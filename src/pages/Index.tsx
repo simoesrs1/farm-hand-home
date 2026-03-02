@@ -1,13 +1,47 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import HeroSection from "@/components/HeroSection";
+import FeaturedFarmers from "@/components/FeaturedFarmers";
+import { ShieldCheck, Truck, Star } from "lucide-react";
+
+const features = [
+  {
+    icon: ShieldCheck,
+    title: "Avaliações Verificadas",
+    description: "Só quem compra pode avaliar — garantimos transparência total.",
+  },
+  {
+    icon: Truck,
+    title: "Proximidade Real",
+    description: "Encontre produtores num raio à sua escolha com geolocalização.",
+  },
+  {
+    icon: Star,
+    title: "Qualidade Garantida",
+    description: "Os melhores agricultores do país, classificados pela comunidade.",
+  },
+];
 
 const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <main>
+      <HeroSection />
+
+      {/* Value props */}
+      <section className="border-b border-border bg-card py-12">
+        <div className="container grid gap-8 md:grid-cols-3">
+          {features.map((f) => (
+            <div key={f.title} className="flex flex-col items-center text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <f.icon className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="mt-4 font-display text-lg font-semibold text-foreground">{f.title}</h3>
+              <p className="mt-1.5 text-sm text-muted-foreground">{f.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <FeaturedFarmers />
+    </main>
   );
 };
 
