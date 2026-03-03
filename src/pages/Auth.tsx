@@ -1,12 +1,64 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Leaf, User, Tractor } from "lucide-react";
+import { Leaf, User, Tractor, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user } = useAuth();
   const [isSignup, setIsSignup] = useState(searchParams.get("tab") === "signup");
   const [profileType, setProfileType] = useState<"cliente" | "vendedor">("cliente");
+  const [loading, setLoading] = useState(false);
+
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  // Redirect if already logged in
+  if (user) {
+    navigate("/", { replace: true });
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (isSignup) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: fullName, profile_type: profileType },
+            emailRedirectTo: window.location.origin,
+          },
+        });
+        if (error) throw error;
+        toast({
+          title: "Conta criada!",
+          description: "Verifica o teu email para confirmar o registo.",
+        });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        navigate("/");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center py-12">
@@ -19,7 +71,6 @@ const Auth = () => {
             <span className="font-display text-xl font-bold text-foreground">FarmConnect</span>
           </div>
 
-          {/* Login / Signup toggle */}
           <div className="mb-6 flex rounded-lg bg-muted p-1">
             <button
               className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
@@ -71,13 +122,16 @@ const Auth = () => {
             </div>
           )}
 
-          <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             {isSignup && (
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">Nome completo</label>
                 <input
                   type="text"
                   placeholder="O seu nome"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
                   className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
@@ -87,6 +141,9 @@ const Auth = () => {
               <input
                 type="email"
                 placeholder="email@exemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
                 className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -95,10 +152,22 @@ const Auth = () => {
               <input
                 type="password"
                 placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
-            <Button type="submit" className="mt-2 w-full">
+
+            {isSignup && profileType === "vendedor" && (
+              <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+                Após confirmar o email, será redirecionado para completar o perfil da sua exploração com dados da empresa e certificados.
+              </p>
+            )}
+
+            <Button type="submit" className="mt-2 w-full" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSignup ? "Criar conta" : "Entrar"}
             </Button>
           </form>
