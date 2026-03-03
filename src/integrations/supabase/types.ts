@@ -14,7 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      farmer_certificates: {
+        Row: {
+          farmer_id: string
+          file_name: string
+          file_url: string
+          id: string
+          uploaded_at: string
+        }
+        Insert: {
+          farmer_id: string
+          file_name: string
+          file_url: string
+          id?: string
+          uploaded_at?: string
+        }
+        Update: {
+          farmer_id?: string
+          file_name?: string
+          file_url?: string
+          id?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_certificates_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_details"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      farmer_details: {
+        Row: {
+          address: string | null
+          cae_code: string | null
+          company_name: string | null
+          created_at: string
+          description: string | null
+          id: string
+          initial_score: number | null
+          phone: string | null
+          registration_step: number
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          cae_code?: string | null
+          company_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          initial_score?: number | null
+          phone?: string | null
+          registration_step?: number
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          cae_code?: string | null
+          company_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          initial_score?: number | null
+          phone?: string | null
+          registration_step?: number
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_details_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          profile_type: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          profile_type?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          profile_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
