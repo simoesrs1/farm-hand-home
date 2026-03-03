@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Leaf, User } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, Leaf, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { to: "/", label: "Início" },
@@ -13,6 +14,13 @@ const navLinks = [
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
@@ -26,16 +34,13 @@ const Header = () => {
           </span>
         </Link>
 
-        {/* Desktop nav */}
         <nav className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
               className={`rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary ${
-                location.pathname === link.to
-                  ? "text-primary"
-                  : "text-muted-foreground"
+                location.pathname === link.to ? "text-primary" : "text-muted-foreground"
               }`}
             >
               {link.label}
@@ -44,18 +49,31 @@ const Header = () => {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Link to="/auth">
-            <Button variant="outline" size="sm" className="gap-2">
-              <User className="h-4 w-4" />
-              Entrar
-            </Button>
-          </Link>
-          <Link to="/auth?tab=signup">
-            <Button size="sm">Registar</Button>
-          </Link>
+          {user ? (
+            <>
+              <span className="text-sm text-muted-foreground">
+                {profile?.full_name || user.email}
+              </span>
+              <Button variant="outline" size="sm" className="gap-2" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4" />
+                Sair
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link to="/auth">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <User className="h-4 w-4" />
+                  Entrar
+                </Button>
+              </Link>
+              <Link to="/auth?tab=signup">
+                <Button size="sm">Registar</Button>
+              </Link>
+            </>
+          )}
         </div>
 
-        {/* Mobile toggle */}
         <button
           className="md:hidden p-2 text-foreground"
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -65,7 +83,6 @@ const Header = () => {
         </button>
       </div>
 
-      {/* Mobile nav */}
       {mobileOpen && (
         <div className="border-t border-border bg-background p-4 md:hidden animate-fade-in">
           <nav className="flex flex-col gap-1">
@@ -75,24 +92,36 @@ const Header = () => {
                 to={link.to}
                 onClick={() => setMobileOpen(false)}
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary ${
-                  location.pathname === link.to
-                    ? "text-primary"
-                    : "text-muted-foreground"
+                  location.pathname === link.to ? "text-primary" : "text-muted-foreground"
                 }`}
               >
                 {link.label}
               </Link>
             ))}
             <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
-              <Link to="/auth" onClick={() => setMobileOpen(false)}>
-                <Button variant="outline" className="w-full gap-2">
-                  <User className="h-4 w-4" />
-                  Entrar
-                </Button>
-              </Link>
-              <Link to="/auth?tab=signup" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full">Registar</Button>
-              </Link>
+              {user ? (
+                <>
+                  <span className="px-3 text-sm text-muted-foreground">
+                    {profile?.full_name || user.email}
+                  </span>
+                  <Button variant="outline" className="w-full gap-2" onClick={() => { handleSignOut(); setMobileOpen(false); }}>
+                    <LogOut className="h-4 w-4" />
+                    Sair
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/auth" onClick={() => setMobileOpen(false)}>
+                    <Button variant="outline" className="w-full gap-2">
+                      <User className="h-4 w-4" />
+                      Entrar
+                    </Button>
+                  </Link>
+                  <Link to="/auth?tab=signup" onClick={() => setMobileOpen(false)}>
+                    <Button className="w-full">Registar</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
         </div>
