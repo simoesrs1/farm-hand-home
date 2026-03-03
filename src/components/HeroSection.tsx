@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -7,6 +8,14 @@ import heroImage from "@/assets/hero-farm.jpg";
 const HeroSection = () => {
   const [location, setLocation] = useState("");
   const [radius, setRadius] = useState([25]);
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (location) params.set("location", location);
+    params.set("radius", String(radius[0]));
+    navigate(`/resultados?${params.toString()}`);
+  };
 
   return (
     <section className="relative overflow-hidden">
@@ -62,7 +71,7 @@ const HeroSection = () => {
                 className="py-2"
               />
             </div>
-            <Button className="gap-2 md:px-6">
+            <Button className="gap-2 md:px-6" onClick={handleSearch}>
               <Search className="h-4 w-4" />
               Procurar
             </Button>

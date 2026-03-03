@@ -1,6 +1,8 @@
 import { Star, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface FarmerCardProps {
+  id: string;
   name: string;
   farm: string;
   image: string;
@@ -10,9 +12,9 @@ interface FarmerCardProps {
   products: string[];
 }
 
-const FarmerCard = ({ name, farm, image, rating, reviews, location, products }: FarmerCardProps) => {
+const FarmerCard = ({ id, name, farm, image, rating, reviews, location, products }: FarmerCardProps) => {
   return (
-    <div className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+    <Link to={`/agricultor/${id}`} className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 block">
       <div className="relative h-48 overflow-hidden">
         <img
           src={image}
@@ -54,7 +56,7 @@ const FarmerCard = ({ name, farm, image, rating, reviews, location, products }: 
           ))}
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
