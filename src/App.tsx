@@ -10,6 +10,8 @@ import Auth from "./pages/Auth";
 import Catalog from "./pages/Catalog";
 import About from "./pages/About";
 import Mission from "./pages/Mission";
+import FarmerProfile from "./pages/FarmerProfile";
+import SearchResults from "./pages/SearchResults";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +29,8 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/catalogo" element={<Catalog />} />
+              <Route path="/agricultor/:id" element={<FarmerProfile />} />
+              <Route path="/resultados" element={<SearchResults />} />
               <Route path="/sobre" element={<About />} />
               <Route path="/missao" element={<Mission />} />
               <Route path="*" element={<NotFound />} />

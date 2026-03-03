@@ -54,7 +54,7 @@ const FarmerCard = ({ name, farm, image, rating, reviews, location, products }: 
           ))}
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
