@@ -45,8 +45,30 @@ const Auth = () => {
           description: "Verifica o teu email para confirmar o registo.",
         });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+
+        // Verifica se é agricultor com onboarding incompleto
+        if (data.user) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("profile_type")
+            .eq("id", data.user.id)
+            .single();
+
+          if (prof?.profile_type === "vendedor") {
+            const { data: details } = await supabase
+              .from("farmer_details")
+              .select("registration_step")
+              .eq("user_id", data.user.id)
+              .single();
+
+            if (!details || details.registration_step < 2) {
+              navigate("/onboarding/agricultor");
+              return;
+            }
+          }
+        }
         navigate("/");
       }
     } catch (error: any) {
