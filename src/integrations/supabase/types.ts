@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       farmer_certificates: {
         Row: {
+          certificate_type: string | null
           farmer_id: string
           file_name: string
           file_url: string
@@ -23,6 +24,7 @@ export type Database = {
           uploaded_at: string
         }
         Insert: {
+          certificate_type?: string | null
           farmer_id: string
           file_name: string
           file_url: string
@@ -30,6 +32,7 @@ export type Database = {
           uploaded_at?: string
         }
         Update: {
+          certificate_type?: string | null
           farmer_id?: string
           file_name?: string
           file_url?: string
@@ -51,8 +54,11 @@ export type Database = {
           address: string | null
           cae_code: string | null
           company_name: string | null
+          company_nif: string | null
           created_at: string
           description: string | null
+          exploration_id: string | null
+          exploration_number: string | null
           id: string
           initial_score: number | null
           phone: string | null
@@ -65,8 +71,11 @@ export type Database = {
           address?: string | null
           cae_code?: string | null
           company_name?: string | null
+          company_nif?: string | null
           created_at?: string
           description?: string | null
+          exploration_id?: string | null
+          exploration_number?: string | null
           id?: string
           initial_score?: number | null
           phone?: string | null
@@ -79,8 +88,11 @@ export type Database = {
           address?: string | null
           cae_code?: string | null
           company_name?: string | null
+          company_nif?: string | null
           created_at?: string
           description?: string | null
+          exploration_id?: string | null
+          exploration_number?: string | null
           id?: string
           initial_score?: number | null
           phone?: string | null
