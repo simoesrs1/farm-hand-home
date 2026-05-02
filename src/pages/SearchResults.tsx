@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Star, MapPin, ArrowLeft, ArrowUpDown } from "lucide-react";
+import { Star, MapPin, ArrowLeft, ArrowUpDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { products } from "@/data/products";
+import { useCart } from "@/contexts/CartContext";
+import { useToast } from "@/hooks/use-toast";
 
 type SortOption = "mais-avaliado" | "menos-avaliado" | "preco-maior" | "preco-menor";
 
@@ -16,6 +18,8 @@ const sortLabels: Record<SortOption, string> = {
 
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { addItem } = useCart();
+  const { toast } = useToast();
   const location = searchParams.get("location") || "";
   const radius = searchParams.get("radius") || "25";
   const sort = (searchParams.get("sort") as SortOption) || "mais-avaliado";
@@ -126,7 +130,18 @@ const SearchResults = () => {
                     <span className="text-lg font-bold text-primary">{p.price.toFixed(2)}€</span>
                     <span className="text-xs text-muted-foreground">/{p.unit}</span>
                   </div>
-                  <Button size="sm" variant="outline">Adicionar</Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    onClick={() => {
+                      addItem(p);
+                      toast({ title: "Adicionado ao carrinho", description: p.name });
+                    }}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Adicionar
+                  </Button>
                 </div>
               </div>
             </div>

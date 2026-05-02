@@ -121,6 +121,21 @@ const Header = () => {
                   <span className="px-3 text-sm text-muted-foreground">
                     {profile?.full_name || user.email}
                   </span>
+                  {isClient && (
+                    <Link to="/carrinho" onClick={() => setMobileOpen(false)}>
+                      <Button variant="outline" className="w-full justify-between gap-2">
+                        <span className="flex items-center gap-2">
+                          <ShoppingCart className="h-4 w-4" />
+                          Carrinho
+                        </span>
+                        {totalCount > 0 && (
+                          <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                            {totalCount}
+                          </span>
+                        )}
+                      </Button>
+                    </Link>
+                  )}
                   <Button variant="outline" className="w-full gap-2" onClick={() => { handleSignOut(); setMobileOpen(false); }}>
                     <LogOut className="h-4 w-4" />
                     Sair
