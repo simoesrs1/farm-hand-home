@@ -3,10 +3,14 @@ import { Star, MapPin, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { farmers } from "@/data/farmers";
 import { products } from "@/data/products";
+import { useCart } from "@/contexts/CartContext";
+import { useToast } from "@/hooks/use-toast";
 
 const FarmerProfile = () => {
   const { id } = useParams<{ id: string }>();
   const farmer = farmers.find((f) => f.id === id);
+  const { addItem } = useCart();
+  const { toast } = useToast();
 
   if (!farmer) {
     return (
@@ -93,7 +97,16 @@ const FarmerProfile = () => {
                         <span className="text-lg font-bold text-primary">{p.price.toFixed(2)}€</span>
                         <span className="text-xs text-muted-foreground">/{p.unit}</span>
                       </div>
-                      <Button size="sm" variant="outline">Adicionar</Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          addItem(p);
+                          toast({ title: "Adicionado ao carrinho", description: p.name });
+                        }}
+                      >
+                        Adicionar
+                      </Button>
                     </div>
                   </div>
                 </div>
