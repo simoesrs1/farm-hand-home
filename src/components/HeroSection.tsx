@@ -4,6 +4,7 @@ import { MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import heroImage from "@/assets/hero-farm.jpg";
+import PortugalMapDialog from "@/components/PortugalMapDialog";
 
 const HeroSection = () => {
   const [location, setLocation] = useState("");
@@ -75,6 +76,10 @@ const HeroSection = () => {
               <Search className="h-4 w-4" />
               Procurar
             </Button>
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
+            <p className="text-xs text-muted-foreground">Prefere visualizar no mapa?</p>
+            <PortugalMapDialog />
           </div>
         </div>
       </div>
