@@ -47,6 +47,13 @@ export type Database = {
             referencedRelation: "farmer_details"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "farmer_certificates_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "public_farmer_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       farmer_details: {
@@ -140,7 +147,56 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_farmer_profiles: {
+        Row: {
+          address: string | null
+          cae_code: string | null
+          company_name: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          initial_score: number | null
+          registration_step: number | null
+          updated_at: string | null
+          user_id: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          cae_code?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          initial_score?: number | null
+          registration_step?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          cae_code?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          initial_score?: number | null
+          registration_step?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_details_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
