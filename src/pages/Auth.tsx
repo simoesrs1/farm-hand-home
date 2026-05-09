@@ -5,6 +5,7 @@ import { Leaf, User, Tractor, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { toUserMessage } from "@/lib/auth-errors";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -71,10 +72,11 @@ const Auth = () => {
         }
         navigate("/");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error("Auth error", error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: toUserMessage(error),
         variant: "destructive",
       });
     } finally {
