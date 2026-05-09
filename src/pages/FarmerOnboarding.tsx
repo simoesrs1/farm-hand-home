@@ -15,6 +15,7 @@ import {
   MapPin,
   Hash,
 } from "lucide-react";
+import { toUserMessage } from "@/lib/auth-errors";
 
 const CERTIFICATE_TYPES = [
   "Produção Biológica",
@@ -173,10 +174,11 @@ const FarmerOnboarding = () => {
         description: "O seu perfil de agricultor foi criado com sucesso.",
       });
       navigate("/");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error("Farmer onboarding error", error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: toUserMessage(error),
         variant: "destructive",
       });
     } finally {
