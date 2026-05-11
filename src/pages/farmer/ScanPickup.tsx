@@ -71,7 +71,10 @@ const ScanPickup = () => {
       });
     return () => {
       mounted = false;
-      scanner.stop().catch(() => {}).then(() => scanner.clear().catch(() => {}));
+      scanner
+        .stop()
+        .then(() => scanner.clear())
+        .catch(() => { /* ignore */ });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, success]);
