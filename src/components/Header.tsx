@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Leaf, User, LogOut, ShoppingCart } from "lucide-react";
+import { Menu, X, Leaf, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import NotificationBell from "@/components/NotificationBell";
 
 const navLinks = [
   { to: "/", label: "Início" },
@@ -18,7 +19,8 @@ const Header = () => {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const { totalCount } = useCart();
-  const isClient = !!user && profile?.profile_type !== "vendedor";
+  const isFarmer = !!user && profile?.profile_type === "vendedor";
+  const isClient = !!user && !isFarmer;
 
   const handleSignOut = async () => {
     await signOut();
