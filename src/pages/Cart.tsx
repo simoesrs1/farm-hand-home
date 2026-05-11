@@ -1,16 +1,18 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard } from "lucide-react";
+import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [paying, setPaying] = useState(false);
 
   // Group items by farmer for clearer display
   const grouped = useMemo(() => {
@@ -25,20 +27,39 @@ const Cart = () => {
     return Array.from(map.values());
   }, [items]);
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!user) {
-      toast({
-        title: "Inicie sessão",
-        description: "Precisa de estar autenticado para finalizar a compra.",
-      });
+      toast({ title: "Inicie sessão", description: "Precisa de estar autenticado para finalizar a compra." });
       navigate("/auth");
       return;
     }
-    toast({
-      title: "A ir para pagamento…",
-      description: `Total: ${totalPrice.toFixed(2)}€`,
-    });
-    // TODO: integrar com gateway de pagamento
+    if (profile?.profile_type === "vendedor") {
+      toast({ title: "Conta de agricultor", description: "Apenas clientes podem comprar.", variant: "destructive" });
+      return;
+    }
+    setPaying(true);
+    try {
+      const payload = {
+        items: items.map((i) => ({
+          product_name: i.name,
+          product_image: i.image,
+          unit_price: i.price,
+          unit: i.unit,
+          quantity: i.quantity,
+        })),
+      };
+      const { data, error } = await supabase.functions.invoke("create-order", { body: payload });
+      if (error || (data as any)?.error) {
+        const msg = (data as any)?.error ?? error?.message ?? "Erro ao processar pagamento";
+        toast({ title: "Não foi possível pagar", description: msg, variant: "destructive" });
+        return;
+      }
+      clearCart();
+      toast({ title: "Pagamento simulado com sucesso!", description: "A tua encomenda está pronta para levantar." });
+      navigate("/encomendas");
+    } finally {
+      setPaying(false);
+    }
   };
 
   if (items.length === 0) {
