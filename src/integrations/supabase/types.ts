@@ -69,6 +69,7 @@ export type Database = {
           id: string
           initial_score: number | null
           phone: string | null
+          pickup_days: number
           registration_step: number
           updated_at: string
           user_id: string
@@ -86,6 +87,7 @@ export type Database = {
           id?: string
           initial_score?: number | null
           phone?: string | null
+          pickup_days?: number
           registration_step?: number
           updated_at?: string
           user_id: string
@@ -103,6 +105,7 @@ export type Database = {
           id?: string
           initial_score?: number | null
           phone?: string | null
+          pickup_days?: number
           registration_step?: number
           updated_at?: string
           user_id?: string
@@ -114,6 +117,171 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          order_id: string | null
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          order_id?: string | null
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          order_id?: string | null
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          product_image: string | null
+          product_name: string
+          quantity: number
+          subtotal: number
+          unit: string | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          product_image?: string | null
+          product_name: string
+          quantity: number
+          subtotal: number
+          unit?: string | null
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_image?: string | null
+          product_name?: string
+          quantity?: number
+          subtotal?: number
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          client_id: string
+          commission_amount: number
+          created_at: string
+          delivered_at: string | null
+          expired_at: string | null
+          farmer_amount: number
+          farmer_id: string
+          id: string
+          paid_at: string | null
+          pickup_code: string
+          pickup_deadline: string
+          status: Database["public"]["Enums"]["order_status"]
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          commission_amount: number
+          created_at?: string
+          delivered_at?: string | null
+          expired_at?: string | null
+          farmer_amount: number
+          farmer_id: string
+          id?: string
+          paid_at?: string | null
+          pickup_code: string
+          pickup_deadline: string
+          status?: Database["public"]["Enums"]["order_status"]
+          total: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          commission_amount?: number
+          created_at?: string
+          delivered_at?: string | null
+          expired_at?: string | null
+          farmer_amount?: number
+          farmer_id?: string
+          id?: string
+          paid_at?: string | null
+          pickup_code?: string
+          pickup_deadline?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "public_farmer_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -199,10 +367,14 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      user_owns_farmer: { Args: { _farmer_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      order_status:
+        | "pending_payment"
+        | "awaiting_pickup"
+        | "delivered"
+        | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -329,6 +501,13 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      order_status: [
+        "pending_payment",
+        "awaiting_pickup",
+        "delivered",
+        "expired",
+      ],
+    },
   },
 } as const
