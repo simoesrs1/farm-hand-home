@@ -196,8 +196,8 @@ const Cart = () => {
                 <span>{totalPrice.toFixed(2)}€</span>
               </div>
               <div className="flex justify-between text-muted-foreground">
-                <span>Entrega</span>
-                <span>Calculada no pagamento</span>
+                <span>Levantamento</span>
+                <span>Na quinta com QR</span>
               </div>
             </div>
             <div className="mt-4 flex justify-between border-t border-border pt-4">
@@ -206,9 +206,15 @@ const Cart = () => {
                 {totalPrice.toFixed(2)}€
               </span>
             </div>
-            <Button onClick={handleCheckout} className="mt-6 w-full gap-2" size="lg">
+            <div className="mt-4 flex gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <p>
+                Se não levantares a encomenda no prazo, <strong>perdes 90% do valor pago</strong>. Apenas 10% serve de compensação ao agricultor.
+              </p>
+            </div>
+            <Button onClick={handleCheckout} disabled={paying} className="mt-6 w-full gap-2" size="lg">
               <CreditCard className="h-4 w-4" />
-              Ir para pagamento
+              {paying ? "A processar…" : "Pagar (simulado)"}
             </Button>
           </aside>
         </div>
