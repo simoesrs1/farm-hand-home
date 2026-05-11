@@ -16,6 +16,9 @@ import FarmerProfile from "./pages/FarmerProfile";
 import FarmerOnboarding from "./pages/FarmerOnboarding";
 import SearchResults from "./pages/SearchResults";
 import Cart from "./pages/Cart";
+import MyOrders from "./pages/MyOrders";
+import FarmerOrders from "./pages/farmer/FarmerOrders";
+import ScanPickup from "./pages/farmer/ScanPickup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +42,9 @@ const App = () => (
                   <Route path="/agricultor/:id" element={<FarmerProfile />} />
                   <Route path="/resultados" element={<SearchResults />} />
                   <Route path="/carrinho" element={<Cart />} />
+                  <Route path="/encomendas" element={<MyOrders />} />
+                  <Route path="/agricultor/encomendas" element={<FarmerOrders />} />
+                  <Route path="/agricultor/scan" element={<ScanPickup />} />
                   <Route path="/sobre" element={<About />} />
                   <Route path="/missao" element={<Mission />} />
                   <Route path="*" element={<NotFound />} />

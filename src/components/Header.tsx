@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Leaf, User, LogOut, ShoppingCart } from "lucide-react";
+import { Menu, X, Leaf, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import NotificationBell from "@/components/NotificationBell";
 
 const navLinks = [
   { to: "/", label: "Início" },
@@ -18,7 +19,8 @@ const Header = () => {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const { totalCount } = useCart();
-  const isClient = !!user && profile?.profile_type !== "vendedor";
+  const isFarmer = !!user && profile?.profile_type === "vendedor";
+  const isClient = !!user && !isFarmer;
 
   const handleSignOut = async () => {
     await signOut();
@@ -55,19 +57,50 @@ const Header = () => {
           {user ? (
             <>
               {isClient && (
-                <Link
-                  to="/carrinho"
-                  className="relative flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
-                  aria-label="Carrinho"
-                >
-                  <ShoppingCart className="h-5 w-5" />
-                  {totalCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                      {totalCount > 99 ? "99+" : totalCount}
-                    </span>
-                  )}
-                </Link>
+                <>
+                  <Link
+                    to="/encomendas"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
+                    aria-label="As minhas encomendas"
+                    title="As minhas encomendas"
+                  >
+                    <ShoppingBag className="h-5 w-5" />
+                  </Link>
+                  <Link
+                    to="/carrinho"
+                    className="relative flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
+                    aria-label="Carrinho"
+                  >
+                    <ShoppingCart className="h-5 w-5" />
+                    {totalCount > 0 && (
+                      <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                        {totalCount > 99 ? "99+" : totalCount}
+                      </span>
+                    )}
+                  </Link>
+                </>
               )}
+              {isFarmer && (
+                <>
+                  <Link
+                    to="/agricultor/encomendas"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
+                    aria-label="Encomendas"
+                    title="Encomendas"
+                  >
+                    <Package className="h-5 w-5" />
+                  </Link>
+                  <Link
+                    to="/agricultor/scan"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
+                    aria-label="Validar entrega"
+                    title="Validar entrega"
+                  >
+                    <ScanLine className="h-5 w-5" />
+                  </Link>
+                </>
+              )}
+              <NotificationBell />
               <span className="text-sm text-muted-foreground">
                 {profile?.full_name || user.email}
               </span>
