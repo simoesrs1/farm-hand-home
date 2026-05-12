@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
     );
   } catch (e) {
     console.error("validate-pickup error", e);
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
+    return new Response(JSON.stringify({ error: "Erro interno. Tenta novamente." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
