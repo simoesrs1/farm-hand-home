@@ -1,10 +1,20 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+
+interface OrderItem {
+  id: string;
+  product_name: string;
+  product_image: string | null;
+  quantity: number;
+  unit: string | null;
+  unit_price: number;
+  subtotal: number;
+}
 
 interface Order {
   id: string;
@@ -13,9 +23,11 @@ interface Order {
   farmer_amount: number;
   status: "pending_payment" | "awaiting_pickup" | "delivered" | "expired";
   pickup_deadline: string;
+  pickup_code: string;
   delivered_at: string | null;
   expired_at: string | null;
   created_at: string;
+  order_items: OrderItem[];
 }
 
 const meta = {
@@ -29,18 +41,38 @@ const FarmerOrders = () => {
   const { user, profile } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get("id");
+  const refs = useRef<Record<string, HTMLLIElement | null>>({});
 
   useEffect(() => {
     if (!user) return;
-    (async () => {
+    let cancelled = false;
+    const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,delivered_at,expired_at,created_at")
+        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,delivered_at,expired_at,created_at,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
         .order("created_at", { ascending: false });
-      setOrders((data as Order[]) ?? []);
-      setLoading(false);
-    })();
+      if (!cancelled) {
+        setOrders((data as Order[]) ?? []);
+        setLoading(false);
+      }
+    };
+    load();
+    const ch = supabase
+      .channel("farmer-orders:" + user.id)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => load())
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
   }, [user]);
+
+  useEffect(() => {
+    if (!highlightId || loading) return;
+    const el = refs.current[highlightId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightId, loading, orders.length]);
 
   if (!user || profile?.profile_type !== "vendedor") {
     return (
@@ -107,12 +139,17 @@ const FarmerOrders = () => {
                 : o.status === "expired"
                 ? Math.round(o.total * 0.1 * 100) / 100
                 : o.farmer_amount;
+            const isHighlighted = highlightId === o.id;
             return (
-              <li key={o.id} className="rounded-2xl border border-border bg-card p-5">
+              <li
+                key={o.id}
+                ref={(el) => { refs.current[o.id] = el; }}
+                className={`rounded-2xl border bg-card p-5 transition-all ${isHighlighted ? "border-primary ring-2 ring-primary/30 shadow-lg" : "border-border"}`}
+              >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(o.created_at).toLocaleString("pt-PT")}
+                      Encomenda #{o.id.slice(0, 8).toUpperCase()} · {new Date(o.created_at).toLocaleString("pt-PT")}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Total: <span className="font-medium text-foreground">{o.total.toFixed(2)}€</span>
@@ -127,9 +164,29 @@ const FarmerOrders = () => {
                     <Icon className="h-3.5 w-3.5" /> {m.label}
                   </span>
                 </div>
+
+                {o.order_items?.length > 0 && (
+                  <ul className="mt-4 space-y-2 border-t border-border pt-4">
+                    {o.order_items.map((it) => (
+                      <li key={it.id} className="flex items-center gap-3 text-sm">
+                        {it.product_image && (
+                          <img src={it.product_image} alt={it.product_name} className="h-10 w-10 rounded-md object-cover" />
+                        )}
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">{it.product_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {it.quantity} {it.unit ?? ""} × {it.unit_price.toFixed(2)}€
+                          </p>
+                        </div>
+                        <p className="font-medium text-foreground">{it.subtotal.toFixed(2)}€</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
                 {o.status === "awaiting_pickup" && (
                   <p className="mt-3 border-t border-border pt-3 text-sm text-muted-foreground">
-                    Prazo: <span className="font-medium text-foreground">{new Date(o.pickup_deadline).toLocaleDateString("pt-PT")}</span>
+                    Prazo de levantamento: <span className="font-medium text-foreground">{new Date(o.pickup_deadline).toLocaleDateString("pt-PT")}</span>
                   </p>
                 )}
               </li>
