@@ -92,16 +92,27 @@ Deno.serve(async (req) => {
     }
     let pickupDays = 7;
     if (!farmerId) {
-      const { data: anyFarmer } = await admin
+      // Prefer fully-registered farmers; fall back to any farmer if none completed onboarding
+      const { data: completed } = await admin
         .from("farmer_details")
         .select("id, pickup_days")
         .eq("registration_step", 2)
         .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
-      if (!anyFarmer) return jsonError(400, "Nenhum agricultor disponível para receber a encomenda.");
-      farmerId = anyFarmer.id;
-      pickupDays = anyFarmer.pickup_days ?? 7;
+      let chosen = completed;
+      if (!chosen) {
+        const { data: anyFarmer } = await admin
+          .from("farmer_details")
+          .select("id, pickup_days")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        chosen = anyFarmer;
+      }
+      if (!chosen) return jsonError(400, "Nenhum agricultor disponível para receber a encomenda.");
+      farmerId = chosen.id;
+      pickupDays = chosen.pickup_days ?? 7;
     } else {
       const { data: f } = await admin
         .from("farmer_details")
