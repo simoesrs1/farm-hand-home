@@ -1,5 +1,7 @@
-import { Star, MapPin } from "lucide-react";
+import { Star, MapPin, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useFavorite } from "@/hooks/useFavorite";
+import { cn } from "@/lib/utils";
 
 interface FarmerCardProps {
   id: string;
@@ -13,6 +15,14 @@ interface FarmerCardProps {
 }
 
 const FarmerCard = ({ id, name, farm, image, rating, reviews, location, products }: FarmerCardProps) => {
+  const { isFavorite, toggle, loading } = useFavorite(id, farm);
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggle();
+  };
+
   return (
     <Link to={`/agricultor/${id}`} className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1 block">
       <div className="relative h-48 overflow-hidden">
@@ -21,6 +31,21 @@ const FarmerCard = ({ id, name, farm, image, rating, reviews, location, products
           alt={`Exploração ${farm}`}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
+        <button
+          type="button"
+          onClick={handleFavoriteClick}
+          disabled={loading}
+          aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+          aria-pressed={isFavorite}
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur-sm transition-transform hover:scale-110 disabled:opacity-50"
+        >
+          <Heart
+            className={cn(
+              "h-4 w-4 transition-colors",
+              isFavorite ? "fill-accent text-accent" : "text-muted-foreground"
+            )}
+          />
+        </button>
         <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
           <MapPin className="h-3 w-3 text-primary" />
           {location}

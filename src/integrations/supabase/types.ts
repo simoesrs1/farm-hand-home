@@ -121,6 +121,27 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          created_at: string
+          farmer_slug: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          farmer_slug: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          farmer_slug?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
