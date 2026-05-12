@@ -73,8 +73,7 @@ const ScanPickup = () => {
       mounted = false;
       (async () => {
         try {
-          // @ts-expect-error - getState exists at runtime
-          const state = scanner.getState?.();
+          const state = (scanner as unknown as { getState?: () => number }).getState?.();
           // 2 === SCANNING, 3 === PAUSED
           if (state === 2 || state === 3) {
             await scanner.stop();
