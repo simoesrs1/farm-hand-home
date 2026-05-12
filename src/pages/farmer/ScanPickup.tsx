@@ -71,10 +71,16 @@ const ScanPickup = () => {
       });
     return () => {
       mounted = false;
-      scanner
-        .stop()
-        .then(() => scanner.clear())
-        .catch(() => { /* ignore */ });
+      (async () => {
+        try {
+          const state = (scanner as unknown as { getState?: () => number }).getState?.();
+          // 2 === SCANNING, 3 === PAUSED
+          if (state === 2 || state === 3) {
+            await scanner.stop();
+          }
+        } catch { /* ignore */ }
+        try { scanner.clear(); } catch { /* ignore */ }
+      })();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, success]);
