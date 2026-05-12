@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -14,16 +15,20 @@ interface Notification {
   message: string;
   read: boolean;
   created_at: string;
+  order_id: string | null;
+  type: string;
 }
 
 const NotificationBell = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [items, setItems] = useState<Notification[]>([]);
+  const [open, setOpen] = useState(false);
 
   const load = async () => {
     const { data } = await supabase
       .from("notifications")
-      .select("id,title,message,read,created_at")
+      .select("id,title,message,read,created_at,order_id,type")
       .order("created_at", { ascending: false })
       .limit(20);
     setItems((data as Notification[]) ?? []);
@@ -51,8 +56,16 @@ const NotificationBell = () => {
     setItems((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
+  const handleClick = (n: Notification) => {
+    setOpen(false);
+    if (n.order_id) {
+      const base = profile?.profile_type === "vendedor" ? "/agricultor/encomendas" : "/encomendas";
+      navigate(`${base}?id=${n.order_id}`);
+    }
+  };
+
   return (
-    <DropdownMenu onOpenChange={(o) => o && unread > 0 && markAllRead()}>
+    <DropdownMenu open={open} onOpenChange={(o) => { setOpen(o); if (o && unread > 0) markAllRead(); }}>
       <DropdownMenuTrigger
         className="relative flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
         aria-label="Notificações"
@@ -73,12 +86,18 @@ const NotificationBell = () => {
         ) : (
           <ul className="divide-y divide-border">
             {items.map((n) => (
-              <li key={n.id} className={`px-4 py-3 ${!n.read ? "bg-primary/5" : ""}`}>
-                <p className="text-sm font-medium text-foreground">{n.title}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{n.message}</p>
-                <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {new Date(n.created_at).toLocaleString("pt-PT")}
-                </p>
+              <li key={n.id} className={`${!n.read ? "bg-primary/5" : ""}`}>
+                <button
+                  type="button"
+                  onClick={() => handleClick(n)}
+                  className="block w-full px-4 py-3 text-left transition-colors hover:bg-secondary"
+                >
+                  <p className="text-sm font-medium text-foreground">{n.title}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{n.message}</p>
+                  <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {new Date(n.created_at).toLocaleString("pt-PT")}
+                  </p>
+                </button>
               </li>
             ))}
           </ul>
