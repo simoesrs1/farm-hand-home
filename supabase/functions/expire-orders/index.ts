@@ -1,5 +1,6 @@
 // Marks orders past pickup_deadline as expired (90% to platform, 10% to farmer)
-// Can be invoked manually or via cron
+// Protected by a shared CRON_SECRET. Caller must send:
+//   Authorization: Bearer <CRON_SECRET>
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
@@ -8,10 +9,35 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+function jsonError(status: number, message: string) {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function timingSafeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let res = 0;
+  for (let i = 0; i < a.length; i++) res |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return res === 0;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const expected = Deno.env.get("CRON_SECRET");
+    if (!expected) {
+      console.error("expire-orders: CRON_SECRET not configured");
+      return jsonError(503, "Serviço indisponível");
+    }
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const provided = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (!provided || !timingSafeEqual(provided, expected)) {
+      return jsonError(401, "Não autorizado");
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(supabaseUrl, serviceKey);
@@ -25,7 +51,6 @@ Deno.serve(async (req) => {
       .select("id, client_id, farmer_id, total");
     if (error) throw error;
 
-    // Notify farmers (10% goes to them as compensation)
     if (expired && expired.length > 0) {
       const farmerIds = [...new Set(expired.map((o) => o.farmer_id))];
       const { data: farmers } = await admin
@@ -67,9 +92,6 @@ Deno.serve(async (req) => {
     );
   } catch (e) {
     console.error("expire-orders error", e);
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonError(500, "Erro interno");
   }
 });

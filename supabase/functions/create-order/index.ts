@@ -1,5 +1,6 @@
 // Mock checkout — creates an order with simulated payment success
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { CATALOG } from "../_shared/products.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,17 +9,16 @@ const corsHeaders = {
 };
 
 interface ItemInput {
-  product_name: string;
-  product_image?: string;
-  unit_price: number;
-  unit?: string;
+  product_id: string;
   quantity: number;
 }
 
 const COMMISSION_RATE = 0.1;
+const MAX_QUANTITY = 1000;
+const MAX_ITEMS = 50;
+const MAX_TOTAL = 10000; // sanity cap (€)
 
 function generatePickupCode(): string {
-  // 8 chars, A-Z + 2-9 (no confusing chars)
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
   const bytes = new Uint8Array(8);
@@ -27,88 +27,64 @@ function generatePickupCode(): string {
   return code;
 }
 
+function jsonError(status: number, message: string) {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Não autenticado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!authHeader) return jsonError(401, "Não autenticado");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // User-scoped client to identify caller
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData.user) {
-      return new Response(JSON.stringify({ error: "Sessão inválida" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (userErr || !userData.user) return jsonError(401, "Sessão inválida");
     const clientId = userData.user.id;
 
     const body = await req.json().catch(() => null);
     const items: ItemInput[] = body?.items;
-    if (!Array.isArray(items) || items.length === 0) {
-      return new Response(JSON.stringify({ error: "Carrinho vazio" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!Array.isArray(items) || items.length === 0) return jsonError(400, "Carrinho vazio");
+    if (items.length > MAX_ITEMS) return jsonError(400, "Demasiados itens");
 
-    // Validate items
+    // Validate items: only product_id + quantity are accepted from the client.
+    // Prices are read exclusively from the server-side catalog.
+    const resolved: { product: typeof CATALOG[string]; quantity: number; subtotal: number }[] = [];
     for (const it of items) {
-      if (
-        !it.product_name ||
-        typeof it.unit_price !== "number" ||
-        it.unit_price < 0 ||
-        typeof it.quantity !== "number" ||
-        it.quantity <= 0 ||
-        it.quantity > 1000
-      ) {
-        return new Response(JSON.stringify({ error: "Item inválido" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (!it || typeof it.product_id !== "string") return jsonError(400, "Item inválido");
+      if (typeof it.quantity !== "number" || !Number.isInteger(it.quantity) || it.quantity <= 0 || it.quantity > MAX_QUANTITY) {
+        return jsonError(400, "Quantidade inválida");
       }
+      const product = CATALOG[it.product_id];
+      if (!product) return jsonError(400, "Produto desconhecido");
+      const subtotal = Math.round(product.price * it.quantity * 100) / 100;
+      resolved.push({ product, quantity: it.quantity, subtotal });
     }
 
-    // Service-role client for writes
     const admin = createClient(supabaseUrl, serviceKey);
 
-    // Ensure caller has a 'cliente' profile (only clients can buy)
     const { data: profile } = await admin
       .from("profiles")
       .select("profile_type")
       .eq("id", clientId)
       .maybeSingle();
-    if (!profile) {
-      return new Response(JSON.stringify({ error: "Perfil não encontrado" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (profile.profile_type === "vendedor") {
-      return new Response(JSON.stringify({ error: "Apenas clientes podem comprar" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!profile) return jsonError(400, "Perfil não encontrado");
+    if (profile.profile_type === "vendedor") return jsonError(403, "Apenas clientes podem comprar");
 
-    // Pick a farmer: prefer body.farmer_id if valid; otherwise first registered farmer
     let farmerId: string | null = body?.farmer_id ?? null;
     if (farmerId) {
       const { data: f } = await admin
         .from("farmer_details")
-        .select("id, pickup_days")
+        .select("id")
         .eq("id", farmerId)
         .eq("registration_step", 2)
         .maybeSingle();
@@ -123,12 +99,7 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
-      if (!anyFarmer) {
-        return new Response(
-          JSON.stringify({ error: "Nenhum agricultor disponível para receber a encomenda." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
+      if (!anyFarmer) return jsonError(400, "Nenhum agricultor disponível para receber a encomenda.");
       farmerId = anyFarmer.id;
       pickupDays = anyFarmer.pickup_days ?? 7;
     } else {
@@ -140,15 +111,12 @@ Deno.serve(async (req) => {
       pickupDays = f?.pickup_days ?? 7;
     }
 
-    // Compute totals server-side (never trust client totals)
-    const total = items.reduce(
-      (acc, it) => acc + Math.round(it.unit_price * 100) * it.quantity,
-      0,
-    ) / 100;
+    const total = Math.round(resolved.reduce((acc, r) => acc + r.subtotal * 100, 0)) / 100;
+    if (total <= 0 || total > MAX_TOTAL) return jsonError(400, "Total inválido");
+
     const commission = Math.round(total * COMMISSION_RATE * 100) / 100;
     const farmerAmount = Math.round((total - commission) * 100) / 100;
 
-    // Generate unique pickup code (retry on collision)
     let pickupCode = generatePickupCode();
     for (let i = 0; i < 5; i++) {
       const { data: exists } = await admin
@@ -163,7 +131,6 @@ Deno.serve(async (req) => {
     const now = new Date();
     const deadline = new Date(now.getTime() + pickupDays * 24 * 60 * 60 * 1000);
 
-    // Create order — payment is simulated, mark as paid + awaiting_pickup immediately
     const { data: order, error: orderErr } = await admin
       .from("orders")
       .insert({
@@ -181,20 +148,18 @@ Deno.serve(async (req) => {
       .single();
     if (orderErr) throw orderErr;
 
-    // Insert items
-    const itemRows = items.map((it) => ({
+    const itemRows = resolved.map((r) => ({
       order_id: order.id,
-      product_name: it.product_name,
-      product_image: it.product_image ?? null,
-      unit_price: it.unit_price,
-      unit: it.unit ?? null,
-      quantity: it.quantity,
-      subtotal: Math.round(it.unit_price * it.quantity * 100) / 100,
+      product_name: r.product.name,
+      product_image: r.product.image || null,
+      unit_price: r.product.price,
+      unit: r.product.unit,
+      quantity: r.quantity,
+      subtotal: r.subtotal,
     }));
     const { error: itemsErr } = await admin.from("order_items").insert(itemRows);
     if (itemsErr) throw itemsErr;
 
-    // Notify farmer
     const { data: farmer } = await admin
       .from("farmer_details")
       .select("user_id")
@@ -223,9 +188,6 @@ Deno.serve(async (req) => {
     );
   } catch (e) {
     console.error("create-order error", e);
-    return new Response(
-      JSON.stringify({ error: (e as Error).message ?? "Erro interno" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return jsonError(500, "Erro interno. Tenta novamente.");
   }
 });

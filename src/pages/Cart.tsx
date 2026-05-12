@@ -41,10 +41,7 @@ const Cart = () => {
     try {
       const payload = {
         items: items.map((i) => ({
-          product_name: i.name,
-          product_image: i.image,
-          unit_price: i.price,
-          unit: i.unit,
+          product_id: i.id,
           quantity: i.quantity,
         })),
       };
