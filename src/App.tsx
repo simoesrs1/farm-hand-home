@@ -20,6 +20,9 @@ import Cart from "./pages/Cart";
 import MyOrders from "./pages/MyOrders";
 import FarmerOrders from "./pages/farmer/FarmerOrders";
 import ScanPickup from "./pages/farmer/ScanPickup";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
