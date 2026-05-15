@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Leaf, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag } from "lucide-react";
+import { Menu, X, Leaf, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -101,13 +101,54 @@ const Header = () => {
                 </>
               )}
               <NotificationBell />
-              <span className="text-sm text-muted-foreground">
-                {profile?.full_name || user.email}
-              </span>
-              <Button variant="outline" size="sm" className="gap-2" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4" />
-                Sair
-              </Button>
+              <div className="relative group">
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+                >
+                  <UserCircle className="h-4 w-4 text-primary" />
+                  <span className="max-w-[10rem] truncate">
+                    {profile?.full_name || user.email}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:rotate-180" />
+                </button>
+                {/* Bridge to keep hover continuous */}
+                <div className="absolute right-0 top-full h-2 w-56" />
+                <div className="invisible absolute right-0 top-[calc(100%+0.5rem)] z-50 w-56 origin-top-right scale-95 rounded-xl border border-border bg-popover p-1.5 opacity-0 shadow-xl transition-all duration-150 group-hover:visible group-hover:scale-100 group-hover:opacity-100 group-focus-within:visible group-focus-within:scale-100 group-focus-within:opacity-100">
+                  <Link
+                    to="/perfil"
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+                  >
+                    <UserCircle className="h-4 w-4 text-muted-foreground" />
+                    Perfil
+                  </Link>
+                  <Link
+                    to="/definicoes"
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+                  >
+                    <SettingsIcon className="h-4 w-4 text-muted-foreground" />
+                    Definições
+                  </Link>
+                  {isClient && (
+                    <Link
+                      to="/favoritos"
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+                    >
+                      <Heart className="h-4 w-4 text-muted-foreground" />
+                      Favoritos
+                    </Link>
+                  )}
+                  <div className="my-1 border-t border-border" />
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sair
+                  </button>
+                </div>
+              </div>
             </>
           ) : (
             <>
