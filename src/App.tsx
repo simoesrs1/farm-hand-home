@@ -32,6 +32,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
+            <FarmerOnboardingGuard />
             <div className="flex min-h-screen flex-col">
               <Header />
               <div className="flex-1">
