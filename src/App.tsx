@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import FarmerOnboardingGuard from "./components/FarmerOnboardingGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Catalog from "./pages/Catalog";
@@ -31,6 +32,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
+            <FarmerOnboardingGuard />
             <div className="flex min-h-screen flex-col">
               <Header />
               <div className="flex-1">
