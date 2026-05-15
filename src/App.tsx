@@ -52,6 +52,9 @@ const App = () => (
                   <Route path="/agricultor/scan" element={<ScanPickup />} />
                   <Route path="/sobre" element={<About />} />
                   <Route path="/missao" element={<Mission />} />
+                  <Route path="/perfil" element={<Profile />} />
+                  <Route path="/definicoes" element={<Settings />} />
+                  <Route path="/favoritos" element={<Favorites />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
