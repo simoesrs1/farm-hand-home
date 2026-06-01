@@ -1,0 +1,1 @@
+ALTER VIEW public.farmer_public SET (security_invoker = true);
