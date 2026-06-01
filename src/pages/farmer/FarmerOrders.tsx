@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import OrderChat from "@/components/OrderChat";
 
 interface OrderItem {
   id: string;
@@ -188,6 +189,11 @@ const FarmerOrders = () => {
                   <p className="mt-3 border-t border-border pt-3 text-sm text-muted-foreground">
                     Prazo de levantamento: <span className="font-medium text-foreground">{new Date(o.pickup_deadline).toLocaleDateString("pt-PT")}</span>
                   </p>
+                )}
+                {(o.status === "awaiting_pickup" || o.status === "delivered" || o.status === "expired") && (
+                  <div className="mt-4 border-t border-border pt-4">
+                    <OrderChat orderId={o.id} viewerRole="agricultor" deliveredAt={o.delivered_at} />
+                  </div>
                 )}
               </li>
             );
