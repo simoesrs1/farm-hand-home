@@ -197,6 +197,39 @@ export type Database = {
           },
         ]
       }
+      order_chat_messages: {
+        Row: {
+          attachment_mime: string | null
+          attachment_url: string | null
+          content: string | null
+          created_at: string
+          id: string
+          order_id: string
+          sender_id: string | null
+          sender_role: string
+        }
+        Insert: {
+          attachment_mime?: string | null
+          attachment_url?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          sender_id?: string | null
+          sender_role: string
+        }
+        Update: {
+          attachment_mime?: string | null
+          attachment_url?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          sender_id?: string | null
+          sender_role?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -240,6 +273,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      order_reports: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          proof_mime: string | null
+          proof_url: string
+          reason: string
+          reporter_id: string
+          reporter_role: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          proof_mime?: string | null
+          proof_url: string
+          reason: string
+          reporter_id: string
+          reporter_role: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          proof_mime?: string | null
+          proof_url?: string
+          reason?: string
+          reporter_id?: string
+          reporter_role?: string
+          status?: string
+        }
+        Relationships: []
       }
       orders: {
         Row: {
@@ -455,6 +524,9 @@ export type Database = {
       }
     }
     Functions: {
+      delete_old_order_chats: { Args: never; Returns: number }
+      user_in_order: { Args: { _order_id: string }; Returns: boolean }
+      user_is_order_client: { Args: { _order_id: string }; Returns: boolean }
       user_owns_farmer: { Args: { _farmer_id: string }; Returns: boolean }
     }
     Enums: {
