@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import OrderChat from "@/components/OrderChat";
 
 interface Order {
   id: string;
@@ -15,6 +16,7 @@ interface Order {
   pickup_code: string;
   pickup_deadline: string;
   paid_at: string | null;
+  delivered_at: string | null;
   created_at: string;
 }
 
@@ -36,7 +38,7 @@ const MyOrders = () => {
     (async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,total,status,pickup_code,pickup_deadline,paid_at,created_at")
+        .select("id,total,status,pickup_code,pickup_deadline,paid_at,delivered_at,created_at")
         .order("created_at", { ascending: false });
       setOrders((data as Order[]) ?? []);
       setLoading(false);
@@ -99,6 +101,11 @@ const MyOrders = () => {
                       Prazo: <span className="font-medium text-foreground">{new Date(o.pickup_deadline).toLocaleDateString("pt-PT")}</span>
                     </p>
                     <Button onClick={() => setSelected(o)}>Mostrar QR de levantamento</Button>
+                  </div>
+                )}
+                {(o.status === "awaiting_pickup" || o.status === "delivered" || o.status === "expired") && (
+                  <div className="mt-4 border-t border-border pt-4">
+                    <OrderChat orderId={o.id} viewerRole="cliente" deliveredAt={o.delivered_at} />
                   </div>
                 )}
               </li>
