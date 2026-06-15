@@ -16,7 +16,7 @@ const features = [
   {
     icon: Star,
     title: "Qualidade Garantida",
-    description: "Os melhores agricultores do país, classificados pela comunidade.",
+    description: "Agricultores do país, classificados pela comunidade..",
   },
 ];
 
