@@ -127,13 +127,11 @@ const FarmerOnboarding = () => {
           .upload(filePath, file);
         if (uploadError) throw uploadError;
 
-        const { data: urlData } = supabase.storage
-          .from("certificates")
-          .getPublicUrl(filePath);
-
+        // Store the storage path (not a public URL). Signed URLs are generated
+        // on demand when a farmer requests to view their certificate.
         certRecords.push({
           file_name: file.name,
-          file_url: urlData.publicUrl,
+          file_url: filePath,
           certificate_type: type,
         });
       }
