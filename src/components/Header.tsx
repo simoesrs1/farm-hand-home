@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Leaf, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle } from "lucide-react";
+import { Menu, X, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle } from "lucide-react";
+import logoFarmConnect from "@/assets/logo-farmconnect.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -31,8 +32,8 @@ const Header = () => {
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-105">
-            <Leaf className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-primary transition-transform group-hover:scale-105">
+            <img src={logoFarmConnect} alt="FarmConnect logo" width={40} height={40} className="h-full w-full object-cover" />
           </div>
           <span className="font-display text-xl font-bold text-foreground">
             Farm<span className="text-primary">Connect</span>
