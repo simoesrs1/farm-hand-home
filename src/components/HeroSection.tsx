@@ -41,8 +41,8 @@ const HeroSection = () => {
         <h1 className="max-w-3xl font-display text-4xl font-bold leading-tight text-primary-foreground md:text-6xl animate-fade-in">
           Do campo para a sua mesa, sem intermediários
         </h1>
-        <p className="mt-4 max-w-xl text-base text-primary-foreground/80 md:text-lg animate-fade-in" style={{ animationDelay: "0.15s" }}>
-          Descubra agricultores locais perto de si e compre produtos frescos diretamente de quem cultiva.
+        <p className="mt-4 max-w-xl text-base text-primary-foreground/80 md:text-lg animate-fade-in whitespace-pre-line" style={{ animationDelay: "0.15s" }}>
+          Descubra produtos frescos diretamente de quem cultiva.{"\n"}Apoia o produtor local!
         </p>
 
         <div
