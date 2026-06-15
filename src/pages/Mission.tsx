@@ -16,7 +16,7 @@ const Mission = () => (
           <div>
             <h2 className="font-display text-xl font-semibold text-foreground">Missão</h2>
             <p className="mt-2 text-muted-foreground leading-relaxed">
-              Democratizar o acesso a produtos agrícolas frescos e de qualidade, criando um mercado 
+              Democratizar o acesso a produtos agrícolas frescos, de qualidade e a preços acessíveis, criando um mercado 
               digital que valoriza o trabalho dos pequenos e médios agricultores portugueses, enquanto 
               oferece aos consumidores uma experiência de compra transparente e de confiança.
             </p>
