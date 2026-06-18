@@ -76,7 +76,10 @@ export type Database = {
           id: string
           initial_score: number | null
           phone: string | null
+          pickup_address: string | null
           pickup_days: number
+          pickup_lat: number | null
+          pickup_lng: number | null
           registration_step: number
           updated_at: string
           user_id: string
@@ -94,7 +97,10 @@ export type Database = {
           id?: string
           initial_score?: number | null
           phone?: string | null
+          pickup_address?: string | null
           pickup_days?: number
+          pickup_lat?: number | null
+          pickup_lng?: number | null
           registration_step?: number
           updated_at?: string
           user_id: string
@@ -112,7 +118,10 @@ export type Database = {
           id?: string
           initial_score?: number | null
           phone?: string | null
+          pickup_address?: string | null
           pickup_days?: number
+          pickup_lat?: number | null
+          pickup_lng?: number | null
           registration_step?: number
           updated_at?: string
           user_id?: string
