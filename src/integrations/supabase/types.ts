@@ -399,6 +399,85 @@ export type Database = {
           },
         ]
       }
+      products: {
+        Row: {
+          active: boolean
+          category: string | null
+          client_price: number
+          created_at: string
+          description: string | null
+          farmer_id: string
+          farmer_price: number
+          has_modifications: boolean
+          id: string
+          is_lactose_free: boolean
+          is_organic: boolean
+          media_urls: string[]
+          modifications_description: string | null
+          name: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          client_price: number
+          created_at?: string
+          description?: string | null
+          farmer_id: string
+          farmer_price: number
+          has_modifications?: boolean
+          id?: string
+          is_lactose_free?: boolean
+          is_organic?: boolean
+          media_urls?: string[]
+          modifications_description?: string | null
+          name: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          client_price?: number
+          created_at?: string
+          description?: string | null
+          farmer_id?: string
+          farmer_price?: number
+          has_modifications?: boolean
+          id?: string
+          is_lactose_free?: boolean
+          is_organic?: boolean
+          media_urls?: string[]
+          modifications_description?: string | null
+          name?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "public_farmer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
