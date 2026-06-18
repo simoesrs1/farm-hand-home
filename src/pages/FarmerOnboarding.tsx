@@ -154,6 +154,9 @@ const FarmerOnboarding = () => {
           phone,
           website,
           description,
+          pickup_address: pickupAddress,
+          pickup_lat: pickupLat,
+          pickup_lng: pickupLng,
           registration_step: 2,
           initial_score: Math.min(certificates.length * 10, 50),
         })
