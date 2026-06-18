@@ -51,6 +51,7 @@ const App = () => (
                   <Route path="/encomendas" element={<MyOrders />} />
                   <Route path="/agricultor/encomendas" element={<FarmerOrders />} />
                   <Route path="/agricultor/scan" element={<ScanPickup />} />
+                  <Route path="/agricultor/produtos/novo" element={<NewProduct />} />
                   <Route path="/sobre" element={<About />} />
                   <Route path="/missao" element={<Mission />} />
                   <Route path="/perfil" element={<Profile />} />
