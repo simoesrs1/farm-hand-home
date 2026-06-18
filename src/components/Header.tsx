@@ -84,6 +84,14 @@ const Header = () => {
               {isFarmer && (
                 <>
                   <Link
+                    to="/agricultor/produtos/novo"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
+                    aria-label="Adicionar produto"
+                    title="Adicionar produto"
+                  >
+                    <Store className="h-5 w-5" />
+                  </Link>
+                  <Link
                     to="/agricultor/encomendas"
                     className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
                     aria-label="Encomendas"
