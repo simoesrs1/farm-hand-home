@@ -55,6 +55,11 @@ const FarmerOnboarding = () => {
   const [website, setWebsite] = useState("");
   const [description, setDescription] = useState("");
 
+  // Local de levantamento da encomenda
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [pickupLat, setPickupLat] = useState<number | null>(null);
+  const [pickupLng, setPickupLng] = useState<number | null>(null);
+
   const [certificates, setCertificates] = useState<CertificateUpload[]>([]);
   const [loading, setLoading] = useState(false);
   const [farmerDetailsId, setFarmerDetailsId] = useState<string | null>(null);
