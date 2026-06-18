@@ -16,6 +16,7 @@ import {
   Hash,
 } from "lucide-react";
 import { toUserMessage } from "@/lib/auth-errors";
+import PickupLocationMap from "@/components/PickupLocationMap";
 
 const CERTIFICATE_TYPES = [
   "Produção Biológica",
@@ -53,6 +54,11 @@ const FarmerOnboarding = () => {
   const [phone, setPhone] = useState("");
   const [website, setWebsite] = useState("");
   const [description, setDescription] = useState("");
+
+  // Local de levantamento da encomenda
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [pickupLat, setPickupLat] = useState<number | null>(null);
+  const [pickupLng, setPickupLng] = useState<number | null>(null);
 
   const [certificates, setCertificates] = useState<CertificateUpload[]>([]);
   const [loading, setLoading] = useState(false);
@@ -148,6 +154,9 @@ const FarmerOnboarding = () => {
           phone,
           website,
           description,
+          pickup_address: pickupAddress,
+          pickup_lat: pickupLat,
+          pickup_lng: pickupLng,
           registration_step: 2,
           initial_score: Math.min(certificates.length * 10, 50),
         })
@@ -361,6 +370,66 @@ const FarmerOnboarding = () => {
                     className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
+              </div>
+            </section>
+
+            {/* Local de Levantamento */}
+            <section className="rounded-xl border border-border bg-background/50 p-5">
+              <div className="mb-2 flex items-center gap-2 text-foreground">
+                <MapPin className="h-5 w-5 text-primary" />
+                <h2 className="font-display text-base font-semibold">
+                  Local de Levantamento da Encomenda
+                </h2>
+              </div>
+              <p className="mb-4 text-xs text-muted-foreground">
+                Indique a morada onde os clientes irão levantar as encomendas e
+                marque o ponto exato no mapa (clique ou arraste o marcador).
+              </p>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                    Morada de levantamento *
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={pickupAddress}
+                      onChange={(e) => setPickupAddress(e.target.value)}
+                      required
+                      placeholder="Rua, número, código postal, localidade"
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                    {address && (
+                      <button
+                        type="button"
+                        onClick={() => setPickupAddress(address)}
+                        className="shrink-0 rounded-lg border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-muted"
+                      >
+                        Usar morada da exploração
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <PickupLocationMap
+                  lat={pickupLat}
+                  lng={pickupLng}
+                  onChange={(la, ln) => {
+                    setPickupLat(la);
+                    setPickupLng(ln);
+                  }}
+                />
+
+                {pickupLat != null && pickupLng != null ? (
+                  <p className="text-xs text-muted-foreground">
+                    Coordenadas: {pickupLat.toFixed(5)}, {pickupLng.toFixed(5)}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Clique no mapa para marcar o local de levantamento.
+                  </p>
+                )}
               </div>
             </section>
 
