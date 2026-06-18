@@ -16,6 +16,7 @@ import {
   Hash,
 } from "lucide-react";
 import { toUserMessage } from "@/lib/auth-errors";
+import PickupLocationMap from "@/components/PickupLocationMap";
 
 const CERTIFICATE_TYPES = [
   "Produção Biológica",
