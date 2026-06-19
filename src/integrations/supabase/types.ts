@@ -63,6 +63,73 @@ export type Database = {
           },
         ]
       }
+      farmer_change_requests: {
+        Row: {
+          created_at: string
+          document_urls: string[]
+          farmer_id: string
+          id: string
+          justification: string
+          requested_changes: Json
+          review_deadline: string
+          reviewed_at: string | null
+          reviewer_notes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_urls?: string[]
+          farmer_id: string
+          id?: string
+          justification: string
+          requested_changes: Json
+          review_deadline?: string
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_urls?: string[]
+          farmer_id?: string
+          id?: string
+          justification?: string
+          requested_changes?: Json
+          review_deadline?: string
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_change_requests_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farmer_change_requests_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farmer_change_requests_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "public_farmer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       farmer_details: {
         Row: {
           address: string | null
@@ -83,6 +150,7 @@ export type Database = {
           registration_step: number
           updated_at: string
           user_id: string
+          verification_status: string
           website: string | null
         }
         Insert: {
@@ -104,6 +172,7 @@ export type Database = {
           registration_step?: number
           updated_at?: string
           user_id: string
+          verification_status?: string
           website?: string | null
         }
         Update: {
@@ -125,6 +194,7 @@ export type Database = {
           registration_step?: number
           updated_at?: string
           user_id?: string
+          verification_status?: string
           website?: string | null
         }
         Relationships: [
@@ -613,6 +683,7 @@ export type Database = {
     }
     Functions: {
       delete_old_order_chats: { Args: never; Returns: number }
+      farmer_is_verified: { Args: { _farmer_id: string }; Returns: boolean }
       user_in_order: { Args: { _order_id: string }; Returns: boolean }
       user_is_order_client: { Args: { _order_id: string }; Returns: boolean }
       user_owns_farmer: { Args: { _farmer_id: string }; Returns: boolean }
