@@ -48,6 +48,21 @@ const Cart = () => {
       toast({ title: "Conta de agricultor", description: "Apenas clientes podem comprar.", variant: "destructive" });
       return;
     }
+  const onCheckoutClick = () => {
+    if (!user) {
+      toast({ title: "Inicie sessão", description: "Precisa de estar autenticado para finalizar a compra." });
+      navigate("/auth");
+      return;
+    }
+    if (profile?.profile_type === "vendedor") {
+      toast({ title: "Conta de agricultor", description: "Apenas clientes podem comprar.", variant: "destructive" });
+      return;
+    }
+    setSafetyOpen(true);
+  };
+
+  const handleCheckout = async () => {
+    setSafetyOpen(false);
     setPaying(true);
     try {
       const payload = {
