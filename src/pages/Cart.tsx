@@ -1,11 +1,21 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle } from "lucide-react";
+import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
@@ -13,6 +23,7 @@ const Cart = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [paying, setPaying] = useState(false);
+  const [safetyOpen, setSafetyOpen] = useState(false);
 
   // Group items by farmer for clearer display
   const grouped = useMemo(() => {
@@ -27,7 +38,7 @@ const Cart = () => {
     return Array.from(map.values());
   }, [items]);
 
-  const handleCheckout = async () => {
+  const onCheckoutClick = () => {
     if (!user) {
       toast({ title: "Inicie sessão", description: "Precisa de estar autenticado para finalizar a compra." });
       navigate("/auth");
@@ -37,6 +48,11 @@ const Cart = () => {
       toast({ title: "Conta de agricultor", description: "Apenas clientes podem comprar.", variant: "destructive" });
       return;
     }
+    setSafetyOpen(true);
+  };
+
+  const handleCheckout = async () => {
+    setSafetyOpen(false);
     setPaying(true);
     try {
       const payload = {
@@ -209,13 +225,47 @@ const Cart = () => {
                 Se não levantar a encomenda no prazo indicado, <strong>perderá 100% do valor pago</strong>.
               </p>
             </div>
-            <Button onClick={handleCheckout} disabled={paying} className="mt-6 w-full gap-2" size="lg">
+            <Button onClick={onCheckoutClick} disabled={paying} className="mt-6 w-full gap-2" size="lg">
               <CreditCard className="h-4 w-4" />
               {paying ? "A processar…" : "Pagar (simulado)"}
             </Button>
           </aside>
         </div>
       </div>
+
+      <AlertDialog open={safetyOpen} onOpenChange={setSafetyOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-amber-600" />
+              Aviso de segurança
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  Para a sua segurança, <strong>não entre de forma alguma</strong> em propriedades
+                  com falta de identificação, sinalética visível do produtor, ou que possam colocar
+                  a sua segurança em causa.
+                </p>
+                <p>
+                  Confirme sempre o local de levantamento indicado pelo agricultor antes de se
+                  deslocar e prefira deslocações em horário diurno.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  A FarmConnect <strong>não se responsabiliza por atos de terceiros</strong> nem
+                  pela segurança física das pessoas durante o processo de levantamento.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCheckout}>
+              Compreendo e quero continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 };
