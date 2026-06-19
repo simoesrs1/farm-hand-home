@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle, Store } from "lucide-react";
+import { Menu, X, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle, Store, ClipboardList } from "lucide-react";
 import logoFarmConnect from "@/assets/logo-farmconnect.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -131,6 +131,15 @@ const Header = () => {
                     <UserCircle className="h-4 w-4 text-muted-foreground" />
                     Perfil
                   </Link>
+                  {isFarmer && (
+                    <Link
+                      to="/agricultor/informacoes"
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+                    >
+                      <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                      Informações da exploração
+                    </Link>
+                  )}
                   <Link
                     to="/definicoes"
                     className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"

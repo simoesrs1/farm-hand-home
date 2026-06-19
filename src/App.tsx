@@ -21,6 +21,7 @@ import MyOrders from "./pages/MyOrders";
 import FarmerOrders from "./pages/farmer/FarmerOrders";
 import ScanPickup from "./pages/farmer/ScanPickup";
 import NewProduct from "./pages/farmer/NewProduct";
+import FarmerInfo from "./pages/farmer/FarmerInfo";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Favorites from "./pages/Favorites";
@@ -52,6 +53,7 @@ const App = () => (
                   <Route path="/agricultor/encomendas" element={<FarmerOrders />} />
                   <Route path="/agricultor/scan" element={<ScanPickup />} />
                   <Route path="/agricultor/produtos/novo" element={<NewProduct />} />
+                  <Route path="/agricultor/informacoes" element={<FarmerInfo />} />
                   <Route path="/sobre" element={<About />} />
                   <Route path="/missao" element={<Mission />} />
                   <Route path="/perfil" element={<Profile />} />
