@@ -1,0 +1,362 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Loader2, ShieldCheck, ShieldAlert, Lock, FileUp, AlertTriangle, Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { toUserMessage } from "@/lib/auth-errors";
+
+type FarmerDetails = {
+  id: string;
+  company_name: string | null;
+  company_nif: string | null;
+  cae_code: string | null;
+  exploration_number: string | null;
+  exploration_id: string | null;
+  address: string | null;
+  phone: string | null;
+  website: string | null;
+  description: string | null;
+  pickup_address: string | null;
+  verification_status: string;
+};
+
+const EDITABLE_FIELDS: { key: keyof FarmerDetails; label: string; type?: string }[] = [
+  { key: "company_name", label: "Nome da exploração" },
+  { key: "company_nif", label: "NIF" },
+  { key: "cae_code", label: "Código CAE" },
+  { key: "exploration_number", label: "Nº de exploração" },
+  { key: "exploration_id", label: "ID de exploração" },
+  { key: "address", label: "Morada da exploração" },
+  { key: "phone", label: "Telefone", type: "tel" },
+  { key: "website", label: "Website", type: "url" },
+  { key: "pickup_address", label: "Local de levantamento" },
+];
+
+const FarmerInfo = () => {
+  const { user, profile, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const [loading, setLoading] = useState(true);
+  const [details, setDetails] = useState<FarmerDetails | null>(null);
+  const [pending, setPending] = useState<any | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(false);
+  const [draft, setDraft] = useState<Partial<FarmerDetails>>({});
+  const [description, setDescription] = useState("");
+  const [justification, setJustification] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && (!user || profile?.profile_type !== "vendedor")) {
+      navigate("/perfil");
+    }
+  }, [user, profile, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from("farmer_details")
+        .select("id, company_name, company_nif, cae_code, exploration_number, exploration_id, address, phone, website, description, pickup_address, verification_status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data) {
+        setDetails(data as FarmerDetails);
+        setDraft(data as any);
+        setDescription(data.description ?? "");
+        const { data: req } = await supabase
+          .from("farmer_change_requests")
+          .select("*")
+          .eq("farmer_id", data.id)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        setPending(req);
+      }
+      setLoading(false);
+    })();
+  }, [user]);
+
+  const isLocked = details?.verification_status !== "verified";
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !details) return;
+    if (!justification.trim() || justification.trim().length < 20) {
+      toast({ title: "Justificação insuficiente", description: "Descreva o motivo das alterações (mínimo 20 caracteres).", variant: "destructive" });
+      return;
+    }
+    if (files.length === 0) {
+      toast({ title: "Documentação obrigatória", description: "Anexe pelo menos um documento comprovativo.", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      // Compute changed fields
+      const changes: Record<string, { from: any; to: any }> = {};
+      for (const f of EDITABLE_FIELDS) {
+        const next = (draft as any)[f.key] ?? null;
+        const prev = (details as any)[f.key] ?? null;
+        if ((next || "") !== (prev || "")) {
+          changes[f.key] = { from: prev, to: next };
+        }
+      }
+      if ((description || "") !== (details.description || "")) {
+        changes.description = { from: details.description, to: description };
+      }
+      if (Object.keys(changes).length === 0) {
+        toast({ title: "Sem alterações", description: "Não detetámos alterações face aos dados atuais.", variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
+
+      // Upload documents
+      const urls: string[] = [];
+      for (const file of files) {
+        const path = `${user.id}/${Date.now()}-${file.name}`;
+        const { error: upErr } = await supabase.storage.from("change-request-docs").upload(path, file);
+        if (upErr) throw upErr;
+        urls.push(path);
+      }
+
+      const { error } = await supabase.from("farmer_change_requests").insert({
+        farmer_id: details.id,
+        user_id: user.id,
+        requested_changes: changes,
+        justification: justification.trim(),
+        document_urls: urls,
+      });
+      if (error) throw error;
+
+      toast({
+        title: "Pedido submetido",
+        description: "A equipa FarmConnect tem até 7 dias para validar. O perfil ficará bloqueado até decisão.",
+      });
+      setEditing(false);
+      setAcknowledged(false);
+      setJustification("");
+      setFiles([]);
+      // refresh
+      const { data: refreshed } = await supabase
+        .from("farmer_details")
+        .select("id, company_name, company_nif, cae_code, exploration_number, exploration_id, address, phone, website, description, pickup_address, verification_status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (refreshed) setDetails(refreshed as FarmerDetails);
+      const { data: req } = await supabase
+        .from("farmer_change_requests")
+        .select("*")
+        .eq("farmer_id", details.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setPending(req);
+    } catch (err) {
+      toast({ title: "Erro", description: toUserMessage(err), variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (authLoading || loading) {
+    return (
+      <main className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </main>
+    );
+  }
+
+  if (!details) {
+    return (
+      <main className="container max-w-2xl py-10">
+        <p className="text-muted-foreground">Sem dados de agricultor.</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="container max-w-3xl py-10">
+      <header className="mb-6 flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+          <ShieldCheck className="h-6 w-6" />
+        </div>
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Informações da exploração</h1>
+          <p className="text-sm text-muted-foreground">Dados submetidos no registo inicial</p>
+        </div>
+      </header>
+
+      {/* Status banner */}
+      {isLocked ? (
+        <Alert variant="destructive" className="mb-6">
+          <Lock className="h-4 w-4" />
+          <AlertTitle>Perfil bloqueado — em verificação</AlertTitle>
+          <AlertDescription>
+            Existe um pedido de alteração pendente. Enquanto a equipa FarmConnect não validar a informação,
+            o perfil e os produtos <strong>não aparecem publicamente</strong> e <strong>não pode realizar vendas</strong>.
+            A nossa equipa tem até <strong>7 dias</strong> para concluir a análise.
+            {pending?.review_deadline && (
+              <span className="mt-1 block text-xs">
+                Prazo máximo: {new Date(pending.review_deadline).toLocaleDateString("pt-PT")}
+              </span>
+            )}
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert className="mb-6 border-primary/30 bg-primary/5">
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          <AlertTitle>Perfil verificado</AlertTitle>
+          <AlertDescription>
+            O seu perfil está ativo. Qualquer alteração de dados terá de ser revista pela equipa FarmConnect.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Current data */}
+      {!editing && (
+        <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
+          <h2 className="font-display text-lg font-semibold text-foreground">Dados atuais</h2>
+          <dl className="grid gap-3 sm:grid-cols-2">
+            {EDITABLE_FIELDS.map((f) => (
+              <div key={f.key as string}>
+                <dt className="text-xs font-medium text-muted-foreground">{f.label}</dt>
+                <dd className="text-sm text-foreground">{(details as any)[f.key] || "—"}</dd>
+              </div>
+            ))}
+            <div className="sm:col-span-2">
+              <dt className="text-xs font-medium text-muted-foreground">Descrição</dt>
+              <dd className="whitespace-pre-wrap text-sm text-foreground">{details.description || "—"}</dd>
+            </div>
+          </dl>
+
+          <div className="pt-2">
+            <Button
+              onClick={() => setEditing(true)}
+              disabled={isLocked}
+              className="gap-2"
+            >
+              <FileUp className="h-4 w-4" />
+              Pedir alteração de dados
+            </Button>
+            {isLocked && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Já existe um pedido em análise. Aguarde a decisão da equipa para submeter novo pedido.
+              </p>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Edit form with acknowledgment gate */}
+      {editing && (
+        <section className="space-y-6">
+          {!acknowledged ? (
+            <Alert variant="destructive" className="border-amber-500/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Antes de continuar</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p>
+                  Ao submeter um pedido de alteração, o seu perfil será <strong>imediatamente bloqueado</strong> até a
+                  equipa FarmConnect validar a nova informação.
+                </p>
+                <ul className="list-disc pl-5 text-sm">
+                  <li>Enquanto não for validado, o perfil e os produtos <strong>não aparecem</strong> na plataforma.</li>
+                  <li>Durante esse período <strong>não poderá realizar vendas</strong>.</li>
+                  <li>A equipa tem um prazo máximo de <strong>7 dias</strong> para analisar o pedido.</li>
+                  <li>É obrigatório anexar <strong>documentação comprovativa</strong> e uma justificação clara.</li>
+                </ul>
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" onClick={() => setAcknowledged(true)} className="gap-2">
+                    <ShieldAlert className="h-4 w-4" /> Compreendo e quero continuar
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
+                    Cancelar
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-border bg-card p-6">
+              <h2 className="font-display text-lg font-semibold text-foreground">Pedido de alteração</h2>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {EDITABLE_FIELDS.map((f) => (
+                  <div key={f.key as string}>
+                    <Label className="text-xs">{f.label}</Label>
+                    <Input
+                      type={f.type ?? "text"}
+                      value={(draft as any)[f.key] ?? ""}
+                      onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <Label className="text-xs">Descrição</Label>
+                <Textarea
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs">Justificação das alterações *</Label>
+                <Textarea
+                  rows={4}
+                  required
+                  minLength={20}
+                  placeholder="Explique o motivo das alterações (mínimo 20 caracteres)…"
+                  value={justification}
+                  onChange={(e) => setJustification(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs">Documentação comprovativa *</Label>
+                <Input
+                  type="file"
+                  multiple
+                  accept="image/*,application/pdf"
+                  onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Anexe certidões, comprovativos ou outros documentos que sustentem o pedido.
+                </p>
+                {files.length > 0 && (
+                  <ul className="mt-2 list-disc pl-5 text-xs text-muted-foreground">
+                    {files.map((f) => <li key={f.name}>{f.name}</li>)}
+                  </ul>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <Button type="submit" disabled={submitting} className="gap-2">
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Submeter pedido
+                </Button>
+                <Button type="button" variant="outline" onClick={() => { setEditing(false); setAcknowledged(false); }}>
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          )}
+        </section>
+      )}
+    </main>
+  );
+};
+
+export default FarmerInfo;
