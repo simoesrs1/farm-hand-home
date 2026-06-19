@@ -21,6 +21,7 @@ import MyOrders from "./pages/MyOrders";
 import FarmerOrders from "./pages/farmer/FarmerOrders";
 import ScanPickup from "./pages/farmer/ScanPickup";
 import NewProduct from "./pages/farmer/NewProduct";
+import FarmerInfo from "./pages/farmer/FarmerInfo";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Favorites from "./pages/Favorites";
