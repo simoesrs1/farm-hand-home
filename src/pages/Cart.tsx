@@ -23,6 +23,7 @@ const Cart = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [paying, setPaying] = useState(false);
+  const [safetyOpen, setSafetyOpen] = useState(false);
 
   // Group items by farmer for clearer display
   const grouped = useMemo(() => {
