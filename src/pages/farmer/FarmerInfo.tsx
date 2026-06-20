@@ -75,6 +75,7 @@ const FarmerInfo = () => {
 
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<FarmerDetails | null>(null);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [pending, setPending] = useState<any | null>(null);
   const [editing, setEditing] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
@@ -90,28 +91,37 @@ const FarmerInfo = () => {
     }
   }, [user, profile, authLoading, navigate]);
 
+  const SELECT_COLS = "id, company_name, company_nif, cae_code, exploration_number, exploration_id, address, phone, website, description, pickup_address, pickup_lat, pickup_lng, verification_status";
+
   useEffect(() => {
     if (!user) return;
     (async () => {
       setLoading(true);
       const { data } = await supabase
         .from("farmer_details")
-        .select("id, company_name, company_nif, cae_code, exploration_number, exploration_id, address, phone, website, description, pickup_address, verification_status")
+        .select(SELECT_COLS)
         .eq("user_id", user.id)
         .maybeSingle();
       if (data) {
         setDetails(data as FarmerDetails);
         setDraft(data as any);
         setDescription(data.description ?? "");
-        const { data: req } = await supabase
-          .from("farmer_change_requests")
-          .select("*")
-          .eq("farmer_id", data.id)
-          .eq("status", "pending")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const [{ data: req }, { data: certs }] = await Promise.all([
+          supabase
+            .from("farmer_change_requests")
+            .select("*")
+            .eq("farmer_id", data.id)
+            .eq("status", "pending")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from("farmer_certificates")
+            .select("id, file_name, certificate_type")
+            .eq("farmer_id", data.id),
+        ]);
         setPending(req);
+        setCertificates((certs ?? []) as Certificate[]);
       }
       setLoading(false);
     })();
