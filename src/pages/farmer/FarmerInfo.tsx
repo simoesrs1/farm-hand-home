@@ -189,7 +189,7 @@ const FarmerInfo = () => {
       // refresh
       const { data: refreshed } = await supabase
         .from("farmer_details")
-        .select("id, company_name, company_nif, cae_code, exploration_number, exploration_id, address, phone, website, description, pickup_address, verification_status")
+        .select(SELECT_COLS)
         .eq("user_id", user.id)
         .maybeSingle();
       if (refreshed) setDetails(refreshed as FarmerDetails);
