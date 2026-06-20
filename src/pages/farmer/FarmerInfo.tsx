@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, ShieldCheck, ShieldAlert, Lock, FileUp, AlertTriangle, Save } from "lucide-react";
+import { Loader2, ShieldCheck, ShieldAlert, Lock, FileUp, AlertTriangle, Save, MapPin, Building2, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,30 +13,60 @@ import { toUserMessage } from "@/lib/auth-errors";
 
 type FarmerDetails = {
   id: string;
+  exploration_id: string | null;
+  exploration_number: string | null;
   company_name: string | null;
   company_nif: string | null;
   cae_code: string | null;
-  exploration_number: string | null;
-  exploration_id: string | null;
   address: string | null;
   phone: string | null;
   website: string | null;
   description: string | null;
   pickup_address: string | null;
+  pickup_lat: number | null;
+  pickup_lng: number | null;
   verification_status: string;
 };
 
-const EDITABLE_FIELDS: { key: keyof FarmerDetails; label: string; type?: string }[] = [
-  { key: "company_name", label: "Nome da exploração" },
-  { key: "company_nif", label: "NIF" },
-  { key: "cae_code", label: "Código CAE" },
-  { key: "exploration_number", label: "Nº de exploração" },
-  { key: "exploration_id", label: "ID de exploração" },
-  { key: "address", label: "Morada da exploração" },
-  { key: "phone", label: "Telefone", type: "tel" },
-  { key: "website", label: "Website", type: "url" },
-  { key: "pickup_address", label: "Local de levantamento" },
+type Certificate = {
+  id: string;
+  file_name: string;
+  certificate_type: string;
+};
+
+type FieldDef = { key: keyof FarmerDetails; label: string; type?: string; full?: boolean };
+
+const SECTIONS: { title: string; icon: typeof MapPin; fields: FieldDef[] }[] = [
+  {
+    title: "Identificação da Exploração",
+    icon: MapPin,
+    fields: [
+      { key: "exploration_id", label: "Identificação da exploração" },
+      { key: "exploration_number", label: "Nº de exploração" },
+    ],
+  },
+  {
+    title: "Dados da Empresa",
+    icon: Building2,
+    fields: [
+      { key: "company_name", label: "Nome da empresa" },
+      { key: "company_nif", label: "NIF da empresa" },
+      { key: "cae_code", label: "CAE da empresa" },
+      { key: "phone", label: "Telefone", type: "tel" },
+      { key: "address", label: "Morada", full: true },
+      { key: "website", label: "Website", type: "url", full: true },
+    ],
+  },
+  {
+    title: "Local de Levantamento da Encomenda",
+    icon: MapPin,
+    fields: [
+      { key: "pickup_address", label: "Morada de levantamento", full: true },
+    ],
+  },
 ];
+
+const EDITABLE_FIELDS: FieldDef[] = SECTIONS.flatMap((s) => s.fields);
 
 const FarmerInfo = () => {
   const { user, profile, loading: authLoading } = useAuth();
