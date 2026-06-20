@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, ShieldCheck, ShieldAlert, Lock, FileUp, AlertTriangle, Save } from "lucide-react";
+import { Loader2, ShieldCheck, ShieldAlert, Lock, FileUp, AlertTriangle, Save, MapPin, Building2, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,30 +13,60 @@ import { toUserMessage } from "@/lib/auth-errors";
 
 type FarmerDetails = {
   id: string;
+  exploration_id: string | null;
+  exploration_number: string | null;
   company_name: string | null;
   company_nif: string | null;
   cae_code: string | null;
-  exploration_number: string | null;
-  exploration_id: string | null;
   address: string | null;
   phone: string | null;
   website: string | null;
   description: string | null;
   pickup_address: string | null;
+  pickup_lat: number | null;
+  pickup_lng: number | null;
   verification_status: string;
 };
 
-const EDITABLE_FIELDS: { key: keyof FarmerDetails; label: string; type?: string }[] = [
-  { key: "company_name", label: "Nome da exploração" },
-  { key: "company_nif", label: "NIF" },
-  { key: "cae_code", label: "Código CAE" },
-  { key: "exploration_number", label: "Nº de exploração" },
-  { key: "exploration_id", label: "ID de exploração" },
-  { key: "address", label: "Morada da exploração" },
-  { key: "phone", label: "Telefone", type: "tel" },
-  { key: "website", label: "Website", type: "url" },
-  { key: "pickup_address", label: "Local de levantamento" },
+type Certificate = {
+  id: string;
+  file_name: string;
+  certificate_type: string;
+};
+
+type FieldDef = { key: keyof FarmerDetails; label: string; type?: string; full?: boolean };
+
+const SECTIONS: { title: string; icon: typeof MapPin; fields: FieldDef[] }[] = [
+  {
+    title: "Identificação da Exploração",
+    icon: MapPin,
+    fields: [
+      { key: "exploration_id", label: "Identificação da exploração" },
+      { key: "exploration_number", label: "Nº de exploração" },
+    ],
+  },
+  {
+    title: "Dados da Empresa",
+    icon: Building2,
+    fields: [
+      { key: "company_name", label: "Nome da empresa" },
+      { key: "company_nif", label: "NIF da empresa" },
+      { key: "cae_code", label: "CAE da empresa" },
+      { key: "phone", label: "Telefone", type: "tel" },
+      { key: "address", label: "Morada", full: true },
+      { key: "website", label: "Website", type: "url", full: true },
+    ],
+  },
+  {
+    title: "Local de Levantamento da Encomenda",
+    icon: MapPin,
+    fields: [
+      { key: "pickup_address", label: "Morada de levantamento", full: true },
+    ],
+  },
 ];
+
+const EDITABLE_FIELDS: FieldDef[] = SECTIONS.flatMap((s) => s.fields);
 
 const FarmerInfo = () => {
   const { user, profile, loading: authLoading } = useAuth();
@@ -45,6 +75,7 @@ const FarmerInfo = () => {
 
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<FarmerDetails | null>(null);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [pending, setPending] = useState<any | null>(null);
   const [editing, setEditing] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
@@ -60,28 +91,37 @@ const FarmerInfo = () => {
     }
   }, [user, profile, authLoading, navigate]);
 
+  const SELECT_COLS = "id, company_name, company_nif, cae_code, exploration_number, exploration_id, address, phone, website, description, pickup_address, pickup_lat, pickup_lng, verification_status";
+
   useEffect(() => {
     if (!user) return;
     (async () => {
       setLoading(true);
       const { data } = await supabase
         .from("farmer_details")
-        .select("id, company_name, company_nif, cae_code, exploration_number, exploration_id, address, phone, website, description, pickup_address, verification_status")
+        .select(SELECT_COLS)
         .eq("user_id", user.id)
         .maybeSingle();
       if (data) {
         setDetails(data as FarmerDetails);
         setDraft(data as any);
         setDescription(data.description ?? "");
-        const { data: req } = await supabase
-          .from("farmer_change_requests")
-          .select("*")
-          .eq("farmer_id", data.id)
-          .eq("status", "pending")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const [{ data: req }, { data: certs }] = await Promise.all([
+          supabase
+            .from("farmer_change_requests")
+            .select("*")
+            .eq("farmer_id", data.id)
+            .eq("status", "pending")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from("farmer_certificates")
+            .select("id, file_name, certificate_type")
+            .eq("farmer_id", data.id),
+        ]);
         setPending(req);
+        setCertificates((certs ?? []) as Certificate[]);
       }
       setLoading(false);
     })();
@@ -149,7 +189,7 @@ const FarmerInfo = () => {
       // refresh
       const { data: refreshed } = await supabase
         .from("farmer_details")
-        .select("id, company_name, company_nif, cae_code, exploration_number, exploration_id, address, phone, website, description, pickup_address, verification_status")
+        .select(SELECT_COLS)
         .eq("user_id", user.id)
         .maybeSingle();
       if (refreshed) setDetails(refreshed as FarmerDetails);
@@ -223,29 +263,69 @@ const FarmerInfo = () => {
         </Alert>
       )}
 
-      {/* Current data */}
+      {/* Current data — mirrors the onboarding sections */}
       {!editing && (
-        <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
-          <h2 className="font-display text-lg font-semibold text-foreground">Dados atuais</h2>
-          <dl className="grid gap-3 sm:grid-cols-2">
-            {EDITABLE_FIELDS.map((f) => (
-              <div key={f.key as string}>
-                <dt className="text-xs font-medium text-muted-foreground">{f.label}</dt>
-                <dd className="text-sm text-foreground">{(details as any)[f.key] || "—"}</dd>
-              </div>
-            ))}
-            <div className="sm:col-span-2">
-              <dt className="text-xs font-medium text-muted-foreground">Descrição</dt>
-              <dd className="whitespace-pre-wrap text-sm text-foreground">{details.description || "—"}</dd>
-            </div>
-          </dl>
+        <div className="space-y-5">
+          {SECTIONS.map((section) => {
+            const Icon = section.icon;
+            return (
+              <section key={section.title} className="rounded-2xl border border-border bg-card p-6">
+                <div className="mb-4 flex items-center gap-2 text-foreground">
+                  <Icon className="h-5 w-5 text-primary" />
+                  <h2 className="font-display text-base font-semibold">{section.title}</h2>
+                </div>
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  {section.fields.map((f) => (
+                    <div key={f.key as string} className={f.full ? "sm:col-span-2" : ""}>
+                      <dt className="text-xs font-medium text-muted-foreground">{f.label}</dt>
+                      <dd className="text-sm text-foreground break-words">{(details as any)[f.key] || "—"}</dd>
+                    </div>
+                  ))}
+                  {section.title === "Dados da Empresa" && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs font-medium text-muted-foreground">Descrição da exploração</dt>
+                      <dd className="whitespace-pre-wrap text-sm text-foreground">{details.description || "—"}</dd>
+                    </div>
+                  )}
+                  {section.title === "Local de Levantamento da Encomenda" && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs font-medium text-muted-foreground">Coordenadas no mapa</dt>
+                      <dd className="text-sm text-foreground">
+                        {details.pickup_lat != null && details.pickup_lng != null
+                          ? `${details.pickup_lat.toFixed(5)}, ${details.pickup_lng.toFixed(5)}`
+                          : "—"}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </section>
+            );
+          })}
 
-          <div className="pt-2">
-            <Button
-              onClick={() => setEditing(true)}
-              disabled={isLocked}
-              className="gap-2"
-            >
+          {/* Certificates */}
+          <section className="rounded-2xl border border-border bg-card p-6">
+            <div className="mb-4 flex items-center gap-2 text-foreground">
+              <Award className="h-5 w-5 text-primary" />
+              <h2 className="font-display text-base font-semibold">Certificados</h2>
+            </div>
+            {certificates.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum certificado submetido.</p>
+            ) : (
+              <ul className="space-y-2">
+                {certificates.map((c) => (
+                  <li key={c.id} className="flex items-start justify-between gap-3 rounded-lg border border-border bg-background/50 p-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{c.certificate_type}</p>
+                      <p className="text-xs text-muted-foreground">{c.file_name}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <div className="pt-1">
+            <Button onClick={() => setEditing(true)} disabled={isLocked} className="gap-2">
               <FileUp className="h-4 w-4" />
               Pedir alteração de dados
             </Button>
@@ -255,8 +335,9 @@ const FarmerInfo = () => {
               </p>
             )}
           </div>
-        </section>
+        </div>
       )}
+
 
       {/* Edit form with acknowledgment gate */}
       {editing && (
