@@ -263,29 +263,69 @@ const FarmerInfo = () => {
         </Alert>
       )}
 
-      {/* Current data */}
+      {/* Current data — mirrors the onboarding sections */}
       {!editing && (
-        <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
-          <h2 className="font-display text-lg font-semibold text-foreground">Dados atuais</h2>
-          <dl className="grid gap-3 sm:grid-cols-2">
-            {EDITABLE_FIELDS.map((f) => (
-              <div key={f.key as string}>
-                <dt className="text-xs font-medium text-muted-foreground">{f.label}</dt>
-                <dd className="text-sm text-foreground">{(details as any)[f.key] || "—"}</dd>
-              </div>
-            ))}
-            <div className="sm:col-span-2">
-              <dt className="text-xs font-medium text-muted-foreground">Descrição</dt>
-              <dd className="whitespace-pre-wrap text-sm text-foreground">{details.description || "—"}</dd>
-            </div>
-          </dl>
+        <div className="space-y-5">
+          {SECTIONS.map((section) => {
+            const Icon = section.icon;
+            return (
+              <section key={section.title} className="rounded-2xl border border-border bg-card p-6">
+                <div className="mb-4 flex items-center gap-2 text-foreground">
+                  <Icon className="h-5 w-5 text-primary" />
+                  <h2 className="font-display text-base font-semibold">{section.title}</h2>
+                </div>
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  {section.fields.map((f) => (
+                    <div key={f.key as string} className={f.full ? "sm:col-span-2" : ""}>
+                      <dt className="text-xs font-medium text-muted-foreground">{f.label}</dt>
+                      <dd className="text-sm text-foreground break-words">{(details as any)[f.key] || "—"}</dd>
+                    </div>
+                  ))}
+                  {section.title === "Dados da Empresa" && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs font-medium text-muted-foreground">Descrição da exploração</dt>
+                      <dd className="whitespace-pre-wrap text-sm text-foreground">{details.description || "—"}</dd>
+                    </div>
+                  )}
+                  {section.title === "Local de Levantamento da Encomenda" && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs font-medium text-muted-foreground">Coordenadas no mapa</dt>
+                      <dd className="text-sm text-foreground">
+                        {details.pickup_lat != null && details.pickup_lng != null
+                          ? `${details.pickup_lat.toFixed(5)}, ${details.pickup_lng.toFixed(5)}`
+                          : "—"}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </section>
+            );
+          })}
 
-          <div className="pt-2">
-            <Button
-              onClick={() => setEditing(true)}
-              disabled={isLocked}
-              className="gap-2"
-            >
+          {/* Certificates */}
+          <section className="rounded-2xl border border-border bg-card p-6">
+            <div className="mb-4 flex items-center gap-2 text-foreground">
+              <Award className="h-5 w-5 text-primary" />
+              <h2 className="font-display text-base font-semibold">Certificados</h2>
+            </div>
+            {certificates.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum certificado submetido.</p>
+            ) : (
+              <ul className="space-y-2">
+                {certificates.map((c) => (
+                  <li key={c.id} className="flex items-start justify-between gap-3 rounded-lg border border-border bg-background/50 p-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{c.certificate_type}</p>
+                      <p className="text-xs text-muted-foreground">{c.file_name}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <div className="pt-1">
+            <Button onClick={() => setEditing(true)} disabled={isLocked} className="gap-2">
               <FileUp className="h-4 w-4" />
               Pedir alteração de dados
             </Button>
@@ -295,8 +335,9 @@ const FarmerInfo = () => {
               </p>
             )}
           </div>
-        </section>
+        </div>
       )}
+
 
       {/* Edit form with acknowledgment gate */}
       {editing && (
