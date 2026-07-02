@@ -145,6 +145,9 @@ const NewProduct = () => {
         media_urls: mediaUrls,
         delivery_mode: deliveryMode,
         shipping_days: deliveryMode === "pickup" ? null : shippingDaysNum,
+        stock_quantity: stockNum,
+        availability_start: pickupEnabled ? availabilityStart : null,
+        availability_end: pickupEnabled ? availabilityEnd : null,
       } as any);
       if (error) throw error;
 
