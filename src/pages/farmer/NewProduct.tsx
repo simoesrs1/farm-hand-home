@@ -126,7 +126,9 @@ const NewProduct = () => {
         farmer_price: farmerPriceNumber,
         client_price: clientPrice,
         media_urls: mediaUrls,
-      });
+        delivery_mode: deliveryMode,
+        shipping_days: deliveryMode === "pickup" ? null : shippingDaysNum,
+      } as any);
       if (error) throw error;
 
       toast({ title: "Produto adicionado", description: "O artigo está agora disponível." });
