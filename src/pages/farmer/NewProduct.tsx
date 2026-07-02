@@ -274,6 +274,50 @@ const NewProduct = () => {
           </div>
         </Card>
 
+        {/* Delivery */}
+        <Card className="p-5 space-y-4">
+          <h2 className="font-medium">Entrega</h2>
+          <p className="text-xs text-muted-foreground">Escolha como o cliente pode receber o produto.</p>
+          <RadioGroup value={deliveryMode} onValueChange={(v) => setDeliveryMode(v as any)} className="gap-2">
+            <label htmlFor="dm-pickup" className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-secondary/50">
+              <RadioGroupItem value="pickup" id="dm-pickup" className="mt-0.5" />
+              <div>
+                <div className="text-sm font-medium">Apenas levantamento na propriedade</div>
+                <p className="text-xs text-muted-foreground">O cliente vai buscar à sua exploração.</p>
+              </div>
+            </label>
+            <label htmlFor="dm-shipping" className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-secondary/50">
+              <RadioGroupItem value="shipping" id="dm-shipping" className="mt-0.5" />
+              <div>
+                <div className="text-sm font-medium">Apenas envio ao domicílio</div>
+                <p className="text-xs text-muted-foreground">Faz sempre entrega em casa do cliente.</p>
+              </div>
+            </label>
+            <label htmlFor="dm-both" className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-secondary/50">
+              <RadioGroupItem value="both" id="dm-both" className="mt-0.5" />
+              <div>
+                <div className="text-sm font-medium">Ambos (levantamento ou envio)</div>
+                <p className="text-xs text-muted-foreground">O cliente escolhe a opção.</p>
+              </div>
+            </label>
+          </RadioGroup>
+          {(deliveryMode === "shipping" || deliveryMode === "both") && (
+            <div className="space-y-2">
+              <Label htmlFor="shipping-days">Dias estimados para entrega em casa *</Label>
+              <Input
+                id="shipping-days"
+                type="number"
+                min="1"
+                step="1"
+                value={shippingDays}
+                onChange={(e) => setShippingDays(e.target.value)}
+                placeholder="Ex: 3"
+              />
+              <p className="text-xs text-muted-foreground">Número médio de dias úteis até o produto chegar ao cliente.</p>
+            </div>
+          )}
+        </Card>
+
         {/* Pricing */}
         <Card className="p-5 space-y-4">
           <h2 className="font-medium">Preço</h2>
