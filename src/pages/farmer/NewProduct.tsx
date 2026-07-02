@@ -338,6 +338,49 @@ const NewProduct = () => {
           )}
         </Card>
 
+        {/* Availability */}
+        <Card className="p-5 space-y-4">
+          <h2 className="font-medium">Quantidade e disponibilidade</h2>
+          <div className="space-y-2">
+            <Label htmlFor="stock-qty">Quantidade disponível ({unit || "un"}) *</Label>
+            <Input
+              id="stock-qty"
+              type="number"
+              min="0"
+              step="0.01"
+              value={stockQuantity}
+              onChange={(e) => setStockQuantity(e.target.value)}
+              placeholder="Ex: 25"
+            />
+            <p className="text-xs text-muted-foreground">Total disponível para venda desta publicação.</p>
+          </div>
+          {(deliveryMode === "pickup" || deliveryMode === "both") && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="avail-start">Disponível a partir de *</Label>
+                <Input
+                  id="avail-start"
+                  type="date"
+                  value={availabilityStart}
+                  onChange={(e) => setAvailabilityStart(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">Primeiro dia em que o cliente pode levantar.</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="avail-end">Disponível até *</Label>
+                <Input
+                  id="avail-end"
+                  type="date"
+                  value={availabilityEnd}
+                  onChange={(e) => setAvailabilityEnd(e.target.value)}
+                  min={availabilityStart || undefined}
+                />
+                <p className="text-xs text-muted-foreground">Último dia disponível para levantamento.</p>
+              </div>
+            </div>
+          )}
+        </Card>
+
         {/* Pricing */}
         <Card className="p-5 space-y-4">
           <h2 className="font-medium">Preço</h2>
