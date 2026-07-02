@@ -475,6 +475,7 @@ export type Database = {
           category: string | null
           client_price: number
           created_at: string
+          delivery_mode: Database["public"]["Enums"]["delivery_mode"]
           description: string | null
           farmer_id: string
           farmer_price: number
@@ -485,6 +486,7 @@ export type Database = {
           media_urls: string[]
           modifications_description: string | null
           name: string
+          shipping_days: number | null
           unit: string
           updated_at: string
         }
@@ -493,6 +495,7 @@ export type Database = {
           category?: string | null
           client_price: number
           created_at?: string
+          delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
           description?: string | null
           farmer_id: string
           farmer_price: number
@@ -503,6 +506,7 @@ export type Database = {
           media_urls?: string[]
           modifications_description?: string | null
           name: string
+          shipping_days?: number | null
           unit?: string
           updated_at?: string
         }
@@ -511,6 +515,7 @@ export type Database = {
           category?: string | null
           client_price?: number
           created_at?: string
+          delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
           description?: string | null
           farmer_id?: string
           farmer_price?: number
@@ -521,6 +526,7 @@ export type Database = {
           media_urls?: string[]
           modifications_description?: string | null
           name?: string
+          shipping_days?: number | null
           unit?: string
           updated_at?: string
         }
@@ -689,6 +695,7 @@ export type Database = {
       user_owns_farmer: { Args: { _farmer_id: string }; Returns: boolean }
     }
     Enums: {
+      delivery_mode: "pickup" | "shipping" | "both"
       order_status:
         | "pending_payment"
         | "awaiting_pickup"
@@ -821,6 +828,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      delivery_mode: ["pickup", "shipping", "both"],
       order_status: [
         "pending_payment",
         "awaiting_pickup",
