@@ -101,6 +101,20 @@ const NewProduct = () => {
       toast({ title: "Indique os dias de envio", variant: "destructive" });
       return;
     }
+    const stockNum = parseFloat(stockQuantity);
+    if (!Number.isFinite(stockNum) || stockNum <= 0) {
+      toast({ title: "Indique a quantidade disponível", variant: "destructive" });
+      return;
+    }
+    const pickupEnabled = deliveryMode === "pickup" || deliveryMode === "both";
+    if (pickupEnabled && (!availabilityStart || !availabilityEnd)) {
+      toast({ title: "Indique as datas de disponibilidade para levantamento", variant: "destructive" });
+      return;
+    }
+    if (pickupEnabled && availabilityEnd < availabilityStart) {
+      toast({ title: "A data de fim deve ser posterior à data de início", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
     try {
       const mediaUrls: string[] = [];
