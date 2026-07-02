@@ -31,6 +31,9 @@ const NewProduct = () => {
   const [farmerPrice, setFarmerPrice] = useState<string>("");
   const [deliveryMode, setDeliveryMode] = useState<"pickup" | "shipping" | "both">("pickup");
   const [shippingDays, setShippingDays] = useState<string>("");
+  const [stockQuantity, setStockQuantity] = useState<string>("");
+  const [availabilityStart, setAvailabilityStart] = useState<string>("");
+  const [availabilityEnd, setAvailabilityEnd] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
