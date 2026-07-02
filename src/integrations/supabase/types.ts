@@ -472,6 +472,8 @@ export type Database = {
       products: {
         Row: {
           active: boolean
+          availability_end: string | null
+          availability_start: string | null
           category: string | null
           client_price: number
           created_at: string
@@ -487,11 +489,14 @@ export type Database = {
           modifications_description: string | null
           name: string
           shipping_days: number | null
+          stock_quantity: number | null
           unit: string
           updated_at: string
         }
         Insert: {
           active?: boolean
+          availability_end?: string | null
+          availability_start?: string | null
           category?: string | null
           client_price: number
           created_at?: string
@@ -507,11 +512,14 @@ export type Database = {
           modifications_description?: string | null
           name: string
           shipping_days?: number | null
+          stock_quantity?: number | null
           unit?: string
           updated_at?: string
         }
         Update: {
           active?: boolean
+          availability_end?: string | null
+          availability_start?: string | null
           category?: string | null
           client_price?: number
           created_at?: string
@@ -527,6 +535,7 @@ export type Database = {
           modifications_description?: string | null
           name?: string
           shipping_days?: number | null
+          stock_quantity?: number | null
           unit?: string
           updated_at?: string
         }

@@ -31,6 +31,9 @@ const NewProduct = () => {
   const [farmerPrice, setFarmerPrice] = useState<string>("");
   const [deliveryMode, setDeliveryMode] = useState<"pickup" | "shipping" | "both">("pickup");
   const [shippingDays, setShippingDays] = useState<string>("");
+  const [stockQuantity, setStockQuantity] = useState<string>("");
+  const [availabilityStart, setAvailabilityStart] = useState<string>("");
+  const [availabilityEnd, setAvailabilityEnd] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -98,6 +101,20 @@ const NewProduct = () => {
       toast({ title: "Indique os dias de envio", variant: "destructive" });
       return;
     }
+    const stockNum = parseFloat(stockQuantity);
+    if (!Number.isFinite(stockNum) || stockNum <= 0) {
+      toast({ title: "Indique a quantidade disponível", variant: "destructive" });
+      return;
+    }
+    const pickupEnabled = deliveryMode === "pickup" || deliveryMode === "both";
+    if (pickupEnabled && (!availabilityStart || !availabilityEnd)) {
+      toast({ title: "Indique as datas de disponibilidade para levantamento", variant: "destructive" });
+      return;
+    }
+    if (pickupEnabled && availabilityEnd < availabilityStart) {
+      toast({ title: "A data de fim deve ser posterior à data de início", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
     try {
       const mediaUrls: string[] = [];
@@ -128,6 +145,9 @@ const NewProduct = () => {
         media_urls: mediaUrls,
         delivery_mode: deliveryMode,
         shipping_days: deliveryMode === "pickup" ? null : shippingDaysNum,
+        stock_quantity: stockNum,
+        availability_start: pickupEnabled ? availabilityStart : null,
+        availability_end: pickupEnabled ? availabilityEnd : null,
       } as any);
       if (error) throw error;
 
@@ -314,6 +334,49 @@ const NewProduct = () => {
                 placeholder="Ex: 3"
               />
               <p className="text-xs text-muted-foreground">Número médio de dias úteis até o produto chegar ao cliente.</p>
+            </div>
+          )}
+        </Card>
+
+        {/* Availability */}
+        <Card className="p-5 space-y-4">
+          <h2 className="font-medium">Quantidade e disponibilidade</h2>
+          <div className="space-y-2">
+            <Label htmlFor="stock-qty">Quantidade disponível ({unit || "un"}) *</Label>
+            <Input
+              id="stock-qty"
+              type="number"
+              min="0"
+              step="0.01"
+              value={stockQuantity}
+              onChange={(e) => setStockQuantity(e.target.value)}
+              placeholder="Ex: 25"
+            />
+            <p className="text-xs text-muted-foreground">Total disponível para venda desta publicação.</p>
+          </div>
+          {(deliveryMode === "pickup" || deliveryMode === "both") && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="avail-start">Disponível a partir de *</Label>
+                <Input
+                  id="avail-start"
+                  type="date"
+                  value={availabilityStart}
+                  onChange={(e) => setAvailabilityStart(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">Primeiro dia em que o cliente pode levantar.</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="avail-end">Disponível até *</Label>
+                <Input
+                  id="avail-end"
+                  type="date"
+                  value={availabilityEnd}
+                  onChange={(e) => setAvailabilityEnd(e.target.value)}
+                  min={availabilityStart || undefined}
+                />
+                <p className="text-xs text-muted-foreground">Último dia disponível para levantamento.</p>
+              </div>
             </div>
           )}
         </Card>
