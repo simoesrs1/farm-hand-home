@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -28,6 +29,8 @@ const NewProduct = () => {
   const [hasModifications, setHasModifications] = useState(false);
   const [modificationsDescription, setModificationsDescription] = useState("");
   const [farmerPrice, setFarmerPrice] = useState<string>("");
+  const [deliveryMode, setDeliveryMode] = useState<"pickup" | "shipping" | "both">("pickup");
+  const [shippingDays, setShippingDays] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -90,6 +93,11 @@ const NewProduct = () => {
       toast({ title: "Defina um preço válido", variant: "destructive" });
       return;
     }
+    const shippingDaysNum = parseInt(shippingDays, 10);
+    if ((deliveryMode === "shipping" || deliveryMode === "both") && (!Number.isFinite(shippingDaysNum) || shippingDaysNum <= 0)) {
+      toast({ title: "Indique os dias de envio", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
     try {
       const mediaUrls: string[] = [];
@@ -118,7 +126,9 @@ const NewProduct = () => {
         farmer_price: farmerPriceNumber,
         client_price: clientPrice,
         media_urls: mediaUrls,
-      });
+        delivery_mode: deliveryMode,
+        shipping_days: deliveryMode === "pickup" ? null : shippingDaysNum,
+      } as any);
       if (error) throw error;
 
       toast({ title: "Produto adicionado", description: "O artigo está agora disponível." });
@@ -262,6 +272,50 @@ const NewProduct = () => {
               />
             )}
           </div>
+        </Card>
+
+        {/* Delivery */}
+        <Card className="p-5 space-y-4">
+          <h2 className="font-medium">Entrega</h2>
+          <p className="text-xs text-muted-foreground">Escolha como o cliente pode receber o produto.</p>
+          <RadioGroup value={deliveryMode} onValueChange={(v) => setDeliveryMode(v as any)} className="gap-2">
+            <label htmlFor="dm-pickup" className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-secondary/50">
+              <RadioGroupItem value="pickup" id="dm-pickup" className="mt-0.5" />
+              <div>
+                <div className="text-sm font-medium">Apenas levantamento na propriedade</div>
+                <p className="text-xs text-muted-foreground">O cliente vai buscar à sua exploração.</p>
+              </div>
+            </label>
+            <label htmlFor="dm-shipping" className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-secondary/50">
+              <RadioGroupItem value="shipping" id="dm-shipping" className="mt-0.5" />
+              <div>
+                <div className="text-sm font-medium">Apenas envio ao domicílio</div>
+                <p className="text-xs text-muted-foreground">Faz sempre entrega em casa do cliente.</p>
+              </div>
+            </label>
+            <label htmlFor="dm-both" className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-secondary/50">
+              <RadioGroupItem value="both" id="dm-both" className="mt-0.5" />
+              <div>
+                <div className="text-sm font-medium">Ambos (levantamento ou envio)</div>
+                <p className="text-xs text-muted-foreground">O cliente escolhe a opção.</p>
+              </div>
+            </label>
+          </RadioGroup>
+          {(deliveryMode === "shipping" || deliveryMode === "both") && (
+            <div className="space-y-2">
+              <Label htmlFor="shipping-days">Dias estimados para entrega em casa *</Label>
+              <Input
+                id="shipping-days"
+                type="number"
+                min="1"
+                step="1"
+                value={shippingDays}
+                onChange={(e) => setShippingDays(e.target.value)}
+                placeholder="Ex: 3"
+              />
+              <p className="text-xs text-muted-foreground">Número médio de dias úteis até o produto chegar ao cliente.</p>
+            </div>
+          )}
         </Card>
 
         {/* Pricing */}

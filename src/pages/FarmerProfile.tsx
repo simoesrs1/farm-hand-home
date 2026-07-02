@@ -92,6 +92,13 @@ const FarmerProfile = () => {
                       <span className="text-xs font-medium text-foreground">{p.rating.toFixed(1)}</span>
                       <span className="text-xs text-muted-foreground">({p.reviews})</span>
                     </div>
+                    <p className="mt-2 text-xs font-medium text-primary">
+                      {p.deliveryMode === "shipping"
+                        ? `Entrega em casa (${p.shippingDays ?? "?"} dias)`
+                        : p.deliveryMode === "both"
+                        ? `Levantamento ou entrega em casa (${p.shippingDays ?? "?"} dias)`
+                        : "Apenas levantamento na propriedade"}
+                    </p>
                     <div className="mt-3 flex items-end justify-between">
                       <div>
                         <span className="text-lg font-bold text-primary">{p.price.toFixed(2)}€</span>

@@ -76,6 +76,13 @@ const Catalog = () => {
               <div className="p-4">
                 <h3 className="font-semibold text-foreground">{p.name}</h3>
                 <p className="text-xs text-muted-foreground">{p.farmer}</p>
+                <p className="mt-2 text-xs font-medium text-primary">
+                  {p.deliveryMode === "shipping"
+                    ? `Entrega em casa (${p.shippingDays ?? "?"} dias)`
+                    : p.deliveryMode === "both"
+                    ? `Levantamento ou entrega em casa (${p.shippingDays ?? "?"} dias)`
+                    : "Apenas levantamento na propriedade"}
+                </p>
                 <div className="mt-3 flex items-end justify-between">
                   <div>
                     <span className="text-lg font-bold text-primary">{p.price.toFixed(2)}€</span>

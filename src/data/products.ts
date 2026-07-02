@@ -11,6 +11,8 @@ export interface Product {
   reviews: number;
   location: string;
   region: string;
+  deliveryMode?: "pickup" | "shipping" | "both";
+  shippingDays?: number;
 }
 
 export const products: Product[] = [
