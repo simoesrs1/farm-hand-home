@@ -93,6 +93,11 @@ const NewProduct = () => {
       toast({ title: "Defina um preço válido", variant: "destructive" });
       return;
     }
+    const shippingDaysNum = parseInt(shippingDays, 10);
+    if ((deliveryMode === "shipping" || deliveryMode === "both") && (!Number.isFinite(shippingDaysNum) || shippingDaysNum <= 0)) {
+      toast({ title: "Indique os dias de envio", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
     try {
       const mediaUrls: string[] = [];
