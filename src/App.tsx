@@ -11,6 +11,7 @@ import FarmerOnboardingGuard from "./components/FarmerOnboardingGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Catalog from "./pages/Catalog";
+import CategoryPage from "./pages/CategoryPage";
 import About from "./pages/About";
 import Mission from "./pages/Mission";
 import FarmerProfile from "./pages/FarmerProfile";
