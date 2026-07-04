@@ -23,7 +23,13 @@ const NewProduct = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
-  const [unit, setUnit] = useState("kg");
+  const [measure, setMeasure] = useState<"Kg" | "g" | "L" | "mL">("Kg");
+  const [qtyPreset, setQtyPreset] = useState<string>("1");
+  const [qtyCustom, setQtyCustom] = useState<string>("");
+  const qtyNumber = qtyPreset === "100+"
+    ? (parseInt(qtyCustom, 10) > 100 ? parseInt(qtyCustom, 10) : 0)
+    : parseInt(qtyPreset, 10) || 0;
+  const unit = qtyNumber > 0 ? `${qtyNumber} ${measure}` : measure;
   const [isOrganic, setIsOrganic] = useState(false);
   const [isLactoseFree, setIsLactoseFree] = useState(false);
   const [hasModifications, setHasModifications] = useState(false);
