@@ -383,7 +383,7 @@ const NewProduct = () => {
         <Card className="p-5 space-y-4">
           <h2 className="font-medium">Quantidade e disponibilidade</h2>
           <div className="space-y-2">
-            <Label htmlFor="stock-qty">Quantidade disponível ({unit || "un"}) *</Label>
+            <Label htmlFor="stock-qty">Quantidade disponível (nº de produtos) *</Label>
             <Input
               id="stock-qty"
               type="number"
