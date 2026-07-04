@@ -1,23 +1,49 @@
-import { useState } from "react";
-import { Search, Filter, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Search, Filter, Plus, ArrowUpDown, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { products } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 
-const categories = ["Todos", "Hortícolas", "Frutas", "Biológicos", "Azeite", "Mel", "Queijos", "Ovos", "Ervas"];
+const categories = ["Todos", "Hortícolas", "Frutas", "Biológico", "Azeite", "Derivados", "Carne"];
+
+type SortKey = "az" | "price-asc" | "price-desc";
+
+const sortLabels: Record<SortKey, string> = {
+  az: "A a Z",
+  "price-asc": "Preço: menor para maior",
+  "price-desc": "Preço: maior para menor",
+};
 
 const Catalog = () => {
   const [active, setActive] = useState("Todos");
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<SortKey>("az");
   const { addItem } = useCart();
   const { toast } = useToast();
 
-  const filtered = products.filter((p) => {
-    const matchCat = active === "Todos" || p.category === active;
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
-  });
+  const filtered = useMemo(() => {
+    const list = products.filter((p) => {
+      const matchCat = active === "Todos" || p.category === active;
+      const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+      return matchCat && matchSearch;
+    });
+    const sorted = [...list];
+    if (sort === "az") sorted.sort((a, b) => a.name.localeCompare(b.name, "pt"));
+    else if (sort === "price-asc") sorted.sort((a, b) => a.price - b.price);
+    else if (sort === "price-desc") sorted.sort((a, b) => b.price - a.price);
+    return sorted;
+  }, [active, search, sort]);
 
   return (
     <main className="py-12">
@@ -38,26 +64,51 @@ const Catalog = () => {
               className="w-full rounded-lg border border-input bg-background py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Filter className="h-4 w-4" />
-            <span className="text-xs font-medium">Filtros:</span>
-          </div>
-        </div>
 
-        <div className="mb-8 flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActive(cat)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                active === cat
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Tag className="h-4 w-4" />
+                  {active === "Todos" ? "Categorias" : active}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Tipos de produto</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={active} onValueChange={setActive}>
+                  {categories.map((cat) => (
+                    <DropdownMenuRadioItem key={cat} value={cat}>
+                      {cat}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <ArrowUpDown className="h-4 w-4" />
+                  Ordenar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel>Ordenar por</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+                  <DropdownMenuRadioItem value="az">A a Z</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="price-desc">Preço: maior para menor</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="price-asc">Preço: menor para maior</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div className="ml-1 hidden items-center gap-1.5 text-muted-foreground sm:flex">
+              <Filter className="h-4 w-4" />
+              <span className="text-xs">{sortLabels[sort]}</span>
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
