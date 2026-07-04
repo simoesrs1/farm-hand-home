@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { categories } from "@/data/categories";
 
 const COMMISSION = 0.10;
 
@@ -283,8 +284,18 @@ const NewProduct = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="category">Categoria</Label>
-            <Input id="category" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Hortícolas, Frutas..." />
+            <Label htmlFor="category">Categoria *</Label>
+            <select
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="">Selecione uma categoria</option>
+              {categories.map((c) => (
+                <option key={c.slug} value={c.name}>{c.name}</option>
+              ))}
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Descrição</Label>
