@@ -241,15 +241,50 @@ const NewProduct = () => {
             <Label htmlFor="name">Nome do produto *</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Tomate cherry" />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="category">Categoria</Label>
-              <Input id="category" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Hortícolas, Frutas..." />
+          <div className="space-y-2">
+            <Label>Unidade de venda *</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex rounded-md border border-border overflow-hidden">
+                {(["Kg", "g", "L", "mL"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMeasure(m)}
+                    className={`px-3 py-2 text-sm transition-colors ${
+                      measure === m ? "bg-primary text-primary-foreground" : "bg-background hover:bg-secondary"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+              <select
+                value={qtyPreset}
+                onChange={(e) => setQtyPreset(e.target.value)}
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                {Array.from({ length: 100 }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={String(n)}>{n}</option>
+                ))}
+                <option value="100+">100+</option>
+              </select>
+              {qtyPreset === "100+" && (
+                <Input
+                  type="number"
+                  min="101"
+                  step="1"
+                  value={qtyCustom}
+                  onChange={(e) => setQtyCustom(e.target.value)}
+                  placeholder="Nº exato"
+                  className="w-32"
+                />
+              )}
+              <span className="text-sm text-muted-foreground">= {unit} por unidade</span>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="unit">Unidade</Label>
-              <Input id="unit" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="kg, un, dúzia..." />
-            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="category">Categoria</Label>
+            <Input id="category" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Hortícolas, Frutas..." />
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Descrição</Label>
