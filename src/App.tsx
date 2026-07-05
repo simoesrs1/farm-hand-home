@@ -19,6 +19,7 @@ import FarmerOnboarding from "./pages/FarmerOnboarding";
 import SearchResults from "./pages/SearchResults";
 import Cart from "./pages/Cart";
 import MyOrders from "./pages/MyOrders";
+import RateFarmer from "./pages/RateFarmer";
 import FarmerOrders from "./pages/farmer/FarmerOrders";
 import ScanPickup from "./pages/farmer/ScanPickup";
 import NewProduct from "./pages/farmer/NewProduct";
