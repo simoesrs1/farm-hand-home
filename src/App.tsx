@@ -19,6 +19,7 @@ import FarmerOnboarding from "./pages/FarmerOnboarding";
 import SearchResults from "./pages/SearchResults";
 import Cart from "./pages/Cart";
 import MyOrders from "./pages/MyOrders";
+import RateFarmer from "./pages/RateFarmer";
 import FarmerOrders from "./pages/farmer/FarmerOrders";
 import ScanPickup from "./pages/farmer/ScanPickup";
 import NewProduct from "./pages/farmer/NewProduct";
@@ -52,6 +53,7 @@ const App = () => (
                   <Route path="/resultados" element={<SearchResults />} />
                   <Route path="/carrinho" element={<Cart />} />
                   <Route path="/encomendas" element={<MyOrders />} />
+                  <Route path="/avaliar/:orderId" element={<RateFarmer />} />
                   <Route path="/agricultor/encomendas" element={<FarmerOrders />} />
                   <Route path="/agricultor/scan" element={<ScanPickup />} />
                   <Route path="/agricultor/produtos/novo" element={<NewProduct />} />
