@@ -20,9 +20,13 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const nextParam = searchParams.get("next");
+  const safeNext = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
+  const redirectAfterAuth = safeNext ?? "/";
+
   // Redirect if already logged in
   if (user) {
-    navigate("/", { replace: true });
+    navigate(redirectAfterAuth, { replace: true });
     return null;
   }
 
