@@ -41,7 +41,7 @@ const Auth = () => {
           password,
           options: {
             data: { full_name: fullName, profile_type: profileType },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: window.location.origin + redirectAfterAuth,
           },
         });
         if (error) throw error;
