@@ -74,7 +74,7 @@ const Auth = () => {
             }
           }
         }
-        navigate("/");
+        navigate(redirectAfterAuth);
       }
     } catch (error: unknown) {
       console.error("Auth error", error);
