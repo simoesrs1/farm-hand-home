@@ -20,11 +20,26 @@ import {
 
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
+  const { getAvailable, consume } = useStock();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [paying, setPaying] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
+
+  // Clamp cart lines that exceed the current available stock (e.g. stock reduced
+  // in another tab). Also drops lines that went to zero.
+  useEffect(() => {
+    for (const item of items) {
+      const available = getAvailable(item.id);
+      if (available <= 0) {
+        removeItem(item.id);
+      } else if (item.quantity > available) {
+        updateQuantity(item.id, available);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Group items by farmer for clearer display
   const grouped = useMemo(() => {
