@@ -5,19 +5,23 @@ import { Button } from "@/components/ui/button";
 import { products } from "@/data/products";
 import { getCategoryBySlug } from "@/data/categories";
 import { useCart } from "@/contexts/CartContext";
+import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const category = slug ? getCategoryBySlug(slug) : undefined;
-  const { addItem } = useCart();
+  const { addItem, items: cartItems } = useCart();
+  const { getAvailable } = useStock();
   const { toast } = useToast();
 
   const items = useMemo(() => {
     if (!category) return [];
     const name = category.name.toLowerCase();
-    return products.filter((p) => p.category.toLowerCase() === name);
-  }, [category]);
+    return products
+      .filter((p) => p.category.toLowerCase() === name)
+      .filter((p) => getAvailable(p.id) > 0);
+  }, [category, getAvailable]);
 
   if (!category) return <Navigate to="/catalogo" replace />;
 
@@ -47,49 +51,62 @@ const CategoryPage = () => {
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {items.map((p) => (
-              <div
-                key={p.id}
-                className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
-              >
-                <div className="relative h-40 overflow-hidden">
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-foreground">{p.name}</h3>
-                  <p className="text-xs text-muted-foreground">{p.farmer}</p>
-                  <p className="mt-2 text-xs font-medium text-primary">
-                    {p.deliveryMode === "shipping"
-                      ? `Entrega em casa (${p.shippingDays ?? "?"} dias)`
-                      : p.deliveryMode === "both"
-                      ? `Levantamento ou entrega em casa (${p.shippingDays ?? "?"} dias)`
-                      : "Apenas levantamento na propriedade"}
-                  </p>
-                  <div className="mt-3 flex items-end justify-between">
-                    <div>
-                      <span className="text-lg font-bold text-primary">{p.price.toFixed(2)}€</span>
-                      <span className="text-xs text-muted-foreground">/{p.unit}</span>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1"
-                      onClick={() => {
-                        addItem(p);
-                        toast({ title: "Adicionado ao carrinho", description: p.name });
-                      }}
+            {items.map((p) => {
+              const available = getAvailable(p.id);
+              const inCart = cartItems.find((i) => i.id === p.id)?.quantity ?? 0;
+              const canAdd = inCart < available;
+              return (
+                <div
+                  key={p.id}
+                  className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+                >
+                  <div className="relative h-40 overflow-hidden">
+                    <img
+                      src={p.image}
+                      alt={p.name}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-semibold text-foreground">{p.name}</h3>
+                    <p className="text-xs text-muted-foreground">{p.farmer}</p>
+                    <Link
+                      to={`/agricultor/${p.farmerId}`}
+                      className={`mt-1 inline-block text-xs font-medium hover:underline ${available <= 5 ? "text-destructive" : "text-primary"}`}
+                      title="Stock definido pelo agricultor"
                     >
-                      <Plus className="h-3.5 w-3.5" />
-                      Adicionar
-                    </Button>
+                      {available} em stock
+                    </Link>
+                    <p className="mt-2 text-xs font-medium text-primary">
+                      {p.deliveryMode === "shipping"
+                        ? `Entrega em casa (${p.shippingDays ?? "?"} dias)`
+                        : p.deliveryMode === "both"
+                        ? `Levantamento ou entrega em casa (${p.shippingDays ?? "?"} dias)`
+                        : "Apenas levantamento na propriedade"}
+                    </p>
+                    <div className="mt-3 flex items-end justify-between">
+                      <div>
+                        <span className="text-lg font-bold text-primary">{p.price.toFixed(2)}€</span>
+                        <span className="text-xs text-muted-foreground">/{p.unit}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1"
+                        disabled={!canAdd}
+                        onClick={() => {
+                          addItem(p);
+                          toast({ title: "Adicionado ao carrinho", description: p.name });
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        {canAdd ? "Adicionar" : "Sem stock"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

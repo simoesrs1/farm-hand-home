@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { farmers } from "@/data/farmers";
 import { products } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
+import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 
 const FarmerProfile = () => {
   const { id } = useParams<{ id: string }>();
   const farmer = farmers.find((f) => f.id === id);
-  const { addItem } = useCart();
+  const { addItem, items: cartItems } = useCart();
+  const { getAvailable } = useStock();
   const { toast } = useToast();
 
   if (!farmer) {
@@ -21,7 +23,7 @@ const FarmerProfile = () => {
     );
   }
 
-  const farmerProducts = products.filter((p) => p.farmerId === farmer.id);
+  const farmerProducts = products.filter((p) => p.farmerId === farmer.id && getAvailable(p.id) > 0);
 
   return (
     <main className="py-8">
@@ -80,7 +82,11 @@ const FarmerProfile = () => {
             <p className="mt-8 text-center text-muted-foreground">Nenhum produto disponível de momento.</p>
           ) : (
             <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {farmerProducts.map((p) => (
+              {farmerProducts.map((p) => {
+                const available = getAvailable(p.id);
+                const inCart = cartItems.find((i) => i.id === p.id)?.quantity ?? 0;
+                const canAdd = inCart < available;
+                return (
                 <div key={p.id} className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
                   <div className="relative h-40 overflow-hidden">
                     <img src={p.image} alt={p.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -92,6 +98,14 @@ const FarmerProfile = () => {
                       <span className="text-xs font-medium text-foreground">{p.rating.toFixed(1)}</span>
                       <span className="text-xs text-muted-foreground">({p.reviews})</span>
                     </div>
+                    <a
+                      href={`#stock-${p.id}`}
+                      onClick={(e) => e.preventDefault()}
+                      className={`mt-1 inline-block text-xs font-medium hover:underline ${available <= 5 ? "text-destructive" : "text-primary"}`}
+                      title="Stock definido pelo agricultor"
+                    >
+                      {available} em stock
+                    </a>
                     <p className="mt-2 text-xs font-medium text-primary">
                       {p.deliveryMode === "shipping"
                         ? `Entrega em casa (${p.shippingDays ?? "?"} dias)`
@@ -107,17 +121,19 @@ const FarmerProfile = () => {
                       <Button
                         size="sm"
                         variant="outline"
+                        disabled={!canAdd}
                         onClick={() => {
                           addItem(p);
                           toast({ title: "Adicionado ao carrinho", description: p.name });
                         }}
                       >
-                        Adicionar
+                        {canAdd ? "Adicionar" : "Sem stock"}
                       </Button>
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

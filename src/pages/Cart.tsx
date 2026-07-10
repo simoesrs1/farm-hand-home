@@ -2,9 +2,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
+import { useStock } from "@/contexts/StockContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
@@ -19,11 +20,26 @@ import {
 
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
+  const { getAvailable, consume } = useStock();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [paying, setPaying] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
+
+  // Clamp cart lines that exceed the current available stock (e.g. stock reduced
+  // in another tab). Also drops lines that went to zero.
+  useEffect(() => {
+    for (const item of items) {
+      const available = getAvailable(item.id);
+      if (available <= 0) {
+        removeItem(item.id);
+      } else if (item.quantity > available) {
+        updateQuantity(item.id, available);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Group items by farmer for clearer display
   const grouped = useMemo(() => {
@@ -67,6 +83,8 @@ const Cart = () => {
         toast({ title: "Não foi possível pagar", description: msg, variant: "destructive" });
         return;
       }
+      // Decrement stock for each purchased line so it reflects everywhere
+      consume(items.map((i) => ({ id: i.id, quantity: i.quantity })));
       clearCart();
       toast({ title: "Pagamento simulado com sucesso!", description: "A tua encomenda está pronta para levantar." });
       navigate("/encomendas");
@@ -134,7 +152,10 @@ const Cart = () => {
                   </Link>
                 </div>
                 <ul className="divide-y divide-border">
-                  {group.items.map((item) => (
+                  {group.items.map((item) => {
+                    const available = getAvailable(item.id);
+                    const canIncrease = item.quantity < available;
+                    return (
                     <li key={item.id} className="flex gap-4 p-4">
                       <img
                         src={item.image}
@@ -149,6 +170,9 @@ const Cart = () => {
                             </h3>
                             <p className="text-xs text-muted-foreground">
                               {item.price.toFixed(2)}€ / {item.unit}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {available} em stock
                             </p>
                           </div>
                           <button
@@ -172,8 +196,9 @@ const Cart = () => {
                               {item.quantity}
                             </span>
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="p-2 text-muted-foreground hover:text-foreground"
+                              onClick={() => canIncrease && updateQuantity(item.id, item.quantity + 1)}
+                              disabled={!canIncrease}
+                              className="p-2 text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                               aria-label="Aumentar"
                             >
                               <Plus className="h-3.5 w-3.5" />
@@ -185,7 +210,8 @@ const Cart = () => {
                         </div>
                       </div>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               </div>
             ))}

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { products } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
+import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 
 type SortOption = "mais-avaliado" | "menos-avaliado" | "preco-maior" | "preco-menor";
@@ -18,7 +19,8 @@ const sortLabels: Record<SortOption, string> = {
 
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { addItem } = useCart();
+  const { addItem, items: cartItems } = useCart();
+  const { getAvailable } = useStock();
   const { toast } = useToast();
   const location = searchParams.get("location") || "";
   const radius = searchParams.get("radius") || "25";
@@ -63,8 +65,8 @@ const SearchResults = () => {
         break;
     }
 
-    return result;
-  }, [location, sort]);
+    return result.filter((p) => getAvailable(p.id) > 0);
+  }, [location, sort, getAvailable]);
 
   return (
     <main className="py-8">
@@ -108,7 +110,11 @@ const SearchResults = () => {
 
         {/* Products grid */}
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {filtered.map((p) => (
+          {filtered.map((p) => {
+            const available = getAvailable(p.id);
+            const inCart = cartItems.find((i) => i.id === p.id)?.quantity ?? 0;
+            const canAdd = inCart < available;
+            return (
             <div key={p.id} className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
               <div className="relative h-40 overflow-hidden">
                 <img src={p.image} alt={p.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -125,6 +131,13 @@ const SearchResults = () => {
                   <span className="text-xs font-medium text-foreground">{p.rating.toFixed(1)}</span>
                   <span className="text-xs text-muted-foreground">({p.reviews})</span>
                 </div>
+                <Link
+                  to={`/agricultor/${p.farmerId}`}
+                  className={`mt-1 inline-block text-xs font-medium hover:underline ${available <= 5 ? "text-destructive" : "text-primary"}`}
+                  title="Stock definido pelo agricultor"
+                >
+                  {available} em stock
+                </Link>
                 <p className="mt-2 text-xs font-medium text-primary">
                   {p.deliveryMode === "shipping"
                     ? `Entrega em casa (${p.shippingDays ?? "?"} dias)`
@@ -141,18 +154,20 @@ const SearchResults = () => {
                     size="sm"
                     variant="outline"
                     className="gap-1"
+                    disabled={!canAdd}
                     onClick={() => {
                       addItem(p);
                       toast({ title: "Adicionado ao carrinho", description: p.name });
                     }}
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    Adicionar
+                    {canAdd ? "Adicionar" : "Sem stock"}
                   </Button>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {filtered.length === 0 && (
