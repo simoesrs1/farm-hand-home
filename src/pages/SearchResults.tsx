@@ -19,7 +19,8 @@ const sortLabels: Record<SortOption, string> = {
 
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { addItem } = useCart();
+  const { addItem, items: cartItems } = useCart();
+  const { getAvailable } = useStock();
   const { toast } = useToast();
   const location = searchParams.get("location") || "";
   const radius = searchParams.get("radius") || "25";
