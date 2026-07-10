@@ -65,8 +65,8 @@ const SearchResults = () => {
         break;
     }
 
-    return result;
-  }, [location, sort]);
+    return result.filter((p) => getAvailable(p.id) > 0);
+  }, [location, sort, getAvailable]);
 
   return (
     <main className="py-8">
