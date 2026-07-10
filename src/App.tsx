@@ -40,7 +40,6 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <CartProvider>
           <StockProvider>
             <CartProvider>
               <FarmerOnboardingGuard />
