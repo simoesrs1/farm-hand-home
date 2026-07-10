@@ -83,6 +83,8 @@ const Cart = () => {
         toast({ title: "Não foi possível pagar", description: msg, variant: "destructive" });
         return;
       }
+      // Decrement stock for each purchased line so it reflects everywhere
+      consume(items.map((i) => ({ id: i.id, quantity: i.quantity })));
       clearCart();
       toast({ title: "Pagamento simulado com sucesso!", description: "A tua encomenda está pronta para levantar." });
       navigate("/encomendas");
