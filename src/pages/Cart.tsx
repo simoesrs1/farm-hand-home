@@ -152,7 +152,10 @@ const Cart = () => {
                   </Link>
                 </div>
                 <ul className="divide-y divide-border">
-                  {group.items.map((item) => (
+                  {group.items.map((item) => {
+                    const available = getAvailable(item.id);
+                    const canIncrease = item.quantity < available;
+                    return (
                     <li key={item.id} className="flex gap-4 p-4">
                       <img
                         src={item.image}
@@ -167,6 +170,9 @@ const Cart = () => {
                             </h3>
                             <p className="text-xs text-muted-foreground">
                               {item.price.toFixed(2)}€ / {item.unit}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {available} em stock
                             </p>
                           </div>
                           <button
@@ -190,8 +196,9 @@ const Cart = () => {
                               {item.quantity}
                             </span>
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="p-2 text-muted-foreground hover:text-foreground"
+                              onClick={() => canIncrease && updateQuantity(item.id, item.quantity + 1)}
+                              disabled={!canIncrease}
+                              className="p-2 text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                               aria-label="Aumentar"
                             >
                               <Plus className="h-3.5 w-3.5" />
@@ -203,7 +210,8 @@ const Cart = () => {
                         </div>
                       </div>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               </div>
             ))}
