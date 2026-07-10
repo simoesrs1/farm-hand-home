@@ -41,37 +41,40 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
-            <FarmerOnboardingGuard />
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <div className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
-                  <Route path="/onboarding/agricultor" element={<FarmerOnboarding />} />
-                  <Route path="/catalogo" element={<Catalog />} />
-                  <Route path="/catalogo/:slug" element={<CategoryPage />} />
-                  <Route path="/agricultor/:id" element={<FarmerProfile />} />
-                  <Route path="/resultados" element={<SearchResults />} />
-                  <Route path="/carrinho" element={<Cart />} />
-                  <Route path="/encomendas" element={<MyOrders />} />
-                  <Route path="/avaliar/:orderId" element={<RateFarmer />} />
-                  <Route path="/agricultor/encomendas" element={<FarmerOrders />} />
-                  <Route path="/agricultor/scan" element={<ScanPickup />} />
-                  <Route path="/agricultor/produtos/novo" element={<NewProduct />} />
-                  <Route path="/agricultor/informacoes" element={<FarmerInfo />} />
-                  <Route path="/sobre" element={<About />} />
-                  <Route path="/missao" element={<Mission />} />
-                  <Route path="/perfil" element={<Profile />} />
-                  <Route path="/definicoes" element={<Settings />} />
-                  <Route path="/favoritos" element={<Favorites />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+          <StockProvider>
+            <CartProvider>
+              <FarmerOnboardingGuard />
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <div className="flex-1">
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+                    <Route path="/onboarding/agricultor" element={<FarmerOnboarding />} />
+                    <Route path="/catalogo" element={<Catalog />} />
+                    <Route path="/catalogo/:slug" element={<CategoryPage />} />
+                    <Route path="/agricultor/:id" element={<FarmerProfile />} />
+                    <Route path="/resultados" element={<SearchResults />} />
+                    <Route path="/carrinho" element={<Cart />} />
+                    <Route path="/encomendas" element={<MyOrders />} />
+                    <Route path="/avaliar/:orderId" element={<RateFarmer />} />
+                    <Route path="/agricultor/encomendas" element={<FarmerOrders />} />
+                    <Route path="/agricultor/scan" element={<ScanPickup />} />
+                    <Route path="/agricultor/produtos/novo" element={<NewProduct />} />
+                    <Route path="/agricultor/informacoes" element={<FarmerInfo />} />
+                    <Route path="/sobre" element={<About />} />
+                    <Route path="/missao" element={<Mission />} />
+                    <Route path="/perfil" element={<Profile />} />
+                    <Route path="/definicoes" element={<Settings />} />
+                    <Route path="/favoritos" element={<Favorites />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </div>
+                <Footer />
               </div>
-              <Footer />
-            </div>
-          </CartProvider>
+            </CartProvider>
+          </StockProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
