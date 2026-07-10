@@ -5,19 +5,23 @@ import { Button } from "@/components/ui/button";
 import { products } from "@/data/products";
 import { getCategoryBySlug } from "@/data/categories";
 import { useCart } from "@/contexts/CartContext";
+import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const category = slug ? getCategoryBySlug(slug) : undefined;
-  const { addItem } = useCart();
+  const { addItem, items: cartItems } = useCart();
+  const { getAvailable } = useStock();
   const { toast } = useToast();
 
   const items = useMemo(() => {
     if (!category) return [];
     const name = category.name.toLowerCase();
-    return products.filter((p) => p.category.toLowerCase() === name);
-  }, [category]);
+    return products
+      .filter((p) => p.category.toLowerCase() === name)
+      .filter((p) => getAvailable(p.id) > 0);
+  }, [category, getAvailable]);
 
   if (!category) return <Navigate to="/catalogo" replace />;
 
