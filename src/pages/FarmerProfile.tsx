@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { farmers } from "@/data/farmers";
 import { products } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
+import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 
 const FarmerProfile = () => {
   const { id } = useParams<{ id: string }>();
   const farmer = farmers.find((f) => f.id === id);
-  const { addItem } = useCart();
+  const { addItem, items: cartItems } = useCart();
+  const { getAvailable } = useStock();
   const { toast } = useToast();
 
   if (!farmer) {
