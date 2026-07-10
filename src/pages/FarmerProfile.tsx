@@ -23,7 +23,7 @@ const FarmerProfile = () => {
     );
   }
 
-  const farmerProducts = products.filter((p) => p.farmerId === farmer.id);
+  const farmerProducts = products.filter((p) => p.farmerId === farmer.id && getAvailable(p.id) > 0);
 
   return (
     <main className="py-8">
