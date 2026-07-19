@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Image as ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
@@ -12,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { categories } from "@/data/categories";
+import { DeliveryModesEnum } from "@/data/delivery-modes";
 
 const COMMISSION = 0.10;
 
@@ -36,13 +38,14 @@ const NewProduct = () => {
   const [hasModifications, setHasModifications] = useState(false);
   const [modificationsDescription, setModificationsDescription] = useState("");
   const [farmerPrice, setFarmerPrice] = useState<string>("");
-  const [deliveryMode, setDeliveryMode] = useState<"pickup" | "shipping" | "both">("pickup");
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryModesEnum>(DeliveryModesEnum.Pickup);
   const [shippingDays, setShippingDays] = useState<string>("");
   const [stockQuantity, setStockQuantity] = useState<string>("");
   const [availabilityStart, setAvailabilityStart] = useState<string>("");
   const [availabilityEnd, setAvailabilityEnd] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
 
   useEffect(() => {
     if (!user) {
@@ -91,6 +94,11 @@ const NewProduct = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Removido: switch morto que tentava "normalizar" deliveryMode aqui.
+    // setDeliveryMode é assíncrono, então este código nunca via o valor
+    // atualizado antes das validações abaixo — e já não é necessário porque
+    // deliveryMode já chega correto do RadioGroup (ver mapeamento mais abaixo).
+
     if (!user || !farmerId) {
       toast({ title: "Perfil de agricultor não encontrado", variant: "destructive" });
       return;
@@ -104,7 +112,7 @@ const NewProduct = () => {
       return;
     }
     const shippingDaysNum = parseInt(shippingDays, 10);
-    if ((deliveryMode === "shipping" || deliveryMode === "both") && (!Number.isFinite(shippingDaysNum) || shippingDaysNum <= 0)) {
+    if ((deliveryMode === DeliveryModesEnum.Shipping || deliveryMode === DeliveryModesEnum.Both) && (!Number.isFinite(shippingDaysNum) || shippingDaysNum <= 0)) {
       toast({ title: "Indique os dias de envio", variant: "destructive" });
       return;
     }
@@ -113,7 +121,7 @@ const NewProduct = () => {
       toast({ title: "Indique a quantidade disponível", variant: "destructive" });
       return;
     }
-    const pickupEnabled = deliveryMode === "pickup" || deliveryMode === "both";
+    const pickupEnabled = deliveryMode === DeliveryModesEnum.Pickup || deliveryMode === DeliveryModesEnum.Both;
     if (pickupEnabled && (!availabilityStart || !availabilityEnd)) {
       toast({ title: "Indique as datas de disponibilidade para levantamento", variant: "destructive" });
       return;
@@ -149,12 +157,14 @@ const NewProduct = () => {
           : null,
         farmer_price: farmerPriceNumber,
         client_price: clientPrice,
-        media_urls: mediaUrls,
-        delivery_mode: deliveryMode,
-        shipping_days: deliveryMode === "pickup" ? null : shippingDaysNum,
+        media_urls: '{' + mediaUrls + '}',
+        delivery_mode: DeliveryModesEnum[deliveryMode].toLowerCase(),
+        shipping_days: deliveryMode === DeliveryModesEnum.Pickup ? 0 : shippingDaysNum,
         stock_quantity: stockNum,
         availability_start: pickupEnabled ? availabilityStart : null,
         availability_end: pickupEnabled ? availabilityEnd : null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       } as any);
       if (error) throw error;
 
@@ -350,30 +360,39 @@ const NewProduct = () => {
         <Card className="p-5 space-y-4">
           <h2 className="font-medium">Entrega</h2>
           <p className="text-xs text-muted-foreground">Escolha como o cliente pode receber o produto.</p>
-          <RadioGroup value={deliveryMode} onValueChange={(v) => setDeliveryMode(v as any)} className="gap-2">
+          {/* DeliveryModesEnum é numérico (Pickup=0, Shipping=1, Both=2), mas o
+             RadioGroup do radix só aceita value como string. Por isso:
+             - value: converte o número do estado para a KEY do enum ("Pickup"/"Shipping"/"Both")
+             - RadioGroupItem value: usa a mesma KEY (não o número nem string arbitrária)
+             - onValueChange: recebe a KEY (string) e converte de volta para o número do enum */}
+          <RadioGroup
+            value={DeliveryModesEnum[deliveryMode]}
+            onValueChange={(v) => setDeliveryMode(DeliveryModesEnum[v as keyof typeof DeliveryModesEnum])}
+            className="gap-2"
+          >
             <label htmlFor="dm-pickup" className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-secondary/50">
-              <RadioGroupItem value="pickup" id="dm-pickup" className="mt-0.5" />
+              <RadioGroupItem value={DeliveryModesEnum[DeliveryModesEnum.Pickup]} id="dm-pickup" className="mt-0.5" />
               <div>
                 <div className="text-sm font-medium">Apenas levantamento na propriedade</div>
                 <p className="text-xs text-muted-foreground">O cliente vai buscar à sua exploração.</p>
               </div>
             </label>
             <label htmlFor="dm-shipping" className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-secondary/50">
-              <RadioGroupItem value="shipping" id="dm-shipping" className="mt-0.5" />
+              <RadioGroupItem value={DeliveryModesEnum[DeliveryModesEnum.Shipping]} id="dm-shipping" className="mt-0.5" />
               <div>
                 <div className="text-sm font-medium">Apenas envio ao domicílio</div>
                 <p className="text-xs text-muted-foreground">Faz sempre entrega em casa do cliente.</p>
               </div>
             </label>
             <label htmlFor="dm-both" className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-secondary/50">
-              <RadioGroupItem value="both" id="dm-both" className="mt-0.5" />
+              <RadioGroupItem value={DeliveryModesEnum[DeliveryModesEnum.Both]} id="dm-both" className="mt-0.5" />
               <div>
                 <div className="text-sm font-medium">Ambos (levantamento ou envio)</div>
                 <p className="text-xs text-muted-foreground">O cliente escolhe a opção.</p>
               </div>
             </label>
           </RadioGroup>
-          {(deliveryMode === "shipping" || deliveryMode === "both") && (
+          {(deliveryMode === DeliveryModesEnum.Shipping || deliveryMode === DeliveryModesEnum.Both) && (
             <div className="space-y-2">
               <Label htmlFor="shipping-days">Dias estimados para entrega em casa *</Label>
               <Input
@@ -406,7 +425,7 @@ const NewProduct = () => {
             />
             <p className="text-xs text-muted-foreground">Total disponível para venda desta publicação.</p>
           </div>
-          {(deliveryMode === "pickup" || deliveryMode === "both") && (
+          {(deliveryMode === DeliveryModesEnum.Pickup || deliveryMode === DeliveryModesEnum.Both) && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="avail-start">Disponível a partir de *</Label>
@@ -415,6 +434,7 @@ const NewProduct = () => {
                   type="date"
                   value={availabilityStart}
                   onChange={(e) => setAvailabilityStart(e.target.value)}
+                  max="2099-12-31"
                 />
                 <p className="text-xs text-muted-foreground">Primeiro dia em que o cliente pode levantar.</p>
               </div>
@@ -426,6 +446,7 @@ const NewProduct = () => {
                   value={availabilityEnd}
                   onChange={(e) => setAvailabilityEnd(e.target.value)}
                   min={availabilityStart || undefined}
+                  max="2099-12-31"
                 />
                 <p className="text-xs text-muted-foreground">Último dia disponível para levantamento.</p>
               </div>
