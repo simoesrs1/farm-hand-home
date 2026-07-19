@@ -7,6 +7,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { toUserMessage } from "@/lib/auth-errors";
 
+import {Icon} from 'react-icons-kit';
+import {eyeOff} from 'react-icons-kit/feather/eyeOff';
+import {eye} from 'react-icons-kit/feather/eye'
+
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -24,10 +28,22 @@ const Auth = () => {
   const safeNext = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
   const redirectAfterAuth = safeNext ?? "/";
 
+  const [type, setType] = useState('password');
+  const [icon, setIcon] = useState(eyeOff);
   // Redirect if already logged in
   if (user) {
     navigate(redirectAfterAuth, { replace: true });
     return null;
+  }
+
+  const handlePasswordToggle = () => {
+   if (type==='password'){
+      setIcon(eye);
+      setType('text')
+   } else {
+      setIcon(eyeOff)
+      setType('password')
+   }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -177,15 +193,27 @@ const Auth = () => {
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">Palavra-passe</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
+              <div className="relative">
+                <input
+                  type={type}
+                  name="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                  minLength={8}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <button
+                  type="button"
+                  onClick={handlePasswordToggle}
+                  className="absolute inset-y-0 right-3 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  aria-label="Mostrar ou ocultar palavra-passe"
+                >
+                  <Icon icon={icon} size={20} />
+                </button>
+              </div>
             </div>
 
             {isSignup && profileType === "vendedor" && (
