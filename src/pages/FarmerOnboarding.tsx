@@ -63,6 +63,7 @@ const FarmerOnboarding = () => {
   const [certificates, setCertificates] = useState<CertificateUpload[]>([]);
   const [loading, setLoading] = useState(false);
   const [farmerDetailsId, setFarmerDetailsId] = useState<string | null>(null);
+  
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -114,6 +115,55 @@ const FarmerOnboarding = () => {
     setCertificates((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const onValidateExplorationNumber = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setExplorationNumber(value);
+
+    if (!value || value.length < 7) {
+      return;
+    }
+
+    // farmer_details RLS only exposes each farmer's own row, so a direct
+    // select can never see another farmer's exploration_number. Use a
+    // SECURITY DEFINER RPC that only returns a boolean instead.
+    const { data: taken } = await supabase.rpc("exploration_number_taken", {
+      p_exploration_number: value.toUpperCase(),
+      p_exclude_id: farmerDetailsId,
+    });
+
+    if (taken) {
+      toast({
+        title: "Número de exploração já registado",
+        description: "Este número de exploração já está associado a outra conta.",
+        variant: "destructive",
+      });
+      setExplorationNumber("");
+    }
+  };
+
+  const onValidateCompanyNif = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "");
+    setCompanyNif(value);
+
+    if (value.length < 9) {
+      return;
+    }
+
+    const { data: taken } = await supabase.rpc("company_nif_taken", {
+      p_company_nif: value,
+      p_exclude_id: farmerDetailsId,
+    });
+
+    if (taken) {
+      toast({
+        title: "NIF já registado",
+        description: "Este NIF já está associado a outra conta.",
+        variant: "destructive",
+      });
+      setCompanyNif("");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!farmerDetailsId || !user) return;
@@ -146,7 +196,7 @@ const FarmerOnboarding = () => {
         .from("farmer_details")
         .update({
           exploration_id: explorationId,
-          exploration_number: explorationNumber,
+          exploration_number: explorationNumber.toUpperCase(),
           company_name: companyName,
           company_nif: companyNif,
           cae_code: caeCode,
@@ -258,7 +308,7 @@ const FarmerOnboarding = () => {
                   <input
                     type="text"
                     value={explorationNumber}
-                    onChange={(e) => setExplorationNumber(e.target.value)}
+                    onChange={(e) => onValidateExplorationNumber(e)}
                     required
                     placeholder="Ex: PT123456789"
                     className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -299,9 +349,7 @@ const FarmerOnboarding = () => {
                     pattern="[0-9]*"
                     maxLength={9}
                     value={companyNif}
-                    onChange={(e) =>
-                      setCompanyNif(e.target.value.replace(/\D/g, ""))
-                    }
+                    onChange={(e) => onValidateCompanyNif(e)}
                     required
                     placeholder="9 dígitos"
                     className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"

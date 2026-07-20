@@ -1,27 +1,94 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { ArrowLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { products } from "@/data/products";
+import { type Product } from "@/data/products";
 import { getCategoryBySlug } from "@/data/categories";
 import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const category = slug ? getCategoryBySlug(slug) : undefined;
   const { addItem, items: cartItems } = useCart();
-  const { getAvailable } = useStock();
+  const { registerStock } = useStock();
   const { toast } = useToast();
+  const [items, setItems] = useState<Product[]>([]);
 
-  const items = useMemo(() => {
-    if (!category) return [];
-    const name = category.name.toLowerCase();
-    return products
-      .filter((p) => p.category.toLowerCase() === name)
-      .filter((p) => getAvailable(p.id) > 0);
-  }, [category, getAvailable]);
+  useEffect(() => {
+    if (!category) return;
+    let cancelled = false;
+
+    const load = async () => {
+      const { data: rows, error } = await supabase
+        .from("products")
+        .select("id, name, unit, client_price, stock_quantity, media_urls, delivery_mode, shipping_days, category, farmer_id")
+        .ilike("category", category.name)
+        .eq("active", true)
+        .gt("stock_quantity", 0);
+      if (error || !rows || rows.length === 0) {
+        if (!cancelled) setItems([]);
+        return;
+      }
+
+      // Farmer name/address come from the public-safe view (no auth required),
+      // fetched separately to avoid ambiguous Supabase foreign-key embedding
+      // (products.farmer_id points at farmer_details, farmer_public AND
+      // public_farmer_profiles at once).
+      const farmerIds = [...new Set(rows.map((r) => r.farmer_id))];
+      const { data: farmers } = await supabase
+        .from("public_farmer_profiles")
+        .select("id, company_name, address")
+        .in("id", farmerIds);
+      const farmerById = new Map((farmers ?? []).map((f) => [f.id, f]));
+
+      const mapped = await Promise.all(
+        rows.map(async (r) => {
+          const farmer = farmerById.get(r.farmer_id);
+          // Product photos live in a private bucket, so a signed URL is
+          // needed. Anonymous visitors can't read it (bucket policy only
+          // allows "authenticated"), so we fall back to the category image.
+          let image = category.image;
+          const path = r.media_urls?.[0];
+          if (path) {
+            const { data: signed } = await supabase.storage
+              .from("product-media")
+              .createSignedUrl(path, 60 * 60);
+            if (signed?.signedUrl) image = signed.signedUrl;
+          }
+          const product: Product = {
+            id: r.id,
+            name: r.name,
+            farmerId: r.farmer_id,
+            farmer: farmer?.company_name ?? "Agricultor",
+            price: r.client_price,
+            unit: r.unit,
+            category: r.category ?? category.name,
+            image,
+            rating: 0,
+            reviews: 0,
+            location: farmer?.address ?? "",
+            region: "",
+            deliveryMode: r.delivery_mode,
+            shippingDays: r.shipping_days ?? undefined,
+            stock: r.stock_quantity ?? 0,
+          };
+          return product;
+        })
+      );
+      if (!cancelled) {
+        setItems(mapped);
+        registerStock(mapped.map((p) => ({ id: p.id, quantity: p.stock })));
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [category, registerStock]);
 
   if (!category) return <Navigate to="/catalogo" replace />;
 
@@ -52,7 +119,7 @@ const CategoryPage = () => {
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {items.map((p) => {
-              const available = getAvailable(p.id);
+              const available = p.stock;
               const inCart = cartItems.find((i) => i.id === p.id)?.quantity ?? 0;
               const canAdd = inCart < available;
               return (
@@ -72,10 +139,14 @@ const CategoryPage = () => {
                     <p className="text-xs text-muted-foreground">{p.farmer}</p>
                     <Link
                       to={`/agricultor/${p.farmerId}`}
-                      className={`mt-1 inline-block text-xs font-medium hover:underline ${available <= 5 ? "text-destructive" : "text-primary"}`}
+                      className="hover:underline"
                       title="Stock definido pelo agricultor"
                     >
-                      {available} em stock
+                      <span
+                        className={`mt-1 inline-block text-xs font-medium ${available <= 5 ? "text-destructive" : "text-primary"}`}
+                      >
+                        {available} em stock
+                      </span>
                     </Link>
                     <p className="mt-2 text-xs font-medium text-primary">
                       {p.deliveryMode === "shipping"

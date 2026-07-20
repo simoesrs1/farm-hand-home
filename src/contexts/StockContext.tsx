@@ -1,72 +1,73 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
-import { products as CATALOG } from "@/data/products";
+import { createContext, useCallback, useContext, useMemo, useState, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+type StockMap = Record<string, number>;
 
 interface StockContextType {
-  /** Unidades disponíveis (stock inicial - já vendido). */
+  /** Unidades disponíveis conhecidas para este produto (0 se ainda não carregado). */
   getAvailable: (productId: string) => number;
-  /** Regista uma venda, decrementando o stock disponível. */
+  /** Regista níveis de stock já obtidos noutro pedido (ex: listagem de produtos), sem nova rede. */
+  registerStock: (entries: { id: string; quantity: number }[]) => void;
+  /** Vai buscar o stock atual ao Supabase para produtos ainda não conhecidos. Devolve o mapa obtido. */
+  refreshStock: (productIds: string[]) => Promise<StockMap>;
+  /** Decremento otimista local após checkout; o stock real é decrementado no servidor. */
   consume: (entries: { id: string; quantity: number }[]) => void;
 }
 
 const StockContext = createContext<StockContextType>({
   getAvailable: () => 0,
+  registerStock: () => {},
+  refreshStock: async () => ({}),
   consume: () => {},
 });
 
 export const useStock = () => useContext(StockContext);
 
-const STORAGE_KEY = "farmconnect_stock_sold_v1";
-
-type SoldMap = Record<string, number>;
-
 export const StockProvider = ({ children }: { children: ReactNode }) => {
-  const [sold, setSold] = useState<SoldMap>(() => {
-    if (typeof window === "undefined") return {};
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as SoldMap) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(sold));
-    } catch {
-      /* ignore */
-    }
-  }, [sold]);
-
-  const initialById = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const p of CATALOG) map[p.id] = p.stock;
-    return map;
-  }, []);
+  const [stock, setStock] = useState<StockMap>({});
 
   const getAvailable = useCallback(
-    (productId: string) => {
-      const initial = initialById[productId] ?? 0;
-      const used = sold[productId] ?? 0;
-      return Math.max(0, initial - used);
-    },
-    [initialById, sold],
+    (productId: string) => Math.max(0, stock[productId] ?? 0),
+    [stock],
   );
 
+  const registerStock = useCallback((entries: { id: string; quantity: number }[]) => {
+    setStock((prev) => {
+      const next = { ...prev };
+      for (const { id, quantity } of entries) next[id] = quantity;
+      return next;
+    });
+  }, []);
+
+  const refreshStock = useCallback(async (productIds: string[]) => {
+    const ids = [...new Set(productIds)];
+    if (ids.length === 0) return {};
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, stock_quantity")
+      .in("id", ids);
+    if (error || !data) return {};
+    const fresh: StockMap = {};
+    for (const row of data) fresh[row.id] = row.stock_quantity ?? 0;
+    setStock((prev) => ({ ...prev, ...fresh }));
+    return fresh;
+  }, []);
+
   const consume = useCallback((entries: { id: string; quantity: number }[]) => {
-    setSold((prev) => {
+    setStock((prev) => {
       const next = { ...prev };
       for (const { id, quantity } of entries) {
         if (!id || quantity <= 0) continue;
-        next[id] = (next[id] ?? 0) + quantity;
+        next[id] = Math.max(0, (next[id] ?? 0) - quantity);
       }
       return next;
     });
   }, []);
 
-  return (
-    <StockContext.Provider value={{ getAvailable, consume }}>
-      {children}
-    </StockContext.Provider>
+  const value = useMemo(
+    () => ({ getAvailable, registerStock, refreshStock, consume }),
+    [getAvailable, registerStock, refreshStock, consume],
   );
+
+  return <StockContext.Provider value={value}>{children}</StockContext.Provider>;
 };

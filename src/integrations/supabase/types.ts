@@ -697,7 +697,15 @@ export type Database = {
       }
     }
     Functions: {
+      company_nif_taken: {
+        Args: { p_company_nif: string; p_exclude_id?: string | null }
+        Returns: boolean
+      }
       delete_old_order_chats: { Args: never; Returns: number }
+      exploration_number_taken: {
+        Args: { p_exploration_number: string; p_exclude_id?: string | null }
+        Returns: boolean
+      }
       farmer_is_verified: { Args: { _farmer_id: string }; Returns: boolean }
       user_in_order: { Args: { _order_id: string }; Returns: boolean }
       user_is_order_client: { Args: { _order_id: string }; Returns: boolean }

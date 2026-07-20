@@ -1,6 +1,5 @@
 // Mock checkout — creates an order with simulated payment success
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-import { CATALOG } from "../_shared/products.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,21 +55,37 @@ Deno.serve(async (req) => {
     if (!Array.isArray(items) || items.length === 0) return jsonError(400, "Carrinho vazio");
     if (items.length > MAX_ITEMS) return jsonError(400, "Demasiados itens");
 
+    const admin = createClient(supabaseUrl, serviceKey);
+
     // Validate items: only product_id + quantity are accepted from the client.
-    // Prices are read exclusively from the server-side catalog.
-    const resolved: { product: typeof CATALOG[string]; quantity: number; subtotal: number }[] = [];
+    // Prices and stock are read exclusively from the products table, never
+    // trusted from the request body.
+    const productIds = [...new Set(items.map((it) => it?.product_id).filter((id): id is string => typeof id === "string"))];
+    const { data: dbProducts, error: productsErr } = await admin
+      .from("products")
+      .select("id, name, client_price, unit, active, stock_quantity")
+      .in("id", productIds);
+    if (productsErr) throw productsErr;
+    const productById = new Map((dbProducts ?? []).map((p) => [p.id, p]));
+
+    const resolved: { product: { id: string; name: string; price: number; unit: string }; quantity: number; subtotal: number }[] = [];
     for (const it of items) {
       if (!it || typeof it.product_id !== "string") return jsonError(400, "Item inválido");
       if (typeof it.quantity !== "number" || !Number.isInteger(it.quantity) || it.quantity <= 0 || it.quantity > MAX_QUANTITY) {
         return jsonError(400, "Quantidade inválida");
       }
-      const product = CATALOG[it.product_id];
-      if (!product) return jsonError(400, "Produto desconhecido");
-      const subtotal = Math.round(product.price * it.quantity * 100) / 100;
-      resolved.push({ product, quantity: it.quantity, subtotal });
+      const product = productById.get(it.product_id);
+      if (!product || !product.active) return jsonError(400, "Produto desconhecido");
+      if (typeof product.stock_quantity === "number" && product.stock_quantity < it.quantity) {
+        return jsonError(400, `Stock insuficiente para ${product.name}`);
+      }
+      const subtotal = Math.round(product.client_price * it.quantity * 100) / 100;
+      resolved.push({
+        product: { id: product.id, name: product.name, price: product.client_price, unit: product.unit },
+        quantity: it.quantity,
+        subtotal,
+      });
     }
-
-    const admin = createClient(supabaseUrl, serviceKey);
 
     const { data: profile } = await admin
       .from("profiles")
@@ -162,7 +177,7 @@ Deno.serve(async (req) => {
     const itemRows = resolved.map((r) => ({
       order_id: order.id,
       product_name: r.product.name,
-      product_image: r.product.image || null,
+      product_image: null,
       unit_price: r.product.price,
       unit: r.product.unit,
       quantity: r.quantity,
@@ -170,6 +185,18 @@ Deno.serve(async (req) => {
     }));
     const { error: itemsErr } = await admin.from("order_items").insert(itemRows);
     if (itemsErr) throw itemsErr;
+
+    // Best-effort stock decrement (read-then-write, not transactional — matches
+    // the rest of this mock checkout flow, which doesn't guard against races).
+    for (const r of resolved) {
+      const current = productById.get(r.product.id)?.stock_quantity;
+      if (typeof current === "number") {
+        await admin
+          .from("products")
+          .update({ stock_quantity: Math.max(0, current - r.quantity) })
+          .eq("id", r.product.id);
+      }
+    }
 
     const { data: farmer } = await admin
       .from("farmer_details")

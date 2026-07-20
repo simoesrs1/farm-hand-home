@@ -1,12 +1,17 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Star, MapPin, ArrowLeft, ArrowUpDown, Plus } from "lucide-react";
+import { MapPin, ArrowLeft, ArrowUpDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { products } from "@/data/products";
+import { type Product } from "@/data/products";
+import { getCategoryByName } from "@/data/categories";
 import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&h=400&fit=crop";
 
 type SortOption = "mais-avaliado" | "menos-avaliado" | "preco-maior" | "preco-menor";
 
@@ -20,11 +25,13 @@ const sortLabels: Record<SortOption, string> = {
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { addItem, items: cartItems } = useCart();
-  const { getAvailable } = useStock();
+  const { registerStock } = useStock();
   const { toast } = useToast();
   const location = searchParams.get("location") || "";
   const radius = searchParams.get("radius") || "25";
   const sort = (searchParams.get("sort") as SortOption) || "mais-avaliado";
+
+  const [products, setProducts] = useState<Product[]>([]);
 
   const handleSortChange = (value: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -32,24 +39,87 @@ const SearchResults = () => {
     setSearchParams(newParams);
   };
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      const { data: rows, error } = await supabase
+        .from("products")
+        .select("id, name, unit, client_price, stock_quantity, media_urls, delivery_mode, shipping_days, category, farmer_id")
+        .eq("active", true)
+        .gt("stock_quantity", 0);
+      if (error || !rows || rows.length === 0) {
+        if (!cancelled) setProducts([]);
+        return;
+      }
+
+      const farmerIds = [...new Set(rows.map((r) => r.farmer_id))];
+      const { data: farmers } = await supabase
+        .from("public_farmer_profiles")
+        .select("id, company_name, address")
+        .in("id", farmerIds);
+      const farmerById = new Map((farmers ?? []).map((f) => [f.id, f]));
+
+      const mapped = await Promise.all(
+        rows.map(async (r) => {
+          const farmer = farmerById.get(r.farmer_id);
+          const category = r.category ? getCategoryByName(r.category) : undefined;
+          let image = category?.image ?? FALLBACK_IMAGE;
+          const path = r.media_urls?.[0];
+          if (path) {
+            const { data: signed } = await supabase.storage
+              .from("product-media")
+              .createSignedUrl(path, 60 * 60);
+            if (signed?.signedUrl) image = signed.signedUrl;
+          }
+          const product: Product = {
+            id: r.id,
+            name: r.name,
+            farmerId: r.farmer_id,
+            farmer: farmer?.company_name ?? "Agricultor",
+            price: r.client_price,
+            unit: r.unit,
+            category: r.category ?? "",
+            image,
+            rating: 0,
+            reviews: 0,
+            location: farmer?.address ?? "",
+            region: "",
+            deliveryMode: r.delivery_mode,
+            shippingDays: r.shipping_days ?? undefined,
+            stock: r.stock_quantity ?? 0,
+          };
+          return product;
+        })
+      );
+
+      if (!cancelled) {
+        setProducts(mapped);
+        registerStock(mapped.map((p) => ({ id: p.id, quantity: p.stock })));
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [registerStock]);
+
   // Simulate filtering by location — in a real app this would use geolocation
   const filtered = useMemo(() => {
     let result = [...products];
 
-    // If a location is provided, prioritize products from matching regions/locations
     if (location) {
       const q = location.toLowerCase();
       result = result.filter(
         (p) =>
           p.location.toLowerCase().includes(q) ||
-          p.region.toLowerCase().includes(q) ||
           p.farmer.toLowerCase().includes(q)
       );
       // If no exact matches, show all (simulating "nearby")
       if (result.length === 0) result = [...products];
     }
 
-    // Sort
     switch (sort) {
       case "mais-avaliado":
         result.sort((a, b) => b.rating - a.rating || b.reviews - a.reviews);
@@ -65,8 +135,8 @@ const SearchResults = () => {
         break;
     }
 
-    return result.filter((p) => getAvailable(p.id) > 0);
-  }, [location, sort, getAvailable]);
+    return result;
+  }, [products, location, sort]);
 
   return (
     <main className="py-8">
@@ -111,29 +181,26 @@ const SearchResults = () => {
         {/* Products grid */}
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {filtered.map((p) => {
-            const available = getAvailable(p.id);
+            const available = p.stock;
             const inCart = cartItems.find((i) => i.id === p.id)?.quantity ?? 0;
             const canAdd = inCart < available;
             return (
             <div key={p.id} className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
               <div className="relative h-40 overflow-hidden">
                 <img src={p.image} alt={p.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-xs font-medium text-foreground backdrop-blur-sm">
-                  <MapPin className="h-3 w-3 text-primary" />
-                  {p.location}
-                </div>
+                {p.location && (
+                  <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-xs font-medium text-foreground backdrop-blur-sm">
+                    <MapPin className="h-3 w-3 text-primary" />
+                    {p.location}
+                  </div>
+                )}
               </div>
               <div className="p-4">
                 <h3 className="font-semibold text-foreground">{p.name}</h3>
                 <Link to={`/agricultor/${p.farmerId}`} className="text-xs text-primary hover:underline">{p.farmer}</Link>
-                <div className="mt-1.5 flex items-center gap-1">
-                  <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-                  <span className="text-xs font-medium text-foreground">{p.rating.toFixed(1)}</span>
-                  <span className="text-xs text-muted-foreground">({p.reviews})</span>
-                </div>
                 <Link
                   to={`/agricultor/${p.farmerId}`}
-                  className={`mt-1 inline-block text-xs font-medium hover:underline ${available <= 5 ? "text-destructive" : "text-primary"}`}
+                  className={`mt-1 block text-xs font-medium hover:underline ${available <= 5 ? "text-destructive" : "text-primary"}`}
                   title="Stock definido pelo agricultor"
                 >
                   {available} em stock

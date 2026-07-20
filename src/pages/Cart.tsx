@@ -20,7 +20,7 @@ import {
 
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
-  const { getAvailable, consume } = useStock();
+  const { getAvailable, refreshStock, consume } = useStock();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -28,16 +28,26 @@ const Cart = () => {
   const [safetyOpen, setSafetyOpen] = useState(false);
 
   // Clamp cart lines that exceed the current available stock (e.g. stock reduced
-  // in another tab). Also drops lines that went to zero.
+  // in another tab, or the cart was restored from localStorage on a cold load
+  // before any product listing warmed the stock cache). Also drops lines that
+  // went to zero.
   useEffect(() => {
-    for (const item of items) {
-      const available = getAvailable(item.id);
-      if (available <= 0) {
-        removeItem(item.id);
-      } else if (item.quantity > available) {
-        updateQuantity(item.id, available);
+    let cancelled = false;
+    (async () => {
+      const fresh = await refreshStock(items.map((i) => i.id));
+      if (cancelled) return;
+      for (const item of items) {
+        const available = fresh[item.id] ?? 0;
+        if (available <= 0) {
+          removeItem(item.id);
+        } else if (item.quantity > available) {
+          updateQuantity(item.id, available);
+        }
       }
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

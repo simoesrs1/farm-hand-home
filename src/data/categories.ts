@@ -45,3 +45,6 @@ export const categories: Category[] = categoryList.map((c) => ({
 }));
 
 export const getCategoryBySlug = (slug: string) => categories.find((c) => c.slug === slug);
+
+export const getCategoryByName = (name: string) =>
+  categories.find((c) => c.name.toLowerCase() === name.toLowerCase());

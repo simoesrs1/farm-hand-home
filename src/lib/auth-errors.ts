@@ -22,6 +22,12 @@ export function toUserMessage(error: unknown): string {
   if (m.includes("row-level security") || m.includes("permission denied")) {
     return "Não tens permissão para esta ação.";
   }
+  if (m.includes("farmer_details_exploration_number_unique")) {
+    return "Este número de exploração já está associado a outra conta.";
+  }
+  if (m.includes("farmer_details_company_nif_unique")) {
+    return "Este NIF já está associado a outra conta.";
+  }
   if (m.includes("network") || m.includes("fetch")) {
     return "Erro de ligação. Verifica a tua internet e tenta novamente.";
   }
