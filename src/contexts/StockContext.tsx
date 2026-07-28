@@ -42,9 +42,14 @@ export const StockProvider = ({ children }: { children: ReactNode }) => {
   const refreshStock = useCallback(async (productIds: string[]) => {
     const ids = [...new Set(productIds)];
     if (ids.length === 0) return {};
+    // Only active products count as available. An inactive product still has a
+    // stock_quantity row, so without this filter a deactivated item would look
+    // buyable in the cart and then be rejected by checkout ("Produto
+    // desconhecido"). Treating it as unknown lets the cart clamp drop it.
     const { data, error } = await supabase
       .from("products")
       .select("id, stock_quantity")
+      .eq("active", true)
       .in("id", ids);
     if (error || !data) return {};
     const fresh: StockMap = {};

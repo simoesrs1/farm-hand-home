@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrderChat from "@/components/OrderChat";
+import ValidateDeliveryDialog from "@/components/ValidateDeliveryDialog";
 
 interface OrderItem {
   id: string;
@@ -45,6 +46,7 @@ const FarmerOrders = () => {
   const [searchParams] = useSearchParams();
   const highlightId = searchParams.get("id");
   const refs = useRef<Record<string, HTMLLIElement | null>>({});
+  const [validating, setValidating] = useState<Order | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -74,6 +76,13 @@ const FarmerOrders = () => {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [highlightId, loading, orders.length]);
+
+  const markDelivered = (orderId: string) => {
+    const now = new Date().toISOString();
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: "delivered", delivered_at: now } : o)),
+    );
+  };
 
   if (!user || profile?.profile_type !== "vendedor") {
     return (
@@ -161,9 +170,16 @@ const FarmerOrders = () => {
                       {o.status === "delivered" ? "Recebes" : o.status === "expired" ? "Recebeste" : "Vais receber"}: {farmerGets.toFixed(2)}€
                     </p>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${m.tone}`}>
-                    <Icon className="h-3.5 w-3.5" /> {m.label}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${m.tone}`}>
+                      <Icon className="h-3.5 w-3.5" /> {m.label}
+                    </span>
+                    {o.status === "awaiting_pickup" && (
+                      <Button size="sm" className="gap-1.5" onClick={() => setValidating(o)}>
+                        <ScanLine className="h-4 w-4" /> Validar entrega
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {o.order_items?.length > 0 && (
@@ -200,6 +216,12 @@ const FarmerOrders = () => {
           })}
         </ul>
       )}
+
+      <ValidateDeliveryDialog
+        order={validating}
+        onOpenChange={(open) => { if (!open) setValidating(null); }}
+        onValidated={(orderId) => markDelivered(orderId)}
+      />
     </main>
   );
 };

@@ -1,5 +1,5 @@
 // Mock checkout — creates an order with simulated payment success
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { createClient } from "npm:@supabase/supabase-js@2.110.8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,12 +63,12 @@ Deno.serve(async (req) => {
     const productIds = [...new Set(items.map((it) => it?.product_id).filter((id): id is string => typeof id === "string"))];
     const { data: dbProducts, error: productsErr } = await admin
       .from("products")
-      .select("id, name, client_price, unit, active, stock_quantity")
+      .select("id, name, client_price, unit, active, stock_quantity, farmer_id")
       .in("id", productIds);
     if (productsErr) throw productsErr;
     const productById = new Map((dbProducts ?? []).map((p) => [p.id, p]));
 
-    const resolved: { product: { id: string; name: string; price: number; unit: string }; quantity: number; subtotal: number }[] = [];
+    const resolved: { product: { id: string; name: string; price: number; unit: string; farmerId: string }; quantity: number; subtotal: number }[] = [];
     for (const it of items) {
       if (!it || typeof it.product_id !== "string") return jsonError(400, "Item inválido");
       if (typeof it.quantity !== "number" || !Number.isInteger(it.quantity) || it.quantity <= 0 || it.quantity > MAX_QUANTITY) {
@@ -81,7 +81,13 @@ Deno.serve(async (req) => {
       }
       const subtotal = Math.round(product.client_price * it.quantity * 100) / 100;
       resolved.push({
-        product: { id: product.id, name: product.name, price: product.client_price, unit: product.unit },
+        product: {
+          id: product.id,
+          name: product.name,
+          price: product.client_price,
+          unit: product.unit,
+          farmerId: product.farmer_id,
+        },
         quantity: it.quantity,
         subtotal,
       });
@@ -95,47 +101,23 @@ Deno.serve(async (req) => {
     if (!profile) return jsonError(400, "Perfil não encontrado");
     if (profile.profile_type === "vendedor") return jsonError(403, "Apenas clientes podem comprar");
 
-    let farmerId: string | null = body?.farmer_id ?? null;
-    if (farmerId) {
-      const { data: f } = await admin
-        .from("farmer_details")
-        .select("id")
-        .eq("id", farmerId)
-        .eq("registration_step", 2)
-        .maybeSingle();
-      if (!f) farmerId = null;
+    // The order belongs to whoever actually sells the products — never to a
+    // farmer_id supplied by the client, and never to an arbitrary farmer. An
+    // order row holds a single farmer_id, so a cart mixing producers cannot be
+    // one order; reject it instead of silently paying the wrong farmer.
+    const farmerIds = [...new Set(resolved.map((r) => r.product.farmerId))];
+    if (farmerIds.length > 1) {
+      return jsonError(400, "Só é possível finalizar produtos de um agricultor de cada vez.");
     }
-    let pickupDays = 7;
-    if (!farmerId) {
-      // Prefer fully-registered farmers; fall back to any farmer if none completed onboarding
-      const { data: completed } = await admin
-        .from("farmer_details")
-        .select("id, pickup_days")
-        .eq("registration_step", 2)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      let chosen = completed;
-      if (!chosen) {
-        const { data: anyFarmer } = await admin
-          .from("farmer_details")
-          .select("id, pickup_days")
-          .order("created_at", { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        chosen = anyFarmer;
-      }
-      if (!chosen) return jsonError(400, "Nenhum agricultor disponível para receber a encomenda.");
-      farmerId = chosen.id;
-      pickupDays = chosen.pickup_days ?? 7;
-    } else {
-      const { data: f } = await admin
-        .from("farmer_details")
-        .select("pickup_days")
-        .eq("id", farmerId)
-        .single();
-      pickupDays = f?.pickup_days ?? 7;
-    }
+    const farmerId = farmerIds[0];
+
+    const { data: farmerRow } = await admin
+      .from("farmer_details")
+      .select("id, pickup_days, user_id")
+      .eq("id", farmerId)
+      .maybeSingle();
+    if (!farmerRow) return jsonError(400, "Agricultor indisponível para receber a encomenda.");
+    const pickupDays = farmerRow.pickup_days ?? 7;
 
     const total = Math.round(resolved.reduce((acc, r) => acc + r.subtotal * 100, 0)) / 100;
     if (total <= 0 || total > MAX_TOTAL) return jsonError(400, "Total inválido");
@@ -198,14 +180,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data: farmer } = await admin
-      .from("farmer_details")
-      .select("user_id")
-      .eq("id", farmerId)
-      .single();
-    if (farmer) {
+    if (farmerRow.user_id) {
       await admin.from("notifications").insert({
-        user_id: farmer.user_id,
+        user_id: farmerRow.user_id,
         order_id: order.id,
         type: "new_order",
         title: "Nova encomenda",

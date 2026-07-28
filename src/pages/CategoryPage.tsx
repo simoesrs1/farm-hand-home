@@ -48,8 +48,7 @@ const CategoryPage = () => {
         rows.map(async (r) => {
           const farmer = farmerById.get(r.farmer_id);
           // Product photos live in a private bucket, so a signed URL is
-          // needed. Anonymous visitors can't read it (bucket policy only
-          // allows "authenticated"), so we fall back to the category image.
+          // needed; fall back to the category image if there's no photo yet.
           let image = category.image;
           const path = r.media_urls?.[0];
           if (path) {
@@ -136,17 +135,20 @@ const CategoryPage = () => {
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold text-foreground">{p.name}</h3>
-                    <p className="text-xs text-muted-foreground">{p.farmer}</p>
+                    <Link to={`/agricultor/${p.farmerId}`} className="text-xs text-primary underline">
+                      {p.farmer}
+                    </Link>
                     <Link
                       to={`/agricultor/${p.farmerId}`}
                       className="hover:underline"
                       title="Stock definido pelo agricultor"
                     >
-                      <span
-                        className={`mt-1 inline-block text-xs font-medium ${available <= 5 ? "text-destructive" : "text-primary"}`}
-                      >
-                        {available} em stock
-                      </span>
+                      <div>
+                        <span className={`mt-1 inline-block text-xs font-medium ${available <= 5 ? "text-destructive" : "text-primary"}`}>
+                          {available} em stock
+                        </span>
+                      </div>
+                      
                     </Link>
                     <p className="mt-2 text-xs font-medium text-primary">
                       {p.deliveryMode === "shipping"

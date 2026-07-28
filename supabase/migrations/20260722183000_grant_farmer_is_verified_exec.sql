@@ -1,0 +1,13 @@
+-- The "Anyone can view active products" RLS policy on public.products calls
+-- public.farmer_is_verified(farmer_id) directly in its USING clause. An
+-- earlier migration (20260705134050) revoked EXECUTE on this function from
+-- PUBLIC and anon (intending to stop it being called directly from client
+-- code) but never re-granted it to the roles that need to evaluate the
+-- policy itself, so every anon (and non-owner authenticated) product SELECT
+-- started failing with "permission denied for function farmer_is_verified".
+--
+-- Note that a policy's USING expression is evaluated with the privileges of
+-- the querying role, NOT the table owner's -- contrary to the comment in
+-- migration 20260512093728. SECURITY DEFINER changes the privileges the
+-- function body runs with, but the caller still needs EXECUTE to invoke it.
+GRANT EXECUTE ON FUNCTION public.farmer_is_verified(uuid) TO anon, authenticated;

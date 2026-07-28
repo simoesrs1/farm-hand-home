@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, ShieldCheck, ShieldAlert, Lock, FileUp, AlertTriangle, Save, MapPin, Building2, Award } from "lucide-react";

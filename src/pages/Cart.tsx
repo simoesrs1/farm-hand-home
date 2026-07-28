@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
@@ -81,6 +83,42 @@ const Cart = () => {
     setSafetyOpen(false);
     setPaying(true);
     try {
+      // Validate the cart against the live catalogue before paying. A cart is
+      // persisted in localStorage, so it can outlive the products it holds
+      // (product deleted/deactivated, or the dev DB reseeded with new UUIDs).
+      // Any such line makes the whole order fail server-side with "Produto
+      // desconhecido". Detect and drop those lines here so the user gets a
+      // clear message and a self-healing cart instead of a dead-end 400.
+      const ids = [...new Set(items.map((i) => i.id))];
+      const { data: valid, error: checkErr } = await supabase
+        .from("products")
+        .select("id, stock_quantity")
+        .eq("active", true)
+        .in("id", ids);
+      if (checkErr) {
+        toast({ title: "Não foi possível pagar", description: "Erro ao validar o carrinho. Tenta novamente.", variant: "destructive" });
+        return;
+      }
+      const availableById = new Map((valid ?? []).map((p) => [p.id, p.stock_quantity ?? 0]));
+      const unavailable = items.filter((i) => !availableById.has(i.id));
+      const overStock = items.filter((i) => {
+        const avail = availableById.get(i.id);
+        return avail !== undefined && i.quantity > avail;
+      });
+      if (unavailable.length > 0 || overStock.length > 0) {
+        for (const i of unavailable) removeItem(i.id);
+        for (const i of overStock) updateQuantity(i.id, availableById.get(i.id)!);
+        const names = [...unavailable, ...overStock].map((i) => i.name).join(", ");
+        toast({
+          title: "Carrinho atualizado",
+          description: unavailable.length > 0
+            ? `Alguns produtos já não estão disponíveis e foram removidos (${names}). Confirma o carrinho e tenta novamente.`
+            : `Ajustámos as quantidades ao stock disponível (${names}). Confirma o carrinho e tenta novamente.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       const payload = {
         items: items.map((i) => ({
           product_id: i.id,
@@ -89,7 +127,24 @@ const Cart = () => {
       };
       const { data, error } = await supabase.functions.invoke("create-order", { body: payload });
       if (error || (data as any)?.error) {
-        const msg = (data as any)?.error ?? error?.message ?? "Erro ao processar pagamento";
+        // On a non-2xx response supabase-js leaves `data` null and gives a
+        // FunctionsHttpError whose `.message` is a generic "non-2xx status
+        // code". The real reason is the JSON body ({ error: "..." }), which
+        // lives on error.context (the raw Response) — read it so the user
+        // sees the actual validation message instead of a useless generic one.
+        // The body is a one-shot stream: read it exactly once here and reuse
+        // the result, otherwise a second .json()/.clone() throws and the real
+        // message is lost.
+        let msg = (data as any)?.error ?? error?.message ?? "Erro ao processar pagamento";
+        if (error instanceof FunctionsHttpError) {
+          try {
+            const body = await error.context.json();
+            console.log("Function returned an error", body);
+            if (body?.error) msg = body.error;
+          } catch {
+            // body wasn't JSON — keep the generic message
+          }
+        }
         toast({ title: "Não foi possível pagar", description: msg, variant: "destructive" });
         return;
       }
