@@ -80,8 +80,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  const canSwitchProfile = profile?.profile_type === "vendedor";
+  const activeMode: "cliente" | "vendedor" = canSwitchProfile
+    ? profile?.active_mode === "cliente"
+      ? "cliente"
+      : "vendedor"
+    : "cliente";
+
+  const switchMode = async (mode: "cliente" | "vendedor") => {
+    if (!user || !canSwitchProfile) return;
+    setProfile((p) => (p ? { ...p, active_mode: mode } : p));
+    await supabase.from("profiles").update({ active_mode: mode }).eq("id", user.id);
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signOut }}>
+    <AuthContext.Provider
+      value={{ session, user, profile, loading, activeMode, canSwitchProfile, switchMode, signOut }}
+    >
+
       {children}
     </AuthContext.Provider>
   );
