@@ -43,7 +43,7 @@ const FarmerOnboardingGuard = () => {
     return () => {
       cancelled = true;
     };
-  }, [user, profile, loading, location.pathname, navigate]);
+  }, [user, profile, loading, activeMode, location.pathname, navigate]);
 
   return null;
 };
