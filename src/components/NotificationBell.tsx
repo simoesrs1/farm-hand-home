@@ -20,7 +20,7 @@ interface Notification {
 }
 
 const NotificationBell = () => {
-  const { user, profile } = useAuth();
+  const { user, activeMode } = useAuth();
   const navigate = useNavigate();
   const [items, setItems] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
@@ -59,7 +59,7 @@ const NotificationBell = () => {
   const handleClick = (n: Notification) => {
     setOpen(false);
     if (n.order_id) {
-      const base = profile?.profile_type === "vendedor" ? "/agricultor/encomendas" : "/encomendas";
+      const base = activeMode === "vendedor" ? "/agricultor/encomendas" : "/encomendas";
       navigate(`${base}?id=${n.order_id}`);
     }
   };

@@ -565,6 +565,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_mode: string
           avatar_url: string | null
           created_at: string
           full_name: string | null
@@ -573,6 +574,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          active_mode?: string
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
@@ -581,6 +583,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          active_mode?: string
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
@@ -698,12 +701,12 @@ export type Database = {
     }
     Functions: {
       company_nif_taken: {
-        Args: { p_company_nif: string; p_exclude_id?: string | null }
+        Args: { p_company_nif: string; p_exclude_id?: string }
         Returns: boolean
       }
       delete_old_order_chats: { Args: never; Returns: number }
       exploration_number_taken: {
-        Args: { p_exploration_number: string; p_exclude_id?: string | null }
+        Args: { p_exclude_id?: string; p_exploration_number: string }
         Returns: boolean
       }
       farmer_is_verified: { Args: { _farmer_id: string }; Returns: boolean }

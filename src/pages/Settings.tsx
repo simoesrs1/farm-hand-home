@@ -62,6 +62,11 @@ const Settings = () => {
           <KeyRound className="h-5 w-5 text-primary" />
           <h2 className="font-display text-base font-semibold">Alterar senha</h2>
         </div>
+        <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+          A sua conta de agricultor e a sua conta de cliente partilham o mesmo email e a mesma
+          palavra-passe. Alterar aqui a palavra-passe altera o acesso aos dois perfis.
+        </p>
+
         <div>
           <label className="mb-1 block text-xs font-medium text-muted-foreground">Nova senha</label>
           <input

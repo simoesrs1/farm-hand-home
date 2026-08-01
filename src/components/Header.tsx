@@ -18,10 +18,10 @@ const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, activeMode, canSwitchProfile, switchMode } = useAuth();
   const { totalCount } = useCart();
-  const isFarmer = !!user && profile?.profile_type === "vendedor";
-  const isClient = !!user && !isFarmer;
+  const isFarmer = !!user && activeMode === "vendedor";
+  const isClient = !!user && activeMode === "cliente";
 
   const handleSignOut = async () => {
     await signOut();
@@ -132,7 +132,45 @@ const Header = () => {
                 {/* Bridge to keep hover continuous */}
                 <div className="absolute right-0 top-full h-2 w-56" />
                 <div className="invisible absolute right-0 top-[calc(100%+0.5rem)] z-50 w-56 origin-top-right scale-95 rounded-xl border border-border bg-popover p-1.5 opacity-0 shadow-xl transition-all duration-150 group-hover:visible group-hover:scale-100 group-hover:opacity-100 group-focus-within:visible group-focus-within:scale-100 group-focus-within:opacity-100">
+                  {canSwitchProfile && (
+                    <>
+                      <div className="px-3 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        Perfil ativo
+                      </div>
+                      <div className="mb-1 flex gap-1 rounded-lg bg-muted p-1">
+                        <button
+                          type="button"
+                          onClick={() => switchMode("vendedor")}
+                          className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                            activeMode === "vendedor"
+                              ? "bg-background text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Store className="h-3.5 w-3.5" />
+                          Agricultor
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            switchMode("cliente");
+                            navigate("/catalogo");
+                          }}
+                          className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                            activeMode === "cliente"
+                              ? "bg-background text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <ShoppingBag className="h-3.5 w-3.5" />
+                          Cliente
+                        </button>
+                      </div>
+                      <div className="my-1 border-t border-border" />
+                    </>
+                  )}
                   <Link
+
                     to="/perfil"
                     className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                   >
@@ -221,6 +259,30 @@ const Header = () => {
                   <span className="px-3 text-sm text-muted-foreground">
                     {profile?.full_name || user.email}
                   </span>
+                  {canSwitchProfile && (
+                    <div className="flex gap-1 rounded-lg bg-muted p-1">
+                      <button
+                        type="button"
+                        onClick={() => switchMode("vendedor")}
+                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors ${
+                          activeMode === "vendedor" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                        }`}
+                      >
+                        <Store className="h-3.5 w-3.5" />
+                        Agricultor
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { switchMode("cliente"); setMobileOpen(false); navigate("/catalogo"); }}
+                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors ${
+                          activeMode === "cliente" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                        }`}
+                      >
+                        <ShoppingBag className="h-3.5 w-3.5" />
+                        Cliente
+                      </button>
+                    </div>
+                  )}
                   {isClient && (
                     <Link to="/carrinho" onClick={() => setMobileOpen(false)}>
                       <Button variant="outline" className="w-full justify-between gap-2">

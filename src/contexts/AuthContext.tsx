@@ -3,11 +3,22 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
+type ProfileRow = {
+  full_name: string | null;
+  profile_type: string;
+  active_mode?: string | null;
+};
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
-  profile: { full_name: string | null; profile_type: string } | null;
+  profile: ProfileRow | null;
   loading: boolean;
+  /** Modo em que o utilizador está a navegar: "cliente" ou "vendedor" */
+  activeMode: "cliente" | "vendedor";
+  /** Verdadeiro quando a conta é de agricultor (tem também acesso ao modo cliente) */
+  canSwitchProfile: boolean;
+  switchMode: (mode: "cliente" | "vendedor") => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -16,6 +27,9 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  activeMode: "cliente",
+  canSwitchProfile: false,
+  switchMode: async () => {},
   signOut: async () => {},
 });
 
@@ -24,16 +38,16 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<{ full_name: string | null; profile_type: string } | null>(null);
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("full_name, profile_type")
+      .select("full_name, profile_type, active_mode")
       .eq("id", userId)
       .single();
-    setProfile(data);
+    setProfile(data as ProfileRow | null);
   };
 
   useEffect(() => {
@@ -66,8 +80,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  const canSwitchProfile = profile?.profile_type === "vendedor";
+  const activeMode: "cliente" | "vendedor" = canSwitchProfile
+    ? profile?.active_mode === "cliente"
+      ? "cliente"
+      : "vendedor"
+    : "cliente";
+
+  const switchMode = async (mode: "cliente" | "vendedor") => {
+    if (!user || !canSwitchProfile) return;
+    setProfile((p) => (p ? { ...p, active_mode: mode } : p));
+    await supabase.from("profiles").update({ active_mode: mode }).eq("id", user.id);
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signOut }}>
+    <AuthContext.Provider
+      value={{ session, user, profile, loading, activeMode, canSwitchProfile, switchMode, signOut }}
+    >
+
       {children}
     </AuthContext.Provider>
   );
