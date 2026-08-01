@@ -259,6 +259,30 @@ const Header = () => {
                   <span className="px-3 text-sm text-muted-foreground">
                     {profile?.full_name || user.email}
                   </span>
+                  {canSwitchProfile && (
+                    <div className="flex gap-1 rounded-lg bg-muted p-1">
+                      <button
+                        type="button"
+                        onClick={() => switchMode("vendedor")}
+                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors ${
+                          activeMode === "vendedor" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                        }`}
+                      >
+                        <Store className="h-3.5 w-3.5" />
+                        Agricultor
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { switchMode("cliente"); setMobileOpen(false); navigate("/catalogo"); }}
+                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium transition-colors ${
+                          activeMode === "cliente" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+                        }`}
+                      >
+                        <ShoppingBag className="h-3.5 w-3.5" />
+                        Cliente
+                      </button>
+                    </div>
+                  )}
                   {isClient && (
                     <Link to="/carrinho" onClick={() => setMobileOpen(false)}>
                       <Button variant="outline" className="w-full justify-between gap-2">
