@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
  * Permite o /auth para casos de re-login.
  */
 const FarmerOnboardingGuard = () => {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, activeMode } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [checking, setChecking] = useState(false);
@@ -17,9 +17,12 @@ const FarmerOnboardingGuard = () => {
   useEffect(() => {
     if (loading || !user || !profile) return;
     if (profile.profile_type !== "vendedor") return;
+    // No modo cliente o agricultor navega livremente (só precisa do email verificado)
+    if (activeMode !== "vendedor") return;
 
     const allowedRoutes = ["/onboarding/agricultor", "/auth"];
     if (allowedRoutes.includes(location.pathname)) return;
+
 
     let cancelled = false;
     setChecking(true);
