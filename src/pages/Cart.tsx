@@ -72,10 +72,15 @@ const Cart = () => {
       navigate("/auth");
       return;
     }
-    if (profile?.profile_type === "vendedor") {
-      toast({ title: "Conta de agricultor", description: "Apenas clientes podem comprar.", variant: "destructive" });
+    if (activeMode === "vendedor") {
+      toast({
+        title: "Está no modo agricultor",
+        description: "Mude para o perfil de cliente no menu do seu nome para finalizar a compra.",
+        variant: "destructive",
+      });
       return;
     }
+
     setSafetyOpen(true);
   };
 
