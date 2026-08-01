@@ -59,7 +59,7 @@ const NotificationBell = () => {
   const handleClick = (n: Notification) => {
     setOpen(false);
     if (n.order_id) {
-      const base = profile?.profile_type === "vendedor" ? "/agricultor/encomendas" : "/encomendas";
+      const base = activeMode === "vendedor" ? "/agricultor/encomendas" : "/encomendas";
       navigate(`${base}?id=${n.order_id}`);
     }
   };
