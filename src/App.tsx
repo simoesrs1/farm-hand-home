@@ -46,7 +46,9 @@ const App = () => (
           <StockProvider>
             <CartProvider>
               <FarmerOnboardingGuard />
+              <ClientEmailVerificationGate />
               <div className="flex min-h-screen flex-col">
+
                 <Header />
                 <div className="flex-1">
                   <Routes>
