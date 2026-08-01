@@ -20,7 +20,7 @@ interface Notification {
 }
 
 const NotificationBell = () => {
-  const { user, profile } = useAuth();
+  const { user, activeMode } = useAuth();
   const navigate = useNavigate();
   const [items, setItems] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
