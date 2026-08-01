@@ -23,7 +23,7 @@ import { FunctionsHttpError } from "@supabase/supabase-js";
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
   const { getAvailable, refreshStock, consume } = useStock();
-  const { user, profile } = useAuth();
+  const { user, profile, activeMode } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [paying, setPaying] = useState(false);
