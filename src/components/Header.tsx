@@ -18,10 +18,10 @@ const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, activeMode, canSwitchProfile, switchMode } = useAuth();
   const { totalCount } = useCart();
-  const isFarmer = !!user && profile?.profile_type === "vendedor";
-  const isClient = !!user && !isFarmer;
+  const isFarmer = !!user && activeMode === "vendedor";
+  const isClient = !!user && activeMode === "cliente";
 
   const handleSignOut = async () => {
     await signOut();
