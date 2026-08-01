@@ -9,6 +9,8 @@ import { StockProvider } from "./contexts/StockContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import FarmerOnboardingGuard from "./components/FarmerOnboardingGuard";
+import ClientEmailVerificationGate from "./components/ClientEmailVerificationGate";
+
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Catalog from "./pages/Catalog";
