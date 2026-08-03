@@ -276,11 +276,22 @@ const MyProducts = () => {
             return (
               <li
                 key={p.id}
-                className={`flex flex-col gap-3 rounded-2xl border bg-card p-3 sm:flex-row sm:items-center ${
+                className={`rounded-2xl border bg-card p-3 ${
                   isOut ? "border-destructive/50" : "border-border"
                 }`}
               >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="flex items-center gap-3 sm:flex-1 sm:min-w-0">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                    aria-label={`Editar ${p.name}`}
+                    title="Editar produto"
+                    onClick={() => navigate(`/agricultor/produtos/${p.id}/editar`)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
                     {thumbs[p.id] ? (
                       <img src={thumbs[p.id]} alt={p.name} className="h-full w-full object-cover" />
@@ -295,6 +306,7 @@ const MyProducts = () => {
                     <p className="text-xs text-muted-foreground">por {p.unit}</p>
                   </div>
                 </div>
+
 
                 <div className="flex items-center gap-2 sm:w-32">
                   <span
