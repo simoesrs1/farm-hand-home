@@ -406,7 +406,55 @@ const MyProducts = () => {
                   </AlertDialog>
 
                 </div>
+                </div>
+
+                {/* Descontos */}
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <Tag className="h-3.5 w-3.5" /> Desconto
+                  </span>
+                  {DISCOUNT_PRESETS.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      disabled={discountId === p.id}
+                      onClick={() => applyDiscount(p, d)}
+                      className={`rounded-full border px-2.5 py-1 text-xs transition-colors disabled:opacity-50 ${
+                        (p.discount_percent ?? 0) === d
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background hover:bg-secondary"
+                      }`}
+                    >
+                      {d === 0 ? "Sem desconto" : `-${d}%`}
+                    </button>
+                  ))}
+                  <Input
+                    type="number"
+                    min={0}
+                    max={90}
+                    step={1}
+                    defaultValue={p.discount_percent ?? 0}
+                    onBlur={(e) => applyDiscount(p, parseInt(e.target.value, 10) || 0)}
+                    aria-label="Desconto personalizado (%)"
+                    className="h-8 w-20"
+                  />
+                  {discountId === p.id && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {(p.discount_percent ?? 0) > 0 && (
+                      <span className="mr-1.5 line-through">{p.client_price.toFixed(2)} €</span>
+                    )}
+                    <strong className="text-foreground">
+                      {(
+                        Math.round(p.client_price * (1 - (p.discount_percent ?? 0) / 100) * 100) / 100
+                      ).toFixed(2)}{" "}
+                      €
+                    </strong>
+                  </span>
+                </div>
               </li>
+
             );
           })}
         </ul>
