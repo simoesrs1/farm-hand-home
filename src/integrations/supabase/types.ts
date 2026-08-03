@@ -479,6 +479,7 @@ export type Database = {
           created_at: string
           delivery_mode: Database["public"]["Enums"]["delivery_mode"]
           description: string | null
+          discount_percent: number
           farmer_id: string
           farmer_price: number
           has_modifications: boolean
@@ -502,6 +503,7 @@ export type Database = {
           created_at?: string
           delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
           description?: string | null
+          discount_percent?: number
           farmer_id: string
           farmer_price: number
           has_modifications?: boolean
@@ -525,6 +527,7 @@ export type Database = {
           created_at?: string
           delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
           description?: string | null
+          discount_percent?: number
           farmer_id?: string
           farmer_price?: number
           has_modifications?: boolean
