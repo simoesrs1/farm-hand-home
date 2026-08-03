@@ -61,7 +61,7 @@ const FarmerProfile = () => {
 
       const { data: rows } = await supabase
         .from("products")
-        .select("id, name, unit, client_price, stock_quantity, media_urls, delivery_mode, shipping_days, category")
+        .select("id, name, unit, client_price, discount_percent, stock_quantity, media_urls, delivery_mode, shipping_days, category")
         .eq("farmer_id", id)
         .eq("active", true)
         .gt("stock_quantity", 0);
@@ -82,7 +82,7 @@ const FarmerProfile = () => {
             name: r.name,
             farmerId: id,
             farmer: farmer.company_name,
-            price: r.client_price,
+            price: Math.round(r.client_price * (1 - (r.discount_percent ?? 0) / 100) * 100) / 100,
             unit: r.unit,
             category: r.category ?? "",
             image,
