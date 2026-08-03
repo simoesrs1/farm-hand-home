@@ -167,6 +167,28 @@ const MyProducts = () => {
     setCustom((s) => ({ ...s, [p.id]: "" }));
   };
 
+  const applyDiscount = async (p: ProductRow, value: number) => {
+    const clean = Math.min(90, Math.max(0, Math.round(value)));
+    if (clean === (p.discount_percent ?? 0)) return;
+    setDiscountId(p.id);
+    const { error } = await supabase
+      .from("products")
+      .update({ discount_percent: clean })
+      .eq("id", p.id);
+    setDiscountId(null);
+    if (error) {
+      toast({ title: "Erro a aplicar desconto", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({
+      title: clean > 0 ? `Desconto de ${clean}% aplicado` : "Desconto removido",
+      description: p.name,
+    });
+    setProducts((prev) =>
+      prev.map((x) => (x.id === p.id ? { ...x, discount_percent: clean } : x))
+    );
+  };
+
   const handleDelete = async (p: ProductRow) => {
     setDeletingId(p.id);
     const { error } = await supabase
