@@ -1,9 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Plus, PackageOpen, ImageIcon, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Minus, Trash2, PackageOpen, ImageIcon, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -27,6 +38,7 @@ const MyProducts = () => {
   const [preset, setPreset] = useState<Record<string, string>>({});
   const [custom, setCustom] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [notified, setNotified] = useState(false);
 
   useEffect(() => {
@@ -58,6 +70,7 @@ const MyProducts = () => {
       .from("products")
       .select("id, name, unit, stock_quantity, media_urls")
       .eq("farmer_id", farmer.id)
+      .eq("active", true)
       .order("created_at", { ascending: false });
     if (error) {
       toast({ title: "Erro a carregar produtos", description: error.message, variant: "destructive" });
@@ -105,22 +118,29 @@ const MyProducts = () => {
     }
   }, [loading, notified, outOfStock.length]);
 
-  const handleRestock = async (p: ProductRow) => {
+  const resolveAmount = (p: ProductRow) => {
     const sel = preset[p.id] ?? "1";
-    let add = 0;
     if (sel === "100+") {
       const n = parseInt(custom[p.id] ?? "", 10);
       if (!Number.isFinite(n) || n <= 100) {
         toast({ title: "Indique um valor superior a 100", variant: "destructive" });
-        return;
+        return 0;
       }
-      add = n;
-    } else {
-      add = parseInt(sel, 10) || 0;
+      return n;
     }
-    if (add <= 0) return;
+    return parseInt(sel, 10) || 0;
+  };
+
+  const applyStockDelta = async (p: ProductRow, sign: 1 | -1) => {
+    const amount = resolveAmount(p);
+    if (amount <= 0) return;
+    const current = p.stock_quantity ?? 0;
+    if (sign === -1 && current <= 0) {
+      toast({ title: "Sem stock para retirar", variant: "destructive" });
+      return;
+    }
+    const newStock = Math.max(0, current + sign * amount);
     setSavingId(p.id);
-    const newStock = (p.stock_quantity ?? 0) + add;
     const { error } = await supabase
       .from("products")
       .update({ stock_quantity: newStock })
@@ -130,13 +150,32 @@ const MyProducts = () => {
       toast({ title: "Erro a atualizar stock", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Stock atualizado", description: `${p.name}: +${add} → ${newStock}` });
+    toast({
+      title: "Stock atualizado",
+      description: `${p.name}: ${sign === 1 ? "+" : "−"}${amount} → ${newStock}`,
+    });
     setProducts((prev) =>
       prev.map((x) => (x.id === p.id ? { ...x, stock_quantity: newStock } : x))
     );
     setPreset((s) => ({ ...s, [p.id]: "1" }));
     setCustom((s) => ({ ...s, [p.id]: "" }));
   };
+
+  const handleDelete = async (p: ProductRow) => {
+    setDeletingId(p.id);
+    const { error } = await supabase
+      .from("products")
+      .update({ active: false, stock_quantity: 0 })
+      .eq("id", p.id);
+    setDeletingId(null);
+    if (error) {
+      toast({ title: "Erro a eliminar produto", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Produto eliminado", description: `${p.name} foi removido do catálogo.` });
+    setProducts((prev) => prev.filter((x) => x.id !== p.id));
+  };
+
 
   if (authLoading || loading) {
     return (
@@ -252,7 +291,7 @@ const MyProducts = () => {
                   >
                     {Array.from({ length: 100 }, (_, i) => i + 1).map((n) => (
                       <option key={n} value={String(n)}>
-                        +{n}
+                        {n}
                       </option>
                     ))}
                     <option value="100+">100+</option>
@@ -272,8 +311,8 @@ const MyProducts = () => {
                   )}
                   <Button
                     size="sm"
-                    onClick={() => handleRestock(p)}
-                    disabled={savingId === p.id}
+                    onClick={() => applyStockDelta(p, 1)}
+                    disabled={savingId === p.id || deletingId === p.id}
                     className="gap-1"
                   >
                     {savingId === p.id ? (
@@ -283,6 +322,49 @@ const MyProducts = () => {
                     )}
                     Adicionar stock
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => applyStockDelta(p, -1)}
+                    disabled={savingId === p.id || deletingId === p.id || stock <= 0}
+                    className="gap-1"
+                  >
+                    <Minus className="h-4 w-4" />
+                    Retirar stock
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={deletingId === p.id}
+                        className="gap-1"
+                      >
+                        {deletingId === p.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                        Eliminar
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Eliminar “{p.name}”?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          O produto deixa de aparecer no catálogo e na sua lista de produtos
+                          publicados. Esta ação não pode ser anulada.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(p)}>
+                          Eliminar produto
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
                 </div>
               </li>
             );
