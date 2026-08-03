@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Plus, Minus, Trash2, PackageOpen, ImageIcon, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Minus, Trash2, Pencil, Tag, PackageOpen, ImageIcon, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -25,7 +25,12 @@ type ProductRow = {
   unit: string;
   stock_quantity: number | null;
   media_urls: string[] | null;
+  client_price: number;
+  discount_percent: number | null;
 };
+
+const DISCOUNT_PRESETS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
+
 
 const MyProducts = () => {
   const navigate = useNavigate();
