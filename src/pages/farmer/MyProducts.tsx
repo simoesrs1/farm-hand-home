@@ -70,6 +70,7 @@ const MyProducts = () => {
       .from("products")
       .select("id, name, unit, stock_quantity, media_urls")
       .eq("farmer_id", farmer.id)
+      .eq("active", true)
       .order("created_at", { ascending: false });
     if (error) {
       toast({ title: "Erro a carregar produtos", description: error.message, variant: "destructive" });
