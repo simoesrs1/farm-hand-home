@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Image as ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, Loader2, Sparkles, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +45,50 @@ const NewProduct = () => {
   const [availabilityEnd, setAvailabilityEnd] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  const fileToDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleGenerateDescription = async () => {
+    if (!name.trim() && files.length === 0) {
+      toast({ title: "Adicione o nome ou uma fotografia primeiro", variant: "destructive" });
+      return;
+    }
+    setGenerating(true);
+    try {
+      const images = await Promise.all(
+        files.filter((f) => f.type.startsWith("image/") && f.size < 4_000_000).slice(0, 3).map(fileToDataUrl)
+      );
+      const { data, error } = await supabase.functions.invoke("generate-product-description", {
+        body: {
+          name,
+          category,
+          unit,
+          isOrganic,
+          isLactoseFree,
+          modifications: hasModifications ? modificationsDescription : "",
+          farmName: (profile as any)?.full_name ?? "",
+          images,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.description) throw new Error("Não foi possível gerar a descrição.");
+      setDescription(data.description);
+      toast({ title: "Descrição gerada", description: "Pode editar o texto antes de publicar." });
+    } catch (err: any) {
+      toast({ title: "Erro a gerar descrição", description: err.message, variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
 
 
   useEffect(() => {
@@ -308,7 +352,20 @@ const NewProduct = () => {
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="description">Descrição</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleGenerateDescription}
+                disabled={generating}
+                className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+              >
+                {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                {generating ? "A escrever..." : "Escrever com IA"}
+              </Button>
+            </div>
             <Textarea
               id="description"
               value={description}
