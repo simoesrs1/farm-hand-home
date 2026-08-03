@@ -290,7 +290,7 @@ const MyProducts = () => {
                   >
                     {Array.from({ length: 100 }, (_, i) => i + 1).map((n) => (
                       <option key={n} value={String(n)}>
-                        +{n}
+                        {n}
                       </option>
                     ))}
                     <option value="100+">100+</option>
