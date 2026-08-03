@@ -44,6 +44,7 @@ const MyProducts = () => {
   const [custom, setCustom] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [discountId, setDiscountId] = useState<string | null>(null);
   const [notified, setNotified] = useState(false);
 
   useEffect(() => {
@@ -73,7 +74,7 @@ const MyProducts = () => {
     setFarmerId(farmer.id);
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, unit, stock_quantity, media_urls")
+      .select("id, name, unit, stock_quantity, media_urls, client_price, discount_percent")
       .eq("farmer_id", farmer.id)
       .eq("active", true)
       .order("created_at", { ascending: false });
