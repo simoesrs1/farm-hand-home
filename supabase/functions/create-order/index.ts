@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     const productIds = [...new Set(items.map((it) => it?.product_id).filter((id): id is string => typeof id === "string"))];
     const { data: dbProducts, error: productsErr } = await admin
       .from("products")
-      .select("id, name, client_price, unit, active, stock_quantity, farmer_id")
+      .select("id, name, client_price, discount_percent, unit, active, stock_quantity, farmer_id")
       .in("id", productIds);
     if (productsErr) throw productsErr;
     const productById = new Map((dbProducts ?? []).map((p) => [p.id, p]));
@@ -79,12 +79,16 @@ Deno.serve(async (req) => {
       if (typeof product.stock_quantity === "number" && product.stock_quantity < it.quantity) {
         return jsonError(400, `Stock insuficiente para ${product.name}`);
       }
-      const subtotal = Math.round(product.client_price * it.quantity * 100) / 100;
+      // The farmer can run a promotion on a product; the discounted price is
+      // recomputed here from the DB so the client can never pick the price.
+      const discount = Math.min(90, Math.max(0, Number(product.discount_percent ?? 0)));
+      const unitPrice = Math.round(product.client_price * (1 - discount / 100) * 100) / 100;
+      const subtotal = Math.round(unitPrice * it.quantity * 100) / 100;
       resolved.push({
         product: {
           id: product.id,
           name: product.name,
-          price: product.client_price,
+          price: unitPrice,
           unit: product.unit,
           farmerId: product.farmer_id,
         },
@@ -92,6 +96,7 @@ Deno.serve(async (req) => {
         subtotal,
       });
     }
+
 
     const { data: profile } = await admin
       .from("profiles")

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Plus, Minus, Trash2, PackageOpen, ImageIcon, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Minus, Trash2, Pencil, Tag, PackageOpen, ImageIcon, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -25,7 +25,12 @@ type ProductRow = {
   unit: string;
   stock_quantity: number | null;
   media_urls: string[] | null;
+  client_price: number;
+  discount_percent: number | null;
 };
+
+const DISCOUNT_PRESETS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
+
 
 const MyProducts = () => {
   const navigate = useNavigate();
@@ -39,6 +44,7 @@ const MyProducts = () => {
   const [custom, setCustom] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [discountId, setDiscountId] = useState<string | null>(null);
   const [notified, setNotified] = useState(false);
 
   useEffect(() => {
@@ -68,7 +74,7 @@ const MyProducts = () => {
     setFarmerId(farmer.id);
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, unit, stock_quantity, media_urls")
+      .select("id, name, unit, stock_quantity, media_urls, client_price, discount_percent")
       .eq("farmer_id", farmer.id)
       .eq("active", true)
       .order("created_at", { ascending: false });
@@ -161,6 +167,28 @@ const MyProducts = () => {
     setCustom((s) => ({ ...s, [p.id]: "" }));
   };
 
+  const applyDiscount = async (p: ProductRow, value: number) => {
+    const clean = Math.min(90, Math.max(0, Math.round(value)));
+    if (clean === (p.discount_percent ?? 0)) return;
+    setDiscountId(p.id);
+    const { error } = await supabase
+      .from("products")
+      .update({ discount_percent: clean })
+      .eq("id", p.id);
+    setDiscountId(null);
+    if (error) {
+      toast({ title: "Erro a aplicar desconto", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({
+      title: clean > 0 ? `Desconto de ${clean}% aplicado` : "Desconto removido",
+      description: p.name,
+    });
+    setProducts((prev) =>
+      prev.map((x) => (x.id === p.id ? { ...x, discount_percent: clean } : x))
+    );
+  };
+
   const handleDelete = async (p: ProductRow) => {
     setDeletingId(p.id);
     const { error } = await supabase
@@ -248,11 +276,22 @@ const MyProducts = () => {
             return (
               <li
                 key={p.id}
-                className={`flex flex-col gap-3 rounded-2xl border bg-card p-3 sm:flex-row sm:items-center ${
+                className={`rounded-2xl border bg-card p-3 ${
                   isOut ? "border-destructive/50" : "border-border"
                 }`}
               >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="flex items-center gap-3 sm:flex-1 sm:min-w-0">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                    aria-label={`Editar ${p.name}`}
+                    title="Editar produto"
+                    onClick={() => navigate(`/agricultor/produtos/${p.id}/editar`)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
                     {thumbs[p.id] ? (
                       <img src={thumbs[p.id]} alt={p.name} className="h-full w-full object-cover" />
@@ -267,6 +306,7 @@ const MyProducts = () => {
                     <p className="text-xs text-muted-foreground">por {p.unit}</p>
                   </div>
                 </div>
+
 
                 <div className="flex items-center gap-2 sm:w-32">
                   <span
@@ -366,7 +406,55 @@ const MyProducts = () => {
                   </AlertDialog>
 
                 </div>
+                </div>
+
+                {/* Descontos */}
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <Tag className="h-3.5 w-3.5" /> Desconto
+                  </span>
+                  {DISCOUNT_PRESETS.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      disabled={discountId === p.id}
+                      onClick={() => applyDiscount(p, d)}
+                      className={`rounded-full border px-2.5 py-1 text-xs transition-colors disabled:opacity-50 ${
+                        (p.discount_percent ?? 0) === d
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background hover:bg-secondary"
+                      }`}
+                    >
+                      {d === 0 ? "Sem desconto" : `-${d}%`}
+                    </button>
+                  ))}
+                  <Input
+                    type="number"
+                    min={0}
+                    max={90}
+                    step={1}
+                    defaultValue={p.discount_percent ?? 0}
+                    onBlur={(e) => applyDiscount(p, parseInt(e.target.value, 10) || 0)}
+                    aria-label="Desconto personalizado (%)"
+                    className="h-8 w-20"
+                  />
+                  {discountId === p.id && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {(p.discount_percent ?? 0) > 0 && (
+                      <span className="mr-1.5 line-through">{p.client_price.toFixed(2)} €</span>
+                    )}
+                    <strong className="text-foreground">
+                      {(
+                        Math.round(p.client_price * (1 - (p.discount_percent ?? 0) / 100) * 100) / 100
+                      ).toFixed(2)}{" "}
+                      €
+                    </strong>
+                  </span>
+                </div>
               </li>
+
             );
           })}
         </ul>

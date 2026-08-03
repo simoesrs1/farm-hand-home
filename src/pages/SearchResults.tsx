@@ -45,7 +45,7 @@ const SearchResults = () => {
     const load = async () => {
       const { data: rows, error } = await supabase
         .from("products")
-        .select("id, name, unit, client_price, stock_quantity, media_urls, delivery_mode, shipping_days, category, farmer_id")
+        .select("id, name, unit, client_price, discount_percent, stock_quantity, media_urls, delivery_mode, shipping_days, category, farmer_id")
         .eq("active", true)
         .gt("stock_quantity", 0);
       if (error || !rows || rows.length === 0) {
@@ -77,7 +77,7 @@ const SearchResults = () => {
             name: r.name,
             farmerId: r.farmer_id,
             farmer: farmer?.company_name ?? "Agricultor",
-            price: r.client_price,
+            price: Math.round(r.client_price * (1 - (r.discount_percent ?? 0) / 100) * 100) / 100,
             unit: r.unit,
             category: r.category ?? "",
             image,
