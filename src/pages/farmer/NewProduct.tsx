@@ -45,6 +45,50 @@ const NewProduct = () => {
   const [availabilityEnd, setAvailabilityEnd] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  const fileToDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleGenerateDescription = async () => {
+    if (!name.trim() && files.length === 0) {
+      toast({ title: "Adicione o nome ou uma fotografia primeiro", variant: "destructive" });
+      return;
+    }
+    setGenerating(true);
+    try {
+      const images = await Promise.all(
+        files.filter((f) => f.type.startsWith("image/") && f.size < 4_000_000).slice(0, 3).map(fileToDataUrl)
+      );
+      const { data, error } = await supabase.functions.invoke("generate-product-description", {
+        body: {
+          name,
+          category,
+          unit,
+          isOrganic,
+          isLactoseFree,
+          modifications: hasModifications ? modificationsDescription : "",
+          farmName: (profile as any)?.full_name ?? "",
+          images,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.description) throw new Error("Não foi possível gerar a descrição.");
+      setDescription(data.description);
+      toast({ title: "Descrição gerada", description: "Pode editar o texto antes de publicar." });
+    } catch (err: any) {
+      toast({ title: "Erro a gerar descrição", description: err.message, variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
 
 
   useEffect(() => {
