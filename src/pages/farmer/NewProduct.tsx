@@ -352,7 +352,20 @@ const NewProduct = () => {
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="description">Descrição</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleGenerateDescription}
+                disabled={generating}
+                className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+              >
+                {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                {generating ? "A escrever..." : "Escrever com IA"}
+              </Button>
+            </div>
             <Textarea
               id="description"
               value={description}
