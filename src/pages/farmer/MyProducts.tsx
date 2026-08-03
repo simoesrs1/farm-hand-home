@@ -310,8 +310,8 @@ const MyProducts = () => {
                   )}
                   <Button
                     size="sm"
-                    onClick={() => handleRestock(p)}
-                    disabled={savingId === p.id}
+                    onClick={() => applyStockDelta(p, 1)}
+                    disabled={savingId === p.id || deletingId === p.id}
                     className="gap-1"
                   >
                     {savingId === p.id ? (
@@ -321,6 +321,49 @@ const MyProducts = () => {
                     )}
                     Adicionar stock
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => applyStockDelta(p, -1)}
+                    disabled={savingId === p.id || deletingId === p.id || stock <= 0}
+                    className="gap-1"
+                  >
+                    <Minus className="h-4 w-4" />
+                    Retirar stock
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={deletingId === p.id}
+                        className="gap-1"
+                      >
+                        {deletingId === p.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                        Eliminar
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Eliminar “{p.name}”?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          O produto deixa de aparecer no catálogo e na sua lista de produtos
+                          publicados. Esta ação não pode ser anulada.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(p)}>
+                          Eliminar produto
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
                 </div>
               </li>
             );
