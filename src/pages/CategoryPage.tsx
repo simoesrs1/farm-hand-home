@@ -9,6 +9,8 @@ import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import SavingsBadge from "@/components/SavingsBadge";
+import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 
 type SortOption =
   | "relevancia"
@@ -35,6 +37,7 @@ const sortLabels: Record<SortOption, string> = {
 type SortableProduct = Product & {
   isOrganic: boolean;
   createdAt: string;
+  originalPrice: number;
   score: number;
   lat: number | null;
   lng: number | null;
@@ -62,6 +65,7 @@ const CategoryPage = () => {
   const { registerStock } = useStock();
   const { toast } = useToast();
   const [items, setItems] = useState<SortableProduct[]>([]);
+  const marketPrices = useMarketPrices();
   const [sort, setSort] = useState<SortOption>("relevancia");
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
 
@@ -134,6 +138,7 @@ const CategoryPage = () => {
             farmerId: r.farmer_id,
             farmer: farmer?.company_name ?? "Agricultor",
             price: Math.round(r.client_price * (1 - (r.discount_percent ?? 0) / 100) * 100) / 100,
+            originalPrice: r.client_price,
             unit: r.unit,
             category: r.category ?? category.name,
             image,
@@ -300,6 +305,13 @@ const CategoryPage = () => {
                         ? `Levantamento ou entrega em casa (${p.shippingDays ?? "?"} dias)`
                         : "Apenas levantamento na propriedade"}
                     </p>
+                    <SavingsBadge
+                      price={p.price}
+                      originalPrice={p.originalPrice}
+                      unit={p.unit}
+                      market={marketPrices.get(marketKey(p.name))}
+                    />
+
                     <div className="mt-3 flex items-end justify-between">
                       <div>
                         <span className="text-lg font-bold text-primary">{p.price.toFixed(2)}€</span>

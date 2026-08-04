@@ -9,6 +9,8 @@ import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import SavingsBadge from "@/components/SavingsBadge";
+import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&h=400&fit=crop";
@@ -32,6 +34,8 @@ const SearchResults = () => {
   const sort = (searchParams.get("sort") as SortOption) || "mais-avaliado";
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [originalPrices, setOriginalPrices] = useState<Map<string, number>>(new Map());
+  const marketPrices = useMarketPrices();
 
   const handleSortChange = (value: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -95,6 +99,7 @@ const SearchResults = () => {
 
       if (!cancelled) {
         setProducts(mapped);
+        setOriginalPrices(new Map(rows.map((r) => [r.id, Number(r.client_price)])));
         registerStock(mapped.map((p) => ({ id: p.id, quantity: p.stock })));
       }
     };
@@ -212,6 +217,13 @@ const SearchResults = () => {
                     ? `Levantamento ou entrega em casa (${p.shippingDays ?? "?"} dias)`
                     : "Apenas levantamento na propriedade"}
                 </p>
+                <SavingsBadge
+                  price={p.price}
+                  originalPrice={originalPrices.get(p.id)}
+                  unit={p.unit}
+                  market={marketPrices.get(marketKey(p.name))}
+                />
+
                 <div className="mt-3 flex items-end justify-between">
                   <div>
                     <span className="text-lg font-bold text-primary">{p.price.toFixed(2)}€</span>
