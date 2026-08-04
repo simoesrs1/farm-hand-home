@@ -65,6 +65,7 @@ const CategoryPage = () => {
   const { registerStock } = useStock();
   const { toast } = useToast();
   const [items, setItems] = useState<SortableProduct[]>([]);
+  const marketPrices = useMarketPrices();
   const [sort, setSort] = useState<SortOption>("relevancia");
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
 
