@@ -95,7 +95,7 @@ const CategoryPage = () => {
     const load = async () => {
       const { data: rows, error } = await supabase
         .from("products")
-        .select("id, name, unit, client_price, discount_percent, stock_quantity, media_urls, delivery_mode, shipping_days, category, farmer_id")
+        .select("id, name, unit, client_price, discount_percent, stock_quantity, media_urls, delivery_mode, shipping_days, category, farmer_id, is_organic, created_at")
         .ilike("category", category.name)
         .eq("active", true)
         .gt("stock_quantity", 0);
@@ -111,7 +111,7 @@ const CategoryPage = () => {
       const farmerIds = [...new Set(rows.map((r) => r.farmer_id))];
       const { data: farmers } = await supabase
         .from("public_farmer_profiles")
-        .select("id, company_name, address")
+        .select("id, company_name, address, initial_score, pickup_lat, pickup_lng")
         .in("id", farmerIds);
       const farmerById = new Map((farmers ?? []).map((f) => [f.id, f]));
 
@@ -128,7 +128,7 @@ const CategoryPage = () => {
               .createSignedUrl(path, 60 * 60);
             if (signed?.signedUrl) image = signed.signedUrl;
           }
-          const product: Product = {
+          const product: SortableProduct = {
             id: r.id,
             name: r.name,
             farmerId: r.farmer_id,
@@ -144,10 +144,16 @@ const CategoryPage = () => {
             deliveryMode: r.delivery_mode,
             shippingDays: r.shipping_days ?? undefined,
             stock: r.stock_quantity ?? 0,
+            isOrganic: r.is_organic ?? false,
+            createdAt: r.created_at,
+            score: farmer?.initial_score ?? 0,
+            lat: farmer?.pickup_lat ?? null,
+            lng: farmer?.pickup_lng ?? null,
           };
           return product;
         })
       );
+
       if (!cancelled) {
         setItems(mapped);
         registerStock(mapped.map((p) => ({ id: p.id, quantity: p.stock })));
