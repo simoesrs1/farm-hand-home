@@ -217,6 +217,13 @@ const SearchResults = () => {
                     ? `Levantamento ou entrega em casa (${p.shippingDays ?? "?"} dias)`
                     : "Apenas levantamento na propriedade"}
                 </p>
+                <SavingsBadge
+                  price={p.price}
+                  originalPrice={originalPrices.get(p.id)}
+                  unit={p.unit}
+                  market={marketPrices.get(marketKey(p.name))}
+                />
+
                 <div className="mt-3 flex items-end justify-between">
                   <div>
                     <span className="text-lg font-bold text-primary">{p.price.toFixed(2)}€</span>
