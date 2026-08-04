@@ -37,6 +37,7 @@ const sortLabels: Record<SortOption, string> = {
 type SortableProduct = Product & {
   isOrganic: boolean;
   createdAt: string;
+  originalPrice: number;
   score: number;
   lat: number | null;
   lng: number | null;
