@@ -32,6 +32,8 @@ const SearchResults = () => {
   const sort = (searchParams.get("sort") as SortOption) || "mais-avaliado";
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [originalPrices, setOriginalPrices] = useState<Map<string, number>>(new Map());
+  const marketPrices = useMarketPrices();
 
   const handleSortChange = (value: string) => {
     const newParams = new URLSearchParams(searchParams);
