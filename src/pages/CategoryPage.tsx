@@ -166,6 +166,49 @@ const CategoryPage = () => {
     };
   }, [category, registerStock]);
 
+  const sorted = useMemo(() => {
+    const list = [...items];
+    const dist = (p: SortableProduct) =>
+      userPos && p.lat != null && p.lng != null
+        ? distanceKm(userPos, { lat: p.lat, lng: p.lng })
+        : Number.POSITIVE_INFINITY;
+
+    switch (sort) {
+      case "preco-menor":
+        list.sort((a, b) => a.price - b.price);
+        break;
+      case "preco-maior":
+        list.sort((a, b) => b.price - a.price);
+        break;
+      case "mais-perto":
+        list.sort((a, b) => dist(a) - dist(b));
+        break;
+      case "mais-longe":
+        list.sort((a, b) => {
+          const da = dist(a);
+          const db = dist(b);
+          if (!isFinite(da) && !isFinite(db)) return 0;
+          if (!isFinite(da)) return 1;
+          if (!isFinite(db)) return -1;
+          return db - da;
+        });
+        break;
+      case "biologico":
+        list.sort((a, b) => Number(b.isOrganic) - Number(a.isOrganic));
+        break;
+      case "melhor-avaliacao":
+        list.sort((a, b) => b.score - a.score || b.rating - a.rating);
+        break;
+      case "mais-vendidos":
+        // Sem histórico de vendas público: menor stock restante = mais procurado.
+        list.sort((a, b) => a.stock - b.stock);
+        break;
+      default:
+        list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    }
+    return list;
+  }, [items, sort, userPos]);
+
   if (!category) return <Navigate to="/catalogo" replace />;
 
   return (
@@ -178,7 +221,7 @@ const CategoryPage = () => {
           <ArrowLeft className="h-4 w-4" /> Voltar ao catálogo
         </Link>
 
-        <div className="mb-8 overflow-hidden rounded-xl border border-border">
+        <div className="mb-6 overflow-hidden rounded-xl border border-border">
           <div className="relative h-40 sm:h-56">
             <img src={category.image} alt={category.name} className="h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -188,13 +231,36 @@ const CategoryPage = () => {
           </div>
         </div>
 
-        {items.length === 0 ? (
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{sorted.length}</span> produto
+            {sorted.length !== 1 && "s"} nesta categoria
+          </p>
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+            <Select value={sort} onValueChange={handleSortChange}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(sortLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {sorted.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">
             Ainda não há produtos nesta categoria.
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {items.map((p) => {
+            {sorted.map((p) => {
+
               const available = p.stock;
               const inCart = cartItems.find((i) => i.id === p.id)?.quantity ?? 0;
               const canAdd = inCart < available;
