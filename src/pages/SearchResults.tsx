@@ -9,6 +9,8 @@ import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import SavingsBadge from "@/components/SavingsBadge";
+import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&h=400&fit=crop";
