@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { type Product } from "@/data/products";
 import { getCategoryBySlug } from "@/data/categories";
 import { useCart } from "@/contexts/CartContext";
@@ -9,13 +10,83 @@ import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+type SortOption =
+  | "relevancia"
+  | "preco-menor"
+  | "preco-maior"
+  | "mais-perto"
+  | "mais-longe"
+  | "biologico"
+  | "melhor-avaliacao"
+  | "mais-vendidos";
+
+const sortLabels: Record<SortOption, string> = {
+  relevancia: "Relevância",
+  "preco-menor": "Preço mais baixo",
+  "preco-maior": "Preço mais alto",
+  "mais-perto": "Mais perto",
+  "mais-longe": "Mais longe",
+  biologico: "Biológico",
+  "melhor-avaliacao": "Melhor avaliação",
+  "mais-vendidos": "Mais vendidos",
+};
+
+/** Extra signals used only for sorting on this page. */
+type SortableProduct = Product & {
+  isOrganic: boolean;
+  createdAt: string;
+  score: number;
+  lat: number | null;
+  lng: number | null;
+};
+
+const distanceKm = (
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number }
+) => {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((a.lat * Math.PI) / 180) *
+      Math.cos((b.lat * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
+
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const category = slug ? getCategoryBySlug(slug) : undefined;
   const { addItem, items: cartItems } = useCart();
   const { registerStock } = useStock();
   const { toast } = useToast();
-  const [items, setItems] = useState<Product[]>([]);
+  const [items, setItems] = useState<SortableProduct[]>([]);
+  const [sort, setSort] = useState<SortOption>("relevancia");
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
+
+  const handleSortChange = (value: string) => {
+    const option = value as SortOption;
+    setSort(option);
+    if ((option === "mais-perto" || option === "mais-longe") && !userPos) {
+      if (!navigator.geolocation) {
+        toast({
+          title: "Localização indisponível",
+          description: "O seu navegador não permite obter a localização.",
+        });
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () =>
+          toast({
+            title: "Localização não autorizada",
+            description: "Ative a localização para ordenar por distância.",
+          })
+      );
+    }
+  };
+
 
   useEffect(() => {
     if (!category) return;
