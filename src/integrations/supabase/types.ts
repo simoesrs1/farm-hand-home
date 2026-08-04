@@ -228,6 +228,48 @@ export type Database = {
         }
         Relationships: []
       }
+      market_prices: {
+        Row: {
+          avg_price: number
+          category: string | null
+          collected_at: string
+          created_at: string
+          display_name: string
+          id: string
+          product_key: string
+          sample_size: number
+          sources: Json
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          avg_price: number
+          category?: string | null
+          collected_at?: string
+          created_at?: string
+          display_name: string
+          id?: string
+          product_key: string
+          sample_size?: number
+          sources?: Json
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          avg_price?: number
+          category?: string | null
+          collected_at?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          product_key?: string
+          sample_size?: number
+          sources?: Json
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
