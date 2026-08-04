@@ -138,6 +138,7 @@ const CategoryPage = () => {
             farmerId: r.farmer_id,
             farmer: farmer?.company_name ?? "Agricultor",
             price: Math.round(r.client_price * (1 - (r.discount_percent ?? 0) / 100) * 100) / 100,
+            originalPrice: r.client_price,
             unit: r.unit,
             category: r.category ?? category.name,
             image,
