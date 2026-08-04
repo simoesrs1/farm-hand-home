@@ -95,6 +95,7 @@ const SearchResults = () => {
 
       if (!cancelled) {
         setProducts(mapped);
+        setOriginalPrices(new Map(rows.map((r) => [r.id, Number(r.client_price)])));
         registerStock(mapped.map((p) => ({ id: p.id, quantity: p.stock })));
       }
     };
