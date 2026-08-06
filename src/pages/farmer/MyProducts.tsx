@@ -292,6 +292,7 @@ const MyProducts = () => {
           {products.map((p) => {
             const stock = p.stock_quantity ?? 0;
             const isOut = stock <= 0;
+            const threshold = p.low_stock_threshold ?? 5;
             const sel = preset[p.id] ?? "1";
             return (
               <li
@@ -333,7 +334,8 @@ const MyProducts = () => {
                     className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
                       isOut
                         ? "bg-destructive/10 text-destructive"
-                        : stock <= 5
+                        : stock <= threshold
+
                         ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
                         : "bg-primary/10 text-primary"
                     }`}
