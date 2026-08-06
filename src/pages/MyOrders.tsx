@@ -30,11 +30,12 @@ interface FarmerRef {
 interface Order {
   id: string;
   total: number;
-  status: "pending_payment" | "awaiting_pickup" | "delivered" | "expired";
+  status: "pending_payment" | "awaiting_pickup" | "delivered" | "expired" | "refunded";
   pickup_code: string;
   pickup_deadline: string;
   paid_at: string | null;
   delivered_at: string | null;
+  accepted_at: string | null;
   created_at: string;
   farmer_id: string;
   farmer: FarmerRef | null;
@@ -46,6 +47,7 @@ const statusMeta: Record<Order["status"], { label: string; tone: string; Icon: t
   awaiting_pickup: { label: "A aguardar levantamento", tone: "bg-primary/15 text-primary", Icon: Clock },
   delivered: { label: "Levantada", tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", Icon: CheckCircle2 },
   expired: { label: "Expirada", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
+  refunded: { label: "Devolvida (sem stock)", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
 };
 
 const mapsUrl = (f: FarmerRef | null) => {
