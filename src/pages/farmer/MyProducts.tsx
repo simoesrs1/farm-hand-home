@@ -335,7 +335,6 @@ const MyProducts = () => {
                       isOut
                         ? "bg-destructive/10 text-destructive"
                         : stock <= threshold
-
                         ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
                         : "bg-primary/10 text-primary"
                     }`}
