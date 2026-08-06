@@ -17,6 +17,7 @@ interface Notification {
   created_at: string;
   order_id: string | null;
   type: string;
+  link: string | null;
 }
 
 const NotificationBell = () => {
