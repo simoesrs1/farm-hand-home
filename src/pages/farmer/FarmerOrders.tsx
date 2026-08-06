@@ -202,11 +202,32 @@ const FarmerOrders = () => {
                       {o.status === "delivered" ? "Recebes" : o.status === "expired" ? "Recebeste" : "Vais receber"}: {farmerGets.toFixed(2)}€
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${m.tone}`}>
                       <Icon className="h-3.5 w-3.5" /> {m.label}
                     </span>
-                    {o.status === "awaiting_pickup" && (
+                    {o.status === "awaiting_pickup" && !o.accepted_at && (
+                      <>
+                        <Button
+                          size="sm"
+                          className="gap-1.5"
+                          disabled={acting === o.id}
+                          onClick={() => runAction(o, "accept")}
+                        >
+                          <ThumbsUp className="h-4 w-4" /> Aceitar pedido
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5 text-destructive hover:text-destructive"
+                          disabled={acting === o.id}
+                          onClick={() => runAction(o, "refund_no_stock")}
+                        >
+                          <Undo2 className="h-4 w-4" /> Devolver (sem stock)
+                        </Button>
+                      </>
+                    )}
+                    {o.status === "awaiting_pickup" && o.accepted_at && (
                       <Button size="sm" className="gap-1.5" onClick={() => setValidating(o)}>
                         <ScanLine className="h-4 w-4" /> Validar entrega
                       </Button>
