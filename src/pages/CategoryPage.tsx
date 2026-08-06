@@ -177,6 +177,12 @@ const CategoryPage = () => {
     };
   }, [category, registerStock]);
 
+  useEffect(() => {
+    if (!highlightId) return;
+    const el = cardRefs.current[highlightId];
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightId, items]);
+
   const sorted = useMemo(() => {
     const list = [...items];
     const dist = (p: SortableProduct) =>
@@ -275,10 +281,14 @@ const CategoryPage = () => {
               const available = p.stock;
               const inCart = cartItems.find((i) => i.id === p.id)?.quantity ?? 0;
               const canAdd = inCart < available;
+              const isHighlighted = highlightId === p.id;
               return (
                 <div
                   key={p.id}
-                  className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+                  ref={(el) => { cardRefs.current[p.id] = el; }}
+                  className={`group overflow-hidden rounded-xl border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${
+                    isHighlighted ? "border-primary ring-2 ring-primary/30 shadow-lg" : "border-border"
+                  }`}
                 >
                   <div className="relative h-40 overflow-hidden">
                     <img
