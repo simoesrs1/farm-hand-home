@@ -44,7 +44,9 @@ const meta = {
 
 const FarmerOrders = () => {
   const { user, profile } = useAuth();
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [acting, setActing] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
   const highlightId = searchParams.get("id");
@@ -86,6 +88,33 @@ const FarmerOrders = () => {
       prev.map((o) => (o.id === orderId ? { ...o, status: "delivered", delivered_at: now } : o)),
     );
   };
+
+  const runAction = async (order: Order, action: "accept" | "refund_no_stock") => {
+    setActing(order.id);
+    const { data, error } = await supabase.functions.invoke("order-action", {
+      body: { order_id: order.id, action },
+    });
+    setActing(null);
+    const message = (data as { error?: string } | null)?.error;
+    if (error || message) {
+      toast({
+        title: "Não foi possível concluir",
+        description: message ?? "Tenta novamente dentro de momentos.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (action === "accept") {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === order.id ? { ...o, accepted_at: new Date().toISOString() } : o)),
+      );
+      toast({ title: "Pedido aceite", description: "O cliente foi notificado." });
+    } else {
+      setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "refunded" } : o)));
+      toast({ title: "Encomenda devolvida", description: "O cliente foi notificado da falta de stock." });
+    }
+  };
+
 
   if (!user || profile?.profile_type !== "vendedor") {
     return (
