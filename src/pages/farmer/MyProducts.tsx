@@ -168,6 +168,25 @@ const MyProducts = () => {
     setCustom((s) => ({ ...s, [p.id]: "" }));
   };
 
+  const saveThreshold = async (p: ProductRow, value: number) => {
+    const clean = Math.max(0, Math.round(Number.isFinite(value) ? value : 0));
+    if (clean === (p.low_stock_threshold ?? 5)) return;
+    const { error } = await supabase
+      .from("products")
+      .update({ low_stock_threshold: clean })
+      .eq("id", p.id);
+    if (error) {
+      toast({ title: "Erro a guardar aviso de stock", description: error.message, variant: "destructive" });
+      return;
+    }
+    setProducts((prev) =>
+      prev.map((x) => (x.id === p.id ? { ...x, low_stock_threshold: clean } : x)),
+    );
+    toast({ title: "Aviso de stock atualizado", description: `${p.name}: avisar a partir de ${clean} unidade(s).` });
+  };
+
+
+
   const applyDiscount = async (p: ProductRow, value: number) => {
     const clean = Math.min(90, Math.max(0, Math.round(value)));
     if (clean === (p.discount_percent ?? 0)) return;
