@@ -27,6 +27,7 @@ type ProductRow = {
   media_urls: string[] | null;
   client_price: number;
   discount_percent: number | null;
+  low_stock_threshold: number | null;
 };
 
 const DISCOUNT_PRESETS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
@@ -74,7 +75,7 @@ const MyProducts = () => {
     setFarmerId(farmer.id);
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, unit, stock_quantity, media_urls, client_price, discount_percent")
+      .select("id, name, unit, stock_quantity, media_urls, client_price, discount_percent, low_stock_threshold")
       .eq("farmer_id", farmer.id)
       .eq("active", true)
       .order("created_at", { ascending: false });
