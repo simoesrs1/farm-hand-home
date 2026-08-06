@@ -429,6 +429,25 @@ const MyProducts = () => {
                 </div>
                 </div>
 
+                {/* Aviso de stock baixo */}
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Avisar-me quando restarem
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    defaultValue={threshold}
+                    onBlur={(e) => saveThreshold(p, parseInt(e.target.value, 10))}
+                    aria-label="Limite de aviso de stock baixo"
+                    className="h-8 w-20"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    unidade(s) — recebe também uma notificação quando esgotar.
+                  </span>
+                </div>
+
                 {/* Descontos */}
                 <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
                   <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
