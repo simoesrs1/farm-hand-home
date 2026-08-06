@@ -27,6 +27,7 @@ type ProductRow = {
   media_urls: string[] | null;
   client_price: number;
   discount_percent: number | null;
+  low_stock_threshold: number | null;
 };
 
 const DISCOUNT_PRESETS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
@@ -74,7 +75,7 @@ const MyProducts = () => {
     setFarmerId(farmer.id);
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, unit, stock_quantity, media_urls, client_price, discount_percent")
+      .select("id, name, unit, stock_quantity, media_urls, client_price, discount_percent, low_stock_threshold")
       .eq("farmer_id", farmer.id)
       .eq("active", true)
       .order("created_at", { ascending: false });
@@ -166,6 +167,25 @@ const MyProducts = () => {
     setPreset((s) => ({ ...s, [p.id]: "1" }));
     setCustom((s) => ({ ...s, [p.id]: "" }));
   };
+
+  const saveThreshold = async (p: ProductRow, value: number) => {
+    const clean = Math.max(0, Math.round(Number.isFinite(value) ? value : 0));
+    if (clean === (p.low_stock_threshold ?? 5)) return;
+    const { error } = await supabase
+      .from("products")
+      .update({ low_stock_threshold: clean })
+      .eq("id", p.id);
+    if (error) {
+      toast({ title: "Erro a guardar aviso de stock", description: error.message, variant: "destructive" });
+      return;
+    }
+    setProducts((prev) =>
+      prev.map((x) => (x.id === p.id ? { ...x, low_stock_threshold: clean } : x)),
+    );
+    toast({ title: "Aviso de stock atualizado", description: `${p.name}: avisar a partir de ${clean} unidade(s).` });
+  };
+
+
 
   const applyDiscount = async (p: ProductRow, value: number) => {
     const clean = Math.min(90, Math.max(0, Math.round(value)));
@@ -272,6 +292,7 @@ const MyProducts = () => {
           {products.map((p) => {
             const stock = p.stock_quantity ?? 0;
             const isOut = stock <= 0;
+            const threshold = p.low_stock_threshold ?? 5;
             const sel = preset[p.id] ?? "1";
             return (
               <li
@@ -313,7 +334,7 @@ const MyProducts = () => {
                     className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
                       isOut
                         ? "bg-destructive/10 text-destructive"
-                        : stock <= 5
+                        : stock <= threshold
                         ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
                         : "bg-primary/10 text-primary"
                     }`}
@@ -406,6 +427,25 @@ const MyProducts = () => {
                   </AlertDialog>
 
                 </div>
+                </div>
+
+                {/* Aviso de stock baixo */}
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Avisar-me quando restarem
+                  </span>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    defaultValue={threshold}
+                    onBlur={(e) => saveThreshold(p, parseInt(e.target.value, 10))}
+                    aria-label="Limite de aviso de stock baixo"
+                    className="h-8 w-20"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    unidade(s) — recebe também uma notificação quando esgotar.
+                  </span>
                 </div>
 
                 {/* Descontos */}

@@ -528,6 +528,7 @@ export type Database = {
           id: string
           is_lactose_free: boolean
           is_organic: boolean
+          low_stock_threshold: number
           media_urls: string[]
           modifications_description: string | null
           name: string
@@ -552,6 +553,7 @@ export type Database = {
           id?: string
           is_lactose_free?: boolean
           is_organic?: boolean
+          low_stock_threshold?: number
           media_urls?: string[]
           modifications_description?: string | null
           name: string
@@ -576,6 +578,7 @@ export type Database = {
           id?: string
           is_lactose_free?: boolean
           is_organic?: boolean
+          low_stock_threshold?: number
           media_urls?: string[]
           modifications_description?: string | null
           name?: string

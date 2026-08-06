@@ -58,6 +58,10 @@ const NotificationBell = () => {
 
   const handleClick = (n: Notification) => {
     setOpen(false);
+    if (n.type === "low_stock" || n.type === "out_of_stock") {
+      navigate("/agricultor/produtos");
+      return;
+    }
     if (n.order_id) {
       const base = activeMode === "vendedor" ? "/agricultor/encomendas" : "/encomendas";
       navigate(`${base}?id=${n.order_id}`);
