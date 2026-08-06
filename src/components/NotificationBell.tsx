@@ -29,7 +29,7 @@ const NotificationBell = () => {
   const load = async () => {
     const { data } = await supabase
       .from("notifications")
-      .select("id,title,message,read,created_at,order_id,type")
+      .select("id,title,message,read,created_at,order_id,type,link")
       .order("created_at", { ascending: false })
       .limit(20);
     setItems((data as Notification[]) ?? []);
@@ -61,6 +61,12 @@ const NotificationBell = () => {
     setOpen(false);
     if (n.type === "low_stock" || n.type === "out_of_stock") {
       navigate("/agricultor/produtos");
+      return;
+    }
+    // Favorite-related notifications (restock, promotions, new products) carry a
+    // direct link into the catalog page where the product lives.
+    if (n.link) {
+      navigate(n.link);
       return;
     }
     if (n.order_id) {
