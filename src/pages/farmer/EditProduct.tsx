@@ -31,6 +31,7 @@ const EditProduct = () => {
   const [unit, setUnit] = useState("");
   const [farmerPrice, setFarmerPrice] = useState("");
   const [stockQuantity, setStockQuantity] = useState("");
+  const [lowStockThreshold, setLowStockThreshold] = useState("5");
   const [shippingDays, setShippingDays] = useState("");
   const [availabilityStart, setAvailabilityStart] = useState("");
   const [availabilityEnd, setAvailabilityEnd] = useState("");
@@ -74,6 +75,7 @@ const EditProduct = () => {
       setUnit(p.unit ?? "");
       setFarmerPrice(String(p.farmer_price ?? ""));
       setStockQuantity(String(p.stock_quantity ?? 0));
+      setLowStockThreshold(String(p.low_stock_threshold ?? 5));
       setShippingDays(p.shipping_days != null ? String(p.shipping_days) : "");
       setAvailabilityStart(p.availability_start ?? "");
       setAvailabilityEnd(p.availability_end ?? "");
@@ -125,6 +127,7 @@ const EditProduct = () => {
         farmer_price: farmerPriceNumber,
         client_price: clientPrice,
         stock_quantity: stockNum,
+        low_stock_threshold: Math.max(0, parseInt(lowStockThreshold, 10) || 0),
         shipping_days: shippingDays ? parseInt(shippingDays, 10) : 0,
         availability_start: availabilityStart || null,
         availability_end: availabilityEnd || null,
@@ -235,6 +238,20 @@ const EditProduct = () => {
                 value={stockQuantity}
                 onChange={(e) => setStockQuantity(e.target.value)}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="low-stock">Avisar quando o stock chegar a</Label>
+              <Input
+                id="low-stock"
+                type="number"
+                min={0}
+                step={1}
+                value={lowStockThreshold}
+                onChange={(e) => setLowStockThreshold(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Recebe uma notificação quando as unidades disponíveis descerem até este valor.
+              </p>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">

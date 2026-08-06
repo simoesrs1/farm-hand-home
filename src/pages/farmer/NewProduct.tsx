@@ -41,6 +41,7 @@ const NewProduct = () => {
   const [deliveryMode, setDeliveryMode] = useState<DeliveryModesEnum>(DeliveryModesEnum.Pickup);
   const [shippingDays, setShippingDays] = useState<string>("");
   const [stockQuantity, setStockQuantity] = useState<string>("");
+  const [lowStockThreshold, setLowStockThreshold] = useState<string>("5");
   const [availabilityStart, setAvailabilityStart] = useState<string>("");
   const [availabilityEnd, setAvailabilityEnd] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
@@ -205,6 +206,7 @@ const NewProduct = () => {
         delivery_mode: DeliveryModesEnum[deliveryMode].toLowerCase(),
         shipping_days: deliveryMode === DeliveryModesEnum.Pickup ? 0 : shippingDaysNum,
         stock_quantity: stockNum,
+        low_stock_threshold: Math.max(0, parseInt(lowStockThreshold, 10) || 0),
         availability_start: pickupEnabled ? availabilityStart : null,
         availability_end: pickupEnabled ? availabilityEnd : null,
         created_at: new Date().toISOString(),
@@ -481,6 +483,21 @@ const NewProduct = () => {
               placeholder="Ex: 25"
             />
             <p className="text-xs text-muted-foreground">Total disponível para venda desta publicação.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="low-stock">Avisar quando o stock chegar a</Label>
+            <Input
+              id="low-stock"
+              type="number"
+              min="0"
+              step="1"
+              value={lowStockThreshold}
+              onChange={(e) => setLowStockThreshold(e.target.value)}
+              placeholder="Ex: 5"
+            />
+            <p className="text-xs text-muted-foreground">
+              Recebe uma notificação quando as unidades disponíveis descerem até este valor (e outra quando esgotar).
+            </p>
           </div>
           {(deliveryMode === DeliveryModesEnum.Pickup || deliveryMode === DeliveryModesEnum.Both) && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
