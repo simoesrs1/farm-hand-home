@@ -23,11 +23,12 @@ interface Order {
   total: number;
   commission_amount: number;
   farmer_amount: number;
-  status: "pending_payment" | "awaiting_pickup" | "delivered" | "expired";
+  status: "pending_payment" | "awaiting_pickup" | "delivered" | "expired" | "refunded";
   pickup_deadline: string;
   pickup_code: string;
   delivered_at: string | null;
   expired_at: string | null;
+  accepted_at: string | null;
   created_at: string;
   order_items: OrderItem[];
 }
@@ -36,6 +37,7 @@ const meta = {
   awaiting_pickup: { label: "A aguardar", tone: "bg-primary/15 text-primary", Icon: Clock },
   delivered: { label: "Entregue", tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", Icon: CheckCircle2 },
   expired: { label: "Expirada", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
+  refunded: { label: "Devolvida (sem stock)", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
   pending_payment: { label: "Pendente", tone: "bg-muted text-muted-foreground", Icon: Clock },
 } as const;
 
