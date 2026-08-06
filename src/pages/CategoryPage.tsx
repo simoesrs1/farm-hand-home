@@ -91,6 +91,12 @@ const CategoryPage = () => {
     }
   };
 
+  // Notifications about favourite farmers (restock / promotions / new products)
+  // link straight here with ?produto=<id> so we scroll to and highlight it.
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get("produto");
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
 
   useEffect(() => {
     if (!category) return;
