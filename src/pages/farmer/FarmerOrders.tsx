@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine } from "lucide-react";
+import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrderChat from "@/components/OrderChat";
@@ -23,11 +24,12 @@ interface Order {
   total: number;
   commission_amount: number;
   farmer_amount: number;
-  status: "pending_payment" | "awaiting_pickup" | "delivered" | "expired";
+  status: "pending_payment" | "awaiting_pickup" | "delivered" | "expired" | "refunded";
   pickup_deadline: string;
   pickup_code: string;
   delivered_at: string | null;
   expired_at: string | null;
+  accepted_at: string | null;
   created_at: string;
   order_items: OrderItem[];
 }
@@ -36,12 +38,15 @@ const meta = {
   awaiting_pickup: { label: "A aguardar", tone: "bg-primary/15 text-primary", Icon: Clock },
   delivered: { label: "Entregue", tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", Icon: CheckCircle2 },
   expired: { label: "Expirada", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
+  refunded: { label: "Devolvida (sem stock)", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
   pending_payment: { label: "Pendente", tone: "bg-muted text-muted-foreground", Icon: Clock },
 } as const;
 
 const FarmerOrders = () => {
   const { user, profile } = useAuth();
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [acting, setActing] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
   const highlightId = searchParams.get("id");
@@ -54,7 +59,7 @@ const FarmerOrders = () => {
     const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,delivered_at,expired_at,created_at,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
+        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,delivered_at,expired_at,accepted_at,created_at,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
         .order("created_at", { ascending: false });
       if (!cancelled) {
         setOrders((data as Order[]) ?? []);
@@ -83,6 +88,33 @@ const FarmerOrders = () => {
       prev.map((o) => (o.id === orderId ? { ...o, status: "delivered", delivered_at: now } : o)),
     );
   };
+
+  const runAction = async (order: Order, action: "accept" | "refund_no_stock") => {
+    setActing(order.id);
+    const { data, error } = await supabase.functions.invoke("order-action", {
+      body: { order_id: order.id, action },
+    });
+    setActing(null);
+    const message = (data as { error?: string } | null)?.error;
+    if (error || message) {
+      toast({
+        title: "Não foi possível concluir",
+        description: message ?? "Tenta novamente dentro de momentos.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (action === "accept") {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === order.id ? { ...o, accepted_at: new Date().toISOString() } : o)),
+      );
+      toast({ title: "Pedido aceite", description: "O cliente foi notificado." });
+    } else {
+      setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "refunded" } : o)));
+      toast({ title: "Encomenda devolvida", description: "O cliente foi notificado da falta de stock." });
+    }
+  };
+
 
   if (!user || profile?.profile_type !== "vendedor") {
     return (
@@ -170,11 +202,32 @@ const FarmerOrders = () => {
                       {o.status === "delivered" ? "Recebes" : o.status === "expired" ? "Recebeste" : "Vais receber"}: {farmerGets.toFixed(2)}€
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${m.tone}`}>
                       <Icon className="h-3.5 w-3.5" /> {m.label}
                     </span>
-                    {o.status === "awaiting_pickup" && (
+                    {o.status === "awaiting_pickup" && !o.accepted_at && (
+                      <>
+                        <Button
+                          size="sm"
+                          className="gap-1.5"
+                          disabled={acting === o.id}
+                          onClick={() => runAction(o, "accept")}
+                        >
+                          <ThumbsUp className="h-4 w-4" /> Aceitar pedido
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5 text-destructive hover:text-destructive"
+                          disabled={acting === o.id}
+                          onClick={() => runAction(o, "refund_no_stock")}
+                        >
+                          <Undo2 className="h-4 w-4" /> Devolver (sem stock)
+                        </Button>
+                      </>
+                    )}
+                    {o.status === "awaiting_pickup" && o.accepted_at && (
                       <Button size="sm" className="gap-1.5" onClick={() => setValidating(o)}>
                         <ScanLine className="h-4 w-4" /> Validar entrega
                       </Button>

@@ -30,11 +30,12 @@ interface FarmerRef {
 interface Order {
   id: string;
   total: number;
-  status: "pending_payment" | "awaiting_pickup" | "delivered" | "expired";
+  status: "pending_payment" | "awaiting_pickup" | "delivered" | "expired" | "refunded";
   pickup_code: string;
   pickup_deadline: string;
   paid_at: string | null;
   delivered_at: string | null;
+  accepted_at: string | null;
   created_at: string;
   farmer_id: string;
   farmer: FarmerRef | null;
@@ -46,6 +47,7 @@ const statusMeta: Record<Order["status"], { label: string; tone: string; Icon: t
   awaiting_pickup: { label: "A aguardar levantamento", tone: "bg-primary/15 text-primary", Icon: Clock },
   delivered: { label: "Levantada", tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", Icon: CheckCircle2 },
   expired: { label: "Expirada", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
+  refunded: { label: "Devolvida (sem stock)", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
 };
 
 const mapsUrl = (f: FarmerRef | null) => {
@@ -71,7 +73,7 @@ const MyOrders = () => {
     (async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,total,status,pickup_code,pickup_deadline,paid_at,delivered_at,created_at,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
+        .select("id,total,status,pickup_code,pickup_deadline,paid_at,delivered_at,accepted_at,created_at,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
         .order("created_at", { ascending: false });
       setOrders((data as unknown as Order[]) ?? []);
       setLoading(false);
@@ -82,7 +84,7 @@ const MyOrders = () => {
     const active: Order[] = [];
     const past: Order[] = [];
     for (const o of orders) {
-      if (o.status === "delivered" || o.status === "expired") past.push(o);
+      if (o.status === "delivered" || o.status === "expired" || o.status === "refunded") past.push(o);
       else active.push(o);
     }
     return { activeOrders: active, pastOrders: past };
@@ -114,9 +116,16 @@ const MyOrders = () => {
             </p>
             <p className="mt-1 text-sm text-muted-foreground">{o.total.toFixed(2)}€</p>
           </div>
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${meta.tone}`}>
-            <Icon className="h-3.5 w-3.5" /> {meta.label}
-          </span>
+          <div className="flex flex-col items-end gap-1.5">
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${meta.tone}`}>
+              <Icon className="h-3.5 w-3.5" /> {meta.label}
+            </span>
+            {o.status === "awaiting_pickup" && (
+              <span className="text-[11px] text-muted-foreground">
+                {o.accepted_at ? "Pedido aceite pelo agricultor" : "A aguardar aceitação do agricultor"}
+              </span>
+            )}
+          </div>
         </div>
 
         {o.farmer?.pickup_address && (
