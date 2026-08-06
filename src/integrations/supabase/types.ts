@@ -274,6 +274,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          link: string | null
           message: string
           order_id: string | null
           read: boolean
@@ -284,6 +285,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          link?: string | null
           message: string
           order_id?: string | null
           read?: boolean
@@ -294,6 +296,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          link?: string | null
           message?: string
           order_id?: string | null
           read?: boolean
@@ -433,6 +436,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          accepted_at: string | null
           client_id: string
           commission_amount: number
           created_at: string
@@ -449,6 +453,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accepted_at?: string | null
           client_id: string
           commission_amount: number
           created_at?: string
@@ -465,6 +470,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accepted_at?: string | null
           client_id?: string
           commission_amount?: number
           created_at?: string
@@ -754,6 +760,7 @@ export type Database = {
       }
     }
     Functions: {
+      category_slug: { Args: { _name: string }; Returns: string }
       company_nif_taken: {
         Args: { p_company_nif: string; p_exclude_id?: string }
         Returns: boolean
@@ -775,6 +782,7 @@ export type Database = {
         | "awaiting_pickup"
         | "delivered"
         | "expired"
+        | "refunded"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -908,6 +916,7 @@ export const Constants = {
         "awaiting_pickup",
         "delivered",
         "expired",
+        "refunded",
       ],
     },
   },
