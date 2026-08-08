@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -11,18 +11,27 @@ interface Props {
   lat: number | null;
   lng: number | null;
   onChange: (lat: number, lng: number) => void;
+  /** Realça o mapa a vermelho quando falta marcar o ponto de levantamento. */
+  invalid?: boolean;
 }
 
 const PORTUGAL_CENTER = { lat: 39.5, lng: -8.0 };
 
-const PickupLocationMap = ({ lat, lng, onChange }: Props) => {
+const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
   const markerInstance = useRef<any>(null);
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
-    const browserKey = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-    const trackingId = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
+    const browserKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
+    if (!browserKey) {
+      console.warn(
+        "VITE_GOOGLE_MAPS_BROWSER_KEY não definida — o mapa não será carregado.",
+      );
+      setUnavailable(true);
+      return;
+    }
 
     const initialize = () => {
       if (!mapRef.current || !window.google?.maps || mapInstance.current) return;
@@ -95,7 +104,7 @@ const PickupLocationMap = ({ lat, lng, onChange }: Props) => {
     const script = document.createElement("script");
     script.id = "gmaps-sdk";
     script.async = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initPickupMap&channel=${trackingId}`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initPickupMap`;
     document.head.appendChild(script);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -119,10 +128,22 @@ const PickupLocationMap = ({ lat, lng, onChange }: Props) => {
     mapInstance.current.panTo(pos);
   }, [lat, lng, onChange]);
 
+  if (unavailable) {
+    return (
+      <div className="flex h-72 w-full items-center justify-center rounded-lg border border-dashed border-border bg-muted p-6 text-center">
+        <p className="text-sm text-muted-foreground">
+          Mapa indisponível — falta configurar a chave do Google Maps.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={mapRef}
-      className="h-72 w-full rounded-lg border border-border bg-muted"
+      className={`h-72 w-full rounded-lg border bg-muted ${
+        invalid ? "border-destructive ring-2 ring-destructive/20" : "border-border"
+      }`}
     />
   );
 };

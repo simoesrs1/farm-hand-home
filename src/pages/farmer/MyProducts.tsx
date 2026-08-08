@@ -1,9 +1,36 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Plus, PackageOpen, ImageIcon, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Plus,
+  Minus,
+  PackageOpen,
+  ImageIcon,
+  AlertTriangle,
+  CalendarClock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -14,6 +41,38 @@ type ProductRow = {
   unit: string;
   stock_quantity: number | null;
   media_urls: string[] | null;
+  availability_start: string | null;
+  availability_end: string | null;
+};
+
+// `availability_start`/`availability_end` são colunas `date` (YYYY-MM-DD), por
+// isso comparamos como texto contra o dia local para evitar saltos de fuso.
+const todayISO = () => {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+const formatDate = (iso: string) =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString("pt-PT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+const daysUntil = (iso: string) => {
+  const ms = new Date(`${iso}T00:00:00`).getTime() - new Date(`${todayISO()}T00:00:00`).getTime();
+  return Math.round(ms / 86_400_000);
+};
+
+type AvailabilityState = "none" | "upcoming" | "active" | "ending" | "expired";
+
+const availabilityState = (p: ProductRow): AvailabilityState => {
+  if (!p.availability_end) return "none";
+  const today = todayISO();
+  if (p.availability_end < today) return "expired";
+  if (p.availability_start && p.availability_start > today) return "upcoming";
+  return daysUntil(p.availability_end) <= 7 ? "ending" : "active";
 };
 
 const MyProducts = () => {
@@ -28,6 +87,9 @@ const MyProducts = () => {
   const [custom, setCustom] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [notified, setNotified] = useState(false);
+  const [removeId, setRemoveId] = useState<string | null>(null);
+  const [removeQty, setRemoveQty] = useState("");
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -56,7 +118,7 @@ const MyProducts = () => {
     setFarmerId(farmer.id);
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, unit, stock_quantity, media_urls")
+      .select("id, name, unit, stock_quantity, media_urls, availability_start, availability_end")
       .eq("farmer_id", farmer.id)
       .order("created_at", { ascending: false });
     if (error) {
@@ -95,15 +157,27 @@ const MyProducts = () => {
     () => products.filter((p) => (p.stock_quantity ?? 0) <= 0),
     [products]
   );
+  const expired = useMemo(
+    () => products.filter((p) => availabilityState(p) === "expired"),
+    [products]
+  );
   useEffect(() => {
-    if (!loading && !notified && outOfStock.length > 0) {
+    if (loading || notified) return;
+    if (outOfStock.length > 0) {
       toast({
         title: `${outOfStock.length} produto(s) sem stock`,
         description: "Reponha stock diretamente na lista para voltarem à venda.",
       });
-      setNotified(true);
     }
-  }, [loading, notified, outOfStock.length]);
+    if (expired.length > 0) {
+      toast({
+        title: `${expired.length} produto(s) fora do prazo`,
+        description: "A data de disponibilidade já passou. Atualize-a para continuarem à venda.",
+        variant: "destructive",
+      });
+    }
+    if (outOfStock.length > 0 || expired.length > 0) setNotified(true);
+  }, [loading, notified, outOfStock.length, expired.length]);
 
   const handleRestock = async (p: ProductRow) => {
     const sel = preset[p.id] ?? "1";
@@ -136,6 +210,50 @@ const MyProducts = () => {
     );
     setPreset((s) => ({ ...s, [p.id]: "1" }));
     setCustom((s) => ({ ...s, [p.id]: "" }));
+  };
+
+  const removeTarget = useMemo(
+    () => products.find((p) => p.id === removeId) ?? null,
+    [products, removeId]
+  );
+  const removeMax = removeTarget?.stock_quantity ?? 0;
+  const removeAmount = parseInt(removeQty, 10);
+  const removeValid =
+    Number.isFinite(removeAmount) && removeAmount > 0 && removeAmount <= removeMax;
+
+  const openRemoveDialog = (p: ProductRow) => {
+    setRemoveId(p.id);
+    setRemoveQty("");
+  };
+
+  const closeRemoveDialog = () => {
+    setRemoveId(null);
+    setRemoveQty("");
+    setConfirmRemove(false);
+  };
+
+  const handleRemoveStock = async () => {
+    if (!removeTarget || !removeValid) return;
+    setSavingId(removeTarget.id);
+    const newStock = removeMax - removeAmount;
+    const { error } = await supabase
+      .from("products")
+      .update({ stock_quantity: newStock })
+      .eq("id", removeTarget.id);
+    setSavingId(null);
+    if (error) {
+      toast({ title: "Erro a atualizar stock", description: error.message, variant: "destructive" });
+      setConfirmRemove(false);
+      return;
+    }
+    toast({
+      title: "Stock removido",
+      description: `${removeTarget.name}: −${removeAmount} → ${newStock}`,
+    });
+    setProducts((prev) =>
+      prev.map((x) => (x.id === removeTarget.id ? { ...x, stock_quantity: newStock } : x))
+    );
+    closeRemoveDialog();
   };
 
   if (authLoading || loading) {
@@ -190,6 +308,17 @@ const MyProducts = () => {
         </Alert>
       )}
 
+      {expired.length > 0 && (
+        <Alert variant="destructive" className="mt-4">
+          <CalendarClock className="h-4 w-4" />
+          <AlertTitle>Prazo de disponibilidade terminado</AlertTitle>
+          <AlertDescription>
+            {expired.length} produto(s) com a data de fim já ultrapassada. Atualize o prazo para
+            continuarem disponíveis para levantamento.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {products.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center">
           <PackageOpen className="h-8 w-8 text-muted-foreground" />
@@ -206,11 +335,13 @@ const MyProducts = () => {
             const stock = p.stock_quantity ?? 0;
             const isOut = stock <= 0;
             const sel = preset[p.id] ?? "1";
+            const avail = availabilityState(p);
+            const isExpired = avail === "expired";
             return (
               <li
                 key={p.id}
                 className={`flex flex-col gap-3 rounded-2xl border bg-card p-3 sm:flex-row sm:items-center ${
-                  isOut ? "border-destructive/50" : "border-border"
+                  isOut || isExpired ? "border-destructive/50" : "border-border"
                 }`}
               >
                 <div className="flex items-center gap-3 sm:flex-1 sm:min-w-0">
@@ -226,6 +357,33 @@ const MyProducts = () => {
                   <div className="min-w-0">
                     <p className="truncate font-medium text-foreground">{p.name}</p>
                     <p className="text-xs text-muted-foreground">por {p.unit}</p>
+                    {avail === "none" ? (
+                      <p className="mt-1 text-xs text-muted-foreground">Sem prazo de levantamento</p>
+                    ) : (
+                      <p
+                        className={`mt-1 inline-flex items-center gap-1 text-xs ${
+                          avail === "expired"
+                            ? "font-medium text-destructive"
+                            : avail === "ending"
+                            ? "font-medium text-amber-700 dark:text-amber-400"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                        <span>
+                          {p.availability_start && `${formatDate(p.availability_start)} – `}
+                          {formatDate(p.availability_end!)}
+                          {avail === "expired" && " · prazo terminado"}
+                          {avail === "ending" &&
+                            ` · termina ${
+                              daysUntil(p.availability_end!) === 0
+                                ? "hoje"
+                                : `em ${daysUntil(p.availability_end!)} dia(s)`
+                            }`}
+                          {avail === "upcoming" && " · ainda não iniciado"}
+                        </span>
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -283,12 +441,119 @@ const MyProducts = () => {
                     )}
                     Adicionar stock
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openRemoveDialog(p)}
+                    disabled={isOut || savingId === p.id}
+                    className="gap-1"
+                  >
+                    <Minus className="h-4 w-4" />
+                    Remover stock
+                  </Button>
                 </div>
               </li>
             );
           })}
         </ul>
       )}
+
+      <Dialog
+        open={!!removeTarget}
+        onOpenChange={(open) => {
+          if (!open && savingId === null) closeRemoveDialog();
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remover stock</DialogTitle>
+            <DialogDescription>
+              {removeTarget && (
+                <>
+                  {removeTarget.name} · máximo disponível:{" "}
+                  <span className="font-medium text-primary">
+                    {removeMax} {removeTarget.unit}
+                  </span>
+                  .
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div>
+            <label htmlFor="remove-stock-qty" className="mb-1 block text-sm font-medium text-foreground">
+              Quantidade a remover
+            </label>
+            <Input
+              id="remove-stock-qty"
+              type="number"
+              min={1}
+              max={removeMax}
+              step={1}
+              value={removeQty}
+              onChange={(e) => setRemoveQty(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && removeValid) setConfirmRemove(true);
+              }}
+              placeholder={`1 - ${removeMax}`}
+              autoComplete="off"
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              Indique um valor entre 1 e {removeMax}.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeRemoveDialog} disabled={savingId !== null}>
+              Cancelar
+            </Button>
+            <Button onClick={() => setConfirmRemove(true)} disabled={!removeValid || savingId !== null}>
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={confirmRemove}
+        onOpenChange={(open) => {
+          if (!open && savingId === null) setConfirmRemove(false);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar remoção de stock</AlertDialogTitle>
+            <AlertDialogDescription>
+              {removeTarget && removeValid && (
+                <>
+                  Deseja mesmo remover {removeAmount} {removeTarget.unit} de{" "}
+                  <span className="font-medium text-foreground">{removeTarget.name}</span>? O stock
+                  passará de {removeMax} para {removeMax - removeAmount}. Esta ação não pode ser
+                  anulada.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={savingId !== null}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={savingId !== null}
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemoveStock();
+              }}
+            >
+              {savingId !== null ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> A remover…
+                </>
+              ) : (
+                "Sim, remover"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
