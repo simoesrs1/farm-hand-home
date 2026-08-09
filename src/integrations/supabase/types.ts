@@ -145,6 +145,8 @@ export type Database = {
           phone: string | null
           pickup_address: string | null
           pickup_days: number
+          pickup_hours: Json
+          pickup_hours_note: string | null
           pickup_lat: number | null
           pickup_lng: number | null
           registration_step: number
@@ -167,6 +169,8 @@ export type Database = {
           phone?: string | null
           pickup_address?: string | null
           pickup_days?: number
+          pickup_hours?: Json
+          pickup_hours_note?: string | null
           pickup_lat?: number | null
           pickup_lng?: number | null
           registration_step?: number
@@ -189,6 +193,8 @@ export type Database = {
           phone?: string | null
           pickup_address?: string | null
           pickup_days?: number
+          pickup_hours?: Json
+          pickup_hours_note?: string | null
           pickup_lat?: number | null
           pickup_lng?: number | null
           registration_step?: number
@@ -542,6 +548,7 @@ export type Database = {
           stock_quantity: number | null
           unit: string
           updated_at: string
+          vat_rate: number
         }
         Insert: {
           active?: boolean
@@ -567,6 +574,7 @@ export type Database = {
           stock_quantity?: number | null
           unit?: string
           updated_at?: string
+          vat_rate?: number
         }
         Update: {
           active?: boolean
@@ -592,6 +600,7 @@ export type Database = {
           stock_quantity?: number | null
           unit?: string
           updated_at?: string
+          vat_rate?: number
         }
         Relationships: [
           {
@@ -659,6 +668,8 @@ export type Database = {
           id: string | null
           initial_score: number | null
           pickup_days: number | null
+          pickup_hours: Json | null
+          pickup_hours_note: string | null
           registration_step: number | null
           updated_at: string | null
           user_id: string | null
@@ -673,6 +684,8 @@ export type Database = {
           id?: string | null
           initial_score?: number | null
           pickup_days?: number | null
+          pickup_hours?: Json | null
+          pickup_hours_note?: string | null
           registration_step?: number | null
           updated_at?: string | null
           user_id?: string | null
@@ -687,6 +700,8 @@ export type Database = {
           id?: string | null
           initial_score?: number | null
           pickup_days?: number | null
+          pickup_hours?: Json | null
+          pickup_hours_note?: string | null
           registration_step?: number | null
           updated_at?: string | null
           user_id?: string | null
@@ -711,6 +726,8 @@ export type Database = {
           description: string | null
           id: string | null
           initial_score: number | null
+          pickup_hours: Json | null
+          pickup_hours_note: string | null
           pickup_lat: number | null
           pickup_lng: number | null
           registration_step: number | null
@@ -726,6 +743,8 @@ export type Database = {
           description?: string | null
           id?: string | null
           initial_score?: number | null
+          pickup_hours?: Json | null
+          pickup_hours_note?: string | null
           pickup_lat?: number | null
           pickup_lng?: number | null
           registration_step?: number | null
@@ -741,6 +760,8 @@ export type Database = {
           description?: string | null
           id?: string | null
           initial_score?: number | null
+          pickup_hours?: Json | null
+          pickup_hours_note?: string | null
           pickup_lat?: number | null
           pickup_lng?: number | null
           registration_step?: number | null

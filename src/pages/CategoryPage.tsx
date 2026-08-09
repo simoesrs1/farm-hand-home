@@ -9,6 +9,8 @@ import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import PickupAvailabilityBadge from "@/components/PickupAvailabilityBadge";
+import { parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
 import SavingsBadge from "@/components/SavingsBadge";
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 
@@ -41,6 +43,7 @@ type SortableProduct = Product & {
   score: number;
   lat: number | null;
   lng: number | null;
+  pickupWindows: PickupWindow[];
 };
 
 const distanceKm = (
@@ -121,7 +124,7 @@ const CategoryPage = () => {
       const farmerIds = [...new Set(rows.map((r) => r.farmer_id))];
       const { data: farmers } = await supabase
         .from("public_farmer_profiles")
-        .select("id, company_name, address, initial_score, pickup_lat, pickup_lng")
+        .select("id, company_name, address, initial_score, pickup_lat, pickup_lng, pickup_hours")
         .in("id", farmerIds);
       const farmerById = new Map((farmers ?? []).map((f) => [f.id, f]));
 
@@ -160,6 +163,7 @@ const CategoryPage = () => {
             score: farmer?.initial_score ?? 0,
             lat: farmer?.pickup_lat ?? null,
             lng: farmer?.pickup_lng ?? null,
+            pickupWindows: parsePickupHours((farmer as any)?.pickup_hours),
           };
           return product;
         })
@@ -314,6 +318,7 @@ const CategoryPage = () => {
                       </div>
                       
                     </Link>
+                    <PickupAvailabilityBadge windows={p.pickupWindows} />
                     <p className="mt-2 text-xs font-medium text-primary">
                       {p.deliveryMode === "shipping"
                         ? `Entrega em casa (${p.shippingDays ?? "?"} dias)`

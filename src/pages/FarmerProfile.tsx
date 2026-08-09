@@ -9,6 +9,8 @@ import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import PickupAvailabilityBadge from "@/components/PickupAvailabilityBadge";
+import { formatPickupHours, parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
 
 const FALLBACK_FARM_IMAGE =
   "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1200&h=500&fit=crop";
@@ -28,6 +30,8 @@ interface FarmerDisplay {
 
 const FarmerProfile = () => {
   const { id } = useParams<{ id: string }>();
+  const [pickupWindows, setPickupWindows] = useState<PickupWindow[]>([]);
+  const [pickupNote, setPickupNote] = useState<string>("");
   const mockFarmer = farmers.find((f) => f.id === id);
   const { addItem, items: cartItems } = useCart();
   const { registerStock } = useStock();
@@ -51,12 +55,19 @@ const FarmerProfile = () => {
     const load = async () => {
       const { data: farmer } = await supabase
         .from("public_farmer_profiles")
-        .select("id, company_name, address, description")
+        .select("id, company_name, address, description, pickup_hours, pickup_hours_note")
         .eq("id", id)
         .maybeSingle();
       if (!farmer) {
         if (!cancelled) setLoaded(true);
         return;
+      }
+
+      if (!cancelled) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setPickupWindows(parsePickupHours((farmer as any).pickup_hours));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setPickupNote(((farmer as any).pickup_hours_note as string) ?? "");
       }
 
       const { data: rows } = await supabase
@@ -196,6 +207,21 @@ const FarmerProfile = () => {
             </div>
 
             <p className="mt-4 text-muted-foreground leading-relaxed">{display.description}</p>
+
+            {pickupWindows.length > 0 && (
+              <div className="mt-4 rounded-lg border border-border bg-secondary/40 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">Porta aberta para levantamentos</span>
+                  <PickupAvailabilityBadge windows={pickupWindows} className="mt-0" />
+                </div>
+                <ul className="mt-2 space-y-0.5 text-sm text-muted-foreground">
+                  {formatPickupHours(pickupWindows).map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+                {pickupNote && <p className="mt-2 text-xs text-muted-foreground">{pickupNote}</p>}
+              </div>
+            )}
 
             {display.tags.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
