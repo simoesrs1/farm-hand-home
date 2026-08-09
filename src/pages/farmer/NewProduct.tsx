@@ -17,6 +17,14 @@ import { DeliveryModesEnum } from "@/data/delivery-modes";
 
 const COMMISSION = 0.10;
 
+/** Taxas de IVA em Portugal continental. O agricultor escolhe a aplicável. */
+const VAT_OPTIONS = [
+  { value: 0, label: "Isento / não aplicável (0%)" },
+  { value: 6, label: "Reduzida — 6%" },
+  { value: 13, label: "Intermédia — 13%" },
+  { value: 23, label: "Normal — 23%" },
+];
+
 const NewProduct = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
@@ -38,6 +46,7 @@ const NewProduct = () => {
   const [hasModifications, setHasModifications] = useState(false);
   const [modificationsDescription, setModificationsDescription] = useState("");
   const [farmerPrice, setFarmerPrice] = useState<string>("");
+  const [vatRate, setVatRate] = useState<number>(6);
   const [deliveryMode, setDeliveryMode] = useState<DeliveryModesEnum>(DeliveryModesEnum.Pickup);
   const [shippingDays, setShippingDays] = useState<string>("");
   const [stockQuantity, setStockQuantity] = useState<string>("");
@@ -122,8 +131,8 @@ const NewProduct = () => {
   }, [farmerPrice]);
 
   const clientPrice = useMemo(
-    () => Math.round(farmerPriceNumber * (1 + COMMISSION) * 100) / 100,
-    [farmerPriceNumber]
+    () => Math.round(farmerPriceNumber * (1 + COMMISSION) * (1 + vatRate / 100) * 100) / 100,
+    [farmerPriceNumber, vatRate]
   );
 
   const handleFilesAdd = (list: FileList | null) => {
@@ -202,6 +211,7 @@ const NewProduct = () => {
           : null,
         farmer_price: farmerPriceNumber,
         client_price: clientPrice,
+        vat_rate: vatRate,
         media_urls: '{' + mediaUrls + '}',
         delivery_mode: DeliveryModesEnum[deliveryMode].toLowerCase(),
         shipping_days: deliveryMode === DeliveryModesEnum.Pickup ? 0 : shippingDaysNum,
@@ -546,11 +556,30 @@ const NewProduct = () => {
               <p className="text-xs text-muted-foreground">Valor que recebe por {unit || "unidade"}.</p>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="vat">Taxa de IVA a cobrar *</Label>
+              <select
+                id="vat"
+                value={vatRate}
+                onChange={(e) => setVatRate(parseInt(e.target.value, 10))}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                {VAT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Informe-se previamente sobre a taxa correta para este produto — a
+                responsabilidade fiscal é do agricultor.
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label>Preço final para o cliente</Label>
               <div className="flex h-10 items-center rounded-md border border-input bg-muted px-3 text-sm font-semibold text-foreground">
                 {clientPrice.toFixed(2)} € / {unit || "un"}
               </div>
-              <p className="text-xs text-muted-foreground">Inclui {Math.round(COMMISSION * 100)}% da FarmConnect.</p>
+              <p className="text-xs text-muted-foreground">Inclui {Math.round(COMMISSION * 100)}% da FarmConnect e IVA de {vatRate}%.</p>
             </div>
           </div>
         </Card>

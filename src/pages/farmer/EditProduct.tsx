@@ -14,6 +14,12 @@ import { toast } from "@/hooks/use-toast";
 import { categories } from "@/data/categories";
 
 const COMMISSION = 0.1;
+const VAT_OPTIONS = [
+  { value: 0, label: "Isento / não aplicável (0%)" },
+  { value: 6, label: "Reduzida — 6%" },
+  { value: 13, label: "Intermédia — 13%" },
+  { value: 23, label: "Normal — 23%" },
+];
 const DISCOUNT_PRESETS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
 
 const EditProduct = () => {
@@ -30,6 +36,7 @@ const EditProduct = () => {
   const [category, setCategory] = useState("");
   const [unit, setUnit] = useState("");
   const [farmerPrice, setFarmerPrice] = useState("");
+  const [vatRate, setVatRate] = useState<number>(6);
   const [stockQuantity, setStockQuantity] = useState("");
   const [lowStockThreshold, setLowStockThreshold] = useState("5");
   const [shippingDays, setShippingDays] = useState("");
@@ -74,6 +81,7 @@ const EditProduct = () => {
       setCategory(p.category ?? "");
       setUnit(p.unit ?? "");
       setFarmerPrice(String(p.farmer_price ?? ""));
+      setVatRate(Number(p.vat_rate ?? 6));
       setStockQuantity(String(p.stock_quantity ?? 0));
       setLowStockThreshold(String(p.low_stock_threshold ?? 5));
       setShippingDays(p.shipping_days != null ? String(p.shipping_days) : "");
@@ -93,8 +101,8 @@ const EditProduct = () => {
   }, [farmerPrice]);
 
   const clientPrice = useMemo(
-    () => Math.round(farmerPriceNumber * (1 + COMMISSION) * 100) / 100,
-    [farmerPriceNumber],
+    () => Math.round(farmerPriceNumber * (1 + COMMISSION) * (1 + vatRate / 100) * 100) / 100,
+    [farmerPriceNumber, vatRate],
   );
   const finalPrice = useMemo(
     () => Math.round(clientPrice * (1 - discount / 100) * 100) / 100,
@@ -126,6 +134,7 @@ const EditProduct = () => {
         unit: unit.trim() || "Kg",
         farmer_price: farmerPriceNumber,
         client_price: clientPrice,
+        vat_rate: vatRate,
         stock_quantity: stockNum,
         low_stock_threshold: Math.max(0, parseInt(lowStockThreshold, 10) || 0),
         shipping_days: shippingDays ? parseInt(shippingDays, 10) : 0,
@@ -229,6 +238,24 @@ const EditProduct = () => {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="vat">Taxa de IVA a cobrar</Label>
+              <select
+                id="vat"
+                value={vatRate}
+                onChange={(e) => setVatRate(parseInt(e.target.value, 10))}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                {VAT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Informe-se previamente sobre a taxa correta — a responsabilidade fiscal é do agricultor.
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="stock">Quantidade disponível (nº de produtos)</Label>
               <Input
                 id="stock"
@@ -255,7 +282,7 @@ const EditProduct = () => {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Preço ao cliente (com comissão de 10%): <strong>{clientPrice.toFixed(2)} €</strong>
+            Preço ao cliente (com comissão de 10% e IVA de {vatRate}%): <strong>{clientPrice.toFixed(2)} €</strong>
           </p>
         </Card>
 
