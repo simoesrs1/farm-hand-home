@@ -29,6 +29,7 @@ import NewProduct from "./pages/farmer/NewProduct";
 import MyProducts from "./pages/farmer/MyProducts";
 import EditProduct from "./pages/farmer/EditProduct";
 import FarmerInfo from "./pages/farmer/FarmerInfo";
+import FarmerAvailability from "./pages/farmer/Availability";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Favorites from "./pages/Favorites";
@@ -70,6 +71,7 @@ const App = () => (
                     <Route path="/agricultor/produtos" element={<MyProducts />} />
                     <Route path="/agricultor/produtos/:id/editar" element={<EditProduct />} />
 
+                    <Route path="/agricultor/disponibilidade" element={<FarmerAvailability />} />
                     <Route path="/agricultor/informacoes" element={<FarmerInfo />} />
                     <Route path="/sobre" element={<About />} />
                     <Route path="/missao" element={<Mission />} />
