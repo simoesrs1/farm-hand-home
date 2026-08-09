@@ -668,6 +668,8 @@ export type Database = {
           id: string | null
           initial_score: number | null
           pickup_days: number | null
+          pickup_hours: Json | null
+          pickup_hours_note: string | null
           registration_step: number | null
           updated_at: string | null
           user_id: string | null
@@ -682,6 +684,8 @@ export type Database = {
           id?: string | null
           initial_score?: number | null
           pickup_days?: number | null
+          pickup_hours?: Json | null
+          pickup_hours_note?: string | null
           registration_step?: number | null
           updated_at?: string | null
           user_id?: string | null
@@ -696,6 +700,8 @@ export type Database = {
           id?: string | null
           initial_score?: number | null
           pickup_days?: number | null
+          pickup_hours?: Json | null
+          pickup_hours_note?: string | null
           registration_step?: number | null
           updated_at?: string | null
           user_id?: string | null
@@ -720,6 +726,8 @@ export type Database = {
           description: string | null
           id: string | null
           initial_score: number | null
+          pickup_hours: Json | null
+          pickup_hours_note: string | null
           pickup_lat: number | null
           pickup_lng: number | null
           registration_step: number | null
@@ -735,6 +743,8 @@ export type Database = {
           description?: string | null
           id?: string | null
           initial_score?: number | null
+          pickup_hours?: Json | null
+          pickup_hours_note?: string | null
           pickup_lat?: number | null
           pickup_lng?: number | null
           registration_step?: number | null
@@ -750,6 +760,8 @@ export type Database = {
           description?: string | null
           id?: string | null
           initial_score?: number | null
+          pickup_hours?: Json | null
+          pickup_hours_note?: string | null
           pickup_lat?: number | null
           pickup_lng?: number | null
           registration_step?: number | null
