@@ -145,6 +145,8 @@ export type Database = {
           phone: string | null
           pickup_address: string | null
           pickup_days: number
+          pickup_hours: Json
+          pickup_hours_note: string | null
           pickup_lat: number | null
           pickup_lng: number | null
           registration_step: number
@@ -167,6 +169,8 @@ export type Database = {
           phone?: string | null
           pickup_address?: string | null
           pickup_days?: number
+          pickup_hours?: Json
+          pickup_hours_note?: string | null
           pickup_lat?: number | null
           pickup_lng?: number | null
           registration_step?: number
@@ -189,6 +193,8 @@ export type Database = {
           phone?: string | null
           pickup_address?: string | null
           pickup_days?: number
+          pickup_hours?: Json
+          pickup_hours_note?: string | null
           pickup_lat?: number | null
           pickup_lng?: number | null
           registration_step?: number
@@ -542,6 +548,7 @@ export type Database = {
           stock_quantity: number | null
           unit: string
           updated_at: string
+          vat_rate: number
         }
         Insert: {
           active?: boolean
@@ -567,6 +574,7 @@ export type Database = {
           stock_quantity?: number | null
           unit?: string
           updated_at?: string
+          vat_rate?: number
         }
         Update: {
           active?: boolean
@@ -592,6 +600,7 @@ export type Database = {
           stock_quantity?: number | null
           unit?: string
           updated_at?: string
+          vat_rate?: number
         }
         Relationships: [
           {
