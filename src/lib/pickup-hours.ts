@@ -82,7 +82,51 @@ export const pickupStatus = (
   return { open: false, label: "Horário indisponível" };
 };
 
+/** True when `date` falls inside one of the farmer's open-door windows. */
+export const isWithinPickupWindows = (windows: PickupWindow[], date: Date): boolean => {
+  if (windows.length === 0) return true;
+  const mins = date.getHours() * 60 + date.getMinutes();
+  return windows.some(
+    (w) => w.day === date.getDay() && toMinutes(w.start) <= mins && mins < toMinutes(w.end),
+  );
+};
+
+/**
+ * Bookable pickup moments for the coming `days`, in `stepMinutes` steps,
+ * restricted to the farmer's open-door windows and always in the future.
+ */
+export const pickupSlots = (
+  windows: PickupWindow[],
+  { days = 14, stepMinutes = 30, from = new Date() }: { days?: number; stepMinutes?: number; from?: Date } = {},
+): Date[] => {
+  if (windows.length === 0) return [];
+  const slots: Date[] = [];
+  for (let offset = 0; offset < days; offset++) {
+    const base = new Date(from);
+    base.setDate(base.getDate() + offset);
+    base.setHours(0, 0, 0, 0);
+    const dayWindows = windows
+      .filter((w) => w.day === base.getDay())
+      .sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
+    for (const w of dayWindows) {
+      for (let m = toMinutes(w.start); m < toMinutes(w.end); m += stepMinutes) {
+        const d = new Date(base);
+        d.setHours(Math.floor(m / 60), m % 60, 0, 0);
+        if (d.getTime() > from.getTime()) slots.push(d);
+      }
+    }
+  }
+  return slots.sort((a, b) => a.getTime() - b.getTime());
+};
+
+export const formatSlotDate = (d: Date) =>
+  `${DAY_SHORT[d.getDay()]}, ${d.getDate()}/${d.getMonth() + 1}`;
+
+export const formatSlotTime = (d: Date) =>
+  `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+
 /** Groups windows by day for display: "Seg 09:00–13:00, 15:00–18:00". */
+
 export const formatPickupHours = (windows: PickupWindow[]): string[] => {
   const byDay = new Map<number, PickupWindow[]>();
   for (const w of windows) {
