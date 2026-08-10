@@ -118,11 +118,31 @@ Deno.serve(async (req) => {
 
     const { data: farmerRow } = await admin
       .from("farmer_details")
-      .select("id, pickup_days, user_id")
+      .select("id, pickup_days, user_id, pickup_hours")
       .eq("id", farmerId)
       .maybeSingle();
     if (!farmerRow) return jsonError(400, "Agricultor indisponível para receber a encomenda.");
     const pickupDays = farmerRow.pickup_days ?? 7;
+
+    // Optional pickup scheduling — must land inside the farmer's open-door
+    // windows (stored as weekday + HH:MM in Europe/Lisbon local time).
+    const windows = parsePickupWindows(farmerRow.pickup_hours);
+    let scheduledAt: Date | null = null;
+    const rawScheduled = body?.scheduled_pickup_at;
+    if (rawScheduled != null && rawScheduled !== "") {
+      if (typeof rawScheduled !== "string") return jsonError(400, "Agendamento inválido");
+      scheduledAt = new Date(rawScheduled);
+      if (Number.isNaN(scheduledAt.getTime())) return jsonError(400, "Agendamento inválido");
+      if (scheduledAt.getTime() < Date.now() - 60_000) {
+        return jsonError(400, "A data de levantamento já passou.");
+      }
+      if (!isWithinWindows(windows, scheduledAt)) {
+        return jsonError(400, "O horário escolhido está fora da disponibilidade do agricultor.");
+      }
+    } else if (windows.length > 0) {
+      return jsonError(400, "Escolha um horário de levantamento dentro da disponibilidade do agricultor.");
+    }
+
 
     const total = Math.round(resolved.reduce((acc, r) => acc + r.subtotal * 100, 0)) / 100;
     if (total <= 0 || total > MAX_TOTAL) return jsonError(400, "Total inválido");
