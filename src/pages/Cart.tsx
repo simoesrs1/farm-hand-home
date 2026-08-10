@@ -377,7 +377,45 @@ const Cart = () => {
                 {totalPrice.toFixed(2)}€
               </span>
             </div>
+
+            {/* Scheduling — restricted to the farmer's open-door windows */}
+            {grouped.length > 1 ? (
+              <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                O carrinho tem produtos de vários agricultores. Finalize um agricultor de cada vez
+                para poder agendar o levantamento.
+              </p>
+            ) : needsSchedule ? (
+              <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <CalendarClock className="h-4 w-4 text-primary" />
+                  Agendar levantamento
+                </div>
+                <Select value={slot} onValueChange={setSlot}>
+                  <SelectTrigger aria-label="Horário de levantamento">
+                    <SelectValue placeholder="Escolher data e hora" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {slots.map((d) => (
+                      <SelectItem key={d.toISOString()} value={d.toISOString()}>
+                        {formatSlotDate(d)} · {formatSlotTime(d)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  Apenas datas e horas dentro da porta aberta do agricultor estão disponíveis.
+                  {pickupNote ? ` ${pickupNote}` : ""}
+                </p>
+              </div>
+            ) : (
+              <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                Este agricultor ainda não publicou horários de porta aberta. Combine o levantamento
+                pelo chat da encomenda.
+              </p>
+            )}
+
             <div className="mt-4 flex gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
+
               <AlertTriangle className="h-4 w-4 shrink-0" />
               <p>
                 Se não levantar a encomenda no prazo indicado, <strong>perderá 100% do valor pago</strong>.
