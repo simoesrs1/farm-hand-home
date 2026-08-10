@@ -189,7 +189,9 @@ const Cart = () => {
           product_id: i.id,
           quantity: i.quantity,
         })),
+        scheduled_pickup_at: slot || null,
       };
+
       const { data, error } = await supabase.functions.invoke("create-order", { body: payload });
       if (error || (data as any)?.error) {
         // On a non-2xx response supabase-js leaves `data` null and gives a
