@@ -271,7 +271,10 @@ Deno.serve(async (req) => {
         order_id: order.id,
         type: "new_order",
         title: "Nova encomenda",
-        message: `Recebeste uma nova encomenda no valor de ${total.toFixed(2)}€. Aguarda o levantamento até ${deadline.toLocaleDateString("pt-PT")}.`,
+        message: scheduledAt
+          ? `Recebeste uma nova encomenda no valor de ${total.toFixed(2)}€. O cliente agendou o levantamento para ${scheduledAt.toLocaleString("pt-PT", { timeZone: LISBON })}.`
+          : `Recebeste uma nova encomenda no valor de ${total.toFixed(2)}€. Aguarda o levantamento até ${deadline.toLocaleDateString("pt-PT")}.`,
+
       });
     }
 
