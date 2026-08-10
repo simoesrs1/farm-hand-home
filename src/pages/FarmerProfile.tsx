@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Star, MapPin, ArrowLeft } from "lucide-react";
+import { Star, MapPin, ArrowLeft, CalendarArrowDown } from "lucide-react";
+import { downloadPickupIcs } from "@/lib/pickup-ical";
+
 import { Button } from "@/components/ui/button";
 import { farmers } from "@/data/farmers";
 import { type Product } from "@/data/products";
