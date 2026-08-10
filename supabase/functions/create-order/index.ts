@@ -215,7 +215,12 @@ Deno.serve(async (req) => {
     }
 
     const now = new Date();
-    const deadline = new Date(now.getTime() + pickupDays * 24 * 60 * 60 * 1000);
+    let deadline = new Date(now.getTime() + pickupDays * 24 * 60 * 60 * 1000);
+    // A scheduled pickup must always fit inside the escrow deadline.
+    if (scheduledAt && scheduledAt.getTime() > deadline.getTime()) {
+      deadline = new Date(scheduledAt.getTime() + 24 * 60 * 60 * 1000);
+    }
+
 
     const { data: order, error: orderErr } = await admin
       .from("orders")
