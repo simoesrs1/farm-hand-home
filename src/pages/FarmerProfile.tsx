@@ -220,7 +220,18 @@ const FarmerProfile = () => {
                   ))}
                 </ul>
                 {pickupNote && <p className="mt-2 text-xs text-muted-foreground">{pickupNote}</p>}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 gap-2"
+                  onClick={() => downloadPickupIcs(pickupWindows, display.farm, pickupNote)}
+                >
+                  <CalendarArrowDown className="h-4 w-4" />
+                  Adicionar ao meu calendário (iCal)
+                </Button>
               </div>
+
             )}
 
             {display.tags.length > 0 && (
