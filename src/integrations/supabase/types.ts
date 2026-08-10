@@ -454,6 +454,7 @@ export type Database = {
           paid_at: string | null
           pickup_code: string
           pickup_deadline: string
+          scheduled_pickup_at: string | null
           status: Database["public"]["Enums"]["order_status"]
           total: number
           updated_at: string
@@ -471,6 +472,7 @@ export type Database = {
           paid_at?: string | null
           pickup_code: string
           pickup_deadline: string
+          scheduled_pickup_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total: number
           updated_at?: string
@@ -488,6 +490,7 @@ export type Database = {
           paid_at?: string | null
           pickup_code?: string
           pickup_deadline?: string
+          scheduled_pickup_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total?: number
           updated_at?: string
