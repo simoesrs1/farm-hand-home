@@ -194,12 +194,23 @@ const FarmerAvailability = () => {
           />
         </Card>
 
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            disabled={windows.length === 0}
+            onClick={() => downloadPickupIcs(windows, farmName || "A minha quinta", note)}
+          >
+            <CalendarDown className="h-4 w-4" />
+            Exportar calendário (iCal)
+          </Button>
           <Button onClick={handleSave} disabled={saving} className="gap-2">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Guardar disponibilidade
           </Button>
         </div>
+
       </div>
     </div>
   );
