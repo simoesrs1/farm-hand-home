@@ -204,7 +204,7 @@ const FarmerAvailability = () => {
             disabled={windows.length === 0}
             onClick={() => downloadPickupIcs(windows, farmName || "A minha quinta", note)}
           >
-            <CalendarDown className="h-4 w-4" />
+            <CalendarArrowDown className="h-4 w-4" />
             Exportar calendário (iCal)
           </Button>
           <Button onClick={handleSave} disabled={saving} className="gap-2">
