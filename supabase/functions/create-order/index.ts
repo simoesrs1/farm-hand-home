@@ -26,12 +26,65 @@ function generatePickupCode(): string {
   return code;
 }
 
+interface PickupWindow {
+  day: number;
+  start: string;
+  end: string;
+}
+
+function parsePickupWindows(raw: unknown): PickupWindow[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (w): w is PickupWindow =>
+      !!w &&
+      typeof w === "object" &&
+      typeof (w as PickupWindow).day === "number" &&
+      typeof (w as PickupWindow).start === "string" &&
+      typeof (w as PickupWindow).end === "string" &&
+      (w as PickupWindow).start < (w as PickupWindow).end,
+  );
+}
+
+const LISBON = "Europe/Lisbon";
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** Weekday + minutes-of-day of a Date, as seen in Europe/Lisbon. */
+function lisbonParts(date: Date): { day: number; minutes: number } {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: LISBON,
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(date);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const day = WEEKDAYS.indexOf(get("weekday"));
+  const hour = parseInt(get("hour"), 10) % 24;
+  const minute = parseInt(get("minute"), 10);
+  return { day, minutes: hour * 60 + minute };
+}
+
+function toMinutes(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map((n) => parseInt(n, 10));
+  return (h || 0) * 60 + (m || 0);
+}
+
+function isWithinWindows(windows: PickupWindow[], date: Date): boolean {
+  if (windows.length === 0) return true;
+  const { day, minutes } = lisbonParts(date);
+  return windows.some(
+    (w) => w.day === day && toMinutes(w.start) <= minutes && minutes < toMinutes(w.end),
+  );
+}
+
 function jsonError(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
