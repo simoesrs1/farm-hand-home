@@ -19,6 +19,21 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { FunctionsHttpError } from "@supabase/supabase-js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  formatSlotDate,
+  formatSlotTime,
+  parsePickupHours,
+  pickupSlots,
+  type PickupWindow,
+} from "@/lib/pickup-hours";
+import { CalendarClock } from "lucide-react";
 
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
@@ -28,6 +43,10 @@ const Cart = () => {
   const { toast } = useToast();
   const [paying, setPaying] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [pickupWindows, setPickupWindows] = useState<PickupWindow[]>([]);
+  const [pickupNote, setPickupNote] = useState<string>("");
+  const [slot, setSlot] = useState<string>("");
+
 
   // Clamp cart lines that exceed the current available stock (e.g. stock reduced
   // in another tab, or the cart was restored from localStorage on a cold load
