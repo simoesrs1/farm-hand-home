@@ -234,6 +234,8 @@ Deno.serve(async (req) => {
         pickup_code: pickupCode,
         pickup_deadline: deadline.toISOString(),
         paid_at: now.toISOString(),
+        scheduled_pickup_at: scheduledAt ? scheduledAt.toISOString() : null,
+
       })
       .select()
       .single();
