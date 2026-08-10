@@ -85,6 +85,38 @@ const Cart = () => {
     return Array.from(map.values());
   }, [items]);
 
+
+  const farmerId = grouped.length === 1 ? grouped[0].farmerId : null;
+
+  // Load the farmer's "porta aberta" windows so the client can only schedule
+  // the pickup inside a real availability slot.
+  useEffect(() => {
+    if (!farmerId) {
+      setPickupWindows([]);
+      setPickupNote("");
+      setSlot("");
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("public_farmer_profiles")
+        .select("pickup_hours, pickup_hours_note")
+        .eq("id", farmerId)
+        .maybeSingle();
+      if (cancelled) return;
+      setPickupWindows(parsePickupHours((data as any)?.pickup_hours));
+      setPickupNote(((data as any)?.pickup_hours_note as string) ?? "");
+      setSlot("");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [farmerId]);
+
+  const slots = useMemo(() => pickupSlots(pickupWindows), [pickupWindows]);
+  const needsSchedule = pickupWindows.length > 0;
+
   const onCheckoutClick = () => {
     if (!user) {
       toast({ title: "Inicie sessão", description: "Precisa de estar autenticado para finalizar a compra." });
@@ -99,9 +131,18 @@ const Cart = () => {
       });
       return;
     }
+    if (needsSchedule && !slot) {
+      toast({
+        title: "Escolha o horário de levantamento",
+        description: "Só é possível agendar dentro do horário de porta aberta do agricultor.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setSafetyOpen(true);
   };
+
 
   const handleCheckout = async () => {
     setSafetyOpen(false);
