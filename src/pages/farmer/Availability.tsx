@@ -25,6 +25,7 @@ const FarmerAvailability = () => {
   const { user, profile, loading: authLoading } = useAuth();
 
   const [farmerId, setFarmerId] = useState<string | null>(null);
+  const [farmName, setFarmName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [windows, setWindows] = useState<PickupWindow[]>([]);
@@ -44,11 +45,12 @@ const FarmerAvailability = () => {
     (async () => {
       const { data } = await supabase
         .from("farmer_details")
-        .select("id, pickup_hours, pickup_hours_note")
+        .select("id, company_name, pickup_hours, pickup_hours_note")
         .eq("user_id", user.id)
         .maybeSingle();
       const row = data as any;
       setFarmerId(row?.id ?? null);
+      setFarmName(row?.company_name ?? "");
       setWindows(parsePickupHours(row?.pickup_hours));
       setNote(row?.pickup_hours_note ?? "");
       setLoading(false);
