@@ -26,12 +26,65 @@ function generatePickupCode(): string {
   return code;
 }
 
+interface PickupWindow {
+  day: number;
+  start: string;
+  end: string;
+}
+
+function parsePickupWindows(raw: unknown): PickupWindow[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (w): w is PickupWindow =>
+      !!w &&
+      typeof w === "object" &&
+      typeof (w as PickupWindow).day === "number" &&
+      typeof (w as PickupWindow).start === "string" &&
+      typeof (w as PickupWindow).end === "string" &&
+      (w as PickupWindow).start < (w as PickupWindow).end,
+  );
+}
+
+const LISBON = "Europe/Lisbon";
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** Weekday + minutes-of-day of a Date, as seen in Europe/Lisbon. */
+function lisbonParts(date: Date): { day: number; minutes: number } {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: LISBON,
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(date);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const day = WEEKDAYS.indexOf(get("weekday"));
+  const hour = parseInt(get("hour"), 10) % 24;
+  const minute = parseInt(get("minute"), 10);
+  return { day, minutes: hour * 60 + minute };
+}
+
+function toMinutes(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map((n) => parseInt(n, 10));
+  return (h || 0) * 60 + (m || 0);
+}
+
+function isWithinWindows(windows: PickupWindow[], date: Date): boolean {
+  if (windows.length === 0) return true;
+  const { day, minutes } = lisbonParts(date);
+  return windows.some(
+    (w) => w.day === day && toMinutes(w.start) <= minutes && minutes < toMinutes(w.end),
+  );
+}
+
 function jsonError(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -118,11 +171,31 @@ Deno.serve(async (req) => {
 
     const { data: farmerRow } = await admin
       .from("farmer_details")
-      .select("id, pickup_days, user_id")
+      .select("id, pickup_days, user_id, pickup_hours")
       .eq("id", farmerId)
       .maybeSingle();
     if (!farmerRow) return jsonError(400, "Agricultor indisponível para receber a encomenda.");
     const pickupDays = farmerRow.pickup_days ?? 7;
+
+    // Optional pickup scheduling — must land inside the farmer's open-door
+    // windows (stored as weekday + HH:MM in Europe/Lisbon local time).
+    const windows = parsePickupWindows(farmerRow.pickup_hours);
+    let scheduledAt: Date | null = null;
+    const rawScheduled = body?.scheduled_pickup_at;
+    if (rawScheduled != null && rawScheduled !== "") {
+      if (typeof rawScheduled !== "string") return jsonError(400, "Agendamento inválido");
+      scheduledAt = new Date(rawScheduled);
+      if (Number.isNaN(scheduledAt.getTime())) return jsonError(400, "Agendamento inválido");
+      if (scheduledAt.getTime() < Date.now() - 60_000) {
+        return jsonError(400, "A data de levantamento já passou.");
+      }
+      if (!isWithinWindows(windows, scheduledAt)) {
+        return jsonError(400, "O horário escolhido está fora da disponibilidade do agricultor.");
+      }
+    } else if (windows.length > 0) {
+      return jsonError(400, "Escolha um horário de levantamento dentro da disponibilidade do agricultor.");
+    }
+
 
     const total = Math.round(resolved.reduce((acc, r) => acc + r.subtotal * 100, 0)) / 100;
     if (total <= 0 || total > MAX_TOTAL) return jsonError(400, "Total inválido");
@@ -142,7 +215,12 @@ Deno.serve(async (req) => {
     }
 
     const now = new Date();
-    const deadline = new Date(now.getTime() + pickupDays * 24 * 60 * 60 * 1000);
+    let deadline = new Date(now.getTime() + pickupDays * 24 * 60 * 60 * 1000);
+    // A scheduled pickup must always fit inside the escrow deadline.
+    if (scheduledAt && scheduledAt.getTime() > deadline.getTime()) {
+      deadline = new Date(scheduledAt.getTime() + 24 * 60 * 60 * 1000);
+    }
+
 
     const { data: order, error: orderErr } = await admin
       .from("orders")
@@ -156,6 +234,8 @@ Deno.serve(async (req) => {
         pickup_code: pickupCode,
         pickup_deadline: deadline.toISOString(),
         paid_at: now.toISOString(),
+        scheduled_pickup_at: scheduledAt ? scheduledAt.toISOString() : null,
+
       })
       .select()
       .single();
@@ -191,7 +271,10 @@ Deno.serve(async (req) => {
         order_id: order.id,
         type: "new_order",
         title: "Nova encomenda",
-        message: `Recebeste uma nova encomenda no valor de ${total.toFixed(2)}€. Aguarda o levantamento até ${deadline.toLocaleDateString("pt-PT")}.`,
+        message: scheduledAt
+          ? `Recebeste uma nova encomenda no valor de ${total.toFixed(2)}€. O cliente agendou o levantamento para ${scheduledAt.toLocaleString("pt-PT", { timeZone: LISBON })}.`
+          : `Recebeste uma nova encomenda no valor de ${total.toFixed(2)}€. Aguarda o levantamento até ${deadline.toLocaleDateString("pt-PT")}.`,
+
       });
     }
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Star, MapPin, ArrowLeft } from "lucide-react";
+import { Star, MapPin, ArrowLeft, CalendarArrowDown } from "lucide-react";
+import { downloadPickupIcs } from "@/lib/pickup-ical";
+
 import { Button } from "@/components/ui/button";
 import { farmers } from "@/data/farmers";
 import { type Product } from "@/data/products";
@@ -220,7 +222,18 @@ const FarmerProfile = () => {
                   ))}
                 </ul>
                 {pickupNote && <p className="mt-2 text-xs text-muted-foreground">{pickupNote}</p>}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 gap-2"
+                  onClick={() => downloadPickupIcs(pickupWindows, display.farm, pickupNote)}
+                >
+                  <CalendarArrowDown className="h-4 w-4" />
+                  Adicionar ao meu calendário (iCal)
+                </Button>
               </div>
+
             )}
 
             {display.tags.length > 0 && (

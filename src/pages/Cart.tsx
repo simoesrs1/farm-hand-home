@@ -19,6 +19,21 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { FunctionsHttpError } from "@supabase/supabase-js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  formatSlotDate,
+  formatSlotTime,
+  parsePickupHours,
+  pickupSlots,
+  type PickupWindow,
+} from "@/lib/pickup-hours";
+import { CalendarClock } from "lucide-react";
 
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
@@ -28,6 +43,10 @@ const Cart = () => {
   const { toast } = useToast();
   const [paying, setPaying] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [pickupWindows, setPickupWindows] = useState<PickupWindow[]>([]);
+  const [pickupNote, setPickupNote] = useState<string>("");
+  const [slot, setSlot] = useState<string>("");
+
 
   // Clamp cart lines that exceed the current available stock (e.g. stock reduced
   // in another tab, or the cart was restored from localStorage on a cold load
@@ -66,6 +85,38 @@ const Cart = () => {
     return Array.from(map.values());
   }, [items]);
 
+
+  const farmerId = grouped.length === 1 ? grouped[0].farmerId : null;
+
+  // Load the farmer's "porta aberta" windows so the client can only schedule
+  // the pickup inside a real availability slot.
+  useEffect(() => {
+    if (!farmerId) {
+      setPickupWindows([]);
+      setPickupNote("");
+      setSlot("");
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("public_farmer_profiles")
+        .select("pickup_hours, pickup_hours_note")
+        .eq("id", farmerId)
+        .maybeSingle();
+      if (cancelled) return;
+      setPickupWindows(parsePickupHours((data as any)?.pickup_hours));
+      setPickupNote(((data as any)?.pickup_hours_note as string) ?? "");
+      setSlot("");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [farmerId]);
+
+  const slots = useMemo(() => pickupSlots(pickupWindows), [pickupWindows]);
+  const needsSchedule = pickupWindows.length > 0;
+
   const onCheckoutClick = () => {
     if (!user) {
       toast({ title: "Inicie sessão", description: "Precisa de estar autenticado para finalizar a compra." });
@@ -80,9 +131,18 @@ const Cart = () => {
       });
       return;
     }
+    if (needsSchedule && !slot) {
+      toast({
+        title: "Escolha o horário de levantamento",
+        description: "Só é possível agendar dentro do horário de porta aberta do agricultor.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setSafetyOpen(true);
   };
+
 
   const handleCheckout = async () => {
     setSafetyOpen(false);
@@ -129,7 +189,9 @@ const Cart = () => {
           product_id: i.id,
           quantity: i.quantity,
         })),
+        scheduled_pickup_at: slot || null,
       };
+
       const { data, error } = await supabase.functions.invoke("create-order", { body: payload });
       if (error || (data as any)?.error) {
         // On a non-2xx response supabase-js leaves `data` null and gives a
@@ -315,7 +377,45 @@ const Cart = () => {
                 {totalPrice.toFixed(2)}€
               </span>
             </div>
+
+            {/* Scheduling — restricted to the farmer's open-door windows */}
+            {grouped.length > 1 ? (
+              <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                O carrinho tem produtos de vários agricultores. Finalize um agricultor de cada vez
+                para poder agendar o levantamento.
+              </p>
+            ) : needsSchedule ? (
+              <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <CalendarClock className="h-4 w-4 text-primary" />
+                  Agendar levantamento
+                </div>
+                <Select value={slot} onValueChange={setSlot}>
+                  <SelectTrigger aria-label="Horário de levantamento">
+                    <SelectValue placeholder="Escolher data e hora" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {slots.map((d) => (
+                      <SelectItem key={d.toISOString()} value={d.toISOString()}>
+                        {formatSlotDate(d)} · {formatSlotTime(d)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  Apenas datas e horas dentro da porta aberta do agricultor estão disponíveis.
+                  {pickupNote ? ` ${pickupNote}` : ""}
+                </p>
+              </div>
+            ) : (
+              <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                Este agricultor ainda não publicou horários de porta aberta. Combine o levantamento
+                pelo chat da encomenda.
+              </p>
+            )}
+
             <div className="mt-4 flex gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
+
               <AlertTriangle className="h-4 w-4 shrink-0" />
               <p>
                 Se não levantar a encomenda no prazo indicado, <strong>perderá 100% do valor pago</strong>.

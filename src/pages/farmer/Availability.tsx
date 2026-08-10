@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Loader2, Plus, Save, Trash2, TrendingUp } from "lucide-react";
+import { ArrowLeft, CalendarArrowDown, Clock, Loader2, Plus, Save, Trash2, TrendingUp } from "lucide-react";
+import { downloadPickupIcs } from "@/lib/pickup-ical";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +25,7 @@ const FarmerAvailability = () => {
   const { user, profile, loading: authLoading } = useAuth();
 
   const [farmerId, setFarmerId] = useState<string | null>(null);
+  const [farmName, setFarmName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [windows, setWindows] = useState<PickupWindow[]>([]);
@@ -42,11 +45,12 @@ const FarmerAvailability = () => {
     (async () => {
       const { data } = await supabase
         .from("farmer_details")
-        .select("id, pickup_hours, pickup_hours_note")
+        .select("id, company_name, pickup_hours, pickup_hours_note")
         .eq("user_id", user.id)
         .maybeSingle();
       const row = data as any;
       setFarmerId(row?.id ?? null);
+      setFarmName(row?.company_name ?? "");
       setWindows(parsePickupHours(row?.pickup_hours));
       setNote(row?.pickup_hours_note ?? "");
       setLoading(false);
@@ -194,12 +198,23 @@ const FarmerAvailability = () => {
           />
         </Card>
 
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            disabled={windows.length === 0}
+            onClick={() => downloadPickupIcs(windows, farmName || "A minha quinta", note)}
+          >
+            <CalendarArrowDown className="h-4 w-4" />
+            Exportar calendário (iCal)
+          </Button>
           <Button onClick={handleSave} disabled={saving} className="gap-2">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Guardar disponibilidade
           </Button>
         </div>
+
       </div>
     </div>
   );
