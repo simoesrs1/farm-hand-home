@@ -33,8 +33,13 @@ const PortugalMapDialog = () => {
   useEffect(() => {
     if (!open) return;
 
-    const browserKey = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-    const trackingId = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
+    const browserKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
+    if (!browserKey) {
+      console.warn(
+        "VITE_GOOGLE_MAPS_BROWSER_KEY não definida — o mapa não será carregado.",
+      );
+      return;
+    }
 
     const renderMap = () => {
       if (!mapRef.current || !window.google?.maps) return;
@@ -80,7 +85,7 @@ const PortugalMapDialog = () => {
     const script = document.createElement("script");
     script.id = "gmaps-sdk";
     script.async = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initFarmConnectMap&channel=${trackingId}`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initFarmConnectMap`;
     document.head.appendChild(script);
   }, [open]);
 

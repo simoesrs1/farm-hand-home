@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,9 +14,19 @@ import {
   FileText,
   MapPin,
   Hash,
+  AlertCircle,
+  Check,
 } from "lucide-react";
 import { toUserMessage } from "@/lib/auth-errors";
 import PickupLocationMap from "@/components/PickupLocationMap";
+import {
+  FarmerField,
+  FarmerFormValues,
+  normalizeWebsite,
+  validateCompanyNif,
+  validateExplorationNumber,
+  validateFarmerForm,
+} from "@/lib/farmer-validation";
 
 const CERTIFICATE_TYPES = [
   "Produção Biológica",
@@ -37,33 +47,113 @@ interface CertificateUpload {
   type: string;
 }
 
+const EMPTY_VALUES: FarmerFormValues = {
+  explorationId: "",
+  explorationNumber: "",
+  companyName: "",
+  companyNif: "",
+  caeCode: "",
+  phone: "",
+  address: "",
+  website: "",
+  description: "",
+  pickupAddress: "",
+  pickupLat: null,
+  pickupLng: null,
+};
+
+/** Milissegundos de inatividade antes de consultar o servidor por duplicados. */
+const UNIQUENESS_DEBOUNCE_MS = 500;
+
+const baseInputClass =
+  "w-full rounded-lg border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2";
+
+const inputClass = (invalid?: string) =>
+  `${baseInputClass} ${
+    invalid
+      ? "border-destructive focus:ring-destructive/40"
+      : "border-input focus:ring-ring"
+  }`;
+
+const FieldError = ({ message }: { message?: string }) =>
+  message ? (
+    <p className="mt-1 flex items-start gap-1 text-xs text-destructive">
+      <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
+      <span>{message}</span>
+    </p>
+  ) : null;
+
+const FieldStatus = ({
+  checking,
+  available,
+  label,
+}: {
+  checking: boolean;
+  available: boolean;
+  label: string;
+}) => {
+  if (checking) {
+    return (
+      <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" />A verificar disponibilidade…
+      </p>
+    );
+  }
+  if (available) {
+    return (
+      <p className="mt-1 flex items-center gap-1 text-xs text-primary">
+        <Check className="h-3 w-3" />
+        {label}
+      </p>
+    );
+  }
+  return null;
+};
+
 const FarmerOnboarding = () => {
   const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Identificação da exploração
-  const [explorationId, setExplorationId] = useState("");
-  const [explorationNumber, setExplorationNumber] = useState("");
+  const [values, setValues] = useState<FarmerFormValues>(EMPTY_VALUES);
+  const [touched, setTouched] = useState<Partial<Record<FarmerField, boolean>>>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  // Empresa
-  const [companyName, setCompanyName] = useState("");
-  const [companyNif, setCompanyNif] = useState("");
-  const [caeCode, setCaeCode] = useState("");
-  const [address, setAddress] = useState("");
-  const [phone, setPhone] = useState("");
-  const [website, setWebsite] = useState("");
-  const [description, setDescription] = useState("");
-
-  // Local de levantamento da encomenda
-  const [pickupAddress, setPickupAddress] = useState("");
-  const [pickupLat, setPickupLat] = useState<number | null>(null);
-  const [pickupLng, setPickupLng] = useState<number | null>(null);
+  // Unicidade verificada no servidor (RPC), fora da validação síncrona.
+  const [takenErrors, setTakenErrors] = useState<
+    Partial<Record<"explorationNumber" | "companyNif", string>>
+  >({});
+  const [checking, setChecking] = useState({
+    explorationNumber: false,
+    companyNif: false,
+  });
+  const [availability, setAvailability] = useState({
+    explorationNumber: false,
+    companyNif: false,
+  });
 
   const [certificates, setCertificates] = useState<CertificateUpload[]>([]);
   const [loading, setLoading] = useState(false);
   const [farmerDetailsId, setFarmerDetailsId] = useState<string | null>(null);
-  
+
+  const errors = useMemo(() => validateFarmerForm(values), [values]);
+
+  /** Só mostramos o erro depois de o campo ser tocado ou de haver tentativa de submissão. */
+  const showError = (field: FarmerField): string | undefined => {
+    if (field === "explorationNumber" || field === "companyNif") {
+      const taken = takenErrors[field];
+      if (taken) return taken;
+    }
+    return touched[field] || submitAttempted ? errors[field] : undefined;
+  };
+
+  const setField = <K extends keyof FarmerFormValues>(
+    field: K,
+    value: FarmerFormValues[K],
+  ) => setValues((prev) => ({ ...prev, [field]: value }));
+
+  const markTouched = (field: FarmerField) =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -94,6 +184,84 @@ const FarmerOnboarding = () => {
     }
   };
 
+  // Nº de exploração: verificação de duplicados enquanto o agricultor escreve.
+  //
+  // farmer_details RLS only exposes each farmer's own row, so a direct select
+  // can never see another farmer's exploration_number. Use a SECURITY DEFINER
+  // RPC that only returns a boolean instead.
+  const explorationNumber = values.explorationNumber;
+  useEffect(() => {
+    setTakenErrors((prev) => ({ ...prev, explorationNumber: undefined }));
+    setAvailability((prev) => ({ ...prev, explorationNumber: false }));
+
+    const value = explorationNumber.trim().toUpperCase();
+    if (validateExplorationNumber(value)) return;
+
+    let cancelled = false;
+    setChecking((prev) => ({ ...prev, explorationNumber: true }));
+
+    const timer = setTimeout(async () => {
+      const { data: taken, error } = await supabase.rpc(
+        "exploration_number_taken",
+        { p_exploration_number: value, p_exclude_id: farmerDetailsId },
+      );
+      if (cancelled) return;
+      setChecking((prev) => ({ ...prev, explorationNumber: false }));
+      if (error) return;
+      if (taken) {
+        setTakenErrors((prev) => ({
+          ...prev,
+          explorationNumber:
+            "Este número de exploração já está associado a outra conta.",
+        }));
+      } else {
+        setAvailability((prev) => ({ ...prev, explorationNumber: true }));
+      }
+    }, UNIQUENESS_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      setChecking((prev) => ({ ...prev, explorationNumber: false }));
+    };
+  }, [explorationNumber, farmerDetailsId]);
+
+  // NIF da empresa: mesma verificação de duplicados.
+  const companyNif = values.companyNif;
+  useEffect(() => {
+    setTakenErrors((prev) => ({ ...prev, companyNif: undefined }));
+    setAvailability((prev) => ({ ...prev, companyNif: false }));
+
+    if (validateCompanyNif(companyNif)) return;
+
+    let cancelled = false;
+    setChecking((prev) => ({ ...prev, companyNif: true }));
+
+    const timer = setTimeout(async () => {
+      const { data: taken, error } = await supabase.rpc("company_nif_taken", {
+        p_company_nif: companyNif,
+        p_exclude_id: farmerDetailsId,
+      });
+      if (cancelled) return;
+      setChecking((prev) => ({ ...prev, companyNif: false }));
+      if (error) return;
+      if (taken) {
+        setTakenErrors((prev) => ({
+          ...prev,
+          companyNif: "Este NIF já está associado a outra conta.",
+        }));
+      } else {
+        setAvailability((prev) => ({ ...prev, companyNif: true }));
+      }
+    }, UNIQUENESS_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      setChecking((prev) => ({ ...prev, companyNif: false }));
+    };
+  }, [companyNif, farmerDetailsId]);
+
   const handleFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files).map((file) => ({
@@ -115,58 +283,29 @@ const FarmerOnboarding = () => {
     setCertificates((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const onValidateExplorationNumber = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setExplorationNumber(value);
-
-    if (!value || value.length < 7) {
-      return;
-    }
-
-    // farmer_details RLS only exposes each farmer's own row, so a direct
-    // select can never see another farmer's exploration_number. Use a
-    // SECURITY DEFINER RPC that only returns a boolean instead.
-    const { data: taken } = await supabase.rpc("exploration_number_taken", {
-      p_exploration_number: value.toUpperCase(),
-      p_exclude_id: farmerDetailsId,
-    });
-
-    if (taken) {
-      toast({
-        title: "Número de exploração já registado",
-        description: "Este número de exploração já está associado a outra conta.",
-        variant: "destructive",
-      });
-      setExplorationNumber("");
-    }
-  };
-
-  const onValidateCompanyNif = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, "");
-    setCompanyNif(value);
-
-    if (value.length < 9) {
-      return;
-    }
-
-    const { data: taken } = await supabase.rpc("company_nif_taken", {
-      p_company_nif: value,
-      p_exclude_id: farmerDetailsId,
-    });
-
-    if (taken) {
-      toast({
-        title: "NIF já registado",
-        description: "Este NIF já está associado a outra conta.",
-        variant: "destructive",
-      });
-      setCompanyNif("");
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!farmerDetailsId || !user) return;
+
+    setSubmitAttempted(true);
+
+    const blocking = { ...errors, ...takenErrors };
+    if (Object.values(blocking).some(Boolean)) {
+      toast({
+        title: "Formulário incompleto",
+        description:
+          "Corrija os campos assinalados a vermelho antes de concluir o registo.",
+        variant: "destructive",
+      });
+      // Espera pelo repaint para que os campos já estejam marcados como inválidos.
+      requestAnimationFrame(() => {
+        document
+          .querySelector("[data-invalid='true']")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -195,18 +334,18 @@ const FarmerOnboarding = () => {
       const { error: updateError } = await supabase
         .from("farmer_details")
         .update({
-          exploration_id: explorationId,
-          exploration_number: explorationNumber.toUpperCase(),
-          company_name: companyName,
-          company_nif: companyNif,
-          cae_code: caeCode,
-          address,
-          phone,
-          website,
-          description,
-          pickup_address: pickupAddress,
-          pickup_lat: pickupLat,
-          pickup_lng: pickupLng,
+          exploration_id: values.explorationId.trim(),
+          exploration_number: values.explorationNumber.trim().toUpperCase(),
+          company_name: values.companyName.trim(),
+          company_nif: values.companyNif,
+          cae_code: values.caeCode.trim(),
+          address: values.address.trim(),
+          phone: values.phone.trim(),
+          website: normalizeWebsite(values.website),
+          description: values.description.trim(),
+          pickup_address: values.pickupAddress.trim(),
+          pickup_lat: values.pickupLat,
+          pickup_lng: values.pickupLng,
           registration_step: 2,
           initial_score: Math.min(certificates.length * 10, 50),
         })
@@ -251,6 +390,17 @@ const FarmerOnboarding = () => {
     );
   }
 
+  const explorationIdError = showError("explorationId");
+  const explorationNumberError = showError("explorationNumber");
+  const companyNameError = showError("companyName");
+  const companyNifError = showError("companyNif");
+  const caeCodeError = showError("caeCode");
+  const phoneError = showError("phone");
+  const addressError = showError("address");
+  const websiteError = showError("website");
+  const pickupAddressError = showError("pickupAddress");
+  const pickupLocationError = showError("pickupLocation");
+
   return (
     <main className="fixed inset-0 z-40 overflow-y-auto bg-background/80 backdrop-blur-sm">
       <div className="flex min-h-full items-start justify-center p-4 py-10">
@@ -278,7 +428,8 @@ const FarmerOnboarding = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5 p-6">
+          {/* noValidate: as mensagens de erro são as nossas, não as do browser. */}
+          <form onSubmit={handleSubmit} noValidate className="space-y-5 p-6">
             {/* Identificação da Exploração */}
             <section className="rounded-xl border border-border bg-background/50 p-5">
               <div className="mb-4 flex items-center gap-2 text-foreground">
@@ -288,31 +439,45 @@ const FarmerOnboarding = () => {
                 </h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
+                <div data-invalid={!!explorationIdError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
                     Identificação da exploração *
                   </label>
                   <input
                     type="text"
-                    value={explorationId}
-                    onChange={(e) => setExplorationId(e.target.value)}
-                    required
+                    value={values.explorationId}
+                    onChange={(e) => setField("explorationId", e.target.value)}
+                    onBlur={() => markTouched("explorationId")}
+                    aria-invalid={!!explorationIdError}
                     placeholder="Ex: Quinta do Vale"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className={inputClass(explorationIdError)}
                   />
+                  <FieldError message={explorationIdError} />
                 </div>
-                <div>
+                <div data-invalid={!!explorationNumberError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
                     Nº de exploração *
                   </label>
                   <input
                     type="text"
-                    value={explorationNumber}
-                    onChange={(e) => onValidateExplorationNumber(e)}
-                    required
+                    value={values.explorationNumber}
+                    onChange={(e) =>
+                      setField("explorationNumber", e.target.value.toUpperCase())
+                    }
+                    onBlur={() => markTouched("explorationNumber")}
+                    aria-invalid={!!explorationNumberError}
+                    maxLength={20}
                     placeholder="Ex: PT123456789"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className={inputClass(explorationNumberError)}
                   />
+                  <FieldError message={explorationNumberError} />
+                  {!explorationNumberError && (
+                    <FieldStatus
+                      checking={checking.explorationNumber}
+                      available={availability.explorationNumber}
+                      label="Número disponível."
+                    />
+                  )}
                 </div>
               </div>
             </section>
@@ -326,20 +491,22 @@ const FarmerOnboarding = () => {
                 </h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
+                <div data-invalid={!!companyNameError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
                     Nome da empresa *
                   </label>
                   <input
                     type="text"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    required
+                    value={values.companyName}
+                    onChange={(e) => setField("companyName", e.target.value)}
+                    onBlur={() => markTouched("companyName")}
+                    aria-invalid={!!companyNameError}
                     placeholder="Ex: Quinta do Vale Verde, Lda."
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className={inputClass(companyNameError)}
                   />
+                  <FieldError message={companyNameError} />
                 </div>
-                <div>
+                <div data-invalid={!!companyNifError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
                     NIF da empresa *
                   </label>
@@ -348,74 +515,98 @@ const FarmerOnboarding = () => {
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={9}
-                    value={companyNif}
-                    onChange={(e) => onValidateCompanyNif(e)}
-                    required
+                    value={values.companyNif}
+                    onChange={(e) =>
+                      setField("companyNif", e.target.value.replace(/\D/g, ""))
+                    }
+                    onBlur={() => markTouched("companyNif")}
+                    aria-invalid={!!companyNifError}
                     placeholder="9 dígitos"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className={inputClass(companyNifError)}
                   />
+                  <FieldError message={companyNifError} />
+                  {!companyNifError && (
+                    <FieldStatus
+                      checking={checking.companyNif}
+                      available={availability.companyNif}
+                      label="NIF válido e disponível."
+                    />
+                  )}
                 </div>
-                <div>
+                <div data-invalid={!!caeCodeError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
                     CAE da empresa *
                   </label>
                   <input
                     type="text"
-                    value={caeCode}
-                    onChange={(e) => setCaeCode(e.target.value)}
-                    required
+                    inputMode="numeric"
+                    maxLength={5}
+                    value={values.caeCode}
+                    onChange={(e) =>
+                      setField("caeCode", e.target.value.replace(/\D/g, ""))
+                    }
+                    onBlur={() => markTouched("caeCode")}
+                    aria-invalid={!!caeCodeError}
                     placeholder="Ex: 01110"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className={inputClass(caeCodeError)}
                   />
+                  <FieldError message={caeCodeError} />
                 </div>
-                <div>
+                <div data-invalid={!!phoneError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
                     Telefone *
                   </label>
                   <input
                     type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    required
+                    value={values.phone}
+                    onChange={(e) => setField("phone", e.target.value)}
+                    onBlur={() => markTouched("phone")}
+                    aria-invalid={!!phoneError}
                     placeholder="+351 912 345 678"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className={inputClass(phoneError)}
                   />
+                  <FieldError message={phoneError} />
                 </div>
-                <div className="sm:col-span-2">
+                <div className="sm:col-span-2" data-invalid={!!addressError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
                     Morada *
                   </label>
                   <input
                     type="text"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    required
+                    value={values.address}
+                    onChange={(e) => setField("address", e.target.value)}
+                    onBlur={() => markTouched("address")}
+                    aria-invalid={!!addressError}
                     placeholder="Morada da exploração"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className={inputClass(addressError)}
                   />
+                  <FieldError message={addressError} />
                 </div>
-                <div className="sm:col-span-2">
+                <div className="sm:col-span-2" data-invalid={!!websiteError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
                     Website
                   </label>
                   <input
-                    type="url"
-                    value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
+                    type="text"
+                    value={values.website}
+                    onChange={(e) => setField("website", e.target.value)}
+                    onBlur={() => markTouched("website")}
+                    aria-invalid={!!websiteError}
                     placeholder="https://..."
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className={inputClass(websiteError)}
                   />
+                  <FieldError message={websiteError} />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
                     Descrição da exploração
                   </label>
                   <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    value={values.description}
+                    onChange={(e) => setField("description", e.target.value)}
                     rows={3}
                     placeholder="Fale sobre a sua exploração, métodos de produção, história..."
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className={inputClass()}
                   />
                 </div>
               </div>
@@ -435,49 +626,64 @@ const FarmerOnboarding = () => {
               </p>
 
               <div className="space-y-3">
-                <div>
+                <div data-invalid={!!pickupAddressError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
                     Morada de levantamento *
                   </label>
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      value={pickupAddress}
-                      onChange={(e) => setPickupAddress(e.target.value)}
-                      required
+                      value={values.pickupAddress}
+                      onChange={(e) => setField("pickupAddress", e.target.value)}
+                      onBlur={() => markTouched("pickupAddress")}
+                      aria-invalid={!!pickupAddressError}
                       placeholder="Rua, número, código postal, localidade"
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      className={inputClass(pickupAddressError)}
                     />
-                    {address && (
+                    {values.address && (
                       <button
                         type="button"
-                        onClick={() => setPickupAddress(address)}
+                        onClick={() => {
+                          setField("pickupAddress", values.address);
+                          markTouched("pickupAddress");
+                        }}
                         className="shrink-0 rounded-lg border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-muted"
                       >
                         Usar morada da exploração
                       </button>
                     )}
                   </div>
+                  <FieldError message={pickupAddressError} />
                 </div>
 
-                <PickupLocationMap
-                  lat={pickupLat}
-                  lng={pickupLng}
-                  onChange={(la, ln) => {
-                    setPickupLat(la);
-                    setPickupLng(ln);
-                  }}
-                />
+                <div data-invalid={!!pickupLocationError}>
+                  <PickupLocationMap
+                    lat={values.pickupLat}
+                    lng={values.pickupLng}
+                    invalid={!!pickupLocationError}
+                    onChange={(la, ln) => {
+                      setValues((prev) => ({
+                        ...prev,
+                        pickupLat: la,
+                        pickupLng: ln,
+                      }));
+                      markTouched("pickupLocation");
+                    }}
+                  />
 
-                {pickupLat != null && pickupLng != null ? (
-                  <p className="text-xs text-muted-foreground">
-                    Coordenadas: {pickupLat.toFixed(5)}, {pickupLng.toFixed(5)}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Clique no mapa para marcar o local de levantamento.
-                  </p>
-                )}
+                  {values.pickupLat != null && values.pickupLng != null ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Coordenadas: {values.pickupLat.toFixed(5)},{" "}
+                      {values.pickupLng.toFixed(5)}
+                    </p>
+                  ) : pickupLocationError ? (
+                    <FieldError message={pickupLocationError} />
+                  ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Clique no mapa para marcar o local de levantamento.
+                    </p>
+                  )}
+                </div>
               </div>
             </section>
 
