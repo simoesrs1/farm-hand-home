@@ -1,13 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Save, Tag } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Tag, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -29,6 +40,7 @@ const EditProduct = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
   const [name, setName] = useState("");
@@ -152,6 +164,22 @@ const EditProduct = () => {
       return;
     }
     toast({ title: "Produto atualizado", description: "As alterações já estão visíveis no catálogo." });
+    navigate("/agricultor/produtos");
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    setDeleting(true);
+    const { error } = await supabase
+      .from("products")
+      .update({ active: false, stock_quantity: 0 } as any)
+      .eq("id", id);
+    setDeleting(false);
+    if (error) {
+      toast({ title: "Erro a eliminar produto", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Produto eliminado", description: `${name} foi removido do catálogo.` });
     navigate("/agricultor/produtos");
   };
 
@@ -392,11 +420,61 @@ const EditProduct = () => {
           </div>
         </Card>
 
+        <Card className="border-destructive/40 p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <Trash2 className="h-4 w-4 text-destructive" />
+            <h2 className="font-medium text-destructive">Eliminar produto</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            O produto deixa de aparecer no catálogo e na sua lista de produtos publicados. Esta ação
+            não pode ser anulada.
+          </p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={deleting || saving} className="gap-2">
+                {deleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                Eliminar produto
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Eliminar “{name}”?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  O produto deixa de aparecer no catálogo e na sua lista de produtos publicados.
+                  Esta ação não pode ser anulada.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={deleting}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleDelete();
+                  }}
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> A eliminar…
+                    </>
+                  ) : (
+                    "Eliminar produto"
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </Card>
+
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => navigate("/agricultor/produtos")}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={saving} className="gap-2">
+          <Button onClick={handleSave} disabled={saving || deleting} className="gap-2">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Guardar alterações
           </Button>

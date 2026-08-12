@@ -5,9 +5,7 @@ import {
   Loader2,
   Plus,
   Minus,
-  Trash2,
   Pencil,
-  Tag,
   PackageOpen,
   ImageIcon,
   AlertTriangle,
@@ -16,25 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -82,9 +61,6 @@ const availabilityState = (p: ProductRow): AvailabilityState => {
   return daysUntil(p.availability_end) <= 7 ? "ending" : "active";
 };
 
-const DISCOUNT_PRESETS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
-
-
 const MyProducts = () => {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
@@ -96,12 +72,7 @@ const MyProducts = () => {
   const [preset, setPreset] = useState<Record<string, string>>({});
   const [custom, setCustom] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [discountId, setDiscountId] = useState<string | null>(null);
   const [notified, setNotified] = useState(false);
-  const [removeId, setRemoveId] = useState<string | null>(null);
-  const [removeQty, setRemoveQty] = useState("");
-  const [confirmRemove, setConfirmRemove] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -237,107 +208,6 @@ const MyProducts = () => {
     setCustom((s) => ({ ...s, [p.id]: "" }));
   };
 
-  const removeTarget = useMemo(
-    () => products.find((p) => p.id === removeId) ?? null,
-    [products, removeId]
-  );
-  const removeMax = removeTarget?.stock_quantity ?? 0;
-  const removeAmount = parseInt(removeQty, 10);
-  const removeValid =
-    Number.isFinite(removeAmount) && removeAmount > 0 && removeAmount <= removeMax;
-
-  const openRemoveDialog = (p: ProductRow) => {
-    setRemoveId(p.id);
-    setRemoveQty("");
-  };
-
-  const closeRemoveDialog = () => {
-    setRemoveId(null);
-    setRemoveQty("");
-    setConfirmRemove(false);
-  };
-
-  const handleRemoveStock = async () => {
-    if (!removeTarget || !removeValid) return;
-    setSavingId(removeTarget.id);
-    const newStock = removeMax - removeAmount;
-    const { error } = await supabase
-      .from("products")
-      .update({ stock_quantity: newStock })
-      .eq("id", removeTarget.id);
-    setSavingId(null);
-    if (error) {
-      toast({ title: "Erro a atualizar stock", description: error.message, variant: "destructive" });
-      setConfirmRemove(false);
-      return;
-    }
-    toast({
-      title: "Stock removido",
-      description: `${removeTarget.name}: −${removeAmount} → ${newStock}`,
-    });
-    setProducts((prev) =>
-      prev.map((x) => (x.id === removeTarget.id ? { ...x, stock_quantity: newStock } : x))
-    );
-    closeRemoveDialog();
-  };
-
-  const saveThreshold = async (p: ProductRow, value: number) => {
-    const clean = Math.max(0, Math.round(Number.isFinite(value) ? value : 0));
-    if (clean === (p.low_stock_threshold ?? 5)) return;
-    const { error } = await supabase
-      .from("products")
-      .update({ low_stock_threshold: clean })
-      .eq("id", p.id);
-    if (error) {
-      toast({ title: "Erro a guardar aviso de stock", description: error.message, variant: "destructive" });
-      return;
-    }
-    setProducts((prev) =>
-      prev.map((x) => (x.id === p.id ? { ...x, low_stock_threshold: clean } : x)),
-    );
-    toast({ title: "Aviso de stock atualizado", description: `${p.name}: avisar a partir de ${clean} unidade(s).` });
-  };
-
-
-
-  const applyDiscount = async (p: ProductRow, value: number) => {
-    const clean = Math.min(90, Math.max(0, Math.round(value)));
-    if (clean === (p.discount_percent ?? 0)) return;
-    setDiscountId(p.id);
-    const { error } = await supabase
-      .from("products")
-      .update({ discount_percent: clean })
-      .eq("id", p.id);
-    setDiscountId(null);
-    if (error) {
-      toast({ title: "Erro a aplicar desconto", description: error.message, variant: "destructive" });
-      return;
-    }
-    toast({
-      title: clean > 0 ? `Desconto de ${clean}% aplicado` : "Desconto removido",
-      description: p.name,
-    });
-    setProducts((prev) =>
-      prev.map((x) => (x.id === p.id ? { ...x, discount_percent: clean } : x))
-    );
-  };
-
-  const handleDelete = async (p: ProductRow) => {
-    setDeletingId(p.id);
-    const { error } = await supabase
-      .from("products")
-      .update({ active: false, stock_quantity: 0 })
-      .eq("id", p.id);
-    setDeletingId(null);
-    if (error) {
-      toast({ title: "Erro a eliminar produto", description: error.message, variant: "destructive" });
-      return;
-    }
-    toast({ title: "Produto eliminado", description: `${p.name} foi removido do catálogo.` });
-    setProducts((prev) => prev.filter((x) => x.id !== p.id));
-  };
-
-
   if (authLoading || loading) {
     return (
       <div className="container py-16 flex justify-center">
@@ -427,7 +297,6 @@ const MyProducts = () => {
                   isOut || isExpired ? "border-destructive/50" : "border-border"
                 }`}
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="flex items-center gap-3 sm:flex-1 sm:min-w-0">
                   <Button
                     size="icon"
@@ -524,231 +393,37 @@ const MyProducts = () => {
                     />
                   )}
                   <Button
-                    size="sm"
+                    size="icon"
                     onClick={() => applyStockDelta(p, 1)}
-                    disabled={savingId === p.id || deletingId === p.id}
-                    className="gap-1"
+                    disabled={savingId === p.id}
+                    className="h-8 w-8 shrink-0"
+                    aria-label={`Adicionar stock a ${p.name}`}
+                    title="Adicionar stock"
                   >
                     {savingId === p.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Plus className="h-4 w-4" />
                     )}
-                    Adicionar stock
                   </Button>
                   <Button
-                    size="sm"
+                    size="icon"
                     variant="outline"
                     onClick={() => applyStockDelta(p, -1)}
-                    disabled={savingId === p.id || deletingId === p.id || stock <= 0}
-                    className="gap-1"
+                    disabled={savingId === p.id || stock <= 0}
+                    className="h-8 w-8 shrink-0"
+                    aria-label={`Retirar stock a ${p.name}`}
+                    title="Retirar stock"
                   >
                     <Minus className="h-4 w-4" />
-                    Retirar stock
                   </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        disabled={deletingId === p.id}
-                        className="gap-1"
-                      >
-                        {deletingId === p.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                        Eliminar
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Eliminar “{p.name}”?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          O produto deixa de aparecer no catálogo e na sua lista de produtos
-                          publicados. Esta ação não pode ser anulada.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(p)}>
-                          Eliminar produto
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-
-                </div>
-                </div>
-
-                {/* Aviso de stock baixo */}
-                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                    <AlertTriangle className="h-3.5 w-3.5" /> Avisar-me quando restarem
-                  </span>
-                  <Input
-                    type="number"
-                    min={0}
-                    step={1}
-                    defaultValue={threshold}
-                    onBlur={(e) => saveThreshold(p, parseInt(e.target.value, 10))}
-                    aria-label="Limite de aviso de stock baixo"
-                    className="h-8 w-20"
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    unidade(s) — recebe também uma notificação quando esgotar.
-                  </span>
-                </div>
-
-                {/* Descontos */}
-                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                    <Tag className="h-3.5 w-3.5" /> Desconto
-                  </span>
-                  {DISCOUNT_PRESETS.map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      disabled={discountId === p.id}
-                      onClick={() => applyDiscount(p, d)}
-                      className={`rounded-full border px-2.5 py-1 text-xs transition-colors disabled:opacity-50 ${
-                        (p.discount_percent ?? 0) === d
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border bg-background hover:bg-secondary"
-                      }`}
-                    >
-                      {d === 0 ? "Sem desconto" : `-${d}%`}
-                    </button>
-                  ))}
-                  <Input
-                    type="number"
-                    min={0}
-                    max={90}
-                    step={1}
-                    defaultValue={p.discount_percent ?? 0}
-                    onBlur={(e) => applyDiscount(p, parseInt(e.target.value, 10) || 0)}
-                    aria-label="Desconto personalizado (%)"
-                    className="h-8 w-20"
-                  />
-                  {discountId === p.id && (
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  )}
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {(p.discount_percent ?? 0) > 0 && (
-                      <span className="mr-1.5 line-through">{p.client_price.toFixed(2)} €</span>
-                    )}
-                    <strong className="text-foreground">
-                      {(
-                        Math.round(p.client_price * (1 - (p.discount_percent ?? 0) / 100) * 100) / 100
-                      ).toFixed(2)}{" "}
-                      €
-                    </strong>
-                  </span>
                 </div>
               </li>
-
             );
           })}
         </ul>
       )}
 
-      <Dialog
-        open={!!removeTarget}
-        onOpenChange={(open) => {
-          if (!open && savingId === null) closeRemoveDialog();
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Remover stock</DialogTitle>
-            <DialogDescription>
-              {removeTarget && (
-                <>
-                  {removeTarget.name} · máximo disponível:{" "}
-                  <span className="font-medium text-primary">
-                    {removeMax} {removeTarget.unit}
-                  </span>
-                  .
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div>
-            <label htmlFor="remove-stock-qty" className="mb-1 block text-sm font-medium text-foreground">
-              Quantidade a remover
-            </label>
-            <Input
-              id="remove-stock-qty"
-              type="number"
-              min={1}
-              max={removeMax}
-              step={1}
-              value={removeQty}
-              onChange={(e) => setRemoveQty(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && removeValid) setConfirmRemove(true);
-              }}
-              placeholder={`1 - ${removeMax}`}
-              autoComplete="off"
-            />
-            <p className="mt-2 text-xs text-muted-foreground">
-              Indique um valor entre 1 e {removeMax}.
-            </p>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={closeRemoveDialog} disabled={savingId !== null}>
-              Cancelar
-            </Button>
-            <Button onClick={() => setConfirmRemove(true)} disabled={!removeValid || savingId !== null}>
-              Confirmar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog
-        open={confirmRemove}
-        onOpenChange={(open) => {
-          if (!open && savingId === null) setConfirmRemove(false);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar remoção de stock</AlertDialogTitle>
-            <AlertDialogDescription>
-              {removeTarget && removeValid && (
-                <>
-                  Deseja mesmo remover {removeAmount} {removeTarget.unit} de{" "}
-                  <span className="font-medium text-foreground">{removeTarget.name}</span>? O stock
-                  passará de {removeMax} para {removeMax - removeAmount}. Esta ação não pode ser
-                  anulada.
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={savingId !== null}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={savingId !== null}
-              onClick={(e) => {
-                e.preventDefault();
-                handleRemoveStock();
-              }}
-            >
-              {savingId !== null ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> A remover…
-                </>
-              ) : (
-                "Sim, remover"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
