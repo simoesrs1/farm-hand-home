@@ -15,6 +15,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Catalog from "./pages/Catalog";
 import CategoryPage from "./pages/CategoryPage";
+import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import Mission from "./pages/Mission";
 import FarmerProfile from "./pages/FarmerProfile";
