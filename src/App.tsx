@@ -61,6 +61,7 @@ const App = () => (
                     <Route path="/onboarding/agricultor" element={<FarmerOnboarding />} />
                     <Route path="/catalogo" element={<Catalog />} />
                     <Route path="/catalogo/:slug" element={<CategoryPage />} />
+                    <Route path="/produto/:id" element={<ProductDetail />} />
                     <Route path="/agricultor/:id" element={<FarmerProfile />} />
                     <Route path="/resultados" element={<SearchResults />} />
                     <Route path="/carrinho" element={<Cart />} />
