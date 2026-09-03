@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams, Navigate, useSearchParams } from "react-router-dom";
+import { Link, useParams, Navigate, useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -64,6 +64,7 @@ const distanceKm = (
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const category = slug ? getCategoryBySlug(slug) : undefined;
+  const navigate = useNavigate();
   const { addItem, items: cartItems } = useCart();
   const { registerStock } = useStock();
   const { toast } = useToast();
@@ -290,9 +291,10 @@ const CategoryPage = () => {
                 <div
                   key={p.id}
                   ref={(el) => { cardRefs.current[p.id] = el; }}
-                  className={`group overflow-hidden rounded-xl border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${
+                  className={`group cursor-pointer overflow-hidden rounded-xl border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${
                     isHighlighted ? "border-primary ring-2 ring-primary/30 shadow-lg" : "border-border"
                   }`}
+                  onClick={() => navigate(`/produto/${p.id}`)}
                 >
                   <div className="relative h-40 overflow-hidden">
                     <img
@@ -303,11 +305,12 @@ const CategoryPage = () => {
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold text-foreground">{p.name}</h3>
-                    <Link to={`/agricultor/${p.farmerId}`} className="text-xs text-primary underline">
+                    <Link to={`/agricultor/${p.farmerId}`} onClick={(e) => e.stopPropagation()} className="text-xs text-primary underline">
                       {p.farmer}
                     </Link>
                     <Link
                       to={`/agricultor/${p.farmerId}`}
+                      onClick={(e) => e.stopPropagation()}
                       className="hover:underline"
                       title="Stock definido pelo agricultor"
                     >
@@ -343,7 +346,8 @@ const CategoryPage = () => {
                         variant="outline"
                         className="gap-1"
                         disabled={!canAdd}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           addItem(p);
                           toast({ title: "Adicionado ao carrinho", description: p.name });
                         }}
