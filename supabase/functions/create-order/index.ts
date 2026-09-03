@@ -265,6 +265,20 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Notify the buyer that the payment went through and the order exists.
+    await admin.from("notifications").insert({
+      user_id: clientId,
+      order_id: order.id,
+      type: "order_paid",
+      title: "Encomenda criada",
+      message: `Pagamento confirmado (${total.toFixed(2)}€). ${
+        resolved.length === 1
+          ? `${resolved[0].quantity} × ${resolved[0].product.name}`
+          : `${resolved.length} produtos`
+      } — código de levantamento ${pickupCode}.`,
+      link: "/encomendas",
+    });
+
     if (farmerRow.user_id) {
       await admin.from("notifications").insert({
         user_id: farmerRow.user_id,
