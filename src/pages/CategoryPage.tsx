@@ -290,9 +290,10 @@ const CategoryPage = () => {
                 <div
                   key={p.id}
                   ref={(el) => { cardRefs.current[p.id] = el; }}
-                  className={`group overflow-hidden rounded-xl border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${
+                  className={`group cursor-pointer overflow-hidden rounded-xl border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ${
                     isHighlighted ? "border-primary ring-2 ring-primary/30 shadow-lg" : "border-border"
                   }`}
+                  onClick={() => navigate(`/produto/${p.id}`)}
                 >
                   <div className="relative h-40 overflow-hidden">
                     <img
