@@ -215,9 +215,18 @@ const ProductDetail = () => {
     const amount = Math.min(qty, maxAddable);
     addItem(product);
     if (inCart + amount > 1) updateQuantity(product.id, inCart + amount);
+    if (pickupTime) {
+      try {
+        localStorage.setItem("farmconnect_pickup_slot", pickupTime);
+      } catch {
+        // ignore
+      }
+    }
     toast({
       title: "Adicionado ao carrinho",
-      description: `${amount} × ${product.name}`,
+      description: pickupTime
+        ? `${amount} × ${product.name} · levantamento ${formatSlotDate(new Date(pickupTime))} às ${formatSlotTime(new Date(pickupTime))}`
+        : `${amount} × ${product.name}`,
     });
   };
 
