@@ -117,6 +117,18 @@ const Cart = () => {
   const slots = useMemo(() => pickupSlots(pickupWindows), [pickupWindows]);
   const needsSchedule = pickupWindows.length > 0;
 
+  // Pre-fill with the slot the client already picked on the product page.
+  useEffect(() => {
+    if (slot || slots.length === 0) return;
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem("farmconnect_pickup_slot");
+    } catch {
+      stored = null;
+    }
+    if (stored && slots.some((d) => d.toISOString() === stored)) setSlot(stored);
+  }, [slots, slot]);
+
   const onCheckoutClick = () => {
     if (!user) {
       toast({ title: "Inicie sessão", description: "Precisa de estar autenticado para finalizar a compra." });
