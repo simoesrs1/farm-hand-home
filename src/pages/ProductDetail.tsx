@@ -12,6 +12,7 @@ import {
   Package,
   ShoppingCart,
   Clock,
+  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +22,21 @@ import { useToast } from "@/hooks/use-toast";
 import { getCategoryByName } from "@/data/categories";
 import SavingsBadge from "@/components/SavingsBadge";
 import PickupAvailabilityBadge from "@/components/PickupAvailabilityBadge";
-import { formatPickupHours, parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
+import {
+  formatPickupHours,
+  formatSlotDate,
+  formatSlotTime,
+  parsePickupHours,
+  pickupSlots,
+  type PickupWindow,
+} from "@/lib/pickup-hours";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import type { Product } from "@/data/products";
 
@@ -52,6 +67,8 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+  const [pickupDay, setPickupDay] = useState("");
+  const [pickupTime, setPickupTime] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -150,6 +167,25 @@ const ProductDetail = () => {
     return `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
   }, [product]);
 
+  const slots = useMemo(
+    () => (product ? pickupSlots(product.pickupWindows) : []),
+    [product],
+  );
+
+  const dayKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+  const days = useMemo(() => {
+    const map = new Map<string, Date>();
+    for (const d of slots) if (!map.has(dayKey(d))) map.set(dayKey(d), d);
+    return [...map.entries()];
+  }, [slots]);
+
+  const timesForDay = useMemo(
+    () => slots.filter((d) => dayKey(d) === pickupDay),
+    [slots, pickupDay],
+  );
+
   if (loading) {
     return (
       <main className="py-16">
@@ -179,9 +215,18 @@ const ProductDetail = () => {
     const amount = Math.min(qty, maxAddable);
     addItem(product);
     if (inCart + amount > 1) updateQuantity(product.id, inCart + amount);
+    if (pickupTime) {
+      try {
+        localStorage.setItem("farmconnect_pickup_slot", pickupTime);
+      } catch {
+        // ignore
+      }
+    }
     toast({
       title: "Adicionado ao carrinho",
-      description: `${amount} × ${product.name}`,
+      description: pickupTime
+        ? `${amount} × ${product.name} · levantamento ${formatSlotDate(new Date(pickupTime))} às ${formatSlotTime(new Date(pickupTime))}`
+        : `${amount} × ${product.name}`,
     });
   };
 
@@ -376,8 +421,54 @@ const ProductDetail = () => {
                   {product.pickupNote && (
                     <p className="mt-2 text-xs text-muted-foreground">{product.pickupNote}</p>
                   )}
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    O horário exato de levantamento é escolhido no carrinho, antes do pagamento.
+                </div>
+              )}
+
+              {days.length > 0 && (
+                <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <CalendarClock className="h-4 w-4 text-primary" />
+                    Escolher horário de levantamento
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Select
+                      value={pickupDay}
+                      onValueChange={(v) => {
+                        setPickupDay(v);
+                        setPickupTime("");
+                      }}
+                    >
+                      <SelectTrigger aria-label="Dia de levantamento">
+                        <SelectValue placeholder="Escolher dia" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {days.map(([key, d]) => (
+                          <SelectItem key={key} value={key}>
+                            {formatSlotDate(d)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={pickupTime}
+                      onValueChange={setPickupTime}
+                      disabled={!pickupDay}
+                    >
+                      <SelectTrigger aria-label="Hora de levantamento">
+                        <SelectValue placeholder="Escolher hora" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {timesForDay.map((d) => (
+                          <SelectItem key={d.toISOString()} value={d.toISOString()}>
+                            {formatSlotTime(d)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Só aparecem dias e horas dentro da porta aberta do agricultor. A escolha segue
+                    para o carrinho e pode ser alterada antes do pagamento.
                   </p>
                 </div>
               )}
