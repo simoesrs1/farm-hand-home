@@ -12,6 +12,7 @@ import {
   Package,
   ShoppingCart,
   Clock,
+  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
