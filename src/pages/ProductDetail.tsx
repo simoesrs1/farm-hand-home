@@ -152,6 +152,25 @@ const ProductDetail = () => {
     return `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
   }, [product]);
 
+  const slots = useMemo(
+    () => (product ? pickupSlots(product.pickupWindows) : []),
+    [product],
+  );
+
+  const dayKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+  const days = useMemo(() => {
+    const map = new Map<string, Date>();
+    for (const d of slots) if (!map.has(dayKey(d))) map.set(dayKey(d), d);
+    return [...map.entries()];
+  }, [slots]);
+
+  const timesForDay = useMemo(
+    () => slots.filter((d) => dayKey(d) === pickupDay),
+    [slots, pickupDay],
+  );
+
   if (loading) {
     return (
       <main className="py-16">
