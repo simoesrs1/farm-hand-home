@@ -459,6 +459,13 @@ const Cart = () => {
                   Confirme sempre o local de levantamento indicado pelo agricultor antes de se
                   deslocar e prefira deslocações em horário diurno.
                 </p>
+                {slot && (
+                  <p className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-2.5 font-medium text-foreground">
+                    <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
+                    Levantamento agendado: {formatSlotDate(new Date(slot))} às {formatSlotTime(new Date(slot))}.
+                    O agricultor recebe a encomenda com este horário.
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground">
                   A FarmConnect <strong>não se responsabiliza por atos de terceiros</strong> nem
                   pela segurança física das pessoas durante o processo de levantamento.
