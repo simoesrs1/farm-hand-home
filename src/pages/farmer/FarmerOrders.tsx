@@ -27,6 +27,7 @@ interface Order {
   status: "pending_payment" | "awaiting_pickup" | "delivered" | "expired" | "refunded";
   pickup_deadline: string;
   pickup_code: string;
+  scheduled_pickup_at: string | null;
   delivered_at: string | null;
   expired_at: string | null;
   accepted_at: string | null;
