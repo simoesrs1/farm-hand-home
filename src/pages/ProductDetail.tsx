@@ -52,6 +52,8 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+  const [pickupDay, setPickupDay] = useState("");
+  const [pickupTime, setPickupTime] = useState("");
 
   useEffect(() => {
     if (!id) return;
