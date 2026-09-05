@@ -21,7 +21,21 @@ import { useToast } from "@/hooks/use-toast";
 import { getCategoryByName } from "@/data/categories";
 import SavingsBadge from "@/components/SavingsBadge";
 import PickupAvailabilityBadge from "@/components/PickupAvailabilityBadge";
-import { formatPickupHours, parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
+import {
+  formatPickupHours,
+  formatSlotDate,
+  formatSlotTime,
+  parsePickupHours,
+  pickupSlots,
+  type PickupWindow,
+} from "@/lib/pickup-hours";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import type { Product } from "@/data/products";
 
