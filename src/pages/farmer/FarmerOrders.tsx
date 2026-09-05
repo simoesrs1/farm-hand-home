@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2 } from "lucide-react";
+import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -60,7 +60,7 @@ const FarmerOrders = () => {
     const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,delivered_at,expired_at,accepted_at,created_at,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
+        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,scheduled_pickup_at,delivered_at,expired_at,accepted_at,created_at,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
         .order("created_at", { ascending: false });
       if (!cancelled) {
         setOrders((data as Order[]) ?? []);
@@ -256,9 +256,24 @@ const FarmerOrders = () => {
                 )}
 
                 {o.status === "awaiting_pickup" && (
-                  <p className="mt-3 border-t border-border pt-3 text-sm text-muted-foreground">
-                    Prazo de levantamento: <span className="font-medium text-foreground">{new Date(o.pickup_deadline).toLocaleDateString("pt-PT")}</span>
-                  </p>
+                  <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm text-muted-foreground">
+                    {o.scheduled_pickup_at && (
+                      <p className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-2.5 font-medium text-foreground">
+                        <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
+                        Levantamento agendado pelo cliente:{" "}
+                        {new Date(o.scheduled_pickup_at).toLocaleString("pt-PT", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    )}
+                    <p>
+                      Prazo de levantamento: <span className="font-medium text-foreground">{new Date(o.pickup_deadline).toLocaleDateString("pt-PT")}</span>
+                    </p>
+                  </div>
                 )}
                 {(o.status === "awaiting_pickup" || o.status === "delivered" || o.status === "expired") && (
                   <div className="mt-4 border-t border-border pt-4">
