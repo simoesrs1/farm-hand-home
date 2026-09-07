@@ -112,7 +112,9 @@ const MyOrders = () => {
               {new Date(o.created_at).toLocaleString("pt-PT")}
             </p>
             <p className="mt-1 font-display text-lg font-semibold text-foreground">
-              {o.farmer?.company_name ?? "Quinta"}
+              <Link to={`/encomendas/${o.id}`} className="hover:underline">
+                {o.farmer?.company_name ?? "Quinta"}
+              </Link>
             </p>
             <p className="mt-1 text-sm text-muted-foreground">{o.total.toFixed(2)}€</p>
           </div>
@@ -125,6 +127,12 @@ const MyOrders = () => {
                 {o.accepted_at ? "Pedido aceite pelo agricultor" : "A aguardar aceitação do agricultor"}
               </span>
             )}
+            <Link
+              to={`/encomendas/${o.id}`}
+              className="text-[11px] font-medium text-primary hover:underline"
+            >
+              Ver estado e levantamento →
+            </Link>
           </div>
         </div>
 
@@ -206,16 +214,25 @@ const MyOrders = () => {
               {new Date(o.created_at).toLocaleString("pt-PT")}
             </p>
             <p className="mt-1 font-display text-lg font-semibold text-foreground/80">
-              {o.farmer?.company_name ?? "Quinta"}
+              <Link to={`/encomendas/${o.id}`} className="hover:underline">
+                {o.farmer?.company_name ?? "Quinta"}
+              </Link>
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {o.total.toFixed(2)}€ · {o.order_items?.length ?? 0} {(o.order_items?.length ?? 0) === 1 ? "artigo" : "artigos"}
             </p>
           </div>
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${meta.tone}`}>
-            <Icon className="h-3.5 w-3.5" /> {meta.label}
-          </span>
-        </div>
+          <div className="flex flex-col items-end gap-1.5">
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${meta.tone}`}>
+              <Icon className="h-3.5 w-3.5" /> {meta.label}
+            </span>
+            <Link
+              to={`/encomendas/${o.id}`}
+              className="text-[11px] font-medium text-primary hover:underline"
+            >
+              Ver estado →
+            </Link>
+          </div>
 
         {o.status === "delivered" && (
           <div className="mt-4 flex justify-end border-t border-border/60 pt-4">
