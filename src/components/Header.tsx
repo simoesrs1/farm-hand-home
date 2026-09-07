@@ -108,6 +108,14 @@ const Header = () => {
                     <Package className="h-5 w-5" />
                   </Link>
                   <Link
+                    to="/agricultor/vendas"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
+                    aria-label="Vendas"
+                    title="As minhas vendas"
+                  >
+                    <TrendingUp className="h-5 w-5" />
+                  </Link>
+                  <Link
                     to="/agricultor/disponibilidade"
                     className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
                     aria-label="Disponibilidade"
