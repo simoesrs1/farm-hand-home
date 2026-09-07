@@ -25,6 +25,7 @@ import Cart from "./pages/Cart";
 import MyOrders from "./pages/MyOrders";
 import RateFarmer from "./pages/RateFarmer";
 import FarmerOrders from "./pages/farmer/FarmerOrders";
+import FarmerSales from "./pages/farmer/Sales";
 import ScanPickup from "./pages/farmer/ScanPickup";
 import NewProduct from "./pages/farmer/NewProduct";
 import MyProducts from "./pages/farmer/MyProducts";
@@ -69,6 +70,7 @@ const App = () => (
                     <Route path="/avaliar/:orderId" element={<RateFarmer />} />
                     <Route path="/agricultor/encomendas" element={<FarmerOrders />} />
                     <Route path="/agricultor/scan" element={<ScanPickup />} />
+                    <Route path="/agricultor/vendas" element={<FarmerSales />} />
                     <Route path="/agricultor/produtos/novo" element={<NewProduct />} />
                     <Route path="/agricultor/produtos" element={<MyProducts />} />
                     <Route path="/agricultor/produtos/:id/editar" element={<EditProduct />} />
