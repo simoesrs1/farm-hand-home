@@ -233,6 +233,7 @@ const MyOrders = () => {
               Ver estado →
             </Link>
           </div>
+        </div>
 
         {o.status === "delivered" && (
           <div className="mt-4 flex justify-end border-t border-border/60 pt-4">
