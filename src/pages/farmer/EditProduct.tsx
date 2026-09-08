@@ -63,6 +63,7 @@ const EditProduct = () => {
   const [isLactoseFree, setIsLactoseFree] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [deliveryMode, setDeliveryMode] = useState<string>("pickup");
+  const [localDelivery, setLocalDelivery] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -108,6 +109,7 @@ const EditProduct = () => {
       setIsLactoseFree(!!p.is_lactose_free);
       setDiscount(p.discount_percent ?? 0);
       setDeliveryMode(p.delivery_mode ?? "pickup");
+      setLocalDelivery(!!p.local_delivery);
       setLoading(false);
     })();
   }, [user, id]);
@@ -155,6 +157,7 @@ const EditProduct = () => {
         stock_quantity: stockNum,
         low_stock_threshold: Math.max(0, parseInt(lowStockThreshold, 10) || 0),
         delivery_mode: deliveryMode,
+        local_delivery: localDelivery,
         shipping_days:
           deliveryMode === "pickup" ? 0 : shippingDays ? parseInt(shippingDays, 10) : 1,
         availability_start: availabilityStart || null,
@@ -395,6 +398,21 @@ const EditProduct = () => {
                 </button>
               ))}
             </div>
+          </div>
+          <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+            <div>
+              <Label htmlFor="local-delivery" className="text-sm font-medium">
+                Entrego eu ao domicílio
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Entrega em mão feita por si, dentro da distância definida na sua disponibilidade.
+              </p>
+            </div>
+            <Switch
+              id="local-delivery"
+              checked={localDelivery}
+              onCheckedChange={setLocalDelivery}
+            />
           </div>
           {deliveryMode !== "pickup" && (
             <div className="space-y-2">
