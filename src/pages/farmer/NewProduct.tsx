@@ -49,6 +49,7 @@ const NewProduct = () => {
   const [vatRate, setVatRate] = useState<number>(6);
   const [deliveryMode, setDeliveryMode] = useState<DeliveryModesEnum>(DeliveryModesEnum.Pickup);
   const [shippingDays, setShippingDays] = useState<string>("");
+  const [localDelivery, setLocalDelivery] = useState(false);
   const [stockQuantity, setStockQuantity] = useState<string>("");
   const [lowStockThreshold, setLowStockThreshold] = useState<string>("5");
   const [availabilityStart, setAvailabilityStart] = useState<string>("");
@@ -214,6 +215,7 @@ const NewProduct = () => {
         vat_rate: vatRate,
         media_urls: '{' + mediaUrls + '}',
         delivery_mode: DeliveryModesEnum[deliveryMode].toLowerCase(),
+        local_delivery: localDelivery,
         shipping_days: deliveryMode === DeliveryModesEnum.Pickup ? 0 : shippingDaysNum,
         stock_quantity: stockNum,
         low_stock_threshold: Math.max(0, parseInt(lowStockThreshold, 10) || 0),
@@ -461,6 +463,22 @@ const NewProduct = () => {
               </div>
             </label>
           </RadioGroup>
+          <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+            <div>
+              <Label htmlFor="local-delivery" className="text-sm font-medium">
+                Entrego eu ao domicílio
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Entrega em mão feita por si, dentro da distância e horários definidos na sua
+                disponibilidade.
+              </p>
+            </div>
+            <Switch
+              id="local-delivery"
+              checked={localDelivery}
+              onCheckedChange={setLocalDelivery}
+            />
+          </div>
           {(deliveryMode === DeliveryModesEnum.Shipping || deliveryMode === DeliveryModesEnum.Both) && (
             <div className="space-y-2">
               <Label htmlFor="shipping-days">Dias estimados para entrega em casa *</Label>
