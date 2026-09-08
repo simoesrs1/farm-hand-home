@@ -32,6 +32,11 @@ const VAT_OPTIONS = [
   { value: 23, label: "Normal — 23%" },
 ];
 const DISCOUNT_PRESETS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
+const DELIVERY_OPTIONS = [
+  { value: "pickup", label: "Levantamento na quinta", hint: "O cliente vai buscar a encomenda." },
+  { value: "shipping", label: "Envio de encomenda", hint: "Entrega ao domicílio por transportadora." },
+  { value: "both", label: "Ambos", hint: "Levantamento ou envio, à escolha do cliente." },
+];
 
 const EditProduct = () => {
   const navigate = useNavigate();
@@ -149,7 +154,9 @@ const EditProduct = () => {
         vat_rate: vatRate,
         stock_quantity: stockNum,
         low_stock_threshold: Math.max(0, parseInt(lowStockThreshold, 10) || 0),
-        shipping_days: shippingDays ? parseInt(shippingDays, 10) : 0,
+        delivery_mode: deliveryMode,
+        shipping_days:
+          deliveryMode === "pickup" ? 0 : shippingDays ? parseInt(shippingDays, 10) : 1,
         availability_start: availabilityStart || null,
         availability_end: availabilityEnd || null,
         is_organic: isOrganic,
@@ -369,6 +376,26 @@ const EditProduct = () => {
 
         <Card className="p-5 space-y-4">
           <h2 className="font-medium">Entrega e disponibilidade</h2>
+          <div className="space-y-2">
+            <Label>Forma de entrega</Label>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {DELIVERY_OPTIONS.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setDeliveryMode(o.value)}
+                  className={`rounded-lg border p-3 text-left text-sm transition-colors ${
+                    deliveryMode === o.value
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-background hover:bg-secondary"
+                  }`}
+                >
+                  <span className="block font-medium">{o.label}</span>
+                  <span className="block text-xs text-muted-foreground">{o.hint}</span>
+                </button>
+              ))}
+            </div>
+          </div>
           {deliveryMode !== "pickup" && (
             <div className="space-y-2">
               <Label htmlFor="days">Dias de envio</Label>
