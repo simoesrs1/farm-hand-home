@@ -137,6 +137,9 @@ export type Database = {
           company_name: string | null
           company_nif: string | null
           created_at: string
+          delivery_hours: Json
+          delivery_note: string | null
+          delivery_radius_km: number | null
           description: string | null
           exploration_id: string | null
           exploration_number: string | null
@@ -161,6 +164,9 @@ export type Database = {
           company_name?: string | null
           company_nif?: string | null
           created_at?: string
+          delivery_hours?: Json
+          delivery_note?: string | null
+          delivery_radius_km?: number | null
           description?: string | null
           exploration_id?: string | null
           exploration_number?: string | null
@@ -185,6 +191,9 @@ export type Database = {
           company_name?: string | null
           company_nif?: string | null
           created_at?: string
+          delivery_hours?: Json
+          delivery_note?: string | null
+          delivery_radius_km?: number | null
           description?: string | null
           exploration_id?: string | null
           exploration_number?: string | null
@@ -543,6 +552,7 @@ export type Database = {
           id: string
           is_lactose_free: boolean
           is_organic: boolean
+          local_delivery: boolean
           low_stock_threshold: number
           media_urls: string[]
           modifications_description: string | null
@@ -569,6 +579,7 @@ export type Database = {
           id?: string
           is_lactose_free?: boolean
           is_organic?: boolean
+          local_delivery?: boolean
           low_stock_threshold?: number
           media_urls?: string[]
           modifications_description?: string | null
@@ -595,6 +606,7 @@ export type Database = {
           id?: string
           is_lactose_free?: boolean
           is_organic?: boolean
+          local_delivery?: boolean
           low_stock_threshold?: number
           media_urls?: string[]
           modifications_description?: string | null
