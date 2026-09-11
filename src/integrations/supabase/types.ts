@@ -738,9 +738,13 @@ export type Database = {
           cae_code: string | null
           company_name: string | null
           created_at: string | null
+          delivery_hours: Json | null
+          delivery_note: string | null
+          delivery_radius_km: number | null
           description: string | null
           id: string | null
           initial_score: number | null
+          pickup_address: string | null
           pickup_hours: Json | null
           pickup_hours_note: string | null
           pickup_lat: number | null
@@ -755,9 +759,13 @@ export type Database = {
           cae_code?: string | null
           company_name?: string | null
           created_at?: string | null
+          delivery_hours?: Json | null
+          delivery_note?: string | null
+          delivery_radius_km?: number | null
           description?: string | null
           id?: string | null
           initial_score?: number | null
+          pickup_address?: string | null
           pickup_hours?: Json | null
           pickup_hours_note?: string | null
           pickup_lat?: number | null
@@ -772,9 +780,13 @@ export type Database = {
           cae_code?: string | null
           company_name?: string | null
           created_at?: string | null
+          delivery_hours?: Json | null
+          delivery_note?: string | null
+          delivery_radius_km?: number | null
           description?: string | null
           id?: string | null
           initial_score?: number | null
+          pickup_address?: string | null
           pickup_hours?: Json | null
           pickup_hours_note?: string | null
           pickup_lat?: number | null
