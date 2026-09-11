@@ -251,6 +251,7 @@ const ProductDetail = () => {
       : "Apenas levantamento na propriedade";
 
   const hours = formatPickupHours(product.pickupWindows);
+  const deliveryHours = formatPickupHours(product.deliveryWindows);
 
   return (
     <main className="py-8">
