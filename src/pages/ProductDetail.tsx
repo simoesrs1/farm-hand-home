@@ -53,6 +53,10 @@ interface Detail extends Product {
   lat: number | null;
   lng: number | null;
   images: string[];
+  localDelivery: boolean;
+  deliveryRadiusKm: number | null;
+  deliveryWindows: PickupWindow[];
+  deliveryNote: string;
 }
 
 const ProductDetail = () => {
@@ -78,7 +82,7 @@ const ProductDetail = () => {
       const { data: r } = await supabase
         .from("products")
         .select(
-          "id, name, description, unit, client_price, discount_percent, stock_quantity, media_urls, delivery_mode, shipping_days, category, farmer_id, is_organic, is_lactose_free, has_modifications, modifications_description, vat_rate",
+          "id, name, description, unit, client_price, discount_percent, stock_quantity, media_urls, delivery_mode, shipping_days, local_delivery, category, farmer_id, is_organic, is_lactose_free, has_modifications, modifications_description, vat_rate",
         )
         .eq("id", id)
         .eq("active", true)
