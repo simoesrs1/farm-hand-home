@@ -53,6 +53,10 @@ interface Detail extends Product {
   lat: number | null;
   lng: number | null;
   images: string[];
+  localDelivery: boolean;
+  deliveryRadiusKm: number | null;
+  deliveryWindows: PickupWindow[];
+  deliveryNote: string;
 }
 
 const ProductDetail = () => {
@@ -78,7 +82,7 @@ const ProductDetail = () => {
       const { data: r } = await supabase
         .from("products")
         .select(
-          "id, name, description, unit, client_price, discount_percent, stock_quantity, media_urls, delivery_mode, shipping_days, category, farmer_id, is_organic, is_lactose_free, has_modifications, modifications_description, vat_rate",
+          "id, name, description, unit, client_price, discount_percent, stock_quantity, media_urls, delivery_mode, shipping_days, local_delivery, category, farmer_id, is_organic, is_lactose_free, has_modifications, modifications_description, vat_rate",
         )
         .eq("id", id)
         .eq("active", true)
@@ -92,7 +96,9 @@ const ProductDetail = () => {
 
       const { data: farmer } = await supabase
         .from("public_farmer_profiles")
-        .select("id, company_name, address, pickup_address, pickup_lat, pickup_lng, pickup_hours, pickup_hours_note")
+        .select(
+          "id, company_name, address, pickup_address, pickup_lat, pickup_lng, pickup_hours, pickup_hours_note, delivery_radius_km, delivery_hours, delivery_note",
+        )
         .eq("id", r.farmer_id)
         .maybeSingle();
 
@@ -137,6 +143,13 @@ const ProductDetail = () => {
         pickupAddress: ((farmer as any)?.pickup_address as string) ?? (farmer as any)?.address ?? "",
         lat: (farmer as any)?.pickup_lat ?? null,
         lng: (farmer as any)?.pickup_lng ?? null,
+        localDelivery: !!(r as any).local_delivery,
+        deliveryRadiusKm:
+          (farmer as any)?.delivery_radius_km != null
+            ? Number((farmer as any).delivery_radius_km)
+            : null,
+        deliveryWindows: parsePickupHours((farmer as any)?.delivery_hours),
+        deliveryNote: ((farmer as any)?.delivery_note as string) ?? "",
       };
       setProduct(detail);
       registerStock([{ id: detail.id, quantity: detail.stock }]);
@@ -238,6 +251,7 @@ const ProductDetail = () => {
       : "Apenas levantamento na propriedade";
 
   const hours = formatPickupHours(product.pickupWindows);
+  const deliveryHours = formatPickupHours(product.deliveryWindows);
 
   return (
     <main className="py-8">
@@ -338,8 +352,46 @@ const ProductDetail = () => {
                   <span className="text-xs uppercase tracking-wide">Entrega</span>
                 </div>
                 <p className="mt-1 text-sm font-semibold text-foreground">{deliveryLabel}</p>
+                {product.localDelivery && (
+                  <p className="mt-1 text-xs text-primary">
+                    O agricultor entrega em mão
+                    {product.deliveryRadiusKm != null
+                      ? ` até ${product.deliveryRadiusKm} km`
+                      : ""}
+                  </p>
+                )}
               </div>
             </div>
+
+            {product.localDelivery && (
+              <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Truck className="h-4 w-4 text-primary" />
+                  Entrega ao domicílio pelo agricultor
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {product.deliveryRadiusKm != null
+                    ? `Entrega em mão até ${product.deliveryRadiusKm} km da quinta.`
+                    : "Entrega em mão feita pelo próprio agricultor."}
+                </p>
+                {deliveryHours.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {deliveryHours.map((h) => (
+                      <span
+                        key={`del-${h}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground"
+                      >
+                        <Clock className="h-3 w-3" /> {h}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {product.deliveryNote && (
+                  <p className="mt-2 text-xs text-muted-foreground">{product.deliveryNote}</p>
+                )}
+              </div>
+            )}
+
 
             {product.modifications && (
               <p className="mt-3 rounded-lg border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
