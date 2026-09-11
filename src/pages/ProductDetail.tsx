@@ -352,8 +352,46 @@ const ProductDetail = () => {
                   <span className="text-xs uppercase tracking-wide">Entrega</span>
                 </div>
                 <p className="mt-1 text-sm font-semibold text-foreground">{deliveryLabel}</p>
+                {product.localDelivery && (
+                  <p className="mt-1 text-xs text-primary">
+                    O agricultor entrega em mão
+                    {product.deliveryRadiusKm != null
+                      ? ` até ${product.deliveryRadiusKm} km`
+                      : ""}
+                  </p>
+                )}
               </div>
             </div>
+
+            {product.localDelivery && (
+              <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Truck className="h-4 w-4 text-primary" />
+                  Entrega ao domicílio pelo agricultor
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {product.deliveryRadiusKm != null
+                    ? `Entrega em mão até ${product.deliveryRadiusKm} km da quinta.`
+                    : "Entrega em mão feita pelo próprio agricultor."}
+                </p>
+                {deliveryHours.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {deliveryHours.map((h) => (
+                      <span
+                        key={`del-${h}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground"
+                      >
+                        <Clock className="h-3 w-3" /> {h}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {product.deliveryNote && (
+                  <p className="mt-2 text-xs text-muted-foreground">{product.deliveryNote}</p>
+                )}
+              </div>
+            )}
+
 
             {product.modifications && (
               <p className="mt-3 rounded-lg border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
