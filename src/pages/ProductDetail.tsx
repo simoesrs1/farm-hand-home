@@ -96,7 +96,9 @@ const ProductDetail = () => {
 
       const { data: farmer } = await supabase
         .from("public_farmer_profiles")
-        .select("id, company_name, address, pickup_address, pickup_lat, pickup_lng, pickup_hours, pickup_hours_note")
+        .select(
+          "id, company_name, address, pickup_address, pickup_lat, pickup_lng, pickup_hours, pickup_hours_note, delivery_radius_km, delivery_hours, delivery_note",
+        )
         .eq("id", r.farmer_id)
         .maybeSingle();
 
@@ -141,6 +143,13 @@ const ProductDetail = () => {
         pickupAddress: ((farmer as any)?.pickup_address as string) ?? (farmer as any)?.address ?? "",
         lat: (farmer as any)?.pickup_lat ?? null,
         lng: (farmer as any)?.pickup_lng ?? null,
+        localDelivery: !!(r as any).local_delivery,
+        deliveryRadiusKm:
+          (farmer as any)?.delivery_radius_km != null
+            ? Number((farmer as any).delivery_radius_km)
+            : null,
+        deliveryWindows: parsePickupHours((farmer as any)?.delivery_hours),
+        deliveryNote: ((farmer as any)?.delivery_note as string) ?? "",
       };
       setProduct(detail);
       registerStock([{ id: detail.id, quantity: detail.stock }]);
