@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle, Store, ClipboardList, Boxes, Clock, TrendingUp } from "lucide-react";
+import { Menu, X, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle, Store, ClipboardList, Boxes, Clock, TrendingUp, Truck } from "lucide-react";
 import logoFarmConnect from "@/assets/logo-farmconnect.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -122,6 +122,14 @@ const Header = () => {
                     title="Disponibilidade (porta aberta)"
                   >
                     <Clock className="h-5 w-5" />
+                  </Link>
+                  <Link
+                    to="/agricultor/entregas"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
+                    aria-label="Entregas ao domicílio"
+                    title="Entregas ao domicílio"
+                  >
+                    <Truck className="h-5 w-5" />
                   </Link>
                   <Link
                     to="/agricultor/scan"
