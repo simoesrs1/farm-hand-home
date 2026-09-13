@@ -124,6 +124,14 @@ const Header = () => {
                     <Clock className="h-5 w-5" />
                   </Link>
                   <Link
+                    to="/agricultor/entregas"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
+                    aria-label="Entregas ao domicílio"
+                    title="Entregas ao domicílio"
+                  >
+                    <Truck className="h-5 w-5" />
+                  </Link>
+                  <Link
                     to="/agricultor/scan"
                     className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
                     aria-label="Validar entrega"
