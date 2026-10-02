@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock } from "lucide-react";
+import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +53,7 @@ const FarmerOrders = () => {
   const highlightId = searchParams.get("id");
   const refs = useRef<Record<string, HTMLLIElement | null>>({});
   const [validating, setValidating] = useState<Order | null>(null);
+  const [deliveryProductNames, setDeliveryProductNames] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) return;
