@@ -205,6 +205,65 @@ const FarmerOrders = () => {
         </div>
       </div>
 
+      {!loading && deliveryPlan.length > 0 && (
+        <section className="mb-8 rounded-2xl border border-border bg-card p-5">
+          <div className="flex items-center gap-2">
+            <Truck className="h-5 w-5 text-primary" />
+            <h2 className="font-display text-xl font-semibold text-foreground">
+              Planeamento de entregas ao domicílio
+            </h2>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Organiza o teu dia: entregas em mão por dia, com horário e produtos.
+          </p>
+          <div className="mt-4 space-y-4">
+            {deliveryPlan.map((day) => (
+              <div key={day.key} className="rounded-xl border border-border bg-background p-4">
+                <p className="font-medium capitalize text-foreground">
+                  {day.date.toLocaleDateString("pt-PT", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  })}
+                </p>
+                <ul className="mt-3 space-y-3">
+                  {day.orders.map((o) => (
+                    <li key={o.id} className="rounded-lg border border-border bg-card p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                          <CalendarClock className="h-4 w-4 text-primary" />
+                          {o.scheduled_pickup_at
+                            ? new Date(o.scheduled_pickup_at).toLocaleTimeString("pt-PT", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                            : "Hora por combinar"}
+                          <span className="text-xs text-muted-foreground">
+                            · Encomenda #{o.id.slice(0, 8).toUpperCase()}
+                          </span>
+                        </p>
+                        <span className="text-sm font-medium text-foreground">{o.total.toFixed(2)}€</span>
+                      </div>
+                      <ul className="mt-2 space-y-1">
+                        {o.order_items.map((it) => (
+                          <li key={it.id} className="flex items-center gap-2 text-sm text-muted-foreground">
+                            {it.product_image && (
+                              <img src={it.product_image} alt={it.product_name} className="h-6 w-6 rounded object-cover" />
+                            )}
+                            <span className="flex-1">{it.product_name}</span>
+                            <span>{it.quantity} {it.unit ?? ""}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {loading ? (
         <Skeleton className="h-40 w-full" />
       ) : orders.length === 0 ? (
