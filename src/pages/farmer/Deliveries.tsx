@@ -130,6 +130,29 @@ const FarmerDeliveries = () => {
     };
   }, [user]);
 
+  const [acting, setActing] = useState<string | null>(null);
+  const act = async (orderId: string, action: "accept" | "refund_no_stock") => {
+    setActing(orderId);
+    const { data, error } = await supabase.functions.invoke("order-action", {
+      body: { order_id: orderId, action, reason: action === "refund_no_stock" ? "Entrega ao domicílio rejeitada pelo agricultor" : "" },
+    });
+    setActing(null);
+    if (error || (data as any)?.error) {
+      toast({ title: "Não foi possível atualizar", description: (data as any)?.error ?? error?.message, variant: "destructive" });
+      return;
+    }
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? action === "accept"
+            ? { ...o, accepted_at: new Date().toISOString() }
+            : { ...o, status: "refunded" as Order["status"] }
+          : o,
+      ),
+    );
+    toast({ title: action === "accept" ? "Encomenda aceite" : "Encomenda rejeitada e reembolsada" });
+  };
+
   const deliveryOrders = useMemo(() => {
     if (deliveryProducts.length === 0) return [];
     const names = new Set(deliveryProducts);
@@ -376,6 +399,26 @@ const FarmerDeliveries = () => {
                     >
                       <Icon className="h-3.5 w-3.5" /> {m.label}
                     </span>
+                    {o.status === "awaiting_pickup" && !o.accepted_at && (
+                      <>
+                        <Button size="sm" disabled={acting === o.id} onClick={() => act(o.id, "accept")}>
+                          Aceitar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={acting === o.id}
+                          onClick={() => {
+                            if (confirm("Rejeitar esta encomenda? O cliente será reembolsado.")) act(o.id, "refund_no_stock");
+                          }}
+                        >
+                          Rejeitar
+                        </Button>
+                      </>
+                    )}
+                    {o.status === "awaiting_pickup" && o.accepted_at && (
+                      <span className="text-xs font-medium text-primary">Aceite</span>
+                    )}
                     <Link to={`/agricultor/encomendas?id=${o.id}`}>
                       <Button size="sm" variant="outline">
                         Ver detalhes
