@@ -67,6 +67,19 @@ const FarmerOrders = () => {
         setOrders((data as Order[]) ?? []);
         setLoading(false);
       }
+      const { data: fd } = await supabase
+        .from("farmer_details")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (fd?.id) {
+        const { data: prods } = await supabase
+          .from("products")
+          .select("name")
+          .eq("farmer_id", fd.id)
+          .eq("local_delivery", true);
+        if (!cancelled) setDeliveryProductNames(((prods as { name: string }[]) ?? []).map((p) => p.name));
+      }
     };
     load();
     const ch = supabase
