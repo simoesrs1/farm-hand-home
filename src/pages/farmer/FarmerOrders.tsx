@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock } from "lucide-react";
+import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +53,7 @@ const FarmerOrders = () => {
   const highlightId = searchParams.get("id");
   const refs = useRef<Record<string, HTMLLIElement | null>>({});
   const [validating, setValidating] = useState<Order | null>(null);
+  const [deliveryProductNames, setDeliveryProductNames] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -65,6 +66,19 @@ const FarmerOrders = () => {
       if (!cancelled) {
         setOrders((data as Order[]) ?? []);
         setLoading(false);
+      }
+      const { data: fd } = await supabase
+        .from("farmer_details")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (fd?.id) {
+        const { data: prods } = await supabase
+          .from("products")
+          .select("name")
+          .eq("farmer_id", fd.id)
+          .eq("local_delivery", true);
+        if (!cancelled) setDeliveryProductNames(((prods as { name: string }[]) ?? []).map((p) => p.name));
       }
     };
     load();
@@ -132,6 +146,32 @@ const FarmerOrders = () => {
     .filter((o) => o.status === "expired")
     .reduce((acc, o) => acc + Math.round(o.total * 0.1 * 100) / 100, 0);
 
+  // Planeamento de entregas ao domicílio: encomendas ativas com produtos de entrega ao domicílio, agrupadas por dia
+  const deliveryNames = new Set(deliveryProductNames);
+  const homeDeliveryOrders = orders.filter(
+    (o) =>
+      o.status === "awaiting_pickup" &&
+      (o.order_items ?? []).some((it) => deliveryNames.has(it.product_name)),
+  );
+  const byDay = new Map<string, Order[]>();
+  for (const o of homeDeliveryOrders) {
+    const when = o.scheduled_pickup_at ?? o.pickup_deadline;
+    const key = new Date(when).toDateString();
+    if (!byDay.has(key)) byDay.set(key, []);
+    byDay.get(key)!.push(o);
+  }
+  const deliveryPlan = [...byDay.entries()]
+    .map(([key, list]) => ({
+      key,
+      date: new Date(key),
+      orders: list.sort(
+        (a, b) =>
+          new Date(a.scheduled_pickup_at ?? a.pickup_deadline).getTime() -
+          new Date(b.scheduled_pickup_at ?? b.pickup_deadline).getTime(),
+      ),
+    }))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
   return (
     <main className="container max-w-5xl py-8">
       <Link to="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
@@ -164,6 +204,65 @@ const FarmerOrders = () => {
           <p className="mt-1 font-display text-2xl font-bold text-foreground">{earnedExpired.toFixed(2)}€</p>
         </div>
       </div>
+
+      {!loading && deliveryPlan.length > 0 && (
+        <section className="mb-8 rounded-2xl border border-border bg-card p-5">
+          <div className="flex items-center gap-2">
+            <Truck className="h-5 w-5 text-primary" />
+            <h2 className="font-display text-xl font-semibold text-foreground">
+              Planeamento de entregas ao domicílio
+            </h2>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Organiza o teu dia: entregas em mão por dia, com horário e produtos.
+          </p>
+          <div className="mt-4 space-y-4">
+            {deliveryPlan.map((day) => (
+              <div key={day.key} className="rounded-xl border border-border bg-background p-4">
+                <p className="font-medium capitalize text-foreground">
+                  {day.date.toLocaleDateString("pt-PT", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  })}
+                </p>
+                <ul className="mt-3 space-y-3">
+                  {day.orders.map((o) => (
+                    <li key={o.id} className="rounded-lg border border-border bg-card p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                          <CalendarClock className="h-4 w-4 text-primary" />
+                          {o.scheduled_pickup_at
+                            ? new Date(o.scheduled_pickup_at).toLocaleTimeString("pt-PT", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                            : "Hora por combinar"}
+                          <span className="text-xs text-muted-foreground">
+                            · Encomenda #{o.id.slice(0, 8).toUpperCase()}
+                          </span>
+                        </p>
+                        <span className="text-sm font-medium text-foreground">{o.total.toFixed(2)}€</span>
+                      </div>
+                      <ul className="mt-2 space-y-1">
+                        {o.order_items.map((it) => (
+                          <li key={it.id} className="flex items-center gap-2 text-sm text-muted-foreground">
+                            {it.product_image && (
+                              <img src={it.product_image} alt={it.product_name} className="h-6 w-6 rounded object-cover" />
+                            )}
+                            <span className="flex-1">{it.product_name}</span>
+                            <span>{it.quantity} {it.unit ?? ""}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {loading ? (
         <Skeleton className="h-40 w-full" />
