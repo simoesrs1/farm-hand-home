@@ -146,6 +146,32 @@ const FarmerOrders = () => {
     .filter((o) => o.status === "expired")
     .reduce((acc, o) => acc + Math.round(o.total * 0.1 * 100) / 100, 0);
 
+  // Planeamento de entregas ao domicílio: encomendas ativas com produtos de entrega ao domicílio, agrupadas por dia
+  const deliveryNames = new Set(deliveryProductNames);
+  const homeDeliveryOrders = orders.filter(
+    (o) =>
+      o.status === "awaiting_pickup" &&
+      (o.order_items ?? []).some((it) => deliveryNames.has(it.product_name)),
+  );
+  const byDay = new Map<string, Order[]>();
+  for (const o of homeDeliveryOrders) {
+    const when = o.scheduled_pickup_at ?? o.pickup_deadline;
+    const key = new Date(when).toDateString();
+    if (!byDay.has(key)) byDay.set(key, []);
+    byDay.get(key)!.push(o);
+  }
+  const deliveryPlan = [...byDay.entries()]
+    .map(([key, list]) => ({
+      key,
+      date: new Date(key),
+      orders: list.sort(
+        (a, b) =>
+          new Date(a.scheduled_pickup_at ?? a.pickup_deadline).getTime() -
+          new Date(b.scheduled_pickup_at ?? b.pickup_deadline).getTime(),
+      ),
+    }))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
   return (
     <main className="container max-w-5xl py-8">
       <Link to="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
