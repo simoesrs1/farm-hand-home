@@ -456,6 +456,41 @@ const Cart = () => {
               </p>
             )}
 
+            {/* Home delivery — address + exact map point, required when the
+                cart has products the farmer delivers himself. */}
+            <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Truck className="h-4 w-4 text-primary" />
+                Entrega ao domicílio
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Se o carrinho tiver produtos com entrega em mão pelo agricultor, indique a morada e
+                marque o ponto exato no mapa.
+              </p>
+              <Label htmlFor="delivery-address" className="text-xs">Morada de entrega</Label>
+              <Input
+                id="delivery-address"
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                placeholder="Rua, n.º, código postal, localidade"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setMapOpen(true)}
+              >
+                <MapPin className="h-4 w-4" />
+                {deliveryPoint ? "Ponto marcado — alterar" : "Marcar ponto no mapa"}
+              </Button>
+              {deliveryPoint && (
+                <p className="text-[11px] text-muted-foreground">
+                  Ponto: {deliveryPoint.lat.toFixed(5)}, {deliveryPoint.lng.toFixed(5)}
+                </p>
+              )}
+            </div>
+
             <div className="mt-4 flex gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
 
               <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -511,6 +546,13 @@ const Cart = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DeliveryPointPicker
+        open={mapOpen}
+        onOpenChange={setMapOpen}
+        value={deliveryPoint}
+        onConfirm={setDeliveryPoint}
+      />
     </main>
   );
 };
