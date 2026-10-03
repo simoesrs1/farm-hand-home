@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Map, MapPin, Navigation } from "lucide-react";
+import { Map as MapIcon, MapPin, Navigation } from "lucide-react";
 
 declare global {
   interface Window {
@@ -156,7 +156,7 @@ const DeliveryRouteMapDialog = ({ farm, stops }: Props) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
-          <Map className="h-4 w-4" />
+          <MapIcon className="h-4 w-4" />
           Ver percurso no mapa
         </Button>
       </DialogTrigger>
