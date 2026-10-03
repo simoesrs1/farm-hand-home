@@ -463,6 +463,13 @@ const FarmerDeliveries = () => {
                   </div>
                 </div>
 
+                {o.delivery_address && (
+                  <p className="mt-3 flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-2.5 text-sm text-foreground">
+                    <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                    {o.delivery_address}
+                  </p>
+                )}
+
                 {o.scheduled_pickup_at && (
                   <p className="mt-3 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-2.5 text-sm font-medium text-foreground">
                     <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
