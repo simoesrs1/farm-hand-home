@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle, ShieldAlert } from "lucide-react";
+import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle, ShieldAlert, MapPin, Truck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import DeliveryPointPicker from "@/components/DeliveryPointPicker";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
@@ -46,6 +49,10 @@ const Cart = () => {
   const [pickupWindows, setPickupWindows] = useState<PickupWindow[]>([]);
   const [pickupNote, setPickupNote] = useState<string>("");
   const [slot, setSlot] = useState<string>("");
+  const [needsDelivery, setNeedsDelivery] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryPoint, setDeliveryPoint] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapOpen, setMapOpen] = useState(false);
 
 
   // Clamp cart lines that exceed the current available stock (e.g. stock reduced
@@ -169,7 +176,7 @@ const Cart = () => {
       const ids = [...new Set(items.map((i) => i.id))];
       const { data: valid, error: checkErr } = await supabase
         .from("products")
-        .select("id, stock_quantity")
+        .select("id, stock_quantity, local_delivery")
         .eq("active", true)
         .in("id", ids);
       if (checkErr) {
@@ -177,6 +184,26 @@ const Cart = () => {
         return;
       }
       const availableById = new Map((valid ?? []).map((p) => [p.id, p.stock_quantity ?? 0]));
+      const hasDelivery = (valid ?? []).some((p: any) => p.local_delivery === true);
+      setNeedsDelivery(hasDelivery);
+      if (hasDelivery) {
+        if (deliveryAddress.trim().length < 5) {
+          toast({
+            title: "Morada de entrega em falta",
+            description: "Este carrinho tem produtos com entrega ao domicílio. Indique a morada de entrega.",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (!deliveryPoint) {
+          toast({
+            title: "Ponto de entrega em falta",
+            description: "Marque no mapa o ponto exato onde o agricultor deve entregar.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
       const unavailable = items.filter((i) => !availableById.has(i.id));
       const overStock = items.filter((i) => {
         const avail = availableById.get(i.id);
@@ -202,6 +229,9 @@ const Cart = () => {
           quantity: i.quantity,
         })),
         scheduled_pickup_at: slot || null,
+        delivery_address: needsDelivery ? deliveryAddress.trim() : null,
+        delivery_lat: needsDelivery ? deliveryPoint?.lat ?? null : null,
+        delivery_lng: needsDelivery ? deliveryPoint?.lng ?? null : null,
       };
 
       const { data, error } = await supabase.functions.invoke("create-order", { body: payload });
