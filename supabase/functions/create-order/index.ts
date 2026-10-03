@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
     const productIds = [...new Set(items.map((it) => it?.product_id).filter((id): id is string => typeof id === "string"))];
     const { data: dbProducts, error: productsErr } = await admin
       .from("products")
-      .select("id, name, client_price, discount_percent, unit, active, stock_quantity, farmer_id")
+      .select("id, name, client_price, discount_percent, unit, active, stock_quantity, farmer_id, local_delivery")
       .in("id", productIds);
     if (productsErr) throw productsErr;
     const productById = new Map((dbProducts ?? []).map((p) => [p.id, p]));
