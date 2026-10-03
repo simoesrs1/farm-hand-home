@@ -26,6 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { DAY_LABELS, parsePickupHours, weeklyHours, type PickupWindow } from "@/lib/pickup-hours";
+import DeliveryRouteMapDialog, { type RouteStop } from "@/components/DeliveryRouteMapDialog";
 
 interface OrderItem {
   id: string;
@@ -44,6 +45,9 @@ interface Order {
   accepted_at: string | null;
   delivered_at: string | null;
   created_at: string;
+  delivery_address: string | null;
+  delivery_lat: number | null;
+  delivery_lng: number | null;
   order_items: OrderItem[];
 }
 
@@ -74,6 +78,7 @@ const FarmerDeliveries = () => {
 
   const [deliveryProducts, setDeliveryProducts] = useState<string[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [farm, setFarm] = useState<{ lat: number; lng: number; name: string } | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -90,10 +95,15 @@ const FarmerDeliveries = () => {
     const load = async () => {
       const { data } = await supabase
         .from("farmer_details")
-        .select("id, delivery_radius_km, delivery_hours, delivery_note")
+        .select("id, farm_name, delivery_radius_km, delivery_hours, delivery_note, pickup_lat, pickup_lng")
         .eq("user_id", user.id)
         .maybeSingle();
       const row = data as any;
+      if (row?.pickup_lat != null && row?.pickup_lng != null) {
+        setFarm({ lat: Number(row.pickup_lat), lng: Number(row.pickup_lng), name: row.farm_name ?? "A minha quinta" });
+      } else {
+        setFarm(null);
+      }
       if (cancelled) return;
       setFarmerId(row?.id ?? null);
       const radius = row?.delivery_radius_km;
@@ -108,7 +118,7 @@ const FarmerDeliveries = () => {
           supabase
             .from("orders")
             .select(
-              "id,total,status,scheduled_pickup_at,pickup_deadline,accepted_at,delivered_at,created_at,order_items(id,product_name,product_image,quantity,unit)",
+              "id,total,status,scheduled_pickup_at,pickup_deadline,accepted_at,delivered_at,created_at,delivery_address,delivery_lat,delivery_lng,order_items(id,product_name,product_image,quantity,unit)",
             )
             .eq("farmer_id", row.id)
             .order("created_at", { ascending: false }),
@@ -158,6 +168,27 @@ const FarmerDeliveries = () => {
     const names = new Set(deliveryProducts);
     return orders.filter((o) => (o.order_items ?? []).some((it) => names.has(it.product_name)));
   }, [orders, deliveryProducts]);
+
+  // Active deliveries with a client-marked map point, for the route map.
+  const routeStops: RouteStop[] = useMemo(
+    () =>
+      deliveryOrders
+        .filter(
+          (o) =>
+            o.status === "awaiting_pickup" &&
+            o.delivery_lat != null &&
+            o.delivery_lng != null,
+        )
+        .map((o) => ({
+          orderId: o.id,
+          label: `Encomenda #${o.id.slice(0, 8).toUpperCase()}`,
+          address: o.delivery_address,
+          lat: Number(o.delivery_lat),
+          lng: Number(o.delivery_lng),
+          when: new Date(o.scheduled_pickup_at ?? o.pickup_deadline),
+        })),
+    [deliveryOrders],
+  );
 
   const addWindow = (day: number) => setWindows((w) => [...w, { day, start: "09:00", end: "18:00" }]);
   const updateWindow = (index: number, patch: Partial<PickupWindow>) =>
@@ -363,12 +394,17 @@ const FarmerDeliveries = () => {
         </Button>
       </div>
 
-      <h2 className="mt-12 font-display text-xl font-semibold">
-        Encomendas com entrega ao domicílio
-      </h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {doneCount} entregue(s) · {activeCount} por entregar
-      </p>
+      <div className="mt-12 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl font-semibold">
+            Encomendas com entrega ao domicílio
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {doneCount} entregue(s) · {activeCount} por entregar
+          </p>
+        </div>
+        <DeliveryRouteMapDialog farm={farm} stops={routeStops} />
+      </div>
 
       {loading ? (
         <Skeleton className="mt-4 h-32 w-full" />
