@@ -456,6 +456,9 @@ export type Database = {
           commission_amount: number
           created_at: string
           delivered_at: string | null
+          delivery_address: string | null
+          delivery_lat: number | null
+          delivery_lng: number | null
           expired_at: string | null
           farmer_amount: number
           farmer_id: string
@@ -474,6 +477,9 @@ export type Database = {
           commission_amount: number
           created_at?: string
           delivered_at?: string | null
+          delivery_address?: string | null
+          delivery_lat?: number | null
+          delivery_lng?: number | null
           expired_at?: string | null
           farmer_amount: number
           farmer_id: string
@@ -492,6 +498,9 @@ export type Database = {
           commission_amount?: number
           created_at?: string
           delivered_at?: string | null
+          delivery_address?: string | null
+          delivery_lat?: number | null
+          delivery_lng?: number | null
           expired_at?: string | null
           farmer_amount?: number
           farmer_id?: string
