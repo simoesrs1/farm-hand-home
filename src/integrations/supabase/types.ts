@@ -544,6 +544,62 @@ export type Database = {
           },
         ]
       }
+      product_history: {
+        Row: {
+          actor_id: string | null
+          actor_name: string | null
+          changes: Json
+          created_at: string
+          event_type: string
+          farmer_id: string
+          id: string
+          note: string | null
+          order_id: string | null
+          product_id: string
+          quantity_delta: number | null
+          stock_after: number | null
+          stock_before: number | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_name?: string | null
+          changes?: Json
+          created_at?: string
+          event_type: string
+          farmer_id: string
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          product_id: string
+          quantity_delta?: number | null
+          stock_after?: number | null
+          stock_before?: number | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_name?: string | null
+          changes?: Json
+          created_at?: string
+          event_type?: string
+          farmer_id?: string
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          product_id?: string
+          quantity_delta?: number | null
+          stock_after?: number | null
+          stock_before?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           active: boolean
@@ -658,6 +714,7 @@ export type Database = {
           full_name: string | null
           id: string
           profile_type: string
+          profile_type_claimed: boolean
           updated_at: string
         }
         Insert: {
@@ -667,6 +724,7 @@ export type Database = {
           full_name?: string | null
           id: string
           profile_type?: string
+          profile_type_claimed?: boolean
           updated_at?: string
         }
         Update: {
@@ -676,6 +734,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           profile_type?: string
+          profile_type_claimed?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -818,9 +877,22 @@ export type Database = {
     }
     Functions: {
       category_slug: { Args: { _name: string }; Returns: string }
+      claim_initial_profile_type: {
+        Args: { _profile_type: string }
+        Returns: string
+      }
       company_nif_taken: {
         Args: { p_company_nif: string; p_exclude_id?: string }
         Returns: boolean
+      }
+      consume_product_stock: {
+        Args: {
+          p_actor_id: string
+          p_order_id: string
+          p_product_id: string
+          p_quantity: number
+        }
+        Returns: undefined
       }
       delete_old_order_chats: { Args: never; Returns: number }
       exploration_number_taken: {
