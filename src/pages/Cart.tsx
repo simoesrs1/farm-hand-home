@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle, ShieldAlert } from "lucide-react";
+import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle, ShieldAlert, MapPin, Truck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import DeliveryPointPicker from "@/components/DeliveryPointPicker";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
@@ -46,6 +49,10 @@ const Cart = () => {
   const [pickupWindows, setPickupWindows] = useState<PickupWindow[]>([]);
   const [pickupNote, setPickupNote] = useState<string>("");
   const [slot, setSlot] = useState<string>("");
+  const [needsDelivery, setNeedsDelivery] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryPoint, setDeliveryPoint] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapOpen, setMapOpen] = useState(false);
 
 
   // Clamp cart lines that exceed the current available stock (e.g. stock reduced
@@ -169,7 +176,7 @@ const Cart = () => {
       const ids = [...new Set(items.map((i) => i.id))];
       const { data: valid, error: checkErr } = await supabase
         .from("products")
-        .select("id, stock_quantity")
+        .select("id, stock_quantity, local_delivery")
         .eq("active", true)
         .in("id", ids);
       if (checkErr) {
@@ -177,6 +184,26 @@ const Cart = () => {
         return;
       }
       const availableById = new Map((valid ?? []).map((p) => [p.id, p.stock_quantity ?? 0]));
+      const hasDelivery = (valid ?? []).some((p: any) => p.local_delivery === true);
+      setNeedsDelivery(hasDelivery);
+      if (hasDelivery) {
+        if (deliveryAddress.trim().length < 5) {
+          toast({
+            title: "Morada de entrega em falta",
+            description: "Este carrinho tem produtos com entrega ao domicílio. Indique a morada de entrega.",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (!deliveryPoint) {
+          toast({
+            title: "Ponto de entrega em falta",
+            description: "Marque no mapa o ponto exato onde o agricultor deve entregar.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
       const unavailable = items.filter((i) => !availableById.has(i.id));
       const overStock = items.filter((i) => {
         const avail = availableById.get(i.id);
@@ -202,6 +229,9 @@ const Cart = () => {
           quantity: i.quantity,
         })),
         scheduled_pickup_at: slot || null,
+        delivery_address: needsDelivery ? deliveryAddress.trim() : null,
+        delivery_lat: needsDelivery ? deliveryPoint?.lat ?? null : null,
+        delivery_lng: needsDelivery ? deliveryPoint?.lng ?? null : null,
       };
 
       const { data, error } = await supabase.functions.invoke("create-order", { body: payload });
@@ -426,6 +456,41 @@ const Cart = () => {
               </p>
             )}
 
+            {/* Home delivery — address + exact map point, required when the
+                cart has products the farmer delivers himself. */}
+            <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Truck className="h-4 w-4 text-primary" />
+                Entrega ao domicílio
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Se o carrinho tiver produtos com entrega em mão pelo agricultor, indique a morada e
+                marque o ponto exato no mapa.
+              </p>
+              <Label htmlFor="delivery-address" className="text-xs">Morada de entrega</Label>
+              <Input
+                id="delivery-address"
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                placeholder="Rua, n.º, código postal, localidade"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setMapOpen(true)}
+              >
+                <MapPin className="h-4 w-4" />
+                {deliveryPoint ? "Ponto marcado — alterar" : "Marcar ponto no mapa"}
+              </Button>
+              {deliveryPoint && (
+                <p className="text-[11px] text-muted-foreground">
+                  Ponto: {deliveryPoint.lat.toFixed(5)}, {deliveryPoint.lng.toFixed(5)}
+                </p>
+              )}
+            </div>
+
             <div className="mt-4 flex gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
 
               <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -481,6 +546,13 @@ const Cart = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DeliveryPointPicker
+        open={mapOpen}
+        onOpenChange={setMapOpen}
+        value={deliveryPoint}
+        onConfirm={setDeliveryPoint}
+      />
     </main>
   );
 };

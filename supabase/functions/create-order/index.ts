@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
     const productIds = [...new Set(items.map((it) => it?.product_id).filter((id): id is string => typeof id === "string"))];
     const { data: dbProducts, error: productsErr } = await admin
       .from("products")
-      .select("id, name, client_price, discount_percent, unit, active, stock_quantity, farmer_id")
+      .select("id, name, client_price, discount_percent, unit, active, stock_quantity, farmer_id, local_delivery")
       .in("id", productIds);
     if (productsErr) throw productsErr;
     const productById = new Map((dbProducts ?? []).map((p) => [p.id, p]));
@@ -197,6 +197,29 @@ Deno.serve(async (req) => {
     }
 
 
+    // Home delivery: when any product is marked for farmer home delivery, the
+    // client must provide a delivery address and map point.
+    const needsDelivery = resolved.some((r) => (r.product as any).local_delivery === true);
+    let deliveryAddress: string | null = null;
+    let deliveryLat: number | null = null;
+    let deliveryLng: number | null = null;
+    if (needsDelivery) {
+      const rawAddress = body?.delivery_address;
+      const rawLat = body?.delivery_lat;
+      const rawLng = body?.delivery_lng;
+      if (typeof rawAddress !== "string" || rawAddress.trim().length < 5) {
+        return jsonError(400, "Indique a morada de entrega ao domicílio.");
+      }
+      const lat = Number(rawLat);
+      const lng = Number(rawLng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+        return jsonError(400, "Marque no mapa o ponto exato da entrega.");
+      }
+      deliveryAddress = rawAddress.trim().slice(0, 300);
+      deliveryLat = lat;
+      deliveryLng = lng;
+    }
+
     const total = Math.round(resolved.reduce((acc, r) => acc + r.subtotal * 100, 0)) / 100;
     if (total <= 0 || total > MAX_TOTAL) return jsonError(400, "Total inválido");
 
@@ -235,7 +258,9 @@ Deno.serve(async (req) => {
         pickup_deadline: deadline.toISOString(),
         paid_at: now.toISOString(),
         scheduled_pickup_at: scheduledAt ? scheduledAt.toISOString() : null,
-
+        delivery_address: deliveryAddress,
+        delivery_lat: deliveryLat,
+        delivery_lng: deliveryLng,
       })
       .select()
       .single();
