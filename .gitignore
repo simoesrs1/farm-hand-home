@@ -17,6 +17,18 @@ dist-ssr
 .env.*
 !.env.example
 
+# Segredos e credenciais
+*.pem
+*.key
+*.p12
+*.pfx
+service-account*.json
+*credentials*.json
+supabase/.env
+supabase/functions/.env
+supabase/.temp
+supabase/.branches
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

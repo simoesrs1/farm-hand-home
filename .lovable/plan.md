@@ -5,7 +5,7 @@ Fluxo completo: **Carrinho → Pagamento → QR Code → Scan do agricultor → 
 ## Funcionalidades
 
 ### Cliente
-- No carrinho, antes de pagar, vê aviso claro: *"Se não levantares a encomenda no prazo definido, perderás 90% do valor pago."*
+- No carrinho, antes de pagar, vê aviso claro: *"Se não levantares a encomenda no prazo definido, perderás 100% do valor pago."*
 - Paga online (Stripe) — o dinheiro fica retido na plataforma.
 - Recebe QR code + código alfanumérico de 8 dígitos para mostrar na quinta.
 - Página "As minhas encomendas" mostra estado: **A aguardar levantamento / Levantada / Expirada**.
