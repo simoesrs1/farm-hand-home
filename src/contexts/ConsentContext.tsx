@@ -38,11 +38,14 @@ export const ConsentProvider = ({ children }: { children: ReactNode }) => {
   const [record, setRecord] = useState<ConsentRecord | null>(() => readConsent());
   const [preferencesOpen, setPreferencesOpen] = useState(false);
 
-  // Uma decisão tomada noutro separador aplica-se a este também.
+  // Uma decisão tomada noutro separador aplica-se a este também. A mensagem
+  // leva o próprio registo: este canal também recebe as mensagens enviadas
+  // por este separador, e reler o cookie (se o navegador o recusou) repunha
+  // `null` e voltava a mostrar o banner.
   useEffect(() => {
     if (typeof BroadcastChannel === "undefined") return;
     const channel = new BroadcastChannel(CHANNEL);
-    channel.onmessage = () => setRecord(readConsent());
+    channel.onmessage = (event: MessageEvent<ConsentRecord>) => setRecord(event.data ?? readConsent());
     return () => channel.close();
   }, []);
 
@@ -53,7 +56,7 @@ export const ConsentProvider = ({ children }: { children: ReactNode }) => {
     setPreferencesOpen(false);
     try {
       const channel = new BroadcastChannel(CHANNEL);
-      channel.postMessage("changed");
+      channel.postMessage(next);
       channel.close();
     } catch {
       // BroadcastChannel indisponível

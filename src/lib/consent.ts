@@ -73,11 +73,31 @@ const readCookie = (name: string): string | null => {
   return match ? decodeURIComponent(match.slice(name.length + 1)) : null;
 };
 
-/** Sem `max-age`/`expires` → cookie de sessão. */
-const writeSessionCookie = (name: string, value: string) => {
+/**
+ * Valores de sessão: cookie sem `max-age`/`expires`, espelhado em
+ * `sessionStorage` para quando o navegador recusa o cookie (pré-visualização
+ * num iframe de outro domínio, cookies bloqueados) — sem isso a decisão
+ * perdia-se logo e o banner voltava a aparecer.
+ */
+const readSessionValue = (name: string): string | null => {
+  const fromCookie = readCookie(name);
+  if (fromCookie !== null) return fromCookie;
+  try {
+    return sessionStorage.getItem(name);
+  } catch {
+    return null;
+  }
+};
+
+const writeSessionValue = (name: string, value: string) => {
   if (typeof document === "undefined") return;
   const secure = window.location.protocol === "https:" ? "; Secure" : "";
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; SameSite=Lax${secure}`;
+  try {
+    sessionStorage.setItem(name, value);
+  } catch {
+    // armazenamento indisponível — fica só o cookie
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -85,7 +105,7 @@ const writeSessionCookie = (name: string, value: string) => {
 // ---------------------------------------------------------------------------
 
 export const readConsent = (): ConsentRecord | null => {
-  const raw = readCookie(CONSENT_COOKIE);
+  const raw = readSessionValue(CONSENT_COOKIE);
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as ConsentRecord;
@@ -106,7 +126,7 @@ export const writeConsent = (choices: ConsentChoices): ConsentRecord => {
     decidedAt: new Date().toISOString(),
     choices: { ...choices, necessary: true },
   };
-  writeSessionCookie(CONSENT_COOKIE, JSON.stringify(record));
+  writeSessionValue(CONSENT_COOKIE, JSON.stringify(record));
   if (!record.choices.preferences) purgePersistedItems();
   return record;
 };
@@ -121,13 +141,13 @@ export const hasConsent = (category: ConsentCategory): boolean => {
 // ---------------------------------------------------------------------------
 
 const sessionId = (): string => {
-  let sid = readCookie(SESSION_COOKIE);
+  let sid = readSessionValue(SESSION_COOKIE);
   if (!sid) {
     sid =
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : Math.random().toString(36).slice(2);
-    writeSessionCookie(SESSION_COOKIE, sid);
+    writeSessionValue(SESSION_COOKIE, sid);
   }
   return sid;
 };
