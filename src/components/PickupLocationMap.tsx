@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import MapConsentGate from "@/components/MapConsentGate";
+import { useConsent } from "@/contexts/ConsentContext";
 
 declare global {
   interface Window {
@@ -22,8 +24,10 @@ const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
   const mapInstance = useRef<any>(null);
   const markerInstance = useRef<any>(null);
   const [unavailable, setUnavailable] = useState(false);
+  const mapsAllowed = useConsent().hasConsent("maps");
 
   useEffect(() => {
+    if (!mapsAllowed) return;
     const browserKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
     if (!browserKey) {
       console.warn(
@@ -107,7 +111,7 @@ const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
     script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initPickupMap`;
     document.head.appendChild(script);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mapsAllowed]);
 
   // Update marker if coordinates change externally
   useEffect(() => {
@@ -139,12 +143,14 @@ const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
   }
 
   return (
-    <div
-      ref={mapRef}
-      className={`h-72 w-full rounded-lg border bg-muted ${
-        invalid ? "border-destructive ring-2 ring-destructive/20" : "border-border"
-      }`}
-    />
+    <MapConsentGate className={`h-72 ${invalid ? "border-destructive" : ""}`}>
+      <div
+        ref={mapRef}
+        className={`h-72 w-full rounded-lg border bg-muted ${
+          invalid ? "border-destructive ring-2 ring-destructive/20" : "border-border"
+        }`}
+      />
+    </MapConsentGate>
   );
 };
 

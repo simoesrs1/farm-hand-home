@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck } from "lucide-react";
+import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrderChat from "@/components/OrderChat";
 import ValidateDeliveryDialog from "@/components/ValidateDeliveryDialog";
+import DeliveryRouteMapDialog, { type RouteStop } from "@/components/DeliveryRouteMapDialog";
 
 interface OrderItem {
   id: string;
@@ -32,6 +33,9 @@ interface Order {
   expired_at: string | null;
   accepted_at: string | null;
   created_at: string;
+  delivery_address: string | null;
+  delivery_lat: number | null;
+  delivery_lng: number | null;
   order_items: OrderItem[];
 }
 
@@ -54,6 +58,7 @@ const FarmerOrders = () => {
   const refs = useRef<Record<string, HTMLLIElement | null>>({});
   const [validating, setValidating] = useState<Order | null>(null);
   const [deliveryProductNames, setDeliveryProductNames] = useState<string[]>([]);
+  const [farm, setFarm] = useState<{ lat: number; lng: number; name: string } | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -61,7 +66,7 @@ const FarmerOrders = () => {
     const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,scheduled_pickup_at,delivered_at,expired_at,accepted_at,created_at,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
+        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,scheduled_pickup_at,delivered_at,expired_at,accepted_at,created_at,delivery_address,delivery_lat,delivery_lng,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
         .order("created_at", { ascending: false });
       if (!cancelled) {
         setOrders((data as Order[]) ?? []);
@@ -69,9 +74,16 @@ const FarmerOrders = () => {
       }
       const { data: fd } = await supabase
         .from("farmer_details")
-        .select("id")
+        .select("id, company_name, pickup_lat, pickup_lng")
         .eq("user_id", user.id)
         .maybeSingle();
+      if (!cancelled) {
+        setFarm(
+          fd?.pickup_lat != null && fd?.pickup_lng != null
+            ? { lat: Number(fd.pickup_lat), lng: Number(fd.pickup_lng), name: fd.company_name ?? "A minha quinta" }
+            : null,
+        );
+      }
       if (fd?.id) {
         const { data: prods } = await supabase
           .from("products")
@@ -130,6 +142,26 @@ const FarmerOrders = () => {
     }
   };
 
+  // Entregas ao domicílio ativas com ponto marcado pelo cliente, para o mapa do percurso
+  const routeStops: RouteStop[] = useMemo(() => {
+    const names = new Set(deliveryProductNames);
+    return orders
+      .filter(
+        (o) =>
+          o.status === "awaiting_pickup" &&
+          o.delivery_lat != null &&
+          o.delivery_lng != null &&
+          (o.order_items ?? []).some((it) => names.has(it.product_name)),
+      )
+      .map((o) => ({
+        orderId: o.id,
+        label: `Encomenda #${o.id.slice(0, 8).toUpperCase()}`,
+        address: o.delivery_address,
+        lat: Number(o.delivery_lat),
+        lng: Number(o.delivery_lng),
+        when: new Date(o.scheduled_pickup_at ?? o.pickup_deadline),
+      }));
+  }, [orders, deliveryProductNames]);
 
   if (!user || profile?.profile_type !== "vendedor") {
     return (
@@ -183,9 +215,12 @@ const FarmerOrders = () => {
           <Package className="h-7 w-7 text-primary" />
           <h1 className="font-display text-3xl font-bold text-foreground">Encomendas da tua quinta</h1>
         </div>
-        <Link to="/agricultor/scan">
-          <Button className="gap-2"><ScanLine className="h-4 w-4" /> Validar entrega</Button>
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {deliveryProductNames.length > 0 && <DeliveryRouteMapDialog farm={farm} stops={routeStops} />}
+          <Link to="/agricultor/scan">
+            <Button className="gap-2"><ScanLine className="h-4 w-4" /> Validar entrega</Button>
+          </Link>
+        </div>
       </div>
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
@@ -244,6 +279,12 @@ const FarmerOrders = () => {
                         </p>
                         <span className="text-sm font-medium text-foreground">{o.total.toFixed(2)}€</span>
                       </div>
+                      {o.delivery_address && (
+                        <p className="mt-2 flex items-center gap-2 text-sm text-foreground">
+                          <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                          {o.delivery_address}
+                        </p>
+                      )}
                       <ul className="mt-2 space-y-1">
                         {o.order_items.map((it) => (
                           <li key={it.id} className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -282,6 +323,7 @@ const FarmerOrders = () => {
                 ? Math.round(o.total * 0.1 * 100) / 100
                 : o.farmer_amount;
             const isHighlighted = highlightId === o.id;
+            const isHomeDelivery = (o.order_items ?? []).some((it) => deliveryNames.has(it.product_name));
             return (
               <li
                 key={o.id}
@@ -356,10 +398,16 @@ const FarmerOrders = () => {
 
                 {o.status === "awaiting_pickup" && (
                   <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm text-muted-foreground">
+                    {isHomeDelivery && o.delivery_address && (
+                      <p className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-2.5 text-foreground">
+                        <Truck className="h-4 w-4 shrink-0 text-primary" />
+                        Entrega ao domicílio: {o.delivery_address}
+                      </p>
+                    )}
                     {o.scheduled_pickup_at && (
                       <p className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-2.5 font-medium text-foreground">
                         <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
-                        Levantamento agendado pelo cliente:{" "}
+                        {isHomeDelivery ? "Entrega combinada para" : "Levantamento agendado pelo cliente"}:{" "}
                         {new Date(o.scheduled_pickup_at).toLocaleString("pt-PT", {
                           weekday: "long",
                           day: "numeric",

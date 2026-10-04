@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,8 @@ interface AuthContextType {
   /** Verdadeiro quando a conta é de agricultor (tem também acesso ao modo cliente) */
   canSwitchProfile: boolean;
   switchMode: (mode: "cliente" | "vendedor") => Promise<void>;
+  /** Relê o perfil da base de dados (ex.: depois de o tipo mudar no servidor) */
+  refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -30,6 +32,7 @@ const AuthContext = createContext<AuthContextType>({
   activeMode: "cliente",
   canSwitchProfile: false,
   switchMode: async () => {},
+  refreshProfile: async () => {},
   signOut: async () => {},
 });
 
@@ -41,14 +44,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
       .select("full_name, profile_type, active_mode")
       .eq("id", userId)
       .single();
     setProfile(data as ProfileRow | null);
-  };
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -74,7 +77,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchProfile]);
+
+  const refreshProfile = useCallback(async () => {
+    if (!user?.id) return;
+    await fetchProfile(user.id);
+  }, [user?.id, fetchProfile]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -95,7 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ session, user, profile, loading, activeMode, canSwitchProfile, switchMode, signOut }}
+      value={{ session, user, profile, loading, activeMode, canSwitchProfile, switchMode, refreshProfile, signOut }}
     >
 
       {children}

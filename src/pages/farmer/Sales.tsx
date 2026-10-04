@@ -13,6 +13,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import ActivityCard from "@/components/ActivityCard";
 
 interface Row {
   id: string;
@@ -111,6 +112,8 @@ const Sales = () => {
         <TrendingUp className="h-7 w-7 text-primary" />
         <h1 className="font-display text-3xl font-bold text-foreground">As minhas vendas</h1>
       </div>
+
+      <ActivityCard userId={user.id} />
 
       {loading ? (
         <Skeleton className="h-72 w-full" />

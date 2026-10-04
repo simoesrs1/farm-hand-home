@@ -4,6 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Map, MapPin } from "lucide-react";
 import { farmers } from "@/data/farmers";
+import MapConsentGate from "@/components/MapConsentGate";
+import { useConsent } from "@/contexts/ConsentContext";
 
 // Approximate coordinates for Portuguese cities used by sample farmers.
 const cityCoords: Record<string, { lat: number; lng: number }> = {
@@ -29,9 +31,10 @@ const PortugalMapDialog = () => {
   const [open, setOpen] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
+  const mapsAllowed = useConsent().hasConsent("maps");
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !mapsAllowed) return;
 
     const browserKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
     if (!browserKey) {
@@ -87,7 +90,7 @@ const PortugalMapDialog = () => {
     script.async = true;
     script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initFarmConnectMap`;
     document.head.appendChild(script);
-  }, [open]);
+  }, [open, mapsAllowed]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -101,7 +104,9 @@ const PortugalMapDialog = () => {
         <DialogHeader>
           <DialogTitle>Agricultores em Portugal</DialogTitle>
         </DialogHeader>
-        <div ref={mapRef} className="h-[420px] w-full rounded-lg border border-border bg-muted" />
+        <MapConsentGate className="h-[420px]">
+          <div ref={mapRef} className="h-[420px] w-full rounded-lg border border-border bg-muted" />
+        </MapConsentGate>
         <div className="mt-4 max-h-40 overflow-y-auto space-y-2">
           {farmers.map((f) => (
             <button

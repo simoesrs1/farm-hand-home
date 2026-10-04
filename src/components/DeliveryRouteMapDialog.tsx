@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Map as MapIcon, MapPin, Navigation } from "lucide-react";
+import MapConsentGate from "@/components/MapConsentGate";
+import { useConsent } from "@/contexts/ConsentContext";
 
 declare global {
   interface Window {
@@ -41,6 +43,7 @@ const DAY_COLORS = ["#2d6a4f", "#b45309", "#1d4ed8", "#9333ea", "#be123c", "#0f7
 const DeliveryRouteMapDialog = ({ farm, stops }: Props) => {
   const [open, setOpen] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapsAllowed = useConsent().hasConsent("maps");
 
   const byDay = useMemo(() => {
     const map = new Map<string, { date: Date; stops: (RouteStop & { km: number | null })[] }>();
@@ -62,7 +65,7 @@ const DeliveryRouteMapDialog = ({ farm, stops }: Props) => {
   }, [stops, farm]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !mapsAllowed) return;
     const browserKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
     if (!browserKey) return;
 
@@ -150,7 +153,7 @@ const DeliveryRouteMapDialog = ({ farm, stops }: Props) => {
     script.async = true;
     script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initDeliveryRouteMap`;
     document.head.appendChild(script);
-  }, [open, farm, stops, byDay]);
+  }, [open, farm, stops, byDay, mapsAllowed]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -174,7 +177,9 @@ const DeliveryRouteMapDialog = ({ farm, stops }: Props) => {
           </p>
         ) : (
           <>
-            <div ref={mapRef} className="h-[400px] w-full rounded-lg border border-border bg-muted" />
+            <MapConsentGate className="h-[400px]">
+              <div ref={mapRef} className="h-[400px] w-full rounded-lg border border-border bg-muted" />
+            </MapConsentGate>
             <div className="mt-4 max-h-56 space-y-3 overflow-y-auto">
               {byDay.map((day, dayIndex) => (
                 <div key={day.key}>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Star, MapPin, ArrowLeft, CalendarArrowDown } from "lucide-react";
+import { Star, MapPin, ArrowLeft, CalendarArrowDown, PauseCircle } from "lucide-react";
 import { downloadPickupIcs } from "@/lib/pickup-ical";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import PickupAvailabilityBadge from "@/components/PickupAvailabilityBadge";
 import { formatPickupHours, parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
+import { formatReturnDate, isPaused } from "@/lib/farmer-activity";
 
 const FALLBACK_FARM_IMAGE =
   "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1200&h=500&fit=crop";
@@ -34,6 +35,7 @@ const FarmerProfile = () => {
   const { id } = useParams<{ id: string }>();
   const [pickupWindows, setPickupWindows] = useState<PickupWindow[]>([]);
   const [pickupNote, setPickupNote] = useState<string>("");
+  const [pause, setPause] = useState<{ until: string; note: string } | null>(null);
   const mockFarmer = farmers.find((f) => f.id === id);
   const { addItem, items: cartItems } = useCart();
   const { registerStock } = useStock();
@@ -57,7 +59,7 @@ const FarmerProfile = () => {
     const load = async () => {
       const { data: farmer } = await supabase
         .from("public_farmer_profiles")
-        .select("id, company_name, address, description, pickup_hours, pickup_hours_note")
+        .select("id, company_name, address, description, pickup_hours, pickup_hours_note, paused_until, pause_note")
         .eq("id", id)
         .maybeSingle();
       if (!farmer) {
@@ -70,6 +72,11 @@ const FarmerProfile = () => {
         setPickupWindows(parsePickupHours((farmer as any).pickup_hours));
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setPickupNote(((farmer as any).pickup_hours_note as string) ?? "");
+        setPause(
+          isPaused(farmer.paused_until)
+            ? { until: farmer.paused_until as string, note: farmer.pause_note ?? "" }
+            : null,
+        );
       }
 
       const { data: rows } = await supabase
@@ -207,6 +214,20 @@ const FarmerProfile = () => {
                 </div>
               )}
             </div>
+
+            {pause && (
+              <div className="mt-4 flex items-start gap-3 rounded-lg border border-accent/40 bg-accent/10 p-4">
+                <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                <div className="text-sm">
+                  <p className="font-medium text-foreground">
+                    Em pausa até {formatReturnDate(pause.until)}
+                  </p>
+                  <p className="mt-0.5 text-muted-foreground">
+                    {pause.note || "Este agricultor não está a aceitar encomendas de momento."}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <p className="mt-4 text-muted-foreground leading-relaxed">{display.description}</p>
 

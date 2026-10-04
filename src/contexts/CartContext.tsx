@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import type { Product } from "@/data/products";
+import { useConsent } from "@/contexts/ConsentContext";
+import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
 
 export interface CartItem extends Product {
   quantity: number;
@@ -27,25 +29,27 @@ const CartContext = createContext<CartContextType>({
 
 export const useCart = () => useContext(CartContext);
 
-const STORAGE_KEY = "farmconnect_cart";
-
 export const CartProvider = ({ children }: { children: ReactNode }) => {
+  const { hasConsent } = useConsent();
+  const prefsAllowed = hasConsent("preferences");
+
   const [items, setItems] = useState<CartItem[]>(() => {
     if (typeof window === "undefined") return [];
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
+    const stored = scopedStorage.get<CartItem[]>(STORAGE_KEYS.cart);
+    return Array.isArray(stored) ? stored : [];
   });
 
+  // Ao aceitar as preferências, recuperar o carrinho de uma visita anterior.
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch {
-      // ignore
+    if (!prefsAllowed) return;
+    const previous = scopedStorage.restore<CartItem[]>(STORAGE_KEYS.cart);
+    if (Array.isArray(previous) && previous.length > 0) {
+      setItems((current) => (current.length > 0 ? current : previous));
     }
+  }, [prefsAllowed]);
+
+  useEffect(() => {
+    scopedStorage.set(STORAGE_KEYS.cart, items);
   }, [items]);
 
   const addItem = (product: Product) => {

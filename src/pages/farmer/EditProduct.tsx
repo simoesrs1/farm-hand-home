@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Save, Tag, Trash2 } from "lucide-react";
+import { ArrowLeft, History, Loader2, Save, Tag, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import ProductHistoryDialog from "@/components/ProductHistoryDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -47,6 +48,7 @@ const EditProduct = () => {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -221,10 +223,24 @@ const EditProduct = () => {
         <ArrowLeft className="h-4 w-4" /> Voltar
       </button>
 
-      <h1 className="font-display text-3xl font-bold text-foreground">Editar produto</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Atualize as informações do artigo e aplique descontos.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-foreground">Editar produto</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Atualize as informações do artigo e aplique descontos.
+          </p>
+        </div>
+        <Button variant="outline" className="gap-2" onClick={() => setHistoryOpen(true)}>
+          <History className="h-4 w-4" /> Histórico
+        </Button>
+      </div>
+      <ProductHistoryDialog
+        productId={id ?? null}
+        productName={name}
+        unit={unit}
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+      />
 
       <div className="mt-8 space-y-6">
         <Card className="p-5 space-y-4">

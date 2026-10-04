@@ -13,6 +13,7 @@ import PickupAvailabilityBadge from "@/components/PickupAvailabilityBadge";
 import { parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
 import SavingsBadge from "@/components/SavingsBadge";
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
+import { farmerRank } from "@/lib/farmer-activity";
 
 type SortOption =
   | "relevancia"
@@ -41,6 +42,8 @@ type SortableProduct = Product & {
   createdAt: string;
   originalPrice: number;
   score: number;
+  /** Pontuação de atividade do agricultor (0–100). */
+  activityScore: number;
   lat: number | null;
   lng: number | null;
   pickupWindows: PickupWindow[];
@@ -125,7 +128,7 @@ const CategoryPage = () => {
       const farmerIds = [...new Set(rows.map((r) => r.farmer_id))];
       const { data: farmers } = await supabase
         .from("public_farmer_profiles")
-        .select("id, company_name, address, initial_score, pickup_lat, pickup_lng, pickup_hours")
+        .select("id, company_name, address, initial_score, activity_score, pickup_lat, pickup_lng, pickup_hours")
         .in("id", farmerIds);
       const farmerById = new Map((farmers ?? []).map((f) => [f.id, f]));
 
@@ -162,6 +165,7 @@ const CategoryPage = () => {
             isOrganic: r.is_organic ?? false,
             createdAt: r.created_at,
             score: farmer?.initial_score ?? 0,
+            activityScore: farmer?.activity_score ?? 0,
             lat: farmer?.pickup_lat ?? null,
             lng: farmer?.pickup_lng ?? null,
             pickupWindows: parsePickupHours((farmer as any)?.pickup_hours),
@@ -226,7 +230,12 @@ const CategoryPage = () => {
         list.sort((a, b) => a.stock - b.stock);
         break;
       default:
-        list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        // Relevância: agricultores mais ativos e certificados primeiro.
+        list.sort(
+          (a, b) =>
+            farmerRank(b.activityScore, b.score) - farmerRank(a.activityScore, a.score) ||
+            b.createdAt.localeCompare(a.createdAt),
+        );
     }
     return list;
   }, [items, sort, userPos]);
@@ -272,6 +281,12 @@ const CategoryPage = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Link
+              to="/termos#ordenacao"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+            >
+              Como ordenamos?
+            </Link>
           </div>
         </div>
 

@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 import { StockProvider } from "./contexts/StockContext";
@@ -10,6 +10,8 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import FarmerOnboardingGuard from "./components/FarmerOnboardingGuard";
 import ClientEmailVerificationGate from "./components/ClientEmailVerificationGate";
+import { ConsentProvider } from "./contexts/ConsentContext";
+import CookieConsent from "./components/CookieConsent";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -33,12 +35,13 @@ import MyProducts from "./pages/farmer/MyProducts";
 import EditProduct from "./pages/farmer/EditProduct";
 import FarmerInfo from "./pages/farmer/FarmerInfo";
 import FarmerAvailability from "./pages/farmer/Availability";
-import FarmerDeliveries from "./pages/farmer/Deliveries";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
 import OAuthConsent from "./pages/OAuthConsent";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -48,52 +51,58 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <StockProvider>
-            <CartProvider>
-              <FarmerOnboardingGuard />
-              <ClientEmailVerificationGate />
-              <div className="flex min-h-screen flex-col">
+        <ConsentProvider>
+          <AuthProvider>
+            <StockProvider>
+              <CartProvider>
+                <FarmerOnboardingGuard />
+                <ClientEmailVerificationGate />
+                <CookieConsent />
+                <div className="flex min-h-screen flex-col">
 
-                <Header />
-                <div className="flex-1">
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
-                    <Route path="/onboarding/agricultor" element={<FarmerOnboarding />} />
-                    <Route path="/catalogo" element={<Catalog />} />
-                    <Route path="/catalogo/:slug" element={<CategoryPage />} />
-                    <Route path="/produto/:id" element={<ProductDetail />} />
-                    <Route path="/agricultor/:id" element={<FarmerProfile />} />
-                    <Route path="/resultados" element={<SearchResults />} />
-                    <Route path="/carrinho" element={<Cart />} />
-                    <Route path="/encomendas" element={<MyOrders />} />
-                    <Route path="/encomendas/:id" element={<OrderStatus />} />
-                    <Route path="/avaliar/:orderId" element={<RateFarmer />} />
-                    <Route path="/agricultor/encomendas" element={<FarmerOrders />} />
-                    <Route path="/agricultor/scan" element={<ScanPickup />} />
-                    <Route path="/agricultor/vendas" element={<FarmerSales />} />
-                    <Route path="/agricultor/produtos/novo" element={<NewProduct />} />
-                    <Route path="/agricultor/produtos" element={<MyProducts />} />
-                    <Route path="/agricultor/produtos/:id/editar" element={<EditProduct />} />
+                  <Header />
+                  <div className="flex-1">
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+                      <Route path="/onboarding/agricultor" element={<FarmerOnboarding />} />
+                      <Route path="/catalogo" element={<Catalog />} />
+                      <Route path="/catalogo/:slug" element={<CategoryPage />} />
+                      <Route path="/produto/:id" element={<ProductDetail />} />
+                      <Route path="/agricultor/:id" element={<FarmerProfile />} />
+                      <Route path="/resultados" element={<SearchResults />} />
+                      <Route path="/carrinho" element={<Cart />} />
+                      <Route path="/encomendas" element={<MyOrders />} />
+                      <Route path="/encomendas/:id" element={<OrderStatus />} />
+                      <Route path="/avaliar/:orderId" element={<RateFarmer />} />
+                      <Route path="/agricultor/encomendas" element={<FarmerOrders />} />
+                      <Route path="/agricultor/scan" element={<ScanPickup />} />
+                      <Route path="/agricultor/vendas" element={<FarmerSales />} />
+                      <Route path="/agricultor/produtos/novo" element={<NewProduct />} />
+                      <Route path="/agricultor/produtos" element={<MyProducts />} />
+                      <Route path="/agricultor/produtos/:id/editar" element={<EditProduct />} />
 
-                    <Route path="/agricultor/disponibilidade" element={<FarmerAvailability />} />
-                    <Route path="/agricultor/entregas" element={<FarmerDeliveries />} />
-                    <Route path="/agricultor/informacoes" element={<FarmerInfo />} />
-                    <Route path="/sobre" element={<About />} />
-                    <Route path="/missao" element={<Mission />} />
-                    <Route path="/perfil" element={<Profile />} />
-                    <Route path="/definicoes" element={<Settings />} />
-                    <Route path="/favoritos" element={<Favorites />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                      <Route path="/agricultor/disponibilidade" element={<FarmerAvailability />} />
+                      {/* Antiga página de entregas: o percurso está agora nas encomendas e a configuração na disponibilidade */}
+                      <Route path="/agricultor/entregas" element={<Navigate to="/agricultor/encomendas" replace />} />
+                      <Route path="/agricultor/informacoes" element={<FarmerInfo />} />
+                      <Route path="/sobre" element={<About />} />
+                      <Route path="/missao" element={<Mission />} />
+                      <Route path="/termos" element={<Terms />} />
+                      <Route path="/privacidade" element={<Privacy />} />
+                      <Route path="/perfil" element={<Profile />} />
+                      <Route path="/definicoes" element={<Settings />} />
+                      <Route path="/favoritos" element={<Favorites />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </div>
+                  <Footer />
                 </div>
-                <Footer />
-              </div>
-            </CartProvider>
-          </StockProvider>
-        </AuthProvider>
+              </CartProvider>
+            </StockProvider>
+          </AuthProvider>
+        </ConsentProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

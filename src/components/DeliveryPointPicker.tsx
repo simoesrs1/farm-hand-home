@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
+import MapConsentGate from "@/components/MapConsentGate";
+import { useConsent } from "@/contexts/ConsentContext";
 
 declare global {
   interface Window {
@@ -22,13 +24,14 @@ const DeliveryPointPicker = ({ open, onOpenChange, value, onConfirm }: Props) =>
   const mapRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<any>(null);
   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(value);
+  const mapsAllowed = useConsent().hasConsent("maps");
 
   useEffect(() => {
     if (open) setPicked(value);
   }, [open, value]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !mapsAllowed) return;
     const browserKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
     if (!browserKey) return;
 
@@ -67,7 +70,7 @@ const DeliveryPointPicker = ({ open, onOpenChange, value, onConfirm }: Props) =>
     script.async = true;
     script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initDeliveryPicker`;
     document.head.appendChild(script);
-  }, [open, value]);
+  }, [open, value, mapsAllowed]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -78,7 +81,9 @@ const DeliveryPointPicker = ({ open, onOpenChange, value, onConfirm }: Props) =>
         <p className="text-sm text-muted-foreground">
           Toque no mapa no local exato onde o agricultor deve entregar a encomenda.
         </p>
-        <div ref={mapRef} className="h-[380px] w-full rounded-lg border border-border bg-muted" />
+        <MapConsentGate className="h-[380px]">
+          <div ref={mapRef} className="h-[380px] w-full rounded-lg border border-border bg-muted" />
+        </MapConsentGate>
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">
             {picked

@@ -8,13 +8,14 @@ interface FarmerCardProps {
   name: string;
   farm: string;
   image: string;
-  rating: number;
-  reviews: number;
+  /** Sem avaliações (reviews = 0 ou ausente), as estrelas não aparecem. */
+  rating?: number;
+  reviews?: number;
   location: string;
   products: string[];
 }
 
-const FarmerCard = ({ id, name, farm, image, rating, reviews, location, products }: FarmerCardProps) => {
+const FarmerCard = ({ id, name, farm, image, rating = 0, reviews = 0, location, products }: FarmerCardProps) => {
   const { isFavorite, toggle, loading } = useFavorite(id, farm);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
@@ -46,30 +47,34 @@ const FarmerCard = ({ id, name, farm, image, rating, reviews, location, products
             )}
           />
         </button>
-        <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
-          <MapPin className="h-3 w-3 text-primary" />
-          {location}
-        </div>
+        {location && (
+          <div className="absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] items-center gap-1 rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
+            <MapPin className="h-3 w-3 shrink-0 text-primary" />
+            <span className="truncate">{location}</span>
+          </div>
+        )}
       </div>
       <div className="p-4">
         <h3 className="font-display text-lg font-semibold text-foreground">{farm}</h3>
         <p className="text-sm text-muted-foreground">{name}</p>
-        <div className="mt-2 flex items-center gap-1.5">
-          <div className="flex items-center gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={`h-3.5 w-3.5 ${
-                  i < Math.floor(rating)
-                    ? "fill-accent text-accent"
-                    : "text-border"
-                }`}
-              />
-            ))}
+        {reviews > 0 && (
+          <div className="mt-2 flex items-center gap-1.5">
+            <div className="flex items-center gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  className={`h-3.5 w-3.5 ${
+                    i < Math.floor(rating)
+                      ? "fill-accent text-accent"
+                      : "text-border"
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-xs font-medium text-foreground">{rating.toFixed(1)}</span>
+            <span className="text-xs text-muted-foreground">({reviews})</span>
           </div>
-          <span className="text-xs font-medium text-foreground">{rating.toFixed(1)}</span>
-          <span className="text-xs text-muted-foreground">({reviews})</span>
-        </div>
+        )}
         <div className="mt-3 flex flex-wrap gap-1.5">
           {products.slice(0, 3).map((p) => (
             <span

@@ -10,10 +10,12 @@ import {
   ImageIcon,
   AlertTriangle,
   CalendarClock,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import ProductHistoryDialog from "@/components/ProductHistoryDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -73,6 +75,7 @@ const MyProducts = () => {
   const [custom, setCustom] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [notified, setNotified] = useState(false);
+  const [historyProduct, setHistoryProduct] = useState<ProductRow | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -308,6 +311,16 @@ const MyProducts = () => {
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                    aria-label={`Histórico de ${p.name}`}
+                    title="Ver histórico"
+                    onClick={() => setHistoryProduct(p)}
+                  >
+                    <History className="h-4 w-4" />
+                  </Button>
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
                     {thumbs[p.id] ? (
                       <img src={thumbs[p.id]} alt={p.name} className="h-full w-full object-cover" />
@@ -424,6 +437,13 @@ const MyProducts = () => {
         </ul>
       )}
 
+      <ProductHistoryDialog
+        productId={historyProduct?.id ?? null}
+        productName={historyProduct?.name}
+        unit={historyProduct?.unit}
+        open={historyProduct !== null}
+        onOpenChange={(open) => !open && setHistoryProduct(null)}
+      />
     </div>
   );
 };

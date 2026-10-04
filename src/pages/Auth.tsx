@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Leaf, User, Tractor, Loader2, AlertCircle } from "lucide-react";
+import GoogleIcon from "@/components/GoogleIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,14 +16,22 @@ import {Icon} from 'react-icons-kit';
 import {eyeOff} from 'react-icons-kit/feather/eyeOff';
 import {eye} from 'react-icons-kit/feather/eye'
 
+/**
+ * O tipo de perfil escolhido no registo não pode viajar no fluxo OAuth (o
+ * provider é que cria o utilizador). Fica guardado enquanto o browser sai para
+ * a Google e é reclamado no regresso, via claim_initial_profile_type.
+ */
+const PENDING_PROFILE_TYPE_KEY = "farmconnect:pending_profile_type";
+
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [isSignup, setIsSignup] = useState(searchParams.get("tab") === "signup");
   const [profileType, setProfileType] = useState<"cliente" | "vendedor">("cliente");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -36,11 +45,61 @@ const Auth = () => {
 
   const [type, setType] = useState('password');
   const [icon, setIcon] = useState(eyeOff);
-  // Redirect if already logged in
-  if (user) {
-    navigate(redirectAfterAuth, { replace: true });
-    return null;
-  }
+
+  const userId = user?.id ?? null;
+
+  /** Agricultores com o registo por completar entram sempre pelo onboarding. */
+  const resolvePostLoginRoute = useCallback(
+    async (id: string) => {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("profile_type")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (prof?.profile_type !== "vendedor") return redirectAfterAuth;
+
+      const { data: details } = await supabase
+        .from("farmer_details")
+        .select("registration_step")
+        .eq("user_id", id)
+        .maybeSingle();
+
+      return !details || details.registration_step < 2
+        ? "/onboarding/agricultor"
+        : redirectAfterAuth;
+    },
+    [redirectAfterAuth],
+  );
+
+  // Sessão ativa: login por password, sessão anterior, ou regresso do OAuth
+  // (o detectSessionInUrl do cliente Supabase já trocou o código por sessão).
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+
+    (async () => {
+      const pending = sessionStorage.getItem(PENDING_PROFILE_TYPE_KEY);
+      if (pending === "cliente" || pending === "vendedor") {
+        sessionStorage.removeItem(PENDING_PROFILE_TYPE_KEY);
+        // Não tem efeito se o perfil já tiver tipo definido (login, não registo).
+        const { error } = await supabase.rpc("claim_initial_profile_type", {
+          _profile_type: pending,
+        });
+        if (error) console.error("claim_initial_profile_type", error);
+        else await refreshProfile();
+      }
+
+      const target = await resolvePostLoginRoute(userId);
+      if (!cancelled) navigate(target, { replace: true });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, navigate, refreshProfile, resolvePostLoginRoute]);
+
+  if (userId) return null;
 
   const handlePasswordToggle = () => {
    if (type==='password'){
@@ -94,31 +153,10 @@ const Auth = () => {
           description: "Verifica o teu email para confirmar o registo.",
         });
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-
-        // Verifica se é agricultor com onboarding incompleto
-        if (data.user) {
-          const { data: prof } = await supabase
-            .from("profiles")
-            .select("profile_type")
-            .eq("id", data.user.id)
-            .single();
-
-          if (prof?.profile_type === "vendedor") {
-            const { data: details } = await supabase
-              .from("farmer_details")
-              .select("registration_step")
-              .eq("user_id", data.user.id)
-              .single();
-
-            if (!details || details.registration_step < 2) {
-              navigate("/onboarding/agricultor");
-              return;
-            }
-          }
-        }
-        navigate(redirectAfterAuth);
+        // O encaminhamento (incluindo o onboarding do agricultor) fica a cargo
+        // do efeito que reage à sessão ativa.
       }
     } catch (error: unknown) {
       console.error("Auth error", error);
@@ -136,6 +174,38 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  const handleGoogleAuth = async () => {
+    setGoogleLoading(true);
+    setEmailTaken(false);
+
+    try {
+      // Só no registo é que há tipo de perfil a reclamar no regresso.
+      if (isSignup) sessionStorage.setItem(PENDING_PROFILE_TYPE_KEY, profileType);
+      else sessionStorage.removeItem(PENDING_PROFILE_TYPE_KEY);
+
+      const redirectTo = new URL("/auth", window.location.origin);
+      if (safeNext) redirectTo.searchParams.set("next", safeNext);
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: redirectTo.toString() },
+      });
+      if (error) throw error;
+      // Em caso de sucesso o browser sai para a Google — o loading fica ativo.
+    } catch (error: unknown) {
+      console.error("Google auth error", error);
+      sessionStorage.removeItem(PENDING_PROFILE_TYPE_KEY);
+      toast({
+        title: "Erro",
+        description: toUserMessage(error),
+        variant: "destructive",
+      });
+      setGoogleLoading(false);
+    }
+  };
+
+  const busy = loading || googleLoading;
 
   return (
     <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center py-12">
@@ -284,11 +354,56 @@ const Auth = () => {
               </p>
             )}
 
-            <Button type="submit" className="mt-2 w-full" disabled={loading}>
+            <Button type="submit" className="mt-2 w-full" disabled={busy}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSignup ? "Criar conta" : "Entrar"}
             </Button>
+
+            {isSignup && (
+              <p className="text-center text-xs text-muted-foreground">
+                Ao criar conta, aceita os{" "}
+                <Link to="/termos" className="font-medium text-primary hover:underline">
+                  Termos e Condições
+                </Link>{" "}
+                e confirma que leu a{" "}
+                <Link to="/privacidade" className="font-medium text-primary hover:underline">
+                  Política de Privacidade
+                </Link>
+                .
+              </p>
+            )}
           </form>
+
+          <div className="my-5 flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">ou</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleGoogleAuth}
+            disabled={busy}
+          >
+            {googleLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <GoogleIcon className="mr-2 h-4 w-4" />
+            )}
+            {isSignup ? "Registar com a Google" : "Entrar com a Google"}
+          </Button>
+
+          {isSignup && (
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              A conta Google fica associada ao perfil de{" "}
+              <span className="font-medium text-foreground">
+                {profileType === "vendedor" ? "agricultor" : "cliente"}
+              </span>{" "}
+              selecionado acima.
+            </p>
+          )}
         </div>
       </div>
     </main>

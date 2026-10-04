@@ -11,13 +11,15 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import SavingsBadge from "@/components/SavingsBadge";
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
+import { farmerRank } from "@/lib/farmer-activity";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&h=400&fit=crop";
 
-type SortOption = "mais-avaliado" | "menos-avaliado" | "preco-maior" | "preco-menor";
+type SortOption = "relevancia" | "mais-avaliado" | "menos-avaliado" | "preco-maior" | "preco-menor";
 
 const sortLabels: Record<SortOption, string> = {
+  relevancia: "Relevância",
   "mais-avaliado": "Mais avaliado",
   "menos-avaliado": "Menos avaliado",
   "preco-maior": "Preço maior",
@@ -31,9 +33,11 @@ const SearchResults = () => {
   const { toast } = useToast();
   const location = searchParams.get("location") || "";
   const radius = searchParams.get("radius") || "25";
-  const sort = (searchParams.get("sort") as SortOption) || "mais-avaliado";
+  const sort = (searchParams.get("sort") as SortOption) || "relevancia";
 
   const [products, setProducts] = useState<Product[]>([]);
+  // Atividade + certificados de cada agricultor, para a ordenação "Relevância".
+  const [rankByFarmer, setRankByFarmer] = useState<Map<string, number>>(new Map());
   const [originalPrices, setOriginalPrices] = useState<Map<string, number>>(new Map());
   const marketPrices = useMarketPrices();
 
@@ -60,7 +64,7 @@ const SearchResults = () => {
       const farmerIds = [...new Set(rows.map((r) => r.farmer_id))];
       const { data: farmers } = await supabase
         .from("public_farmer_profiles")
-        .select("id, company_name, address")
+        .select("id, company_name, address, initial_score, activity_score")
         .in("id", farmerIds);
       const farmerById = new Map((farmers ?? []).map((f) => [f.id, f]));
 
@@ -99,6 +103,9 @@ const SearchResults = () => {
 
       if (!cancelled) {
         setProducts(mapped);
+        setRankByFarmer(
+          new Map((farmers ?? []).map((f) => [f.id, farmerRank(f.activity_score, f.initial_score)])),
+        );
         setOriginalPrices(new Map(rows.map((r) => [r.id, Number(r.client_price)])));
         registerStock(mapped.map((p) => ({ id: p.id, quantity: p.stock })));
       }
@@ -125,7 +132,12 @@ const SearchResults = () => {
       if (result.length === 0) result = [...products];
     }
 
+    const rank = (p: Product) => rankByFarmer.get(p.farmerId ?? "") ?? 0;
+
     switch (sort) {
+      case "relevancia":
+        result.sort((a, b) => rank(b) - rank(a));
+        break;
       case "mais-avaliado":
         result.sort((a, b) => b.rating - a.rating || b.reviews - a.reviews);
         break;
@@ -141,7 +153,7 @@ const SearchResults = () => {
     }
 
     return result;
-  }, [products, location, sort]);
+  }, [products, location, sort, rankByFarmer]);
 
   return (
     <main className="py-8">
@@ -180,6 +192,12 @@ const SearchResults = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Link
+              to="/termos#ordenacao"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+            >
+              Como ordenamos?
+            </Link>
           </div>
         </div>
 

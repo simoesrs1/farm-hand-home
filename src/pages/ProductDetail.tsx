@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/select";
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import type { Product } from "@/data/products";
+import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
 
 interface Detail extends Product {
   description: string;
@@ -228,13 +229,7 @@ const ProductDetail = () => {
     const amount = Math.min(qty, maxAddable);
     addItem(product);
     if (inCart + amount > 1) updateQuantity(product.id, inCart + amount);
-    if (pickupTime) {
-      try {
-        localStorage.setItem("farmconnect_pickup_slot", pickupTime);
-      } catch {
-        // ignore
-      }
-    }
+    if (pickupTime) scopedStorage.set(STORAGE_KEYS.pickupSlot, pickupTime);
     toast({
       title: "Adicionado ao carrinho",
       description: pickupTime

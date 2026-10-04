@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      farmer_activity: {
+        Row: {
+          components: Json
+          computed_at: string
+          exempt_reason: string | null
+          farmer_id: string
+          featured_rank: number | null
+          featured_since: string | null
+          last_action_at: string | null
+          last_nudge_at: string | null
+          level: string
+          previous_level: string | null
+          score: number
+          streak_weeks: number
+        }
+        Insert: {
+          components?: Json
+          computed_at?: string
+          exempt_reason?: string | null
+          farmer_id: string
+          featured_rank?: number | null
+          featured_since?: string | null
+          last_action_at?: string | null
+          last_nudge_at?: string | null
+          level?: string
+          previous_level?: string | null
+          score?: number
+          streak_weeks?: number
+        }
+        Update: {
+          components?: Json
+          computed_at?: string
+          exempt_reason?: string | null
+          farmer_id?: string
+          featured_rank?: number | null
+          featured_since?: string | null
+          last_action_at?: string | null
+          last_nudge_at?: string | null
+          level?: string
+          previous_level?: string | null
+          score?: number
+          streak_weeks?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_activity_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: true
+            referencedRelation: "farmer_details"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       farmer_certificates: {
         Row: {
           certificate_type: string | null
@@ -145,6 +198,8 @@ export type Database = {
           exploration_number: string | null
           id: string
           initial_score: number | null
+          pause_note: string | null
+          paused_until: string | null
           phone: string | null
           pickup_address: string | null
           pickup_days: number
@@ -172,6 +227,8 @@ export type Database = {
           exploration_number?: string | null
           id?: string
           initial_score?: number | null
+          pause_note?: string | null
+          paused_until?: string | null
           phone?: string | null
           pickup_address?: string | null
           pickup_days?: number
@@ -199,6 +256,8 @@ export type Database = {
           exploration_number?: string | null
           id?: string
           initial_score?: number | null
+          pause_note?: string | null
+          paused_until?: string | null
           phone?: string | null
           pickup_address?: string | null
           pickup_days?: number
@@ -802,6 +861,7 @@ export type Database = {
       }
       public_farmer_profiles: {
         Row: {
+          activity_score: number | null
           address: string | null
           cae_code: string | null
           company_name: string | null
@@ -810,8 +870,11 @@ export type Database = {
           delivery_note: string | null
           delivery_radius_km: number | null
           description: string | null
+          featured_rank: number | null
           id: string | null
           initial_score: number | null
+          pause_note: string | null
+          paused_until: string | null
           pickup_address: string | null
           pickup_hours: Json | null
           pickup_hours_note: string | null
@@ -885,6 +948,7 @@ export type Database = {
         Args: { p_company_nif: string; p_exclude_id?: string }
         Returns: boolean
       }
+      compute_farmer_activity: { Args: never; Returns: number }
       consume_product_stock: {
         Args: {
           p_actor_id: string
@@ -899,7 +963,9 @@ export type Database = {
         Args: { p_exclude_id?: string; p_exploration_number: string }
         Returns: boolean
       }
+      farmer_is_listed: { Args: { _farmer_id: string }; Returns: boolean }
       farmer_is_verified: { Args: { _farmer_id: string }; Returns: boolean }
+      today_lisbon: { Args: never; Returns: string }
       user_in_order: { Args: { _order_id: string }; Returns: boolean }
       user_is_order_client: { Args: { _order_id: string }; Returns: boolean }
       user_owns_farmer: { Args: { _farmer_id: string }; Returns: boolean }

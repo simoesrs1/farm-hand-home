@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Mock checkout — creates an order with simulated payment success
 import { createClient } from "npm:@supabase/supabase-js@2.110.8";
 
@@ -171,10 +172,16 @@ Deno.serve(async (req) => {
 
     const { data: farmerRow } = await admin
       .from("farmer_details")
-      .select("id, pickup_days, user_id, pickup_hours")
+      .select("id, pickup_days, user_id, pickup_hours, paused_until")
       .eq("id", farmerId)
       .maybeSingle();
     if (!farmerRow) return jsonError(400, "Agricultor indisponível para receber a encomenda.");
+    // Pausa voluntária: a RLS já oculta os produtos, mas este cliente usa o
+    // service_role. paused_until é a data de regresso (Europe/Lisbon).
+    const todayLisbon = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(new Date());
+    if (farmerRow.paused_until && farmerRow.paused_until > todayLisbon) {
+      return jsonError(400, "Este agricultor está em pausa e não aceita encomendas de momento.");
+    }
     const pickupDays = farmerRow.pickup_days ?? 7;
 
     // Optional pickup scheduling — must land inside the farmer's open-door
@@ -226,6 +233,7 @@ Deno.serve(async (req) => {
     const commission = Math.round(total * COMMISSION_RATE * 100) / 100;
     const farmerAmount = Math.round((total - commission) * 100) / 100;
 
+    
     let pickupCode = generatePickupCode();
     for (let i = 0; i < 5; i++) {
       const { data: exists } = await admin
@@ -278,16 +286,16 @@ Deno.serve(async (req) => {
     const { error: itemsErr } = await admin.from("order_items").insert(itemRows);
     if (itemsErr) throw itemsErr;
 
-    // Best-effort stock decrement (read-then-write, not transactional — matches
-    // the rest of this mock checkout flow, which doesn't guard against races).
+    // Stock decrement goes through consume_product_stock so the product history
+    // trigger records it as a sale tied to this order and buyer.
     for (const r of resolved) {
-      const current = productById.get(r.product.id)?.stock_quantity;
-      if (typeof current === "number") {
-        await admin
-          .from("products")
-          .update({ stock_quantity: Math.max(0, current - r.quantity) })
-          .eq("id", r.product.id);
-      }
+      const { error: stockErr } = await admin.rpc("consume_product_stock", {
+        p_product_id: r.product.id,
+        p_quantity: r.quantity,
+        p_order_id: order.id,
+        p_actor_id: clientId,
+      });
+      if (stockErr) console.error("consume_product_stock failed", r.product.id, stockErr);
     }
 
     // Notify the buyer that the payment went through and the order exists.

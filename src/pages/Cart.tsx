@@ -37,6 +37,7 @@ import {
   type PickupWindow,
 } from "@/lib/pickup-hours";
 import { CalendarClock } from "lucide-react";
+import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
 
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
@@ -127,12 +128,7 @@ const Cart = () => {
   // Pre-fill with the slot the client already picked on the product page.
   useEffect(() => {
     if (slot || slots.length === 0) return;
-    let stored: string | null = null;
-    try {
-      stored = localStorage.getItem("farmconnect_pickup_slot");
-    } catch {
-      stored = null;
-    }
+    const stored = scopedStorage.get<string>(STORAGE_KEYS.pickupSlot);
     if (stored && slots.some((d) => d.toISOString() === stored)) setSlot(stored);
   }, [slots, slot]);
 

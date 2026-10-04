@@ -6,6 +6,8 @@ import {
   CalendarArrowDown,
   Clock,
   Loader2,
+  PauseCircle,
+  PlayCircle,
   Plus,
   Save,
   Trash2,
@@ -30,6 +32,141 @@ import {
   weeklyHours,
   type PickupWindow,
 } from "@/lib/pickup-hours";
+import { formatReturnDate, isPaused, todayLisbon } from "@/lib/farmer-activity";
+
+const MAX_PAUSE_DAYS = 183;
+const PAUSE_NOTE_MAX = 280;
+
+/** Soma dias a uma data AAAA-MM-DD (ao meio-dia, para evitar saltos de fuso). */
+const addDays = (date: string, days: number) => {
+  const d = new Date(`${date}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
+interface PauseCardProps {
+  farmerId: string;
+  pausedUntil: string | null;
+  pauseNote: string;
+  onChange: (pausedUntil: string | null, note: string) => void;
+}
+
+/**
+ * Pausa voluntária (férias, entressafra): oculta os produtos, bloqueia
+ * encomendas e congela a pontuação de atividade até à data de regresso.
+ */
+const PauseCard = ({ farmerId, pausedUntil, pauseNote, onChange }: PauseCardProps) => {
+  const today = todayLisbon();
+  const [returnDate, setReturnDate] = useState(addDays(today, 14));
+  const [note, setNote] = useState(pauseNote);
+  const [busy, setBusy] = useState(false);
+  const paused = isPaused(pausedUntil);
+
+  const save = async (until: string | null, noteValue: string) => {
+    setBusy(true);
+    const { error } = await supabase
+      .from("farmer_details")
+      .update({ paused_until: until, pause_note: until ? noteValue.trim() || null : null })
+      .eq("id", farmerId);
+    setBusy(false);
+    if (error) {
+      toast({ title: "Não foi possível guardar", description: error.message, variant: "destructive" });
+      return;
+    }
+    onChange(until, until ? noteValue.trim() : "");
+    toast(
+      until
+        ? {
+            title: "Pausa ativada",
+            description: `Os seus produtos voltam a aparecer a ${formatReturnDate(until)}.`,
+          }
+        : { title: "Pausa terminada", description: "Os seus produtos já estão de volta ao catálogo." },
+    );
+  };
+
+  const handleActivate = () => {
+    if (!returnDate || returnDate <= today || returnDate > addDays(today, MAX_PAUSE_DAYS)) {
+      toast({
+        title: "Data de regresso inválida",
+        description: "Escolha uma data a partir de amanhã e até 6 meses.",
+        variant: "destructive",
+      });
+      return;
+    }
+    save(returnDate, note);
+  };
+
+  if (paused && pausedUntil) {
+    return (
+      <Card className="mt-5 border-accent/40 bg-accent/10 p-4">
+        <div className="flex items-start gap-3">
+          <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+          <div className="flex-1 text-sm">
+            <p className="font-medium text-foreground">
+              Está em pausa até {formatReturnDate(pausedUntil)}.
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              Os seus produtos não aparecem no catálogo e não recebe encomendas. A sua pontuação de
+              atividade está congelada, por isso não perde posição.
+            </p>
+            {pauseNote && <p className="mt-2 italic text-muted-foreground">"{pauseNote}"</p>}
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Button variant="outline" className="gap-2" disabled={busy} onClick={() => save(null, "")}>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+            Terminar pausa agora
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="mt-5 space-y-4 p-4">
+      <div className="flex items-start gap-3">
+        <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+        <div className="text-sm">
+          <p className="font-medium text-foreground">Vai de férias ou está em entressafra?</p>
+          <p className="mt-1 text-muted-foreground">
+            Ative a pausa: os seus produtos ficam ocultos, não recebe encomendas e a sua pontuação de
+            atividade fica congelada até regressar.
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-[180px_1fr]">
+        <div className="space-y-2">
+          <Label htmlFor="pause-until">Data de regresso</Label>
+          <Input
+            id="pause-until"
+            type="date"
+            min={addDays(today, 1)}
+            max={addDays(today, MAX_PAUSE_DAYS)}
+            value={returnDate}
+            onChange={(e) => setReturnDate(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="pause-note">Mensagem para os clientes (opcional)</Label>
+          <Textarea
+            id="pause-note"
+            rows={2}
+            maxLength={PAUSE_NOTE_MAX}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Ex: Estamos na entressafra. Voltamos com as primeiras laranjas!"
+          />
+        </div>
+      </div>
+      <div className="flex justify-end">
+        <Button variant="outline" className="gap-2" disabled={busy} onClick={handleActivate}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PauseCircle className="h-4 w-4" />}
+          Ativar pausa
+        </Button>
+      </div>
+    </Card>
+  );
+};
 
 interface ScheduleEditorProps {
   windows: PickupWindow[];
@@ -121,6 +258,9 @@ const FarmerAvailability = () => {
   const [deliveryWindows, setDeliveryWindows] = useState<PickupWindow[]>([]);
   const [deliveryNote, setDeliveryNote] = useState("");
 
+  const [pausedUntil, setPausedUntil] = useState<string | null>(null);
+  const [pauseNote, setPauseNote] = useState("");
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
@@ -136,7 +276,7 @@ const FarmerAvailability = () => {
       const { data } = await supabase
         .from("farmer_details")
         .select(
-          "id, company_name, pickup_hours, pickup_hours_note, delivery_radius_km, delivery_hours, delivery_note",
+          "id, company_name, pickup_hours, pickup_hours_note, delivery_radius_km, delivery_hours, delivery_note, paused_until, pause_note",
         )
         .eq("user_id", user.id)
         .maybeSingle();
@@ -150,6 +290,8 @@ const FarmerAvailability = () => {
       setRadiusKm(radius != null ? String(radius) : "");
       setDeliveryWindows(parsePickupHours(row?.delivery_hours));
       setDeliveryNote(row?.delivery_note ?? "");
+      setPausedUntil(row?.paused_until ?? null);
+      setPauseNote(row?.pause_note ?? "");
       setLoading(false);
     })();
   }, [user]);
@@ -235,6 +377,18 @@ const FarmerAvailability = () => {
           </p>
         </div>
       </div>
+
+      {farmerId && (
+        <PauseCard
+          farmerId={farmerId}
+          pausedUntil={pausedUntil}
+          pauseNote={pauseNote}
+          onChange={(until, n) => {
+            setPausedUntil(until);
+            setPauseNote(n);
+          }}
+        />
+      )}
 
       <h2 className="mt-8 font-display text-xl font-semibold">Porta aberta (levantamento)</h2>
       <div className="mt-3">
