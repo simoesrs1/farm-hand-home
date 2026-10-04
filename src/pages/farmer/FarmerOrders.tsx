@@ -142,16 +142,20 @@ const FarmerOrders = () => {
     }
   };
 
+  // Encomenda com entrega ao domicílio: tem morada/ponto de entrega ou inclui um produto com entrega ao domicílio
+  const isHomeDelivery = (o: Order) =>
+    o.delivery_address != null ||
+    o.delivery_lat != null ||
+    (o.order_items ?? []).some((it) => deliveryProductNames.includes(it.product_name));
+
   // Entregas ao domicílio ativas com ponto marcado pelo cliente, para o mapa do percurso
   const routeStops: RouteStop[] = useMemo(() => {
-    const names = new Set(deliveryProductNames);
     return orders
       .filter(
         (o) =>
           o.status === "awaiting_pickup" &&
           o.delivery_lat != null &&
-          o.delivery_lng != null &&
-          (o.order_items ?? []).some((it) => names.has(it.product_name)),
+          o.delivery_lng != null,
       )
       .map((o) => ({
         orderId: o.id,
@@ -161,7 +165,7 @@ const FarmerOrders = () => {
         lng: Number(o.delivery_lng),
         when: new Date(o.scheduled_pickup_at ?? o.pickup_deadline),
       }));
-  }, [orders, deliveryProductNames]);
+  }, [orders]);
 
   if (!user || profile?.profile_type !== "vendedor") {
     return (
@@ -179,12 +183,9 @@ const FarmerOrders = () => {
     .reduce((acc, o) => acc + Math.round(o.total * 0.1 * 100) / 100, 0);
 
   // Planeamento de entregas ao domicílio: encomendas ativas com produtos de entrega ao domicílio, agrupadas por dia
-  const deliveryNames = new Set(deliveryProductNames);
-  const homeDeliveryOrders = orders.filter(
-    (o) =>
-      o.status === "awaiting_pickup" &&
-      (o.order_items ?? []).some((it) => deliveryNames.has(it.product_name)),
-  );
+  const allHomeDeliveryOrders = orders.filter(isHomeDelivery);
+  const homeDeliveryOrders = allHomeDeliveryOrders.filter((o) => o.status === "awaiting_pickup");
+  const homeDeliveredCount = allHomeDeliveryOrders.filter((o) => o.status === "delivered").length;
   const byDay = new Map<string, Order[]>();
   for (const o of homeDeliveryOrders) {
     const when = o.scheduled_pickup_at ?? o.pickup_deadline;
@@ -216,7 +217,61 @@ const FarmerOrders = () => {
           <h1 className="font-display text-3xl font-bold text-foreground">Encomendas da tua quinta</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {deliveryProductNames.length > 0 && <DeliveryRouteMapDialog farm={farm} stops={routeStops} />}
+          <DeliveryRouteMapDialog farm={farm} stops={routeStops}>
+            <div className="mt-6 border-t border-border pt-4">
+              <h3 className="font-display text-lg font-semibold text-foreground">
+                Encomendas com entrega ao domicílio
+              </h3>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {homeDeliveredCount} entregue(s) · {homeDeliveryOrders.length} por entregar
+              </p>
+              {allHomeDeliveryOrders.length === 0 ? (
+                <p className="mt-3 rounded-lg border border-border p-6 text-center text-sm text-muted-foreground">
+                  Ainda não há encomendas com entrega ao domicílio.
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-2">
+                  {allHomeDeliveryOrders.map((o) => {
+                    const m = meta[o.status];
+                    const Icon = m.Icon;
+                    return (
+                      <li key={o.id} className="rounded-lg border border-border p-3 text-sm">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-xs text-muted-foreground">
+                            Encomenda #{o.id.slice(0, 8).toUpperCase()} ·{" "}
+                            {new Date(o.created_at).toLocaleDateString("pt-PT")} ·{" "}
+                            <span className="font-medium text-foreground">{o.total.toFixed(2)}€</span>
+                          </p>
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${m.tone}`}>
+                            <Icon className="h-3 w-3" /> {m.label}
+                          </span>
+                        </div>
+                        <p className="mt-2 flex items-center gap-2 text-foreground">
+                          <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                          {o.delivery_address ?? "Morada por confirmar"}
+                        </p>
+                        {o.scheduled_pickup_at && (
+                          <p className="mt-1 flex items-center gap-2 text-foreground">
+                            <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
+                            {new Date(o.scheduled_pickup_at).toLocaleString("pt-PT", {
+                              weekday: "long",
+                              day: "numeric",
+                              month: "long",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        )}
+                        <p className="mt-1 text-muted-foreground">
+                          {o.order_items.map((it) => `${it.product_name} (${it.quantity}${it.unit ? ` ${it.unit}` : ""})`).join(" · ")}
+                        </p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </DeliveryRouteMapDialog>
           <Link to="/agricultor/scan">
             <Button className="gap-2"><ScanLine className="h-4 w-4" /> Validar entrega</Button>
           </Link>
@@ -323,7 +378,7 @@ const FarmerOrders = () => {
                 ? Math.round(o.total * 0.1 * 100) / 100
                 : o.farmer_amount;
             const isHighlighted = highlightId === o.id;
-            const isHomeDelivery = (o.order_items ?? []).some((it) => deliveryNames.has(it.product_name));
+            const homeDelivery = isHomeDelivery(o);
             return (
               <li
                 key={o.id}
@@ -398,7 +453,7 @@ const FarmerOrders = () => {
 
                 {o.status === "awaiting_pickup" && (
                   <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm text-muted-foreground">
-                    {isHomeDelivery && o.delivery_address && (
+                    {homeDelivery && o.delivery_address && (
                       <p className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-2.5 text-foreground">
                         <Truck className="h-4 w-4 shrink-0 text-primary" />
                         Entrega ao domicílio: {o.delivery_address}
@@ -407,7 +462,7 @@ const FarmerOrders = () => {
                     {o.scheduled_pickup_at && (
                       <p className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-2.5 font-medium text-foreground">
                         <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
-                        {isHomeDelivery ? "Entrega combinada para" : "Levantamento agendado pelo cliente"}:{" "}
+                        {homeDelivery ? "Entrega combinada para" : "Levantamento agendado pelo cliente"}:{" "}
                         {new Date(o.scheduled_pickup_at).toLocaleString("pt-PT", {
                           weekday: "long",
                           day: "numeric",

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Map as MapIcon, MapPin, Navigation } from "lucide-react";
@@ -24,6 +24,8 @@ export interface RouteStop {
 interface Props {
   farm: { lat: number; lng: number; name: string } | null;
   stops: RouteStop[];
+  /** Conteúdo extra mostrado por baixo do mapa (ex.: lista das encomendas). */
+  children?: ReactNode;
 }
 
 const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
@@ -40,7 +42,7 @@ const DAY_COLORS = ["#2d6a4f", "#b45309", "#1d4ed8", "#9333ea", "#be123c", "#0f7
 
 // Route-planning map: farm as origin, one marker per delivery, grouped by day,
 // with the straight-line distance from the farm to each stop.
-const DeliveryRouteMapDialog = ({ farm, stops }: Props) => {
+const DeliveryRouteMapDialog = ({ farm, stops, children }: Props) => {
   const [open, setOpen] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapsAllowed = useConsent().hasConsent("maps");
@@ -158,16 +160,16 @@ const DeliveryRouteMapDialog = ({ farm, stops }: Props) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
+        <Button variant="outline" className="gap-2">
           <MapIcon className="h-4 w-4" />
-          Ver percurso no mapa
+          Entregas ao domicílio
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Navigation className="h-5 w-5 text-primary" />
-            Percurso de entregas ao domicílio
+            Entregas ao domicílio
           </DialogTitle>
         </DialogHeader>
 
@@ -227,6 +229,7 @@ const DeliveryRouteMapDialog = ({ farm, stops }: Props) => {
             </p>
           </>
         )}
+        {children}
       </DialogContent>
     </Dialog>
   );
