@@ -15,6 +15,13 @@
       "when": 1791623039161,
       "tag": "0001_product_stock_batches_fifo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791623196496,
+      "tag": "0002_farmer_activity",
+      "breakpoints": true
     }
   ]
 }
