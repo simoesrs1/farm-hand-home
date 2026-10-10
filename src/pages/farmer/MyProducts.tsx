@@ -33,6 +33,14 @@ type ProductRow = {
   low_stock_threshold: number | null;
 };
 
+type Batch = {
+  id: string;
+  product_id: string;
+  quantity_remaining: number;
+  expires_at: string | null;
+  added_at: string;
+};
+
 // `availability_start`/`availability_end` são colunas `date` (YYYY-MM-DD), por
 // isso comparamos como texto contra o dia local para evitar saltos de fuso.
 const todayISO = () => {
@@ -76,6 +84,8 @@ const MyProducts = () => {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [notified, setNotified] = useState(false);
   const [historyProduct, setHistoryProduct] = useState<ProductRow | null>(null);
+  const [expiry, setExpiry] = useState<Record<string, string>>({});
+  const [batches, setBatches] = useState<Record<string, Batch[]>>({});
 
   useEffect(() => {
     if (authLoading) return;
@@ -102,6 +112,8 @@ const MyProducts = () => {
       return;
     }
     setFarmerId(farmer.id);
+    // Remove automaticamente lotes fora de validade antes de mostrar o stock.
+    await supabase.rpc("expire_stock_batches", {});
     const { data, error } = await supabase
       .from("products")
       .select(
@@ -115,6 +127,15 @@ const MyProducts = () => {
     } else {
       setProducts((data ?? []) as ProductRow[]);
     }
+    const { data: b } = await supabase
+      .from("product_stock_batches")
+      .select("id, product_id, quantity_remaining, expires_at, added_at")
+      .eq("farmer_id", farmer.id)
+      .gt("quantity_remaining", 0)
+      .order("added_at", { ascending: true });
+    const map: Record<string, Batch[]> = {};
+    for (const row of (b ?? []) as Batch[]) (map[row.product_id] ??= []).push(row);
+    setBatches(map);
     setLoading(false);
   };
 
@@ -189,26 +210,30 @@ const MyProducts = () => {
       toast({ title: "Sem stock para retirar", variant: "destructive" });
       return;
     }
-    const newStock = Math.max(0, current + sign * amount);
+    const exp = expiry[p.id] || null;
+    if (sign === 1 && exp && exp < todayISO()) {
+      toast({ title: "A validade não pode estar no passado", variant: "destructive" });
+      return;
+    }
     setSavingId(p.id);
-    const { error } = await supabase
-      .from("products")
-      .update({ stock_quantity: newStock })
-      .eq("id", p.id);
+    const { data, error } =
+      sign === 1
+        ? await supabase.rpc("add_stock_batch", { p_product_id: p.id, p_quantity: amount, p_expires_at: exp })
+        : await supabase.rpc("remove_stock_fifo", { p_product_id: p.id, p_quantity: amount });
     setSavingId(null);
     if (error) {
       toast({ title: "Erro a atualizar stock", description: error.message, variant: "destructive" });
       return;
     }
+    const newStock = Number(data ?? 0);
     toast({
       title: "Stock atualizado",
       description: `${p.name}: ${sign === 1 ? "+" : "−"}${amount} → ${newStock}`,
     });
-    setProducts((prev) =>
-      prev.map((x) => (x.id === p.id ? { ...x, stock_quantity: newStock } : x))
-    );
     setPreset((s) => ({ ...s, [p.id]: "1" }));
     setCustom((s) => ({ ...s, [p.id]: "" }));
+    setExpiry((s) => ({ ...s, [p.id]: "" }));
+    load();
   };
 
   if (authLoading || loading) {
