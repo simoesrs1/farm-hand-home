@@ -33,6 +33,14 @@ type ProductRow = {
   low_stock_threshold: number | null;
 };
 
+type Batch = {
+  id: string;
+  product_id: string;
+  quantity_remaining: number;
+  expires_at: string | null;
+  added_at: string;
+};
+
 // `availability_start`/`availability_end` são colunas `date` (YYYY-MM-DD), por
 // isso comparamos como texto contra o dia local para evitar saltos de fuso.
 const todayISO = () => {
@@ -76,6 +84,8 @@ const MyProducts = () => {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [notified, setNotified] = useState(false);
   const [historyProduct, setHistoryProduct] = useState<ProductRow | null>(null);
+  const [expiry, setExpiry] = useState<Record<string, string>>({});
+  const [batches, setBatches] = useState<Record<string, Batch[]>>({});
 
   useEffect(() => {
     if (authLoading) return;
@@ -102,6 +112,8 @@ const MyProducts = () => {
       return;
     }
     setFarmerId(farmer.id);
+    // Remove automaticamente lotes fora de validade antes de mostrar o stock.
+    await supabase.rpc("expire_stock_batches", {});
     const { data, error } = await supabase
       .from("products")
       .select(
@@ -115,6 +127,15 @@ const MyProducts = () => {
     } else {
       setProducts((data ?? []) as ProductRow[]);
     }
+    const { data: b } = await supabase
+      .from("product_stock_batches")
+      .select("id, product_id, quantity_remaining, expires_at, added_at")
+      .eq("farmer_id", farmer.id)
+      .gt("quantity_remaining", 0)
+      .order("added_at", { ascending: true });
+    const map: Record<string, Batch[]> = {};
+    for (const row of (b ?? []) as Batch[]) (map[row.product_id] ??= []).push(row);
+    setBatches(map);
     setLoading(false);
   };
 
@@ -189,26 +210,30 @@ const MyProducts = () => {
       toast({ title: "Sem stock para retirar", variant: "destructive" });
       return;
     }
-    const newStock = Math.max(0, current + sign * amount);
+    const exp = expiry[p.id] || null;
+    if (sign === 1 && exp && exp < todayISO()) {
+      toast({ title: "A validade não pode estar no passado", variant: "destructive" });
+      return;
+    }
     setSavingId(p.id);
-    const { error } = await supabase
-      .from("products")
-      .update({ stock_quantity: newStock })
-      .eq("id", p.id);
+    const { data, error } =
+      sign === 1
+        ? await supabase.rpc("add_stock_batch", { p_product_id: p.id, p_quantity: amount, p_expires_at: exp })
+        : await supabase.rpc("remove_stock_fifo", { p_product_id: p.id, p_quantity: amount });
     setSavingId(null);
     if (error) {
       toast({ title: "Erro a atualizar stock", description: error.message, variant: "destructive" });
       return;
     }
+    const newStock = Number(data ?? 0);
     toast({
       title: "Stock atualizado",
       description: `${p.name}: ${sign === 1 ? "+" : "−"}${amount} → ${newStock}`,
     });
-    setProducts((prev) =>
-      prev.map((x) => (x.id === p.id ? { ...x, stock_quantity: newStock } : x))
-    );
     setPreset((s) => ({ ...s, [p.id]: "1" }));
     setCustom((s) => ({ ...s, [p.id]: "" }));
+    setExpiry((s) => ({ ...s, [p.id]: "" }));
+    load();
   };
 
   if (authLoading || loading) {
@@ -392,6 +417,15 @@ const MyProducts = () => {
                     ))}
                     <option value="100+">100+</option>
                   </select>
+                  <Input
+                    type="date"
+                    min={todayISO()}
+                    value={expiry[p.id] ?? ""}
+                    onChange={(e) => setExpiry((s) => ({ ...s, [p.id]: e.target.value }))}
+                    className="h-9 w-36"
+                    aria-label="Validade do novo stock"
+                    title="Validade do novo stock (opcional)"
+                  />
                   {sel === "100+" && (
                     <Input
                       type="number"
@@ -431,6 +465,23 @@ const MyProducts = () => {
                     <Minus className="h-4 w-4" />
                   </Button>
                 </div>
+
+                {(batches[p.id]?.length ?? 0) > 0 && (
+                  <div className="w-full border-t border-border pt-2 text-xs text-muted-foreground">
+                    <p className="mb-1 font-medium text-foreground">
+                      Lotes em stock (vende-se primeiro o mais antigo)
+                    </p>
+                    <ul className="flex flex-wrap gap-2">
+                      {batches[p.id].map((b, i) => (
+                        <li key={b.id} className="rounded-md border border-border bg-muted/50 px-2 py-1">
+                          {i === 0 && <span className="mr-1 font-semibold text-primary">Próximo ·</span>}
+                          Inserido {new Date(b.added_at).toLocaleDateString("pt-PT")} · {b.quantity_remaining} {p.unit}
+                          {b.expires_at ? ` · validade ${formatDate(b.expires_at)}` : " · sem validade"}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </li>
             );
           })}
