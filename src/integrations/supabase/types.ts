@@ -600,6 +600,47 @@ export type Database = {
           },
         ]
       }
+      product_stock_batches: {
+        Row: {
+          added_at: string
+          expired_at: string | null
+          expires_at: string | null
+          farmer_id: string
+          id: string
+          product_id: string
+          quantity_initial: number
+          quantity_remaining: number
+        }
+        Insert: {
+          added_at?: string
+          expired_at?: string | null
+          expires_at?: string | null
+          farmer_id: string
+          id?: string
+          product_id: string
+          quantity_initial: number
+          quantity_remaining: number
+        }
+        Update: {
+          added_at?: string
+          expired_at?: string | null
+          expires_at?: string | null
+          farmer_id?: string
+          id?: string
+          product_id?: string
+          quantity_initial?: number
+          quantity_remaining?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_stock_batches_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           active: boolean
@@ -876,6 +917,14 @@ export type Database = {
       }
     }
     Functions: {
+      add_stock_batch: {
+        Args: {
+          p_expires_at?: string
+          p_product_id: string
+          p_quantity: number
+        }
+        Returns: number
+      }
       category_slug: { Args: { _name: string }; Returns: string }
       claim_initial_profile_type: {
         Args: { _profile_type: string }
@@ -894,12 +943,22 @@ export type Database = {
         }
         Returns: undefined
       }
+      deduct_stock_batches: {
+        Args: { p_product_id: string; p_qty: number }
+        Returns: undefined
+      }
       delete_old_order_chats: { Args: never; Returns: number }
+      expire_stock_batches: { Args: { p_product_id?: string }; Returns: number }
       exploration_number_taken: {
         Args: { p_exclude_id?: string; p_exploration_number: string }
         Returns: boolean
       }
       farmer_is_verified: { Args: { _farmer_id: string }; Returns: boolean }
+      lisbon_today: { Args: never; Returns: string }
+      remove_stock_fifo: {
+        Args: { p_product_id: string; p_quantity: number }
+        Returns: number
+      }
       user_in_order: { Args: { _order_id: string }; Returns: boolean }
       user_is_order_client: { Args: { _order_id: string }; Returns: boolean }
       user_owns_farmer: { Args: { _farmer_id: string }; Returns: boolean }
