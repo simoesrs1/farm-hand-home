@@ -417,6 +417,15 @@ const MyProducts = () => {
                     ))}
                     <option value="100+">100+</option>
                   </select>
+                  <Input
+                    type="date"
+                    min={todayISO()}
+                    value={expiry[p.id] ?? ""}
+                    onChange={(e) => setExpiry((s) => ({ ...s, [p.id]: e.target.value }))}
+                    className="h-9 w-36"
+                    aria-label="Validade do novo stock"
+                    title="Validade do novo stock (opcional)"
+                  />
                   {sel === "100+" && (
                     <Input
                       type="number"
@@ -456,6 +465,23 @@ const MyProducts = () => {
                     <Minus className="h-4 w-4" />
                   </Button>
                 </div>
+
+                {(batches[p.id]?.length ?? 0) > 0 && (
+                  <div className="w-full border-t border-border pt-2 text-xs text-muted-foreground">
+                    <p className="mb-1 font-medium text-foreground">
+                      Lotes em stock (vende-se primeiro o mais antigo)
+                    </p>
+                    <ul className="flex flex-wrap gap-2">
+                      {batches[p.id].map((b, i) => (
+                        <li key={b.id} className="rounded-md border border-border bg-muted/50 px-2 py-1">
+                          {i === 0 && <span className="mr-1 font-semibold text-primary">Próximo ·</span>}
+                          Inserido {new Date(b.added_at).toLocaleDateString("pt-PT")} · {b.quantity_remaining} {p.unit}
+                          {b.expires_at ? ` · validade ${formatDate(b.expires_at)}` : " · sem validade"}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </li>
             );
           })}
