@@ -22,7 +22,7 @@ const cityCoords: Record<string, { lat: number; lng: number }> = {
 declare global {
   interface Window {
     google: any;
-    __initFarmConnectMap?: () => void;
+    __initValorRuralMap?: () => void;
   }
 }
 
@@ -80,7 +80,7 @@ const PortugalMapDialog = () => {
       return;
     }
 
-    window.__initFarmConnectMap = renderMap;
+    window.__initValorRuralMap = renderMap;
 
     const existing = document.getElementById("gmaps-sdk");
     if (existing) return;
@@ -88,7 +88,7 @@ const PortugalMapDialog = () => {
     const script = document.createElement("script");
     script.id = "gmaps-sdk";
     script.async = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initFarmConnectMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initValorRuralMap`;
     document.head.appendChild(script);
   }, [open, mapsAllowed]);
 

@@ -3,11 +3,11 @@
  * de Privacidade. Os campos entre [ ] têm de ser preenchidos antes de publicar.
  */
 export const LEGAL = {
-  brand: "FarmConnect",
+  brand: "ValorRural",
   companyName: "[Denominação social]",
   nipc: "[NIPC]",
   address: "[Morada da sede]",
-  email: "info@farmconnect.pt",
+  email: "info@valorrural.pt",
   phone: "+351 912 345 678",
   /** Data da versão em vigor dos documentos legais. */
   lastUpdated: "3 de outubro de 2026",

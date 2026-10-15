@@ -281,7 +281,7 @@ Deno.serve(async (req) => {
         const ok = await sendEmail({
           to: email,
           subject: n.title,
-          html: `<p>${n.message}</p><p><a href="${appUrl}${n.link}">Abrir o FarmConnect</a></p>`,
+          html: `<p>${n.message}</p><p><a href="${appUrl}${n.link}">Abrir o ValorRural</a></p>`,
         });
         if (ok) emailed++;
       }

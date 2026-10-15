@@ -597,7 +597,7 @@ const NewProduct = () => {
               <div className="flex h-10 items-center rounded-md border border-input bg-muted px-3 text-sm font-semibold text-foreground">
                 {clientPrice.toFixed(2)} € / {unit || "un"}
               </div>
-              <p className="text-xs text-muted-foreground">Inclui {Math.round(COMMISSION * 100)}% da FarmConnect e IVA de {vatRate}%.</p>
+              <p className="text-xs text-muted-foreground">Inclui {Math.round(COMMISSION * 100)}% da ValorRural e IVA de {vatRate}%.</p>
             </div>
           </div>
         </Card>

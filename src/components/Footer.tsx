@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Leaf } from "lucide-react";
+import logoValorRural from "@/assets/logo-valorrural-horizontal.png";
 import { useConsent } from "@/contexts/ConsentContext";
 
 const Footer = () => {
@@ -9,11 +9,14 @@ const Footer = () => {
       <div className="container py-12">
         <div className="grid gap-8 md:grid-cols-4">
           <div>
-            <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Leaf className="h-4 w-4" />
-              </div>
-              <span className="font-display text-lg font-bold text-foreground">FarmConnect</span>
+            <Link to="/" className="flex items-center">
+              <img
+                src={logoValorRural}
+                alt="ValorRural — A Tua Conexão Direta com a Quinta"
+                width={903}
+                height={240}
+                className="h-8 w-auto"
+              />
             </Link>
             <p className="mt-3 text-sm text-muted-foreground">
               Conectando consumidores a agricultores locais com transparência e confiança.
@@ -36,12 +39,12 @@ const Footer = () => {
           </div>
           <div>
             <h4 className="mb-3 text-sm font-semibold text-foreground">Contacto</h4>
-            <p className="text-sm text-muted-foreground">info@farmconnect.pt</p>
+            <p className="text-sm text-muted-foreground">info@valorrural.pt</p>
             <p className="text-sm text-muted-foreground">+351 912 345 678</p>
           </div>
         </div>
         <div className="mt-10 flex flex-col items-center gap-3 border-t border-border pt-6 text-xs text-muted-foreground md:flex-row md:justify-between">
-          <span>© 2026 FarmConnect. Todos os direitos reservados.</span>
+          <span>© 2026 ValorRural. Todos os direitos reservados.</span>
           <nav aria-label="Legal" className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <Link to="/termos" className="hover:text-primary transition-colors">Termos e Condições</Link>
             <Link to="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</Link>

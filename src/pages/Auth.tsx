@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Leaf, User, Tractor, Loader2, AlertCircle } from "lucide-react";
+import { User, Tractor, Loader2, AlertCircle } from "lucide-react";
+import logoValorRuralFull from "@/assets/logo-valorrural-full.png";
 import GoogleIcon from "@/components/GoogleIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -211,11 +212,14 @@ const Auth = () => {
     <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center py-12">
       <div className="mx-auto w-full max-w-md px-4">
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-          <div className="mb-6 flex items-center justify-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Leaf className="h-5 w-5" />
-            </div>
-            <span className="font-display text-xl font-bold text-foreground">FarmConnect</span>
+          <div className="mb-6 flex items-center justify-center">
+            <img
+              src={logoValorRuralFull}
+              alt="ValorRural — A Tua Conexão Direta com a Quinta"
+              width={785}
+              height={594}
+              className="h-28 w-auto"
+            />
           </div>
 
           <div className="mb-6 flex rounded-lg bg-muted p-1">

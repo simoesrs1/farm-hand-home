@@ -5,7 +5,7 @@ import { z } from "zod";
 export default defineTool({
   name: "list_products",
   title: "List products",
-  description: "Browse active FarmConnect products. Optionally filter by category name or farmer id.",
+  description: "Browse active ValorRural products. Optionally filter by category name or farmer id.",
   inputSchema: {
     category: z.string().trim().optional().describe("Category name, e.g. 'Fruta', 'Hortícolas'."),
     farmer_id: z.string().uuid().optional().describe("Restrict to one farmer."),
