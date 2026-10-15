@@ -40,7 +40,6 @@ const Header = () => {
             className="h-9 w-auto transition-transform group-hover:scale-[1.03] sm:h-10"
           />
         </Link>
-        </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => (
