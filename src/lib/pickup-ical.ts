@@ -51,7 +51,7 @@ export const buildPickupIcs = (
     const end = nextOccurrence(w.day, w.end, start);
     lines.push(
       "BEGIN:VEVENT",
-      `UID:farmconnect-${w.day}-${w.start.replace(":", "")}-${i}@valorrural`,
+      `UID:valorrural-${w.day}-${w.start.replace(":", "")}-${i}@valorrural`,
       `DTSTAMP:${toUtcStamp(now)}`,
       `DTSTART:${toLocalStamp(start)}`,
       `DTEND:${toLocalStamp(end)}`,
