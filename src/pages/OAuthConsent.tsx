@@ -125,7 +125,7 @@ export default function OAuthConsent() {
         </div>
         <h1 className="mb-2 font-display text-xl font-bold">Ligar {name} à tua conta</h1>
         <p className="mb-6 text-sm text-muted-foreground">
-          {name} vai poder usar o FarmConnect em teu nome, com as tuas permissões.
+          {name} vai poder usar o ValorRural em teu nome, com as tuas permissões.
         </p>
         {details.scopes && details.scopes.length > 0 && (
           <ul className="mb-6 space-y-1 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
