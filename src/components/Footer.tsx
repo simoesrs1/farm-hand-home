@@ -39,12 +39,12 @@ const Footer = () => {
           </div>
           <div>
             <h4 className="mb-3 text-sm font-semibold text-foreground">Contacto</h4>
-            <p className="text-sm text-muted-foreground">info@farmconnect.pt</p>
+            <p className="text-sm text-muted-foreground">info@valorrural.pt</p>
             <p className="text-sm text-muted-foreground">+351 912 345 678</p>
           </div>
         </div>
         <div className="mt-10 flex flex-col items-center gap-3 border-t border-border pt-6 text-xs text-muted-foreground md:flex-row md:justify-between">
-          <span>© 2026 FarmConnect. Todos os direitos reservados.</span>
+          <span>© 2026 ValorRural. Todos os direitos reservados.</span>
           <nav aria-label="Legal" className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <Link to="/termos" className="hover:text-primary transition-colors">Termos e Condições</Link>
             <Link to="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</Link>

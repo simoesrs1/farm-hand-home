@@ -181,7 +181,7 @@ const FarmerInfo = () => {
 
       toast({
         title: "Pedido submetido",
-        description: "A equipa FarmConnect tem até 7 dias para validar. O perfil ficará bloqueado até decisão.",
+        description: "A equipa ValorRural tem até 7 dias para validar. O perfil ficará bloqueado até decisão.",
       });
       setEditing(false);
       setAcknowledged(false);
@@ -244,7 +244,7 @@ const FarmerInfo = () => {
           <Lock className="h-4 w-4" />
           <AlertTitle>Perfil bloqueado — em verificação</AlertTitle>
           <AlertDescription>
-            Existe um pedido de alteração pendente. Enquanto a equipa FarmConnect não validar a informação,
+            Existe um pedido de alteração pendente. Enquanto a equipa ValorRural não validar a informação,
             o perfil e os produtos <strong>não aparecem publicamente</strong> e <strong>não pode realizar vendas</strong>.
             A nossa equipa tem até <strong>7 dias</strong> para concluir a análise.
             {pending?.review_deadline && (
@@ -259,7 +259,7 @@ const FarmerInfo = () => {
           <ShieldCheck className="h-4 w-4 text-primary" />
           <AlertTitle>Perfil verificado</AlertTitle>
           <AlertDescription>
-            O seu perfil está ativo. Qualquer alteração de dados terá de ser revista pela equipa FarmConnect.
+            O seu perfil está ativo. Qualquer alteração de dados terá de ser revista pela equipa ValorRural.
           </AlertDescription>
         </Alert>
       )}
@@ -350,7 +350,7 @@ const FarmerInfo = () => {
               <AlertDescription className="space-y-2">
                 <p>
                   Ao submeter um pedido de alteração, o seu perfil será <strong>imediatamente bloqueado</strong> até a
-                  equipa FarmConnect validar a nova informação.
+                  equipa ValorRural validar a nova informação.
                 </p>
                 <ul className="list-disc pl-5 text-sm">
                   <li>Enquanto não for validado, o perfil e os produtos <strong>não aparecem</strong> na plataforma.</li>

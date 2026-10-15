@@ -40,7 +40,7 @@ export const buildPickupIcs = (
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//FarmConnect//Disponibilidade//PT",
+    "PRODID:-//ValorRural//Disponibilidade//PT",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${escape(`Porta aberta — ${farmName}`)}`,
@@ -51,7 +51,7 @@ export const buildPickupIcs = (
     const end = nextOccurrence(w.day, w.end, start);
     lines.push(
       "BEGIN:VEVENT",
-      `UID:farmconnect-${w.day}-${w.start.replace(":", "")}-${i}@farmconnect`,
+      `UID:farmconnect-${w.day}-${w.start.replace(":", "")}-${i}@valorrural`,
       `DTSTAMP:${toUtcStamp(now)}`,
       `DTSTART:${toLocalStamp(start)}`,
       `DTEND:${toLocalStamp(end)}`,

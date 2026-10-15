@@ -5,7 +5,7 @@ import { z } from "zod";
 export default defineTool({
   name: "search_farmers",
   title: "Search farmers",
-  description: "Search FarmConnect farmers (producers) by farm name or address text. Returns public farm profiles.",
+  description: "Search ValorRural farmers (producers) by farm name or address text. Returns public farm profiles.",
   inputSchema: {
     query: z.string().trim().optional().describe("Text to match against company name or address. Omit to list recent farmers."),
     limit: z.number().int().min(1).max(50).optional().describe("Max results (default 10)."),

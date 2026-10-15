@@ -528,7 +528,7 @@ const Cart = () => {
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  A FarmConnect <strong>não se responsabiliza por atos de terceiros</strong> nem
+                  A ValorRural <strong>não se responsabiliza por atos de terceiros</strong> nem
                   pela segurança física das pessoas durante o processo de levantamento.
                 </p>
               </div>

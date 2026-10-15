@@ -8,7 +8,7 @@ const About = () => (
         A ponte entre o campo e a cidade
       </h1>
       <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-        O FarmConnect nasceu da vontade de encurtar a distância entre quem produz e quem consome. 
+        O ValorRural nasceu da vontade de encurtar a distância entre quem produz e quem consome. 
         Acreditamos que a agricultura local é o futuro da alimentação sustentável — e que cada compra 
         direta fortalece não só a economia rural, mas também a confiança entre pessoas.
       </p>

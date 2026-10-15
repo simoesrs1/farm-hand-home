@@ -38,7 +38,7 @@ var categoryList = [
 var list_categories_default = defineTool({
   name: "list_categories",
   title: "List product categories",
-  description: "List all product categories available on FarmConnect (Bebidas, Carne, Fruta, Hort\xEDcolas, etc.).",
+  description: "List all product categories available on ValorRural (Bebidas, Carne, Fruta, Hort\xEDcolas, etc.).",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: () => {
@@ -57,7 +57,7 @@ import { z } from "npm:zod@^3.25.76";
 var search_farmers_default = defineTool2({
   name: "search_farmers",
   title: "Search farmers",
-  description: "Search FarmConnect farmers (producers) by farm name or address text. Returns public farm profiles.",
+  description: "Search ValorRural farmers (producers) by farm name or address text. Returns public farm profiles.",
   inputSchema: {
     query: z.string().trim().optional().describe("Text to match against company name or address. Omit to list recent farmers."),
     limit: z.number().int().min(1).max(50).optional().describe("Max results (default 10).")
@@ -90,7 +90,7 @@ import { z as z2 } from "npm:zod@^3.25.76";
 var list_products_default = defineTool3({
   name: "list_products",
   title: "List products",
-  description: "Browse active FarmConnect products. Optionally filter by category name or farmer id.",
+  description: "Browse active ValorRural products. Optionally filter by category name or farmer id.",
   inputSchema: {
     category: z2.string().trim().optional().describe("Category name, e.g. 'Fruta', 'Hort\xEDcolas'."),
     farmer_id: z2.string().uuid().optional().describe("Restrict to one farmer."),
@@ -122,7 +122,7 @@ import { z as z3 } from "npm:zod@^3.25.76";
 var list_my_orders_default = defineTool4({
   name: "list_my_orders",
   title: "List my orders",
-  description: "List orders belonging to the signed-in FarmConnect user (as client or as farmer).",
+  description: "List orders belonging to the signed-in ValorRural user (as client or as farmer).",
   inputSchema: {
     status: z3.enum(["awaiting_pickup", "delivered", "expired", "cancelled"]).optional(),
     limit: z3.number().int().min(1).max(50).optional()
@@ -154,10 +154,10 @@ var list_my_orders_default = defineTool4({
 // src/lib/mcp/index.ts
 var projectRef = "ntqaoqwclijbtrblttyj";
 var mcp_default = defineMcp({
-  name: "farmconnect-mcp",
-  title: "FarmConnect MCP",
+  name: "valorrural-mcp",
+  title: "ValorRural MCP",
   version: "0.1.0",
-  instructions: "Tools for FarmConnect, a Portuguese proximity marketplace connecting clients to local farmers. Use `list_categories` to see product categories, `search_farmers` to find producers, `list_products` to browse the catalog, and `list_my_orders` to inspect the signed-in user's orders.",
+  instructions: "Tools for ValorRural, a Portuguese proximity marketplace connecting clients to local farmers. Use `list_categories` to see product categories, `search_farmers` to find producers, `list_products` to browse the catalog, and `list_my_orders` to inspect the signed-in user's orders.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"

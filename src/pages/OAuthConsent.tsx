@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Leaf, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import logoValorRural from "@/assets/logo-valorrural-horizontal.png.asset.json";
 
 type AuthorizationDetails = {
   client?: { name?: string; client_uri?: string; logo_uri?: string };
@@ -113,11 +114,14 @@ export default function OAuthConsent() {
   return (
     <main className="mx-auto max-w-md px-4 py-12">
       <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Leaf className="h-5 w-5" />
-          </div>
-          <span className="font-display text-lg font-bold">FarmConnect</span>
+        <div className="mb-4 flex items-center">
+          <img
+            src={logoValorRural.url}
+            alt="ValorRural — A Tua Conexão Direta com a Quinta"
+            width={903}
+            height={240}
+            className="h-9 w-auto"
+          />
         </div>
         <h1 className="mb-2 font-display text-xl font-bold">Ligar {name} à tua conta</h1>
         <p className="mb-6 text-sm text-muted-foreground">

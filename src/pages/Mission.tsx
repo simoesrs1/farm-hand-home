@@ -43,7 +43,7 @@ const Mission = () => (
           <div>
             <h2 className="font-display text-xl font-semibold text-foreground">Impacto Social</h2>
             <p className="mt-2 text-muted-foreground leading-relaxed">
-              Cada transação no FarmConnect fortalece a economia local, preserva práticas agrícolas 
+              Cada transação no ValorRural fortalece a economia local, preserva práticas agrícolas 
               tradicionais e reduz o desperdício alimentar ao encurtar a cadeia de distribuição.
             </p>
           </div>

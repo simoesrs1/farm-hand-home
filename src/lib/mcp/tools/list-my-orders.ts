@@ -5,7 +5,7 @@ import { z } from "zod";
 export default defineTool({
   name: "list_my_orders",
   title: "List my orders",
-  description: "List orders belonging to the signed-in FarmConnect user (as client or as farmer).",
+  description: "List orders belonging to the signed-in ValorRural user (as client or as farmer).",
   inputSchema: {
     status: z.enum(["awaiting_pickup", "delivered", "expired", "cancelled"]).optional(),
     limit: z.number().int().min(1).max(50).optional(),
