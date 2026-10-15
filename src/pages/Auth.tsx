@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User, Tractor, Loader2, AlertCircle } from "lucide-react";
-import logoValorRuralFull from "@/assets/logo-valorrural-full.png.asset.json";
+import logoValorRuralFull from "@/assets/logo-valorrural-full.png";
 import GoogleIcon from "@/components/GoogleIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -214,7 +214,7 @@ const Auth = () => {
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <div className="mb-6 flex items-center justify-center">
             <img
-              src={logoValorRuralFull.url}
+              src={logoValorRuralFull}
               alt="ValorRural — A Tua Conexão Direta com a Quinta"
               width={785}
               height={594}

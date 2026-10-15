@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import logoValorRural from "@/assets/logo-valorrural-horizontal.png.asset.json";
+import logoValorRural from "@/assets/logo-valorrural-horizontal.png";
 import { useConsent } from "@/contexts/ConsentContext";
 
 const Footer = () => {
@@ -11,7 +11,7 @@ const Footer = () => {
           <div>
             <Link to="/" className="flex items-center">
               <img
-                src={logoValorRural.url}
+                src={logoValorRural}
                 alt="ValorRural — A Tua Conexão Direta com a Quinta"
                 width={903}
                 height={240}

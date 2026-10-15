@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import logoValorRural from "@/assets/logo-valorrural-horizontal.png.asset.json";
+import logoValorRural from "@/assets/logo-valorrural-horizontal.png";
 
 type AuthorizationDetails = {
   client?: { name?: string; client_uri?: string; logo_uri?: string };
@@ -116,7 +116,7 @@ export default function OAuthConsent() {
       <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
         <div className="mb-4 flex items-center">
           <img
-            src={logoValorRural.url}
+            src={logoValorRural}
             alt="ValorRural — A Tua Conexão Direta com a Quinta"
             width={903}
             height={240}

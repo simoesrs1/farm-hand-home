@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle, Store, ClipboardList, Boxes, Clock, TrendingUp } from "lucide-react";
-import logoValorRural from "@/assets/logo-valorrural-horizontal.png.asset.json";
+import logoValorRural from "@/assets/logo-valorrural-horizontal.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -33,7 +33,7 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center group" aria-label="ValorRural — início">
           <img
-            src={logoValorRural.url}
+            src={logoValorRural}
             alt="ValorRural — A Tua Conexão Direta com a Quinta"
             width={903}
             height={240}
