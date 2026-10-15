@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Leaf } from "lucide-react";
+import logoValorRural from "@/assets/logo-valorrural-horizontal.png.asset.json";
 import { useConsent } from "@/contexts/ConsentContext";
 
 const Footer = () => {
@@ -9,11 +9,14 @@ const Footer = () => {
       <div className="container py-12">
         <div className="grid gap-8 md:grid-cols-4">
           <div>
-            <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Leaf className="h-4 w-4" />
-              </div>
-              <span className="font-display text-lg font-bold text-foreground">FarmConnect</span>
+            <Link to="/" className="flex items-center">
+              <img
+                src={logoValorRural.url}
+                alt="ValorRural — A Tua Conexão Direta com a Quinta"
+                width={903}
+                height={240}
+                className="h-8 w-auto"
+              />
             </Link>
             <p className="mt-3 text-sm text-muted-foreground">
               Conectando consumidores a agricultores locais com transparência e confiança.

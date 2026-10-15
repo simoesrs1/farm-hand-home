@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle, Store, ClipboardList, Boxes, Clock, TrendingUp } from "lucide-react";
-import logoFarmConnect from "@/assets/logo-farmconnect.png";
+import logoValorRural from "@/assets/logo-valorrural-horizontal.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -31,13 +31,15 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-primary transition-transform group-hover:scale-105">
-            <img src={logoFarmConnect} alt="FarmConnect logo" width={40} height={40} className="h-full w-full object-cover" />
-          </div>
-          <span className="font-display text-xl font-bold text-foreground">
-            Farm<span className="text-primary">Connect</span>
-          </span>
+        <Link to="/" className="flex items-center group" aria-label="ValorRural — início">
+          <img
+            src={logoValorRural.url}
+            alt="ValorRural — A Tua Conexão Direta com a Quinta"
+            width={903}
+            height={240}
+            className="h-9 w-auto transition-transform group-hover:scale-[1.03] sm:h-10"
+          />
+        </Link>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
