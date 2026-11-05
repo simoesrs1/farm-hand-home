@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -8,13 +8,11 @@ import {
   Pencil,
   PackageOpen,
   ImageIcon,
-  AlertTriangle,
   CalendarClock,
   History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import ProductHistoryDialog from "@/components/ProductHistoryDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,7 +80,6 @@ const MyProducts = () => {
   const [preset, setPreset] = useState<Record<string, string>>({});
   const [custom, setCustom] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [notified, setNotified] = useState(false);
   const [historyProduct, setHistoryProduct] = useState<ProductRow | null>(null);
   const [expiry, setExpiry] = useState<Record<string, string>>({});
   const [batches, setBatches] = useState<Record<string, Batch[]>>({});
@@ -161,33 +158,6 @@ const MyProducts = () => {
       setThumbs(map);
     })();
   }, [products]);
-
-  // Notify farmer once per load about out-of-stock products
-  const outOfStock = useMemo(
-    () => products.filter((p) => (p.stock_quantity ?? 0) <= 0),
-    [products]
-  );
-  const expired = useMemo(
-    () => products.filter((p) => availabilityState(p) === "expired"),
-    [products]
-  );
-  useEffect(() => {
-    if (loading || notified) return;
-    if (outOfStock.length > 0) {
-      toast({
-        title: `${outOfStock.length} produto(s) sem stock`,
-        description: "Reponha stock diretamente na lista para voltarem à venda.",
-      });
-    }
-    if (expired.length > 0) {
-      toast({
-        title: `${expired.length} produto(s) fora do prazo`,
-        description: "A data de disponibilidade já passou. Atualize-a para continuarem à venda.",
-        variant: "destructive",
-      });
-    }
-    if (outOfStock.length > 0 || expired.length > 0) setNotified(true);
-  }, [loading, notified, outOfStock.length, expired.length]);
 
   const resolveAmount = (p: ProductRow) => {
     const sel = preset[p.id] ?? "1";
@@ -277,27 +247,6 @@ const MyProducts = () => {
           </Link>
         </Button>
       </div>
-
-      {outOfStock.length > 0 && (
-        <Alert variant="destructive" className="mt-6">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Stock esgotado</AlertTitle>
-          <AlertDescription>
-            {outOfStock.length} produto(s) sem stock disponível. Reponha as unidades para voltarem à venda.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {expired.length > 0 && (
-        <Alert variant="destructive" className="mt-4">
-          <CalendarClock className="h-4 w-4" />
-          <AlertTitle>Prazo de disponibilidade terminado</AlertTitle>
-          <AlertDescription>
-            {expired.length} produto(s) com a data de fim já ultrapassada. Atualize o prazo para
-            continuarem disponíveis para levantamento.
-          </AlertDescription>
-        </Alert>
-      )}
 
       {products.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center">

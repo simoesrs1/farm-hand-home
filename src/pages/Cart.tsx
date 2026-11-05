@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle, ShieldAlert, MapPin, Truck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import DeliveryPointPicker from "@/components/DeliveryPointPicker";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
@@ -36,6 +37,7 @@ import {
   pickupSlots,
   type PickupWindow,
 } from "@/lib/pickup-hours";
+import { computeDeliveryFee, type DeliveryFeeProduct } from "@/lib/delivery-fee";
 import { CalendarClock } from "lucide-react";
 import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
 
@@ -54,6 +56,39 @@ const Cart = () => {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryPoint, setDeliveryPoint] = useState<{ lat: number; lng: number } | null>(null);
   const [mapOpen, setMapOpen] = useState(false);
+  const [trackingAvailable, setTrackingAvailable] = useState(false);
+  const [withTracking, setWithTracking] = useState(false);
+  const [deliveryFeeProducts, setDeliveryFeeProducts] = useState<DeliveryFeeProduct[]>([]);
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number | null>(null);
+
+  // Sabe logo ao abrir o carrinho se há produtos com entrega ao domicílio (e
+  // com acompanhamento), para mostrar a secção certa antes de pagar.
+  const itemIdsKey = useMemo(() => [...new Set(items.map((i) => i.id))].sort().join(","), [items]);
+  useEffect(() => {
+    const ids = itemIdsKey ? itemIdsKey.split(",") : [];
+    if (ids.length === 0) {
+      setNeedsDelivery(false);
+      setTrackingAvailable(false);
+      setDeliveryFeeProducts([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("id, local_delivery, delivery_tracking, delivery_fee")
+        .eq("active", true)
+        .in("id", ids);
+      if (cancelled) return;
+      const delivery = (data ?? []).filter((p) => p.local_delivery === true);
+      setNeedsDelivery(delivery.length > 0);
+      setTrackingAvailable(delivery.some((p) => p.delivery_tracking === true));
+      setDeliveryFeeProducts(delivery);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [itemIdsKey]);
 
 
   // Clamp cart lines that exceed the current available stock (e.g. stock reduced
@@ -103,24 +138,33 @@ const Cart = () => {
       setPickupWindows([]);
       setPickupNote("");
       setSlot("");
+      setFreeDeliveryThreshold(null);
       return;
     }
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from("public_farmer_profiles")
-        .select("pickup_hours, pickup_hours_note")
+        .select("pickup_hours, pickup_hours_note, free_delivery_threshold")
         .eq("id", farmerId)
         .maybeSingle();
       if (cancelled) return;
       setPickupWindows(parsePickupHours((data as any)?.pickup_hours));
       setPickupNote(((data as any)?.pickup_hours_note as string) ?? "");
+      setFreeDeliveryThreshold(data?.free_delivery_threshold ?? null);
       setSlot("");
     })();
     return () => {
       cancelled = true;
     };
   }, [farmerId]);
+
+  // Valor indicativo: o preço cobrado é calculado de novo no create-order.
+  const deliveryFee = useMemo(
+    () => (needsDelivery ? computeDeliveryFee(deliveryFeeProducts, totalPrice, freeDeliveryThreshold) : null),
+    [needsDelivery, deliveryFeeProducts, totalPrice, freeDeliveryThreshold],
+  );
+  const orderTotal = totalPrice + (deliveryFee?.fee ?? 0);
 
   const slots = useMemo(() => pickupSlots(pickupWindows), [pickupWindows]);
   const needsSchedule = pickupWindows.length > 0;
@@ -172,7 +216,7 @@ const Cart = () => {
       const ids = [...new Set(items.map((i) => i.id))];
       const { data: valid, error: checkErr } = await supabase
         .from("products")
-        .select("id, stock_quantity, local_delivery")
+        .select("id, stock_quantity, local_delivery, delivery_tracking")
         .eq("active", true)
         .in("id", ids);
       if (checkErr) {
@@ -180,8 +224,11 @@ const Cart = () => {
         return;
       }
       const availableById = new Map((valid ?? []).map((p) => [p.id, p.stock_quantity ?? 0]));
-      const hasDelivery = (valid ?? []).some((p: any) => p.local_delivery === true);
+      const deliveryProducts = (valid ?? []).filter((p) => p.local_delivery === true);
+      const hasDelivery = deliveryProducts.length > 0;
+      const hasTracking = deliveryProducts.some((p) => p.delivery_tracking === true);
       setNeedsDelivery(hasDelivery);
+      setTrackingAvailable(hasTracking);
       if (hasDelivery) {
         if (deliveryAddress.trim().length < 5) {
           toast({
@@ -225,9 +272,12 @@ const Cart = () => {
           quantity: i.quantity,
         })),
         scheduled_pickup_at: slot || null,
-        delivery_address: needsDelivery ? deliveryAddress.trim() : null,
-        delivery_lat: needsDelivery ? deliveryPoint?.lat ?? null : null,
-        delivery_lng: needsDelivery ? deliveryPoint?.lng ?? null : null,
+        // Usa os valores acabados de validar, não o estado: setNeedsDelivery só
+        // fica visível no próximo render.
+        delivery_address: hasDelivery ? deliveryAddress.trim() : null,
+        delivery_lat: hasDelivery ? deliveryPoint?.lat ?? null : null,
+        delivery_lng: hasDelivery ? deliveryPoint?.lng ?? null : null,
+        delivery_tracking: hasDelivery && hasTracking && withTracking,
       };
 
       const { data, error } = await supabase.functions.invoke("create-order", { body: payload });
@@ -404,15 +454,29 @@ const Cart = () => {
                 <span>Subtotal</span>
                 <span>{totalPrice.toFixed(2)}€</span>
               </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Levantamento</span>
-                <span>Na quinta com QR</span>
-              </div>
+              {deliveryFee ? (
+                <>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Entrega ao domicílio</span>
+                    <span>{deliveryFee.fee > 0 ? `${deliveryFee.fee.toFixed(2)}€` : "Grátis"}</span>
+                  </div>
+                  {deliveryFee.remainingForFree != null && (
+                    <p className="text-[11px] text-primary">
+                      Faltam {deliveryFee.remainingForFree.toFixed(2)}€ para a entrega ser grátis.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Levantamento</span>
+                  <span>Na quinta com QR</span>
+                </div>
+              )}
             </div>
             <div className="mt-4 flex justify-between border-t border-border pt-4">
               <span className="font-semibold text-foreground">Total</span>
               <span className="font-display text-xl font-bold text-primary">
-                {totalPrice.toFixed(2)}€
+                {orderTotal.toFixed(2)}€
               </span>
             </div>
 
@@ -454,13 +518,14 @@ const Cart = () => {
 
             {/* Home delivery — address + exact map point, required when the
                 cart has products the farmer delivers himself. */}
+            {needsDelivery && (
             <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <Truck className="h-4 w-4 text-primary" />
                 Entrega ao domicílio
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Se o carrinho tiver produtos com entrega em mão pelo agricultor, indique a morada e
+                O carrinho tem produtos com entrega em mão pelo agricultor. Indique a morada e
                 marque o ponto exato no mapa.
               </p>
               <Label htmlFor="delivery-address" className="text-xs">Morada de entrega</Label>
@@ -485,7 +550,29 @@ const Cart = () => {
                   Ponto: {deliveryPoint.lat.toFixed(5)}, {deliveryPoint.lng.toFixed(5)}
                 </p>
               )}
+              {trackingAvailable && (
+                <RadioGroup
+                  value={withTracking ? "with" : "without"}
+                  onValueChange={(v) => setWithTracking(v === "with")}
+                  className="gap-2 pt-2"
+                >
+                  <label htmlFor="tracking-with" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
+                    <RadioGroupItem value="with" id="tracking-with" className="mt-0.5" />
+                    <div>
+                      <div className="text-sm font-medium">Com acompanhamento da entrega</div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Siga a encomenda passo a passo: aceite, embalada, em trânsito, para entrega e entregue. Sem custo adicional.
+                      </p>
+                    </div>
+                  </label>
+                  <label htmlFor="tracking-without" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
+                    <RadioGroupItem value="without" id="tracking-without" className="mt-0.5" />
+                    <div className="text-sm font-medium">Sem acompanhamento</div>
+                  </label>
+                </RadioGroup>
+              )}
             </div>
+            )}
 
             <div className="mt-4 flex gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
 

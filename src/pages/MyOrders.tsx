@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
-import { ShoppingBag, Clock, CheckCircle2, XCircle, ArrowLeft, MapPin, Star, ChevronDown, ChevronUp } from "lucide-react";
+import { ShoppingBag, Clock, CheckCircle2, XCircle, ArrowLeft, MapPin, Star, ChevronDown, ChevronUp, Truck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrderChat from "@/components/OrderChat";
+import DeliveryTrackingDialog from "@/components/DeliveryTrackingDialog";
 
 interface OrderItem {
   id: string;
@@ -36,7 +37,10 @@ interface Order {
   paid_at: string | null;
   delivered_at: string | null;
   accepted_at: string | null;
+  delivery_fee: number;
   created_at: string;
+  delivery_address: string | null;
+  delivery_tracking: boolean;
   farmer_id: string;
   farmer: FarmerRef | null;
   order_items: OrderItem[];
@@ -49,6 +53,17 @@ const statusMeta: Record<Order["status"], { label: string; tone: string; Icon: t
   expired: { label: "Expirada", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
   refunded: { label: "Devolvida (sem stock)", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
 };
+
+// Nas entregas ao domicílio fala-se de entrega, não de levantamento.
+const homeDeliveryLabels: Partial<Record<Order["status"], string>> = {
+  awaiting_pickup: "A aguardar entrega",
+  delivered: "Entregue",
+};
+
+const isHomeDelivery = (o: Order) => o.delivery_address != null;
+
+const statusLabel = (o: Order) =>
+  (isHomeDelivery(o) && homeDeliveryLabels[o.status]) || statusMeta[o.status].label;
 
 const mapsUrl = (f: FarmerRef | null) => {
   if (!f) return null;
@@ -67,13 +82,14 @@ const MyOrders = () => {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Order | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [tracking, setTracking] = useState<Order | null>(null);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,total,status,pickup_code,pickup_deadline,paid_at,delivered_at,accepted_at,created_at,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
+        .select("id,total,status,pickup_code,pickup_deadline,paid_at,delivered_at,accepted_at,created_at,delivery_address,delivery_tracking,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),delivery_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
         .order("created_at", { ascending: false });
       setOrders((data as unknown as Order[]) ?? []);
       setLoading(false);
@@ -104,6 +120,7 @@ const MyOrders = () => {
     const Icon = meta.Icon;
     const url = mapsUrl(o.farmer);
     const isOpen = expanded[o.id] ?? true;
+    const home = isHomeDelivery(o);
     return (
       <li key={o.id} className="rounded-2xl border border-border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -120,7 +137,7 @@ const MyOrders = () => {
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${meta.tone}`}>
-              <Icon className="h-3.5 w-3.5" /> {meta.label}
+              <Icon className="h-3.5 w-3.5" /> {statusLabel(o)}
             </span>
             {o.status === "awaiting_pickup" && (
               <span className="text-[11px] text-muted-foreground">
@@ -131,12 +148,24 @@ const MyOrders = () => {
               to={`/encomendas/${o.id}`}
               className="text-[11px] font-medium text-primary hover:underline"
             >
-              Ver estado e levantamento →
+              {home ? "Ver estado →" : "Ver estado e levantamento →"}
             </Link>
           </div>
         </div>
 
-        {o.farmer?.pickup_address && (
+        {home ? (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/50 p-3">
+            <div className="flex min-w-0 flex-1 items-start gap-2">
+              <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-sm text-foreground">Entrega ao domicílio: {o.delivery_address}</p>
+            </div>
+            {o.delivery_tracking && (
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setTracking(o)}>
+                <Truck className="h-4 w-4" /> Acompanha a tua entrega
+              </Button>
+            )}
+          </div>
+        ) : o.farmer?.pickup_address && (
           <div className="mt-4 flex items-start gap-2 rounded-lg bg-muted/50 p-3">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <div className="flex-1 min-w-0">
@@ -181,6 +210,12 @@ const MyOrders = () => {
                     <p className="font-medium text-foreground">{it.subtotal.toFixed(2)}€</p>
                   </li>
                 ))}
+                {o.delivery_fee > 0 && (
+                  <li className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Entrega ao domicílio</span>
+                    <span className="font-medium text-foreground">{o.delivery_fee.toFixed(2)}€</span>
+                  </li>
+                )}
               </ul>
             )}
           </div>
@@ -191,7 +226,9 @@ const MyOrders = () => {
             <p className="text-sm text-muted-foreground">
               Prazo: <span className="font-medium text-foreground">{new Date(o.pickup_deadline).toLocaleDateString("pt-PT")}</span>
             </p>
-            <Button onClick={() => setSelected(o)}>Mostrar QR de levantamento</Button>
+            <Button onClick={() => setSelected(o)}>
+              {home ? "Mostrar QR de entrega" : "Mostrar QR de levantamento"}
+            </Button>
           </div>
         )}
         {(o.status === "awaiting_pickup") && (
@@ -206,6 +243,7 @@ const MyOrders = () => {
   const renderPastCard = (o: Order) => {
     const meta = statusMeta[o.status];
     const Icon = meta.Icon;
+    const showTracking = o.delivery_tracking && o.status === "delivered";
     return (
       <li key={o.id} className="rounded-2xl border border-border bg-muted/40 p-5 opacity-90">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -224,7 +262,7 @@ const MyOrders = () => {
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${meta.tone}`}>
-              <Icon className="h-3.5 w-3.5" /> {meta.label}
+              <Icon className="h-3.5 w-3.5" /> {statusLabel(o)}
             </span>
             <Link
               to={`/encomendas/${o.id}`}
@@ -236,7 +274,12 @@ const MyOrders = () => {
         </div>
 
         {o.status === "delivered" && (
-          <div className="mt-4 flex justify-end border-t border-border/60 pt-4">
+          <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-border/60 pt-4">
+            {showTracking && (
+              <Button variant="outline" className="gap-2" onClick={() => setTracking(o)}>
+                <Truck className="h-4 w-4" /> Ver percurso da entrega
+              </Button>
+            )}
             <Link to={`/avaliar/${o.id}`}>
               <Button variant="default" className="gap-2">
                 <Star className="h-4 w-4" /> Avaliar agricultor
@@ -302,9 +345,13 @@ const MyOrders = () => {
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Levantamento na quinta</DialogTitle>
+            <DialogTitle>
+              {selected && isHomeDelivery(selected) ? "Entrega ao domicílio" : "Levantamento na quinta"}
+            </DialogTitle>
             <DialogDescription>
-              Mostra este QR code (ou o código abaixo) ao agricultor para levantar a encomenda.
+              {selected && isHomeDelivery(selected)
+                ? "Mostra este QR code (ou o código abaixo) ao agricultor quando receberes a encomenda."
+                : "Mostra este QR code (ou o código abaixo) ao agricultor para levantar a encomenda."}
             </DialogDescription>
           </DialogHeader>
           {selected && (
@@ -325,6 +372,13 @@ const MyOrders = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <DeliveryTrackingDialog
+        orderId={tracking?.id ?? null}
+        farmName={tracking?.farmer?.company_name}
+        open={tracking !== null}
+        onOpenChange={(open) => !open && setTracking(null)}
+      />
     </main>
   );
 };

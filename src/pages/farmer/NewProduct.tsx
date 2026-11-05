@@ -14,6 +14,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { categories } from "@/data/categories";
 import { DeliveryModesEnum } from "@/data/delivery-modes";
+import { Checkbox } from "@/components/ui/checkbox";
+import DeliveryFeeFields from "@/components/DeliveryFeeFields";
+import {
+  applyDeliveryDefaults,
+  changedDeliveryFields,
+  hasHomeDelivery,
+  loadDeliveryDefaults,
+  normalizeDeliverySettings,
+  parseEuro,
+  type DeliveryModeValue,
+  type DeliverySettings,
+} from "@/lib/delivery-defaults";
+
+const MODE_FROM_VALUE: Record<DeliveryModeValue, DeliveryModesEnum> = {
+  pickup: DeliveryModesEnum.Pickup,
+  shipping: DeliveryModesEnum.Shipping,
+  both: DeliveryModesEnum.Both,
+};
 
 const COMMISSION = 0.10;
 
@@ -50,6 +68,12 @@ const NewProduct = () => {
   const [deliveryMode, setDeliveryMode] = useState<DeliveryModesEnum>(DeliveryModesEnum.Pickup);
   const [shippingDays, setShippingDays] = useState<string>("");
   const [localDelivery, setLocalDelivery] = useState(false);
+  const [deliveryTracking, setDeliveryTracking] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState("");
+  const [freeThreshold, setFreeThreshold] = useState("");
+  const [savedThreshold, setSavedThreshold] = useState<number | null>(null);
+  const [deliveryDefaults, setDeliveryDefaults] = useState<DeliverySettings | null>(null);
+  const [saveAsDefault, setSaveAsDefault] = useState(false);
   const [stockQuantity, setStockQuantity] = useState<string>("");
   const [lowStockThreshold, setLowStockThreshold] = useState<string>("5");
   const [availabilityStart, setAvailabilityStart] = useState<string>("");
@@ -121,6 +145,23 @@ const NewProduct = () => {
         toast({ title: "Erro a carregar perfil", description: error.message, variant: "destructive" });
       }
       setFarmerId(data?.id ?? null);
+      // Preenche o cartão "Entrega" com o padrão do agricultor, se existir.
+      if (data?.id) {
+        const defaults = await loadDeliveryDefaults(data.id);
+        setDeliveryDefaults(defaults.settings);
+        setSavedThreshold(defaults.freeDeliveryThreshold);
+        if (defaults.freeDeliveryThreshold != null) {
+          setFreeThreshold(String(defaults.freeDeliveryThreshold).replace(".", ","));
+        }
+        if (defaults.settings) {
+          const s = defaults.settings;
+          setDeliveryMode(MODE_FROM_VALUE[s.delivery_mode]);
+          setLocalDelivery(s.local_delivery);
+          setDeliveryTracking(s.delivery_tracking);
+          setShippingDays(s.shipping_days > 0 ? String(s.shipping_days) : "");
+          setDeliveryFee(s.delivery_fee > 0 ? String(s.delivery_fee).replace(".", ",") : "");
+        }
+      }
       setLoadingFarmer(false);
     };
     load();
@@ -171,6 +212,19 @@ const NewProduct = () => {
       toast({ title: "Indique os dias de envio", variant: "destructive" });
       return;
     }
+    const feeNum = deliveryFee.trim() ? parseEuro(deliveryFee) : 0;
+    const thresholdNum = freeThreshold.trim() ? parseEuro(freeThreshold) : null;
+    if (feeNum === null || (freeThreshold.trim() && thresholdNum === null)) {
+      toast({ title: "Indique valores de entrega válidos", variant: "destructive" });
+      return;
+    }
+    const settings = normalizeDeliverySettings({
+      delivery_mode: DeliveryModesEnum[deliveryMode].toLowerCase() as DeliveryModeValue,
+      local_delivery: localDelivery,
+      delivery_tracking: deliveryTracking,
+      shipping_days: deliveryMode === DeliveryModesEnum.Pickup ? 0 : shippingDaysNum,
+      delivery_fee: feeNum,
+    });
     const stockNum = parseFloat(stockQuantity);
     if (!Number.isFinite(stockNum) || stockNum <= 0) {
       toast({ title: "Indique a quantidade disponível", variant: "destructive" });
@@ -214,9 +268,8 @@ const NewProduct = () => {
         client_price: clientPrice,
         vat_rate: vatRate,
         media_urls: '{' + mediaUrls + '}',
-        delivery_mode: DeliveryModesEnum[deliveryMode].toLowerCase(),
-        local_delivery: localDelivery,
-        shipping_days: deliveryMode === DeliveryModesEnum.Pickup ? 0 : shippingDaysNum,
+        // Valores normalizados: sem entrega ao domicílio não há acompanhamento nem preço.
+        ...settings,
         stock_quantity: stockNum,
         low_stock_threshold: Math.max(0, parseInt(lowStockThreshold, 10) || 0),
         availability_start: pickupEnabled ? availabilityStart : null,
@@ -225,6 +278,30 @@ const NewProduct = () => {
         updated_at: new Date().toISOString()
       } as any);
       if (error) throw error;
+
+      // Padrão de entrega: com a opção marcada, grava os campos alterados (ou
+      // todos, se ainda não havia padrão) e aplica-os aos restantes produtos.
+      // O limite da entrega grátis é sempre do agricultor.
+      const defaultsUpdate: Partial<DeliverySettings> & { free_delivery_threshold?: number | null } = {};
+      if (saveAsDefault) {
+        const fields = deliveryDefaults
+          ? changedDeliveryFields(settings, deliveryDefaults)
+          : (Object.keys(settings) as (keyof DeliverySettings)[]);
+        for (const f of fields) Object.assign(defaultsUpdate, { [f]: settings[f] });
+      }
+      if (thresholdNum !== savedThreshold) defaultsUpdate.free_delivery_threshold = thresholdNum;
+      if (Object.keys(defaultsUpdate).length > 0) {
+        const defaultsErr = await applyDeliveryDefaults(farmerId, defaultsUpdate);
+        if (defaultsErr) {
+          toast({
+            title: "Produto adicionado, mas o padrão de entrega não foi guardado",
+            description: defaultsErr.message,
+            variant: "destructive",
+          });
+          navigate("/catalogo");
+          return;
+        }
+      }
 
       toast({ title: "Produto adicionado", description: "O artigo está agora disponível." });
       navigate("/catalogo");
@@ -479,6 +556,36 @@ const NewProduct = () => {
               onCheckedChange={setLocalDelivery}
             />
           </div>
+          {localDelivery && (
+            <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+              <div>
+                <Label htmlFor="delivery-tracking" className="text-sm font-medium">
+                  Disponibilizo acompanhamento da entrega
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  O acompanhamento já está incluído no preço da entrega ao domicílio e não pode ser
+                  cobrado à parte ao cliente. Terá de atualizar o estado da encomenda (embalada, em
+                  trânsito, para entrega) na página Encomendas.
+                </p>
+              </div>
+              <Switch
+                id="delivery-tracking"
+                checked={deliveryTracking}
+                onCheckedChange={setDeliveryTracking}
+              />
+            </div>
+          )}
+          {hasHomeDelivery({
+            delivery_mode: DeliveryModesEnum[deliveryMode].toLowerCase() as DeliveryModeValue,
+            local_delivery: localDelivery,
+          }) && (
+            <DeliveryFeeFields
+              fee={deliveryFee}
+              onFeeChange={setDeliveryFee}
+              freeThreshold={freeThreshold}
+              onFreeThresholdChange={setFreeThreshold}
+            />
+          )}
           {(deliveryMode === DeliveryModesEnum.Shipping || deliveryMode === DeliveryModesEnum.Both) && (
             <div className="space-y-2">
               <Label htmlFor="shipping-days">Dias estimados para entrega em casa *</Label>
@@ -494,6 +601,22 @@ const NewProduct = () => {
               <p className="text-xs text-muted-foreground">Número médio de dias úteis até o produto chegar ao cliente.</p>
             </div>
           )}
+          <label htmlFor="save-delivery-default" className="flex cursor-pointer items-start gap-3 rounded-lg bg-muted/40 p-3">
+            <Checkbox
+              id="save-delivery-default"
+              checked={saveAsDefault}
+              onCheckedChange={(v) => setSaveAsDefault(v === true)}
+              className="mt-0.5"
+            />
+            <div>
+              <div className="text-sm font-medium">Guardar como padrão para todos os produtos</div>
+              <p className="text-xs text-muted-foreground">
+                {deliveryDefaults
+                  ? "Atualiza o padrão de entrega e aplica-o a todos os seus produtos. Os produtos novos vêm já preenchidos."
+                  : "Os produtos novos vêm já preenchidos com esta entrega, e os produtos que já tem passam a usá-la."}
+              </p>
+            </div>
+          </label>
         </Card>
 
         {/* Availability */}

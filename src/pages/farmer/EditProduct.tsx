@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, History, Loader2, Save, Tag, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import ProductHistoryDialog from "@/components/ProductHistoryDialog";
+import DeliveryFeeFields from "@/components/DeliveryFeeFields";
+import DeliveryScopeDialog, { type DeliveryScope } from "@/components/DeliveryScopeDialog";
+import {
+  applyDeliveryDefaults,
+  changedDeliveryFields,
+  hasHomeDelivery,
+  loadDeliveryDefaults,
+  normalizeDeliverySettings,
+  parseEuro,
+  type DeliveryModeValue,
+  type DeliverySettings,
+} from "@/lib/delivery-defaults";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -66,6 +78,14 @@ const EditProduct = () => {
   const [discount, setDiscount] = useState(0);
   const [deliveryMode, setDeliveryMode] = useState<string>("pickup");
   const [localDelivery, setLocalDelivery] = useState(false);
+  const [deliveryTracking, setDeliveryTracking] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState("");
+  const [freeThreshold, setFreeThreshold] = useState("");
+  const [savedThreshold, setSavedThreshold] = useState<number | null>(null);
+  const [farmerId, setFarmerId] = useState<string | null>(null);
+  // Entrega tal como estava gravada, para saber se o agricultor a alterou.
+  const [originalDelivery, setOriginalDelivery] = useState<DeliverySettings | null>(null);
+  const [scopeFields, setScopeFields] = useState<(keyof DeliverySettings)[] | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -112,6 +132,23 @@ const EditProduct = () => {
       setDiscount(p.discount_percent ?? 0);
       setDeliveryMode(p.delivery_mode ?? "pickup");
       setLocalDelivery(!!p.local_delivery);
+      setDeliveryTracking(!!p.delivery_tracking);
+      setDeliveryFee(Number(p.delivery_fee ?? 0) > 0 ? String(p.delivery_fee).replace(".", ",") : "");
+      setOriginalDelivery(
+        normalizeDeliverySettings({
+          delivery_mode: p.delivery_mode ?? "pickup",
+          local_delivery: !!p.local_delivery,
+          delivery_tracking: !!p.delivery_tracking,
+          shipping_days: Number(p.shipping_days ?? 0),
+          delivery_fee: Number(p.delivery_fee ?? 0),
+        }),
+      );
+      setFarmerId(farmer.id);
+      const defaults = await loadDeliveryDefaults(farmer.id);
+      setSavedThreshold(defaults.freeDeliveryThreshold);
+      setFreeThreshold(
+        defaults.freeDeliveryThreshold != null ? String(defaults.freeDeliveryThreshold).replace(".", ",") : "",
+      );
       setLoading(false);
     })();
   }, [user, id]);
@@ -130,8 +167,10 @@ const EditProduct = () => {
     [clientPrice, discount],
   );
 
-  const handleSave = async () => {
-    if (!id) return;
+  // Sem `scope`, valida e, se a entrega mudou, pergunta se é só para este
+  // produto ou para todos; com `scope`, grava.
+  const handleSave = async (scope?: DeliveryScope) => {
+    if (!id || !farmerId) return;
     if (!name.trim()) {
       toast({ title: "Indique o nome do produto", variant: "destructive" });
       return;
@@ -140,11 +179,25 @@ const EditProduct = () => {
       toast({ title: "Defina um preço válido", variant: "destructive" });
       return;
     }
-    const stockNum = parseInt(stockQuantity, 10);
-    if (!Number.isFinite(stockNum) || stockNum < 0) {
-      toast({ title: "Quantidade inválida", variant: "destructive" });
+    const feeNum = deliveryFee.trim() ? parseEuro(deliveryFee) : 0;
+    const thresholdNum = freeThreshold.trim() ? parseEuro(freeThreshold) : null;
+    if (feeNum === null || (freeThreshold.trim() && thresholdNum === null)) {
+      toast({ title: "Indique valores de entrega válidos", variant: "destructive" });
       return;
     }
+    const settings = normalizeDeliverySettings({
+      delivery_mode: deliveryMode as DeliveryModeValue,
+      local_delivery: localDelivery,
+      delivery_tracking: deliveryTracking,
+      shipping_days: shippingDays ? parseInt(shippingDays, 10) : 1,
+      delivery_fee: feeNum,
+    });
+    const changed = originalDelivery ? changedDeliveryFields(settings, originalDelivery) : [];
+    if (changed.length > 0 && !scope) {
+      setScopeFields(changed);
+      return;
+    }
+    setScopeFields(null);
     setSaving(true);
     const { error } = await supabase
       .from("products")
@@ -156,12 +209,10 @@ const EditProduct = () => {
         farmer_price: farmerPriceNumber,
         client_price: clientPrice,
         vat_rate: vatRate,
-        stock_quantity: stockNum,
+        // O stock não se grava aqui: é gerido por lotes (com validade) em "Os meus produtos".
         low_stock_threshold: Math.max(0, parseInt(lowStockThreshold, 10) || 0),
-        delivery_mode: deliveryMode,
-        local_delivery: localDelivery,
-        shipping_days:
-          deliveryMode === "pickup" ? 0 : shippingDays ? parseInt(shippingDays, 10) : 1,
+        // Valores normalizados: sem entrega ao domicílio não há acompanhamento nem preço.
+        ...settings,
         availability_start: availabilityStart || null,
         availability_end: availabilityEnd || null,
         is_organic: isOrganic,
@@ -170,12 +221,39 @@ const EditProduct = () => {
         updated_at: new Date().toISOString(),
       } as any)
       .eq("id", id);
-    setSaving(false);
     if (error) {
+      setSaving(false);
       toast({ title: "Erro a guardar", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Produto atualizado", description: "As alterações já estão visíveis no catálogo." });
+
+    // "Todos os produtos": os campos alterados passam a padrão e são aplicados
+    // aos restantes produtos. O limite da entrega grátis é sempre do agricultor.
+    const defaultsUpdate: Partial<DeliverySettings> & { free_delivery_threshold?: number | null } = {};
+    if (scope === "all") {
+      for (const f of changed) Object.assign(defaultsUpdate, { [f]: settings[f] });
+    }
+    if (thresholdNum !== savedThreshold) defaultsUpdate.free_delivery_threshold = thresholdNum;
+    if (Object.keys(defaultsUpdate).length > 0) {
+      const defaultsErr = await applyDeliveryDefaults(farmerId, defaultsUpdate);
+      if (defaultsErr) {
+        setSaving(false);
+        toast({
+          title: "Produto atualizado, mas a entrega não foi aplicada aos outros produtos",
+          description: defaultsErr.message,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    setSaving(false);
+    toast({
+      title: "Produto atualizado",
+      description:
+        scope === "all"
+          ? "A entrega foi aplicada a todos os seus produtos."
+          : "As alterações já estão visíveis no catálogo.",
+    });
     navigate("/agricultor/produtos");
   };
 
@@ -234,6 +312,12 @@ const EditProduct = () => {
           <History className="h-4 w-4" /> Histórico
         </Button>
       </div>
+      <DeliveryScopeDialog
+        open={scopeFields !== null}
+        fields={scopeFields ?? []}
+        onChoose={(scope) => handleSave(scope)}
+        onCancel={() => setScopeFields(null)}
+      />
       <ProductHistoryDialog
         productId={id ?? null}
         productName={name}
@@ -311,14 +395,14 @@ const EditProduct = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="stock">Quantidade disponível (nº de produtos)</Label>
-              <Input
-                id="stock"
-                type="number"
-                min={0}
-                step={1}
-                value={stockQuantity}
-                onChange={(e) => setStockQuantity(e.target.value)}
-              />
+              <Input id="stock" value={stockQuantity} readOnly disabled />
+              <p className="text-xs text-muted-foreground">
+                Para adicionar ou retirar stock, com a respetiva validade, use{" "}
+                <Link to="/agricultor/produtos" className="text-primary underline-offset-4 hover:underline">
+                  Os meus produtos
+                </Link>
+                .
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="low-stock">Avisar quando o stock chegar a</Label>
@@ -430,6 +514,33 @@ const EditProduct = () => {
               onCheckedChange={setLocalDelivery}
             />
           </div>
+          {localDelivery && (
+            <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+              <div>
+                <Label htmlFor="delivery-tracking" className="text-sm font-medium">
+                  Disponibilizo acompanhamento da entrega
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  O acompanhamento já está incluído no preço da entrega ao domicílio e não pode ser
+                  cobrado à parte ao cliente. Terá de atualizar o estado da encomenda (embalada, em
+                  trânsito, para entrega) na página Encomendas.
+                </p>
+              </div>
+              <Switch
+                id="delivery-tracking"
+                checked={deliveryTracking}
+                onCheckedChange={setDeliveryTracking}
+              />
+            </div>
+          )}
+          {hasHomeDelivery({ delivery_mode: deliveryMode as DeliveryModeValue, local_delivery: localDelivery }) && (
+            <DeliveryFeeFields
+              fee={deliveryFee}
+              onFeeChange={setDeliveryFee}
+              freeThreshold={freeThreshold}
+              onFreeThresholdChange={setFreeThreshold}
+            />
+          )}
           {deliveryMode !== "pickup" && (
             <div className="space-y-2">
               <Label htmlFor="days">Dias de envio</Label>
@@ -535,7 +646,7 @@ const EditProduct = () => {
           <Button variant="outline" onClick={() => navigate("/agricultor/produtos")}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={saving || deleting} className="gap-2">
+          <Button onClick={() => handleSave()} disabled={saving || deleting} className="gap-2">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Guardar alterações
           </Button>

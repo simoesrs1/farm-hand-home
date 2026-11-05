@@ -59,7 +59,7 @@ const NotificationBell = () => {
 
   const handleClick = (n: Notification) => {
     setOpen(false);
-    if (n.type === "low_stock" || n.type === "out_of_stock") {
+    if (n.type === "low_stock" || n.type === "out_of_stock" || n.type === "stock_expired") {
       navigate("/agricultor/produtos");
       return;
     }

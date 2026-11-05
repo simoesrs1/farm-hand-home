@@ -1,5 +1,34 @@
 // Farmer-side order actions: accept the order, or refund it for lack of stock.
+// Nas entregas ao domicílio com acompanhamento, marca também os passos
+// intermédios (embalada → em trânsito → para entrega). "Entregue" só acontece
+// em validate-pickup, quando o QR code é validado.
 import { createClient } from "npm:@supabase/supabase-js@2.110.8";
+
+// Cada passo exige o anterior: a coluna, o passo de que depende e a notificação.
+const TRACKING_STEPS = {
+  packed: {
+    column: "packed_at",
+    requires: "accepted_at",
+    title: "Encomenda embalada",
+    message: (farm: string) => `${farm} já embalou a tua encomenda.`,
+  },
+  in_transit: {
+    column: "in_transit_at",
+    requires: "packed_at",
+    title: "Encomenda em trânsito",
+    message: (farm: string) => `A tua encomenda de ${farm} está em trânsito.`,
+  },
+  out_for_delivery: {
+    column: "out_for_delivery_at",
+    requires: "in_transit_at",
+    title: "Encomenda para entrega",
+    message: (farm: string) =>
+      `A tua encomenda de ${farm} está a caminho da tua morada. Tem o QR code pronto para a receber.`,
+  },
+} as const;
+type TrackingAction = keyof typeof TRACKING_STEPS;
+const isTrackingAction = (a: unknown): a is TrackingAction =>
+  typeof a === "string" && a in TRACKING_STEPS;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,13 +62,15 @@ Deno.serve(async (req) => {
     const action = body?.action;
     const reason = typeof body?.reason === "string" ? body.reason.slice(0, 300) : "";
     if (typeof orderId !== "string" || !orderId) return jsonError(400, "Encomenda inválida");
-    if (action !== "accept" && action !== "refund_no_stock") return jsonError(400, "Ação inválida");
+    if (action !== "accept" && action !== "refund_no_stock" && !isTrackingAction(action)) {
+      return jsonError(400, "Ação inválida");
+    }
 
     const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const { data: order } = await admin
       .from("orders")
-      .select("id, client_id, farmer_id, status, total, accepted_at")
+      .select("id, client_id, farmer_id, status, total, accepted_at, delivery_tracking, packed_at, in_transit_at, out_for_delivery_at")
       .eq("id", orderId)
       .maybeSingle();
     if (!order) return jsonError(404, "Encomenda não encontrada");
@@ -71,6 +102,29 @@ Deno.serve(async (req) => {
         link: `/encomendas?id=${order.id}`,
       });
       return new Response(JSON.stringify({ ok: true, accepted_at: now }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (isTrackingAction(action)) {
+      const step = TRACKING_STEPS[action];
+      if (!order.delivery_tracking) {
+        return jsonError(400, "Esta encomenda não tem acompanhamento da entrega.");
+      }
+      if (!order[step.requires]) return jsonError(400, "Conclui primeiro o passo anterior.");
+      if (order[step.column]) return jsonError(400, "Este passo já foi marcado.");
+      const now = new Date().toISOString();
+      const { error } = await admin.from("orders").update({ [step.column]: now }).eq("id", order.id);
+      if (error) throw error;
+      await admin.from("notifications").insert({
+        user_id: order.client_id,
+        order_id: order.id,
+        type: `order_${action}`,
+        title: step.title,
+        message: step.message(farmName),
+        link: `/encomendas?id=${order.id}`,
+      });
+      return new Response(JSON.stringify({ ok: true, [step.column]: now }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

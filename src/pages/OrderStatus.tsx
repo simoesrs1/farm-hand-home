@@ -47,6 +47,7 @@ interface Order {
   paid_at: string | null;
   delivered_at: string | null;
   accepted_at: string | null;
+  delivery_fee: number;
   expired_at: string | null;
   created_at: string;
   farmer_id: string;
@@ -89,7 +90,7 @@ const OrderStatus = () => {
     const { data } = await supabase
       .from("orders")
       .select(
-        "id,total,status,pickup_code,pickup_deadline,scheduled_pickup_at,paid_at,delivered_at,accepted_at,expired_at,created_at,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)"
+        "id,total,status,pickup_code,pickup_deadline,scheduled_pickup_at,paid_at,delivered_at,accepted_at,expired_at,created_at,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),delivery_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)"
       )
       .eq("id", id)
       .maybeSingle();
@@ -344,6 +345,12 @@ const OrderStatus = () => {
                   <p className="font-medium text-foreground">{it.subtotal.toFixed(2)}€</p>
                 </li>
               ))}
+              {order.delivery_fee > 0 && (
+                <li className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Entrega ao domicílio</span>
+                  <span className="font-medium text-foreground">{order.delivery_fee.toFixed(2)}€</span>
+                </li>
+              )}
             </ul>
           </div>
         )}

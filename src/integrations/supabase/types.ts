@@ -204,12 +204,18 @@ export type Database = {
           company_name: string | null
           company_nif: string | null
           created_at: string
+          default_delivery_fee: number | null
+          default_delivery_mode: Database["public"]["Enums"]["delivery_mode"] | null
+          default_delivery_tracking: boolean | null
+          default_local_delivery: boolean | null
+          default_shipping_days: number | null
           delivery_hours: Json
           delivery_note: string | null
           delivery_radius_km: number | null
           description: string | null
           exploration_id: string | null
           exploration_number: string | null
+          free_delivery_threshold: number | null
           id: string
           initial_score: number | null
           pause_note: string | null
@@ -233,12 +239,18 @@ export type Database = {
           company_name?: string | null
           company_nif?: string | null
           created_at?: string
+          default_delivery_fee?: number | null
+          default_delivery_mode?: Database["public"]["Enums"]["delivery_mode"] | null
+          default_delivery_tracking?: boolean | null
+          default_local_delivery?: boolean | null
+          default_shipping_days?: number | null
           delivery_hours?: Json
           delivery_note?: string | null
           delivery_radius_km?: number | null
           description?: string | null
           exploration_id?: string | null
           exploration_number?: string | null
+          free_delivery_threshold?: number | null
           id?: string
           initial_score?: number | null
           pause_note?: string | null
@@ -262,12 +274,18 @@ export type Database = {
           company_name?: string | null
           company_nif?: string | null
           created_at?: string
+          default_delivery_fee?: number | null
+          default_delivery_mode?: Database["public"]["Enums"]["delivery_mode"] | null
+          default_delivery_tracking?: boolean | null
+          default_local_delivery?: boolean | null
+          default_shipping_days?: number | null
           delivery_hours?: Json
           delivery_note?: string | null
           delivery_radius_km?: number | null
           description?: string | null
           exploration_id?: string | null
           exploration_number?: string | null
+          free_delivery_threshold?: number | null
           id?: string
           initial_score?: number | null
           pause_note?: string | null
@@ -529,13 +547,18 @@ export type Database = {
           commission_amount: number
           created_at: string
           delivered_at: string | null
+          delivery_fee: number
           delivery_address: string | null
           delivery_lat: number | null
           delivery_lng: number | null
+          delivery_tracking: boolean
           expired_at: string | null
           farmer_amount: number
           farmer_id: string
           id: string
+          in_transit_at: string | null
+          out_for_delivery_at: string | null
+          packed_at: string | null
           paid_at: string | null
           pickup_code: string
           pickup_deadline: string
@@ -550,13 +573,18 @@ export type Database = {
           commission_amount: number
           created_at?: string
           delivered_at?: string | null
+          delivery_fee?: number
           delivery_address?: string | null
           delivery_lat?: number | null
           delivery_lng?: number | null
+          delivery_tracking?: boolean
           expired_at?: string | null
           farmer_amount: number
           farmer_id: string
           id?: string
+          in_transit_at?: string | null
+          out_for_delivery_at?: string | null
+          packed_at?: string | null
           paid_at?: string | null
           pickup_code: string
           pickup_deadline: string
@@ -571,13 +599,18 @@ export type Database = {
           commission_amount?: number
           created_at?: string
           delivered_at?: string | null
+          delivery_fee?: number
           delivery_address?: string | null
           delivery_lat?: number | null
           delivery_lng?: number | null
+          delivery_tracking?: boolean
           expired_at?: string | null
           farmer_amount?: number
           farmer_id?: string
           id?: string
+          in_transit_at?: string | null
+          out_for_delivery_at?: string | null
+          packed_at?: string | null
           paid_at?: string | null
           pickup_code?: string
           pickup_deadline?: string
@@ -722,7 +755,9 @@ export type Database = {
           category: string | null
           client_price: number
           created_at: string
+          delivery_fee: number
           delivery_mode: Database["public"]["Enums"]["delivery_mode"]
+          delivery_tracking: boolean
           description: string | null
           discount_percent: number
           farmer_id: string
@@ -749,7 +784,9 @@ export type Database = {
           category?: string | null
           client_price: number
           created_at?: string
+          delivery_fee?: number
           delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
+          delivery_tracking?: boolean
           description?: string | null
           discount_percent?: number
           farmer_id: string
@@ -776,7 +813,9 @@ export type Database = {
           category?: string | null
           client_price?: number
           created_at?: string
+          delivery_fee?: number
           delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
+          delivery_tracking?: boolean
           description?: string | null
           discount_percent?: number
           farmer_id?: string
@@ -926,6 +965,7 @@ export type Database = {
           delivery_radius_km: number | null
           description: string | null
           featured_rank: number | null
+          free_delivery_threshold: number | null
           id: string | null
           initial_score: number | null
           pause_note: string | null
@@ -952,6 +992,10 @@ export type Database = {
       }
     }
     Functions: {
+      apply_delivery_defaults: {
+        Args: { p_farmer_id: string; p_values: Json }
+        Returns: number
+      }
       add_stock_batch: {
         Args: {
           p_expires_at?: string

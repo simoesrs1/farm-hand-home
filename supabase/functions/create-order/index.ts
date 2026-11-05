@@ -115,9 +115,15 @@ Deno.serve(async (req) => {
     // Prices and stock are read exclusively from the products table, never
     // trusted from the request body.
     const productIds = [...new Set(items.map((it) => it?.product_id).filter((id): id is string => typeof id === "string"))];
+    // Retira os lotes fora de validade antes de validar o stock, para nunca
+    // vender produto expirado entre duas execuções do cron.
+    for (const id of productIds) {
+      const { error: expireErr } = await admin.rpc("expire_stock_batches", { p_product_id: id });
+      if (expireErr) console.error("expire_stock_batches failed", id, expireErr);
+    }
     const { data: dbProducts, error: productsErr } = await admin
       .from("products")
-      .select("id, name, client_price, discount_percent, unit, active, stock_quantity, farmer_id, local_delivery")
+      .select("id, name, client_price, discount_percent, unit, active, stock_quantity, farmer_id, local_delivery, delivery_tracking, delivery_fee")
       .in("id", productIds);
     if (productsErr) throw productsErr;
     const productById = new Map((dbProducts ?? []).map((p) => [p.id, p]));
@@ -172,7 +178,7 @@ Deno.serve(async (req) => {
 
     const { data: farmerRow } = await admin
       .from("farmer_details")
-      .select("id, pickup_days, user_id, pickup_hours, paused_until")
+      .select("id, pickup_days, user_id, pickup_hours, paused_until, free_delivery_threshold")
       .eq("id", farmerId)
       .maybeSingle();
     if (!farmerRow) return jsonError(400, "Agricultor indisponível para receber a encomenda.");
@@ -206,7 +212,11 @@ Deno.serve(async (req) => {
 
     // Home delivery: when any product is marked for farmer home delivery, the
     // client must provide a delivery address and map point.
-    const needsDelivery = resolved.some((r) => (r.product as any).local_delivery === true);
+    // Lido de productById: o objeto `resolved` só guarda id/nome/preço/unidade.
+    const deliveryProducts = resolved
+      .map((r) => productById.get(r.product.id))
+      .filter((p) => p?.local_delivery === true);
+    const needsDelivery = deliveryProducts.length > 0;
     let deliveryAddress: string | null = null;
     let deliveryLat: number | null = null;
     let deliveryLng: number | null = null;
@@ -227,10 +237,31 @@ Deno.serve(async (req) => {
       deliveryLng = lng;
     }
 
-    const total = Math.round(resolved.reduce((acc, r) => acc + r.subtotal * 100, 0)) / 100;
-    if (total <= 0 || total > MAX_TOTAL) return jsonError(400, "Total inválido");
+    // Acompanhamento da entrega: só se o cliente o pedir e algum produto com
+    // entrega ao domicílio o oferecer (incluído no preço, sem custo extra).
+    const wantsTracking = body?.delivery_tracking === true;
+    if (wantsTracking && !deliveryProducts.some((p) => p?.delivery_tracking === true)) {
+      return jsonError(400, "Esta encomenda não tem acompanhamento da entrega disponível.");
+    }
+    const deliveryTracking = needsDelivery && wantsTracking;
 
-    const commission = Math.round(total * COMMISSION_RATE * 100) / 100;
+    const productsTotal = Math.round(resolved.reduce((acc, r) => acc + r.subtotal * 100, 0)) / 100;
+
+    // Preço da entrega: uma por encomenda, o mais alto entre os produtos com
+    // entrega ao domicílio; grátis se os produtos atingirem o limite do
+    // agricultor. Mesma regra de src/lib/delivery-fee.ts.
+    let deliveryFee = 0;
+    if (needsDelivery) {
+      const baseFee = Math.max(0, ...deliveryProducts.map((p) => Number(p?.delivery_fee ?? 0)));
+      const threshold = Number(farmerRow.free_delivery_threshold ?? 0);
+      deliveryFee = threshold > 0 && productsTotal >= threshold ? 0 : Math.round(baseFee * 100) / 100;
+    }
+
+    const total = Math.round((productsTotal + deliveryFee) * 100) / 100;
+    if (productsTotal <= 0 || total > MAX_TOTAL) return jsonError(400, "Total inválido");
+
+    // A comissão incide só sobre os produtos: a entrega vai inteira para o agricultor.
+    const commission = Math.round(productsTotal * COMMISSION_RATE * 100) / 100;
     const farmerAmount = Math.round((total - commission) * 100) / 100;
 
     
@@ -269,6 +300,8 @@ Deno.serve(async (req) => {
         delivery_address: deliveryAddress,
         delivery_lat: deliveryLat,
         delivery_lng: deliveryLng,
+        delivery_tracking: deliveryTracking,
+        delivery_fee: deliveryFee,
       })
       .select()
       .single();

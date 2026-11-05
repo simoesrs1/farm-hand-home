@@ -32,12 +32,35 @@ interface Order {
   delivered_at: string | null;
   expired_at: string | null;
   accepted_at: string | null;
+  delivery_fee: number;
   created_at: string;
   delivery_address: string | null;
   delivery_lat: number | null;
   delivery_lng: number | null;
+  delivery_tracking: boolean;
+  packed_at: string | null;
+  in_transit_at: string | null;
+  out_for_delivery_at: string | null;
   order_items: OrderItem[];
 }
+
+type TrackingAction = "packed" | "in_transit" | "out_for_delivery";
+
+// Passos do acompanhamento que o agricultor marca, por ordem. "Entregue" fica
+// a cargo da validação do QR code.
+const TRACKING_STEPS: { action: TrackingAction; column: "packed_at" | "in_transit_at" | "out_for_delivery_at"; label: string; done: string }[] = [
+  { action: "packed", column: "packed_at", label: "Marcar como embalada", done: "Embalada" },
+  { action: "in_transit", column: "in_transit_at", label: "Marcar em trânsito", done: "Em trânsito" },
+  { action: "out_for_delivery", column: "out_for_delivery_at", label: "Marcar para entrega", done: "Para entrega" },
+];
+
+const nextTrackingStep = (o: Order) =>
+  o.delivery_tracking && o.status === "awaiting_pickup" && o.accepted_at
+    ? TRACKING_STEPS.find((s) => !o[s.column]) ?? null
+    : null;
+
+const lastTrackingStep = (o: Order) =>
+  [...TRACKING_STEPS].reverse().find((s) => o[s.column]) ?? null;
 
 const meta = {
   awaiting_pickup: { label: "A aguardar", tone: "bg-primary/15 text-primary", Icon: Clock },
@@ -66,7 +89,7 @@ const FarmerOrders = () => {
     const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,scheduled_pickup_at,delivered_at,expired_at,accepted_at,created_at,delivery_address,delivery_lat,delivery_lng,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
+        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,scheduled_pickup_at,delivered_at,expired_at,accepted_at,created_at,delivery_address,delivery_lat,delivery_lng,delivery_tracking,packed_at,in_transit_at,out_for_delivery_at,delivery_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
         .order("created_at", { ascending: false });
       if (!cancelled) {
         setOrders((data as Order[]) ?? []);
@@ -116,7 +139,7 @@ const FarmerOrders = () => {
     );
   };
 
-  const runAction = async (order: Order, action: "accept" | "refund_no_stock") => {
+  const runAction = async (order: Order, action: "accept" | "refund_no_stock" | TrackingAction) => {
     setActing(order.id);
     const { data, error } = await supabase.functions.invoke("order-action", {
       body: { order_id: order.id, action },
@@ -131,7 +154,12 @@ const FarmerOrders = () => {
       });
       return;
     }
-    if (action === "accept") {
+    const step = TRACKING_STEPS.find((s) => s.action === action);
+    if (step) {
+      const now = new Date().toISOString();
+      setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, [step.column]: now } : o)));
+      toast({ title: `Encomenda: ${step.done.toLowerCase()}`, description: "O cliente foi notificado." });
+    } else if (action === "accept") {
       setOrders((prev) =>
         prev.map((o) => (o.id === order.id ? { ...o, accepted_at: new Date().toISOString() } : o)),
       );
@@ -379,6 +407,8 @@ const FarmerOrders = () => {
                 : o.farmer_amount;
             const isHighlighted = highlightId === o.id;
             const homeDelivery = isHomeDelivery(o);
+            const nextStep = nextTrackingStep(o);
+            const lastStep = lastTrackingStep(o);
             return (
               <li
                 key={o.id}
@@ -424,6 +454,23 @@ const FarmerOrders = () => {
                         </Button>
                       </>
                     )}
+                    {o.delivery_tracking && o.status === "awaiting_pickup" && (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                        <Truck className="h-3.5 w-3.5" />
+                        Com acompanhamento{lastStep ? ` · ${lastStep.done}` : ""}
+                      </span>
+                    )}
+                    {nextStep && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5"
+                        disabled={acting === o.id}
+                        onClick={() => runAction(o, nextStep.action)}
+                      >
+                        <Truck className="h-4 w-4" /> {nextStep.label}
+                      </Button>
+                    )}
                     {o.status === "awaiting_pickup" && o.accepted_at && (
                       <Button size="sm" className="gap-1.5" onClick={() => setValidating(o)}>
                         <ScanLine className="h-4 w-4" /> Validar entrega
@@ -448,6 +495,12 @@ const FarmerOrders = () => {
                         <p className="font-medium text-foreground">{it.subtotal.toFixed(2)}€</p>
                       </li>
                     ))}
+                    {o.delivery_fee > 0 && (
+                      <li className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Entrega ao domicílio</span>
+                        <span className="font-medium text-foreground">{o.delivery_fee.toFixed(2)}€</span>
+                      </li>
+                    )}
                   </ul>
                 )}
 

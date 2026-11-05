@@ -4,6 +4,7 @@ import { pt } from "date-fns/locale";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
+  CalendarX,
   History,
   Loader2,
   Pencil,
@@ -39,6 +40,11 @@ const EVENTS: Record<string, { label: string; icon: LucideIcon; tone: string }> 
     tone: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
   },
   sale: { label: "Venda", icon: ShoppingBag, tone: "bg-sky-500/10 text-sky-700 dark:text-sky-400" },
+  expired: {
+    label: "Validade expirada",
+    icon: CalendarX,
+    tone: "bg-destructive/10 text-destructive",
+  },
   updated: { label: "Dados alterados", icon: Pencil, tone: "bg-muted text-muted-foreground" },
   deleted: { label: "Produto eliminado", icon: Trash2, tone: "bg-destructive/10 text-destructive" },
   restored: { label: "Produto reativado", icon: RotateCcw, tone: "bg-primary/10 text-primary" },
@@ -92,6 +98,8 @@ const formatValue = (field: string, value: unknown): string => {
 
 const actorLabel = (row: HistoryRow) => {
   if (row.event_type === "sale") return "Cliente";
+  // A expiração é automática, mesmo quando é a página do agricultor a dispará-la.
+  if (row.event_type === "expired") return "Sistema";
   return row.actor_name || (row.actor_id ? "Utilizador" : "Sistema");
 };
 
