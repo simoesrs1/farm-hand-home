@@ -1,1 +1,9 @@
 project_id = "vwlzarmijxqwmiwtzxlc"
+
+# Funções chamadas pelo pg_cron: autenticam-se com o CRON_SECRET (Authorization: Bearer),
+# que não é um JWT, por isso a verificação de JWT do gateway tem de estar desligada.
+[functions.expire-orders]
+verify_jwt = false
+
+[functions.farmer-activity]
+verify_jwt = false

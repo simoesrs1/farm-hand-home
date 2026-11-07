@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Cálculo diário da atividade dos agricultores + lembretes (só incentivos).
 //
 // 1. Recalcula a pontuação de todos os agricultores (compute_farmer_activity).
@@ -11,7 +12,7 @@
 // (ex.: 07:00 Europe/Lisbon) com:
 //   Authorization: Bearer <CRON_SECRET>
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-import { emailEnabled, sendEmail } from "../_shared/email.ts";
+import { emailEnabled, escapeHtml, sendEmail } from "../_shared/email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -135,6 +136,7 @@ Deno.serve(async (req) => {
     const orderFarmer = new Map<string, string>();
     for (const m of chatRows ?? []) {
       // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const order = (m as any).orders as { farmer_id: string; status: string } | null;
       if (!order) continue;
       orderFarmer.set(m.order_id, order.farmer_id);
@@ -281,7 +283,7 @@ Deno.serve(async (req) => {
         const ok = await sendEmail({
           to: email,
           subject: n.title,
-          html: `<p>${n.message}</p><p><a href="${appUrl}${n.link}">Abrir o ValorRural</a></p>`,
+          html: `<p>${escapeHtml(n.message)}</p><p><a href="${escapeHtml(appUrl + (n.link ?? ""))}">Abrir o ValorRural</a></p>`,
         });
         if (ok) emailed++;
       }

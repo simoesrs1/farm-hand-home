@@ -45,7 +45,13 @@ AS $$
 $$;
 
 -- 4. Realtime RLS: restrict chat channel subscriptions to order participants
-ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
+-- Em projetos Supabase recentes a tabela pertence a supabase_realtime_admin e já vem com RLS ativo.
+DO $$
+BEGIN
+  IF NOT (SELECT relrowsecurity FROM pg_class WHERE oid = 'realtime.messages'::regclass) THEN
+    ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
 DROP POLICY IF EXISTS "Order chat channel subscribers only" ON realtime.messages;
 CREATE POLICY "Order chat channel subscribers only"

@@ -60,7 +60,7 @@ CREATE POLICY "Farmers can delete own certificates" ON public.farmer_certificate
 );
 
 -- Storage bucket for certificates
-INSERT INTO storage.buckets (id, name, public) VALUES ('certificates', 'certificates', false);
+INSERT INTO storage.buckets (id, name, public) VALUES ('certificates', 'certificates', false) ON CONFLICT (id) DO NOTHING;
 
 CREATE POLICY "Farmers can upload certificates" ON storage.objects FOR INSERT WITH CHECK (
   bucket_id = 'certificates' AND auth.uid()::text = (storage.foldername(name))[1]
