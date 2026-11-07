@@ -39,7 +39,6 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
-import OAuthConsent from "./pages/OAuthConsent";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 
@@ -65,7 +64,6 @@ const App = () => (
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
-                      <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                       <Route path="/onboarding/agricultor" element={<FarmerOnboarding />} />
                       <Route path="/catalogo" element={<Catalog />} />
                       <Route path="/catalogo/:slug" element={<CategoryPage />} />
