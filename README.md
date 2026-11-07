@@ -1,73 +1,43 @@
-# Welcome to your Lovable project
+# ValorRural (farm-hand-home)
 
-## Project info
+Marketplace que liga agricultores portugueses a clientes. Os clientes encomendam e levantam na quinta ou recebem em casa; os agricultores gerem produtos, disponibilidade, encomendas e vendas.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Stack
 
-## How can I edit this code?
+- React 18, TypeScript, Vite, React Router, TanStack Query
+- shadcn/ui, Tailwind CSS, lucide-react
+- Supabase (Postgres com RLS, Auth, Realtime, Storage, Edge Functions)
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Desenvolvimento local
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+npm install
+cp .env.example .env   # preencher com os valores do projeto Supabase
+npm run dev            # http://localhost:4200
 ```
 
-**Edit a file directly in GitHub**
+Verificações:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+npx tsc --noEmit -p tsconfig.app.json
+npm run lint
+npm test
+```
 
-**Use GitHub Codespaces**
+## Supabase
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Projeto: `vwlzarmijxqwmiwtzxlc` (ver `supabase/config.toml`).
 
-## What technologies are used for this project?
+```sh
+supabase login
+supabase link --project-ref vwlzarmijxqwmiwtzxlc
 
-This project is built with:
+supabase db push                       # aplica as migrações de supabase/migrations/
+supabase functions deploy <nome>       # publica uma Edge Function
+supabase gen types typescript --linked --schema public > src/integrations/supabase/types.ts
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- As migrações vivem **apenas** em `supabase/migrations/`.
+- Segredos das Edge Functions: `supabase secrets set NOME=valor` (nunca no código nem com prefixo `VITE_`).
+- Email (Resend): `EMAIL_PROVIDER=resend`, `EMAIL_API_KEY`, `EMAIL_FROM` (e `EMAIL_REPLY_TO`, opcional); ver `supabase/functions/_shared/email.ts`. Até o domínio `valorrural.pt` estar verificado no Resend, `EMAIL_FROM` é `ValorRural <onboarding@resend.dev>`.
+- Os crons (`expire-orders`, `farmer-activity`) leem `project_url` e `cron_secret` do Vault; ver `supabase/migrations/20261107121000_agendamento_edge_functions.sql`.

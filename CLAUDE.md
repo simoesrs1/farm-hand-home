@@ -16,7 +16,6 @@ Marketplace que liga agricultores portugueses a clientes. Os clientes encomendam
 - React 18, TypeScript e Vite; React Router; TanStack Query.
 - UI: shadcn/ui (`@/components/ui/*`), Tailwind CSS, ícones `lucide-react`.
 - Backend: Supabase (Postgres com RLS, Auth, Realtime, Edge Functions em Deno). Cliente em `@/integrations/supabase/client`.
-- Projeto gerido também pelo Lovable (`.lovable/`).
 - Testes: Vitest (`src/test/`).
 
 ## Comandos
