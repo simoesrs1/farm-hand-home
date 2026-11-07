@@ -9,7 +9,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MODEL = "claude-opus-5-5";
+// Haiku: o modelo mais barato, suficiente para um texto curto de ~60 palavras.
+const MODEL = "claude-haiku-5-5";
 
 const SYSTEM_PROMPT =
   "És um copywriter de um marketplace agrícola de proximidade em Portugal. " +
@@ -64,7 +65,7 @@ Deno.serve(async (req) => {
       .join("\n");
 
     // As fotografias chegam do browser como data URLs (base64); no máximo 3.
-    const content: Anthropic.Beta.BetaContentBlockParam[] = [];
+    const content: Anthropic.ContentBlockParam[] = [];
     for (const url of (Array.isArray(images) ? images : []).slice(0, 3)) {
       const match = typeof url === "string" ? DATA_URL.exec(url) : null;
       if (!match) continue;
@@ -79,13 +80,10 @@ Deno.serve(async (req) => {
     });
 
     const client = new Anthropic({ apiKey });
-    const response = await client.beta.messages.create({
+    const response = await client.messages.create({
       model: MODEL,
       max_tokens: 16000,
       output_config: { effort: "low" },
-      // Se o modelo recusar o pedido, a API tenta outro modelo na mesma chamada.
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content }],
     });
