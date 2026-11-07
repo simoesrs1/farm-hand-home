@@ -1,17 +1,44 @@
+// Gera a descrição de venda de um produto (texto e fotografias) com a API da Claude.
+//
+// Segredo necessário: ANTHROPIC_API_KEY (console.anthropic.com → API keys).
+// Sem ele, a função responde 503 com uma mensagem clara e o formulário continua a funcionar.
+import Anthropic from "npm:@anthropic-ai/sdk@1.6.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const MODEL = "claude-opus-5-5";
+
+const SYSTEM_PROMPT =
+  "És um copywriter de um marketplace agrícola de proximidade em Portugal. " +
+  "Escreves em português de Portugal, num tom simples, honesto e elegante. " +
+  "Devolve apenas a descrição (2 a 4 frases, máximo ~60 palavras), sem títulos, sem markdown, " +
+  "sem emojis, sem inventar certificações ou factos que não te foram dados. " +
+  "Se houver fotografias, usa detalhes visuais reais (cor, frescura, apresentação).";
+
+type ImageMediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+const DATA_URL = /^data:(image\/(?:jpeg|png|gif|webp));base64,(.+)$/;
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!apiKey) {
+    return json({ error: "A geração de descrições ainda não está ativa. Escreva a descrição à mão." }, 503);
+  }
 
+  try {
     const body = await req.json();
     const {
       name = "",
@@ -36,63 +63,56 @@ Deno.serve(async (req) => {
       .filter(Boolean)
       .join("\n");
 
-    const content: unknown[] = [
-      {
-        type: "text",
-        text:
-          `Escreve uma descrição de venda para este produto agrícola português.\n\n${facts || "Sem dados adicionais."}`,
-      },
-    ];
-    for (const url of (images as string[]).slice(0, 3)) {
-      content.push({ type: "image_url", image_url: { url } });
+    // As fotografias chegam do browser como data URLs (base64); no máximo 3.
+    const content: Anthropic.Beta.BetaContentBlockParam[] = [];
+    for (const url of (Array.isArray(images) ? images : []).slice(0, 3)) {
+      const match = typeof url === "string" ? DATA_URL.exec(url) : null;
+      if (!match) continue;
+      content.push({
+        type: "image",
+        source: { type: "base64", media_type: match[1] as ImageMediaType, data: match[2] },
+      });
     }
-
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content:
-              "És um copywriter de um marketplace agrícola de proximidade em Portugal. Escreves em português de Portugal, num tom simples, honesto e elegante. Devolve apenas a descrição (2 a 4 frases, máximo ~60 palavras), sem títulos, sem markdown, sem emojis, sem inventar certificações ou factos que não te foram dados. Se houver fotografias, usa detalhes visuais reais (cor, frescura, apresentação).",
-          },
-          { role: "user", content },
-        ],
-      }),
+    content.push({
+      type: "text",
+      text: `Escreve uma descrição de venda para este produto agrícola português.\n\n${facts || "Sem dados adicionais."}`,
     });
 
-    if (res.status === 429) {
-      return new Response(
-        JSON.stringify({ error: "Demasiados pedidos. Tente novamente daqui a pouco." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-    if (res.status === 402) {
-      return new Response(
-        JSON.stringify({ error: "Créditos de IA esgotados. Adicione créditos ao workspace." }),
-        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-    if (!res.ok) {
-      const t = await res.text();
-      throw new Error(`AI gateway: ${res.status} ${t}`);
-    }
-
-    const data = await res.json();
-    const description: string = data?.choices?.[0]?.message?.content?.trim() ?? "";
-
-    return new Response(JSON.stringify({ description }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const client = new Anthropic({ apiKey });
+    const response = await client.beta.messages.create({
+      model: MODEL,
+      max_tokens: 16000,
+      output_config: { effort: "low" },
+      // Se o modelo recusar o pedido, a API tenta outro modelo na mesma chamada.
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content }],
     });
+
+    if (response.stop_reason === "refusal") {
+      return json({ error: "Não foi possível gerar uma descrição para este produto. Escreva-a à mão." }, 422);
+    }
+
+    const description = response.content
+      .flatMap((block) => (block.type === "text" ? [block.text] : []))
+      .join("")
+      .trim();
+
+    return json({ description });
   } catch (err) {
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    if (err instanceof Anthropic.RateLimitError) {
+      return json({ error: "Demasiados pedidos. Tente novamente daqui a pouco." }, 429);
+    }
+    if (err instanceof Anthropic.AuthenticationError) {
+      console.error("generate-product-description: ANTHROPIC_API_KEY inválida");
+      return json({ error: "A geração de descrições está indisponível de momento." }, 503);
+    }
+    if (err instanceof Anthropic.APIError) {
+      console.error(`generate-product-description: API ${err.status}`, err.message);
+      return json({ error: "A geração de descrições está indisponível de momento." }, 502);
+    }
+    console.error("generate-product-description error", err);
+    return json({ error: "Erro interno" }, 500);
   }
 });

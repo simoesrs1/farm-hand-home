@@ -228,7 +228,7 @@ const sections: LegalSection[] = [
           <li>
             <strong>Prestadores de serviços</strong> que tratam dados por nossa conta, com
             contrato de subcontratação: alojamento, base de dados e autenticação (Supabase),
-            alojamento da aplicação (Lovable), autenticação Google e Google Maps (Google).
+            alojamento da aplicação (Cloudflare), autenticação Google e Google Maps (Google).
           </li>
           <li>
             <strong>Autoridades</strong>, quando a lei o exija.

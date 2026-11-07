@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { toast } from "@/hooks/use-toast";
 import { categories } from "@/data/categories";
 import { DeliveryModesEnum } from "@/data/delivery-modes";
@@ -112,7 +113,20 @@ const NewProduct = () => {
           images,
         },
       });
-      if (error) throw error;
+      if (error) {
+        // Numa resposta não-2xx o supabase-js dá uma mensagem genérica; a razão real
+        // ({ error: "..." }) está no corpo da resposta, em error.context (como no Cart.tsx).
+        let msg = error.message;
+        if (error instanceof FunctionsHttpError) {
+          try {
+            const body = await error.context.json();
+            if (body?.error) msg = body.error;
+          } catch {
+            // corpo não é JSON: fica a mensagem genérica
+          }
+        }
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
       if (!data?.description) throw new Error("Não foi possível gerar a descrição.");
       setDescription(data.description);

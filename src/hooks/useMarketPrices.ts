@@ -19,6 +19,10 @@ export const marketKey = (name: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
+// Desligado: a recolha (sync-market-prices) dependia dos serviços do Lovable e os
+// preços guardados estão desatualizados. Voltar a true quando a recolha for refeita.
+const MARKET_PRICES_ENABLED = false;
+
 /**
  * Preços médios de grandes superfícies, recolhidos diariamente.
  * Devolve um mapa por chave normalizada do nome do produto.
@@ -27,6 +31,7 @@ export const useMarketPrices = () => {
   const [prices, setPrices] = useState<Map<string, MarketPrice>>(new Map());
 
   useEffect(() => {
+    if (!MARKET_PRICES_ENABLED) return;
     let cancelled = false;
     (async () => {
       const { data } = await supabase
