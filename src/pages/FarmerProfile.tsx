@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Star, MapPin, ArrowLeft, CalendarArrowDown, PauseCircle } from "lucide-react";
+import { Star, MapPin, ArrowLeft, CalendarArrowDown, PauseCircle, Eye } from "lucide-react";
 import { downloadPickupIcs } from "@/lib/pickup-ical";
 
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { farmers } from "@/data/farmers";
 import { type Product } from "@/data/products";
 import { getCategoryByName } from "@/data/categories";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +46,28 @@ const FarmerProfile = () => {
   const [dbFarmer, setDbFarmer] = useState<FarmerDisplay | null>(null);
   const [dbProducts, setDbProducts] = useState<Product[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const { user } = useAuth();
+  // O próprio agricultor a ver a sua página: mostra a faixa de pré-visualização.
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    if (!user || !id || mockFarmer) {
+      setIsOwner(false);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from("farmer_details")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setIsOwner(data?.id === id);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, id, mockFarmer]);
 
   // Real farmers created through onboarding live in Supabase and are looked
   // up by UUID; demo farmers in src/data/farmers.ts use slug ids and never
@@ -181,6 +204,25 @@ const FarmerProfile = () => {
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </Link>
+
+        {isOwner && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/10 p-4">
+            <div className="flex items-start gap-3">
+              <Eye className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div className="text-sm">
+                <p className="font-medium text-foreground">Pré-visualização: é assim que os clientes veem a sua página.</p>
+                {pause && (
+                  <p className="mt-0.5 text-muted-foreground">
+                    A sua quinta está em pausa: os clientes não veem os produtos.
+                  </p>
+                )}
+              </div>
+            </div>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/agricultor/informacoes">Editar informações da exploração</Link>
+            </Button>
+          </div>
+        )}
 
         {/* Hero */}
         <div className="overflow-hidden rounded-2xl border border-border bg-card">

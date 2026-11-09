@@ -34,6 +34,7 @@ import NewProduct from "./pages/farmer/NewProduct";
 import MyProducts from "./pages/farmer/MyProducts";
 import EditProduct from "./pages/farmer/EditProduct";
 import FarmerInfo from "./pages/farmer/FarmerInfo";
+import MyPublicPage from "./pages/farmer/MyPublicPage";
 import FarmerAvailability from "./pages/farmer/Availability";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
@@ -68,6 +69,8 @@ const App = () => (
                       <Route path="/catalogo" element={<Catalog />} />
                       <Route path="/catalogo/:slug" element={<CategoryPage />} />
                       <Route path="/produto/:id" element={<ProductDetail />} />
+                      {/* Antes de /agricultor/:id, que apanharia este endereço. */}
+                      <Route path="/agricultor/a-minha-pagina" element={<MyPublicPage />} />
                       <Route path="/agricultor/:id" element={<FarmerProfile />} />
                       <Route path="/resultados" element={<SearchResults />} />
                       <Route path="/carrinho" element={<Cart />} />

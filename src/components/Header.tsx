@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle, Store, ClipboardList, Boxes, Clock, TrendingUp } from "lucide-react";
+import { Menu, X, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle, Store, ClipboardList, Boxes, Clock, TrendingUp, Eye, type LucideIcon } from "lucide-react";
 import logoValorRural from "@/assets/logo-valorrural-horizontal.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import NotificationBell from "@/components/NotificationBell";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const navLinks = [
   { to: "/", label: "Início" },
@@ -14,12 +15,40 @@ const navLinks = [
   { to: "/missao", label: "Missão" },
 ];
 
+type MenuLink = { to: string; label: string; Icon: LucideIcon };
+
+// Uma só lista para o computador e o telemóvel, para os dois menus não divergirem.
+// Atalhos do agricultor: ícones na barra no computador, lista no menu móvel.
+const farmerLinks: MenuLink[] = [
+  { to: "/agricultor/produtos/novo", label: "Adicionar produto", Icon: Store },
+  { to: "/agricultor/produtos", label: "Os meus produtos", Icon: Boxes },
+  { to: "/agricultor/encomendas", label: "Encomendas", Icon: Package },
+  { to: "/agricultor/vendas", label: "As minhas vendas", Icon: TrendingUp },
+  { to: "/agricultor/disponibilidade", label: "Disponibilidade (porta aberta)", Icon: Clock },
+  { to: "/agricultor/scan", label: "Validar entrega", Icon: ScanLine },
+];
+
+// Opções da conta (menu do nome no computador).
+const accountLinks = (isFarmer: boolean, isClient: boolean): MenuLink[] => [
+  { to: "/perfil", label: "Perfil", Icon: UserCircle },
+  ...(isFarmer
+    ? [
+        { to: "/agricultor/a-minha-pagina", label: "Ver a minha página", Icon: Eye },
+        { to: "/agricultor/informacoes", label: "Informações da exploração", Icon: ClipboardList },
+      ]
+    : []),
+  { to: "/definicoes", label: "Definições", Icon: SettingsIcon },
+  ...(isClient ? [{ to: "/favoritos", label: "Favoritos", Icon: Heart }] : []),
+];
+
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, signOut, activeMode, canSwitchProfile, switchMode } = useAuth();
   const { totalCount } = useCart();
+  // Um só sino montado de cada vez: as duas cópias abririam o mesmo canal em tempo real.
+  const isMobile = useIsMobile();
   const isFarmer = !!user && activeMode === "vendedor";
   const isClient = !!user && activeMode === "cliente";
 
@@ -82,59 +111,19 @@ const Header = () => {
                   </Link>
                 </>
               )}
-              {isFarmer && (
-                <>
+              {isFarmer &&
+                farmerLinks.map(({ to, label, Icon }) => (
                   <Link
-                    to="/agricultor/produtos/novo"
+                    key={to}
+                    to={to}
                     className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
-                    aria-label="Adicionar produto"
-                    title="Adicionar produto"
+                    aria-label={label}
+                    title={label}
                   >
-                    <Store className="h-5 w-5" />
+                    <Icon className="h-5 w-5" />
                   </Link>
-                  <Link
-                    to="/agricultor/produtos"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
-                    aria-label="Os meus produtos"
-                    title="Os meus produtos"
-                  >
-                    <Boxes className="h-5 w-5" />
-                  </Link>
-                  <Link
-                    to="/agricultor/encomendas"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
-                    aria-label="Encomendas"
-                    title="Encomendas"
-                  >
-                    <Package className="h-5 w-5" />
-                  </Link>
-                  <Link
-                    to="/agricultor/vendas"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
-                    aria-label="Vendas"
-                    title="As minhas vendas"
-                  >
-                    <TrendingUp className="h-5 w-5" />
-                  </Link>
-                  <Link
-                    to="/agricultor/disponibilidade"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
-                    aria-label="Disponibilidade"
-                    title="Disponibilidade (porta aberta)"
-                  >
-                    <Clock className="h-5 w-5" />
-                  </Link>
-                  <Link
-                    to="/agricultor/scan"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
-                    aria-label="Validar entrega"
-                    title="Validar entrega"
-                  >
-                    <ScanLine className="h-5 w-5" />
-                  </Link>
-                </>
-              )}
-              <NotificationBell />
+                ))}
+              {!isMobile && <NotificationBell />}
               <div className="relative group">
                 <button
                   type="button"
@@ -186,39 +175,16 @@ const Header = () => {
                       <div className="my-1 border-t border-border" />
                     </>
                   )}
-                  <Link
-
-                    to="/perfil"
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
-                  >
-                    <UserCircle className="h-4 w-4 text-muted-foreground" />
-                    Perfil
-                  </Link>
-                  {isFarmer && (
+                  {accountLinks(isFarmer, isClient).map(({ to, label, Icon }) => (
                     <Link
-                      to="/agricultor/informacoes"
+                      key={to}
+                      to={to}
                       className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                     >
-                      <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                      Informações da exploração
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      {label}
                     </Link>
-                  )}
-                  <Link
-                    to="/definicoes"
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
-                  >
-                    <SettingsIcon className="h-4 w-4 text-muted-foreground" />
-                    Definições
-                  </Link>
-                  {isClient && (
-                    <Link
-                      to="/favoritos"
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
-                    >
-                      <Heart className="h-4 w-4 text-muted-foreground" />
-                      Favoritos
-                    </Link>
-                  )}
+                  ))}
                   <div className="my-1 border-t border-border" />
                   <button
                     type="button"
@@ -246,13 +212,16 @@ const Header = () => {
           )}
         </div>
 
-        <button
-          className="md:hidden p-2 text-foreground"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Menu"
-        >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          {user && isMobile && <NotificationBell />}
+          <button
+            className="p-2 text-foreground"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Menu"
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {mobileOpen && (
@@ -301,6 +270,16 @@ const Header = () => {
                     </div>
                   )}
                   {isClient && (
+                    <Link
+                      to="/encomendas"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+                    >
+                      <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                      As minhas encomendas
+                    </Link>
+                  )}
+                  {isClient && (
                     <Link to="/carrinho" onClick={() => setMobileOpen(false)}>
                       <Button variant="outline" className="w-full justify-between gap-2">
                         <span className="flex items-center gap-2">
@@ -315,6 +294,19 @@ const Header = () => {
                       </Button>
                     </Link>
                   )}
+                  {[...(isFarmer ? farmerLinks : []), ...accountLinks(isFarmer, isClient)].map(({ to, label, Icon }) => (
+                    <Link
+                      key={to}
+                      to={to}
+                      onClick={() => setMobileOpen(false)}
+                      className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-secondary ${
+                        location.pathname === to ? "text-primary" : "text-foreground"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      {label}
+                    </Link>
+                  ))}
                   <Button variant="outline" className="w-full gap-2" onClick={() => { handleSignOut(); setMobileOpen(false); }}>
                     <LogOut className="h-4 w-4" />
                     Sair
