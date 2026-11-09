@@ -223,7 +223,9 @@ const sections: LegalSection[] = [
           </li>
           <li>
             <strong>Clientes:</strong> o perfil público do Agricultor (exploração, localização,
-            horários, avaliações) é visível para todos.
+            horários, avaliações) é visível para todos. Nas suas avaliações aparece o primeiro
+            nome e a inicial do apelido e, só se o autorizar, a sua fotografia de perfil. Pode
+            retirar essa autorização a qualquer momento em As minhas encomendas.
           </li>
           <li>
             <strong>Prestadores de serviços</strong> que tratam dados por nossa conta, com

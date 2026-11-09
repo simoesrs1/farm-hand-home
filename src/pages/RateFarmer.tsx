@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import { reviewContext, type ReviewableOrder } from "@/lib/review-eligibility";
+import { avatarPublicUrl, isStoredAvatar } from "@/lib/avatar";
 
 interface FarmerInfo {
   id: string;
@@ -27,18 +29,22 @@ const RateFarmer = () => {
   const [submitting, setSubmitting] = useState(false);
   // Motivo para não mostrar o formulário (null = pode avaliar).
   const [blocked, setBlocked] = useState<string | null>(null);
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const [showPhoto, setShowPhoto] = useState(false);
 
   useEffect(() => {
     if (!user || !orderId) return;
     (async () => {
-      const [{ data }, { data: reviews }] = await Promise.all([
+      const [{ data }, { data: reviews }, { data: myProfile }] = await Promise.all([
         supabase
           .from("orders")
           .select("status,delivery_address,expected_delivery_at,pickup_deadline,farmer:farmer_id(id,company_name,pickup_address)")
           .eq("id", orderId)
           .maybeSingle(),
         supabase.rpc("my_order_reviews"),
+        supabase.from("profiles").select("avatar_url").eq("id", user.id).maybeSingle(),
       ]);
+      setPhotoPath(isStoredAvatar(myProfile?.avatar_url) ? myProfile.avatar_url : null);
       const order = data as unknown as (ReviewableOrder & { farmer: FarmerInfo | null }) | null;
       setFarmer(order?.farmer ?? null);
       if (!order) setBlocked("Encomenda não encontrada.");
@@ -60,6 +66,7 @@ const RateFarmer = () => {
       p_order_id: orderId as string,
       p_rating: rating,
       p_comment: comment,
+      p_show_photo: !!photoPath && showPhoto,
     });
     setSubmitting(false);
     if (error) {
@@ -125,6 +132,19 @@ const RateFarmer = () => {
           placeholder="Conta como foi a tua experiência com este agricultor..."
           rows={5}
         />
+
+        {photoPath && (
+          <label htmlFor="show-photo" className="mt-4 flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3">
+            <Checkbox id="show-photo" checked={showPhoto} onCheckedChange={(v) => setShowPhoto(v === true)} />
+            <img src={avatarPublicUrl(photoPath)} alt="" className="h-9 w-9 rounded-full object-cover" />
+            <span className="text-sm text-foreground">
+              Autorizo mostrar a minha fotografia nesta avaliação
+              <span className="block text-xs text-muted-foreground">
+                Fica visível para todos. Podes retirar a autorização em As minhas encomendas.
+              </span>
+            </span>
+          </label>
+        )}
 
         <div className="mt-6 flex justify-end gap-2">
           <Button variant="outline" onClick={() => navigate("/encomendas")}>Cancelar</Button>

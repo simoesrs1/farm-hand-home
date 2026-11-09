@@ -94,6 +94,7 @@ interface MyReview {
   review_id: string;
   removed: boolean;
   removal_status: string | null;
+  photo_shown: boolean;
 }
 
 interface Complaint {
@@ -180,6 +181,16 @@ const MyOrders = () => {
     return null;
   };
 
+  const hidePhoto = async (reviewId: string) => {
+    const { error } = await supabase.rpc("hide_review_photo", { p_review_id: reviewId });
+    if (error) {
+      toast({ title: "Não foi possível retirar a fotografia", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Fotografia retirada", description: "A tua avaliação mostra agora apenas o nome." });
+    loadReviewState();
+  };
+
   // Avaliar / estado da avaliação, comum às encomendas ativas e concluídas.
   const renderReviewAction = (o: Order) => {
     const review = myReviews[o.id];
@@ -204,6 +215,11 @@ const MyOrders = () => {
         ) : (
           <Button variant="outline" onClick={() => setRemovalReviewId(review.review_id)}>
             Pedir eliminação
+          </Button>
+        )}
+        {review.photo_shown && (
+          <Button variant="outline" onClick={() => hidePhoto(review.review_id)}>
+            Retirar a minha fotografia
           </Button>
         )}
       </>

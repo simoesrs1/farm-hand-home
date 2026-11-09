@@ -239,6 +239,8 @@ export type Database = {
           rating: number
           removed_at: string | null
           reviewer_name: string
+          reviewer_photo_path: string | null
+          show_photo: boolean
         }
         Insert: {
           client_id: string
@@ -251,6 +253,8 @@ export type Database = {
           rating: number
           removed_at?: string | null
           reviewer_name: string
+          reviewer_photo_path?: string | null
+          show_photo?: boolean
         }
         Update: {
           client_id?: string
@@ -263,6 +267,8 @@ export type Database = {
           rating?: number
           removed_at?: string | null
           reviewer_name?: string
+          reviewer_photo_path?: string | null
+          show_photo?: boolean
         }
         Relationships: []
       }
@@ -1095,10 +1101,12 @@ export type Database = {
     }
     Functions: {
       file_delivery_complaint: { Args: { p_order_id: string }; Returns: string }
+      hide_review_photo: { Args: { p_review_id: string }; Returns: undefined }
       my_order_reviews: {
         Args: never
         Returns: {
           order_id: string
+          photo_shown: boolean
           removal_status: string | null
           removed: boolean
           review_id: string
@@ -1109,7 +1117,12 @@ export type Database = {
         Returns: string
       }
       submit_farmer_review: {
-        Args: { p_comment?: string; p_order_id: string; p_rating: number }
+        Args: {
+          p_comment?: string
+          p_order_id: string
+          p_rating: number
+          p_show_photo?: boolean
+        }
         Returns: string
       }
       apply_delivery_defaults: {
