@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,12 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ToastAction } from "@/components/ui/toast";
+import { toast } from "@/hooks/use-toast";
+import { summarizeNotifications } from "@/lib/notification-summary";
+
+// Espera antes de mostrar o balão, para juntar notificações que chegam seguidas.
+const BATCH_MS = 1500;
 
 interface Notification {
   id: string;
@@ -25,6 +31,11 @@ const NotificationBell = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
+  // Notificações recebidas em tempo real à espera do balão.
+  const pending = useRef<Notification[]>([]);
+  const batchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // O canal é criado uma vez por utilizador; o balão usa sempre o handleClick atual.
+  const handleClickRef = useRef<(n: Notification) => void>(() => {});
 
   const load = async () => {
     const { data } = await supabase
@@ -35,6 +46,25 @@ const NotificationBell = () => {
     setItems((data as Notification[]) ?? []);
   };
 
+  const showBatch = () => {
+    const batch = pending.current;
+    pending.current = [];
+    const summary = summarizeNotifications(batch);
+    if (!summary) return;
+    toast({
+      title: summary.title,
+      description: summary.description,
+      action: (
+        <ToastAction
+          altText="Ver notificações"
+          onClick={() => (batch.length === 1 ? handleClickRef.current(batch[0]) : setOpen(true))}
+        >
+          Ver
+        </ToastAction>
+      ),
+    });
+  };
+
   useEffect(() => {
     if (!user) return;
     load();
@@ -43,10 +73,19 @@ const NotificationBell = () => {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
-        () => load(),
+        (payload) => {
+          load();
+          pending.current.push(payload.new as Notification);
+          if (batchTimer.current) clearTimeout(batchTimer.current);
+          batchTimer.current = setTimeout(showBatch, BATCH_MS);
+        },
       )
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      if (batchTimer.current) clearTimeout(batchTimer.current);
+      pending.current = [];
+      supabase.removeChannel(ch);
+    };
   }, [user]);
 
   if (!user) return null;
@@ -74,6 +113,8 @@ const NotificationBell = () => {
       navigate(`${base}?id=${n.order_id}`);
     }
   };
+
+  handleClickRef.current = handleClick;
 
   return (
     <DropdownMenu open={open} onOpenChange={(o) => { setOpen(o); if (o && unread > 0) markAllRead(); }}>
