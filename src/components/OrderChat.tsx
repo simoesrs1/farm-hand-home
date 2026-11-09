@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -230,7 +231,7 @@ const Bubble = ({
   );
 };
 
-const ReportDialog = ({
+export const ReportDialog = ({
   orderId,
   reporterRole,
   open,
@@ -245,6 +246,9 @@ const ReportDialog = ({
   const [reason, setReason] = useState("");
   const [proof, setProof] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [warningAccepted, setWarningAccepted] = useState(false);
+  // O aviso legal aplica-se a quem denuncia um agricultor.
+  const needsWarning = reporterRole === "cliente";
 
   const submit = async () => {
     if (!user) return;
@@ -272,9 +276,10 @@ const ReportDialog = ({
         proof_mime: up.mime,
       });
       if (error) throw error;
-      toast.success("Denúncia enviada. O suporte foi notificado.");
+      toast.success("Denúncia registada para análise da equipa.");
       setReason("");
       setProof(null);
+      setWarningAccepted(false);
       onOpenChange(false);
     } catch (e: any) {
       toast.error(e.message ?? "Não foi possível abrir a denúncia");
@@ -294,8 +299,8 @@ const ReportDialog = ({
         <DialogHeader>
           <DialogTitle>Abrir denúncia</DialogTitle>
           <DialogDescription>
-            Descreve o que se passou e anexa uma prova (foto, PDF). A equipa de suporte entra
-            automaticamente na conversa para ajudar.
+            Descreve o que se passou e anexa uma prova (foto, PDF). A denúncia fica registada para
+            análise da equipa da plataforma.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -317,7 +322,22 @@ const ReportDialog = ({
             />
             {proof && <p className="mt-1 text-xs text-muted-foreground">📎 {proof.name}</p>}
           </div>
-          <Button onClick={submit} disabled={submitting} className="w-full">
+          {needsWarning && (
+            <label htmlFor="report-warning" className="flex cursor-pointer items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-foreground">
+              <Checkbox
+                id="report-warning"
+                checked={warningAccepted}
+                onCheckedChange={(v) => setWarningAccepted(v === true)}
+                className="mt-0.5"
+              />
+              <span>
+                Para denunciar um abuso por parte do agricultor, tens de apresentar provas concretas
+                de que esse abuso aconteceu. Se não existirem provas, o agricultor pode avançar com
+                um processo judicial por difamação.
+              </span>
+            </label>
+          )}
+          <Button onClick={submit} disabled={submitting || (needsWarning && !warningAccepted)} className="w-full">
             {submitting ? "A enviar..." : "Enviar denúncia"}
           </Button>
         </div>

@@ -235,10 +235,18 @@ const sections: LegalSection[] = [
       <>
         <p>
           Só pode avaliar um Agricultor quem lhe tenha comprado através da plataforma (prova de
-          compra). As avaliações
+          compra), com uma avaliação por encomenda, depois de a receber, se o Agricultor a
+          cancelar, ou se a entrega ao domicílio continuar por fazer 24 horas depois da data
+          prevista. As avaliações
           devem ser honestas e respeitosas. São proibidos conteúdos falsos, ofensivos,
           discriminatórios, ilegais, publicidade ou dados pessoais de terceiros, tanto nas
           avaliações como no chat das encomendas.
+        </p>
+        <p>
+          Uma avaliação publicada não pode ser alterada. A sua eliminação pode ser pedida com
+          justificação e fica sujeita à análise da equipa do {LEGAL.brand}. Quem denunciar um abuso
+          por parte de um Agricultor tem de apresentar provas concretas; na falta de provas, o
+          Agricultor pode avançar com um processo judicial por difamação.
         </p>
         <p>
           Podemos remover conteúdos que violem estas regras. Ao publicar conteúdos (textos,

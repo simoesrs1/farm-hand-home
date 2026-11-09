@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
     }
     const { data: dbProducts, error: productsErr } = await admin
       .from("products")
-      .select("id, name, client_price, discount_percent, unit, active, stock_quantity, farmer_id, local_delivery, delivery_tracking, delivery_fee")
+      .select("id, name, client_price, discount_percent, unit, active, stock_quantity, farmer_id, local_delivery, delivery_tracking, delivery_fee, shipping_days")
       .in("id", productIds);
     if (productsErr) throw productsErr;
     const productById = new Map((dbProducts ?? []).map((p) => [p.id, p]));
@@ -284,6 +284,18 @@ Deno.serve(async (req) => {
     }
 
 
+    // Data prevista da entrega ao domicílio: a agendada ou, sem agendamento, o
+    // pagamento mais o maior número de dias de envio. Sem nenhuma das duas fica
+    // NULL e conta o prazo limite.
+    const maxShippingDays = Math.max(0, ...deliveryProducts.map((p) => Number(p?.shipping_days ?? 0)));
+    const expectedDeliveryAt = !needsDelivery
+      ? null
+      : scheduledAt
+        ? scheduledAt.toISOString()
+        : maxShippingDays > 0
+          ? new Date(now.getTime() + maxShippingDays * 24 * 60 * 60 * 1000).toISOString()
+          : null;
+
     const { data: order, error: orderErr } = await admin
       .from("orders")
       .insert({
@@ -302,6 +314,7 @@ Deno.serve(async (req) => {
         delivery_lng: deliveryLng,
         delivery_tracking: deliveryTracking,
         delivery_fee: deliveryFee,
+        expected_delivery_at: expectedDeliveryAt,
       })
       .select()
       .single();

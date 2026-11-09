@@ -1,13 +1,26 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
-import { ShoppingBag, Clock, CheckCircle2, XCircle, ArrowLeft, MapPin, Star, ChevronDown, ChevronUp, Truck } from "lucide-react";
+import { ShoppingBag, Clock, CheckCircle2, XCircle, ArrowLeft, MapPin, Star, ChevronDown, ChevronUp, Truck, PackageX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import OrderChat from "@/components/OrderChat";
+import OrderChat, { ReportDialog } from "@/components/OrderChat";
+import ReviewRemovalDialog from "@/components/ReviewRemovalDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
+import { canFileDeliveryComplaint, reviewContext } from "@/lib/review-eligibility";
 import DeliveryTrackingDialog from "@/components/DeliveryTrackingDialog";
 
 interface OrderItem {
@@ -41,6 +54,7 @@ interface Order {
   created_at: string;
   delivery_address: string | null;
   delivery_tracking: boolean;
+  expected_delivery_at: string | null;
   farmer_id: string;
   farmer: FarmerRef | null;
   order_items: OrderItem[];
@@ -51,7 +65,7 @@ const statusMeta: Record<Order["status"], { label: string; tone: string; Icon: t
   awaiting_pickup: { label: "A aguardar levantamento", tone: "bg-primary/15 text-primary", Icon: Clock },
   delivered: { label: "Levantada", tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", Icon: CheckCircle2 },
   expired: { label: "Expirada", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
-  refunded: { label: "Devolvida (sem stock)", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
+  refunded: { label: "Devolvida", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
 };
 
 // Nas entregas ao domicílio fala-se de entrega, não de levantamento.
@@ -76,6 +90,17 @@ const mapsUrl = (f: FarmerRef | null) => {
   return null;
 };
 
+interface MyReview {
+  review_id: string;
+  removed: boolean;
+  removal_status: string | null;
+}
+
+interface Complaint {
+  status: string;
+  deadline_at: string;
+}
+
 const MyOrders = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -83,18 +108,34 @@ const MyOrders = () => {
   const [selected, setSelected] = useState<Order | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [tracking, setTracking] = useState<Order | null>(null);
+  const [myReviews, setMyReviews] = useState<Record<string, MyReview>>({});
+  const [complaints, setComplaints] = useState<Record<string, Complaint>>({});
+  const [removalReviewId, setRemovalReviewId] = useState<string | null>(null);
+  const [reportOrderId, setReportOrderId] = useState<string | null>(null);
+  const [complaintOrder, setComplaintOrder] = useState<Order | null>(null);
+  const [filing, setFiling] = useState(false);
+
+  const loadReviewState = useCallback(async () => {
+    const [{ data: reviews }, { data: rows }] = await Promise.all([
+      supabase.rpc("my_order_reviews"),
+      supabase.from("delivery_complaints").select("order_id, status, deadline_at"),
+    ]);
+    setMyReviews(Object.fromEntries((reviews ?? []).map((r) => [r.order_id, r])));
+    setComplaints(Object.fromEntries((rows ?? []).map((c) => [c.order_id, c])));
+  }, []);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,total,status,pickup_code,pickup_deadline,paid_at,delivered_at,accepted_at,created_at,delivery_address,delivery_tracking,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),delivery_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
+        .select("id,total,status,pickup_code,pickup_deadline,paid_at,delivered_at,accepted_at,created_at,delivery_address,delivery_tracking,expected_delivery_at,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),delivery_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
         .order("created_at", { ascending: false });
       setOrders((data as unknown as Order[]) ?? []);
+      await loadReviewState();
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, loadReviewState]);
 
   const { activeOrders, pastOrders } = useMemo(() => {
     const active: Order[] = [];
@@ -114,6 +155,60 @@ const MyOrders = () => {
       </main>
     );
   }
+
+  const fileComplaint = async () => {
+    if (!complaintOrder) return;
+    setFiling(true);
+    const { error } = await supabase.rpc("file_delivery_complaint", { p_order_id: complaintOrder.id });
+    setFiling(false);
+    setComplaintOrder(null);
+    if (error) {
+      toast({ title: "Não foi possível registar a queixa", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Queixa registada", description: "O agricultor tem 48 horas para entregar a encomenda." });
+    loadReviewState();
+  };
+
+  const complaintMessage = (c: Complaint) => {
+    if (c.status === "open") {
+      return new Date(c.deadline_at).getTime() > Date.now()
+        ? `Queixa registada. O agricultor tem até ${new Date(c.deadline_at).toLocaleString("pt-PT")} para entregar.`
+        : "Queixa registada. A equipa da plataforma vai confirmar a situação.";
+    }
+    if (c.status === "rejected") return "A queixa foi analisada e recusada pela equipa da plataforma.";
+    return null;
+  };
+
+  // Avaliar / estado da avaliação, comum às encomendas ativas e concluídas.
+  const renderReviewAction = (o: Order) => {
+    const review = myReviews[o.id];
+    if (!review) {
+      if (!reviewContext(o)) return null;
+      return (
+        <Link to={`/avaliar/${o.id}`}>
+          <Button variant="default" className="gap-2">
+            <Star className="h-4 w-4" /> Avaliar agricultor
+          </Button>
+        </Link>
+      );
+    }
+    if (review.removed) return <span className="text-xs text-muted-foreground">Avaliação eliminada</span>;
+    return (
+      <>
+        <Button variant="default" disabled className="gap-2">
+          <Star className="h-4 w-4" /> Já avaliada
+        </Button>
+        {review.removal_status === "pending" ? (
+          <span className="text-xs text-muted-foreground">Eliminação em análise</span>
+        ) : (
+          <Button variant="outline" onClick={() => setRemovalReviewId(review.review_id)}>
+            Pedir eliminação
+          </Button>
+        )}
+      </>
+    );
+  };
 
   const renderActiveCard = (o: Order) => {
     const meta = statusMeta[o.status];
@@ -231,6 +326,18 @@ const MyOrders = () => {
             </Button>
           </div>
         )}
+        {canFileDeliveryComplaint(o) && (
+          <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4">
+            {complaints[o.id] ? (
+              <p className="mr-auto text-sm text-muted-foreground">{complaintMessage(complaints[o.id])}</p>
+            ) : (
+              <Button variant="outline" className="gap-2" onClick={() => setComplaintOrder(o)}>
+                <PackageX className="h-4 w-4" /> Não recebi a encomenda
+              </Button>
+            )}
+            {renderReviewAction(o)}
+          </div>
+        )}
         {(o.status === "awaiting_pickup") && (
           <div className="mt-4 border-t border-border pt-4">
             <OrderChat orderId={o.id} viewerRole="cliente" deliveredAt={o.delivered_at} />
@@ -273,18 +380,20 @@ const MyOrders = () => {
           </div>
         </div>
 
-        {o.status === "delivered" && (
-          <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-border/60 pt-4">
+        {(o.status === "delivered" || o.status === "refunded") && (
+          <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
             {showTracking && (
               <Button variant="outline" className="gap-2" onClick={() => setTracking(o)}>
                 <Truck className="h-4 w-4" /> Ver percurso da entrega
               </Button>
             )}
-            <Link to={`/avaliar/${o.id}`}>
-              <Button variant="default" className="gap-2">
-                <Star className="h-4 w-4" /> Avaliar agricultor
-              </Button>
-            </Link>
+            <ReportDialog
+              orderId={o.id}
+              reporterRole="cliente"
+              open={reportOrderId === o.id}
+              onOpenChange={(open) => setReportOrderId(open ? o.id : null)}
+            />
+            {renderReviewAction(o)}
           </div>
         )}
       </li>
@@ -372,6 +481,28 @@ const MyOrders = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <ReviewRemovalDialog
+        reviewId={removalReviewId}
+        onOpenChange={(open) => !open && setRemovalReviewId(null)}
+        onSubmitted={loadReviewState}
+      />
+
+      <AlertDialog open={!!complaintOrder} onOpenChange={(o) => !o && setComplaintOrder(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Não recebeste a encomenda?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O agricultor será avisado e tem 48 horas para a entregar. Se a entrega não acontecer, a
+              equipa da plataforma confirma a situação e o valor é devolvido.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={fileComplaint} disabled={filing}>Registar queixa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <DeliveryTrackingDialog
         orderId={tracking?.id ?? null}

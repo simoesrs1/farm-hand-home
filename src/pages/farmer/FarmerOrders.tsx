@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck, MapPin } from "lucide-react";
+import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck, MapPin, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -66,7 +66,7 @@ const meta = {
   awaiting_pickup: { label: "A aguardar", tone: "bg-primary/15 text-primary", Icon: Clock },
   delivered: { label: "Entregue", tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", Icon: CheckCircle2 },
   expired: { label: "Expirada", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
-  refunded: { label: "Devolvida (sem stock)", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
+  refunded: { label: "Devolvida", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
   pending_payment: { label: "Pendente", tone: "bg-muted text-muted-foreground", Icon: Clock },
 } as const;
 
@@ -82,6 +82,8 @@ const FarmerOrders = () => {
   const [validating, setValidating] = useState<Order | null>(null);
   const [deliveryProductNames, setDeliveryProductNames] = useState<string[]>([]);
   const [farm, setFarm] = useState<{ lat: number; lng: number; name: string } | null>(null);
+  // Queixas em aberto por entrega não recebida: prazo por encomenda.
+  const [complaintDeadlines, setComplaintDeadlines] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -106,6 +108,13 @@ const FarmerOrders = () => {
             ? { lat: Number(fd.pickup_lat), lng: Number(fd.pickup_lng), name: fd.company_name ?? "A minha quinta" }
             : null,
         );
+      }
+      const { data: complaints } = await supabase
+        .from("delivery_complaints")
+        .select("order_id, deadline_at")
+        .eq("status", "open");
+      if (!cancelled) {
+        setComplaintDeadlines(Object.fromEntries((complaints ?? []).map((c) => [c.order_id, c.deadline_at])));
       }
       if (fd?.id) {
         const { data: prods } = await supabase
@@ -506,6 +515,13 @@ const FarmerOrders = () => {
 
                 {o.status === "awaiting_pickup" && (
                   <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm text-muted-foreground">
+                    {complaintDeadlines[o.id] && (
+                      <p className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-2.5 text-foreground">
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" />
+                        O cliente indicou que não recebeu a encomenda. Tens até{" "}
+                        {new Date(complaintDeadlines[o.id]).toLocaleString("pt-PT")} para a entregar e validar o QR code.
+                      </p>
+                    )}
                     {homeDelivery && o.delivery_address && (
                       <p className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-2.5 text-foreground">
                         <Truck className="h-4 w-4 shrink-0 text-primary" />

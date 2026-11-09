@@ -12,6 +12,7 @@ import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import PickupAvailabilityBadge from "@/components/PickupAvailabilityBadge";
+import FarmerReviewsBar from "@/components/FarmerReviewsBar";
 import { formatPickupHours, parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
 import { formatReturnDate, isPaused } from "@/lib/farmer-activity";
 
@@ -191,6 +192,9 @@ const FarmerProfile = () => {
               <p className="mt-1 text-primary-foreground/80">{display.name}</p>
             </div>
           </div>
+
+          {/* Os agricultores de demonstração não têm encomendas nem avaliações reais. */}
+          {id && !mockFarmer && <FarmerReviewsBar farmerId={id} />}
 
           <div className="p-5 md:p-6">
             <div className="flex flex-wrap items-center gap-4">

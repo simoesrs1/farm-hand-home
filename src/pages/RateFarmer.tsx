@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
+import { reviewContext, type ReviewableOrder } from "@/lib/review-eligibility";
 
 interface FarmerInfo {
   id: string;
@@ -24,16 +25,27 @@ const RateFarmer = () => {
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // Motivo para não mostrar o formulário (null = pode avaliar).
+  const [blocked, setBlocked] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user || !orderId) return;
     (async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("farmer:farmer_id(id,company_name,pickup_address)")
-        .eq("id", orderId)
-        .maybeSingle();
-      setFarmer(((data as { farmer: FarmerInfo | null })?.farmer) ?? null);
+      const [{ data }, { data: reviews }] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("status,delivery_address,expected_delivery_at,pickup_deadline,farmer:farmer_id(id,company_name,pickup_address)")
+          .eq("id", orderId)
+          .maybeSingle(),
+        supabase.rpc("my_order_reviews"),
+      ]);
+      const order = data as unknown as (ReviewableOrder & { farmer: FarmerInfo | null }) | null;
+      setFarmer(order?.farmer ?? null);
+      if (!order) setBlocked("Encomenda não encontrada.");
+      else if ((reviews ?? []).some((r) => r.order_id === orderId)) setBlocked("Esta encomenda já foi avaliada.");
+      else if (!reviewContext(order)) {
+        setBlocked("Podes avaliar depois de receberes a encomenda, se o agricultor a cancelar ou se a entrega se atrasar mais de 24 horas.");
+      }
       setLoading(false);
     })();
   }, [user, orderId]);
@@ -44,9 +56,16 @@ const RateFarmer = () => {
       return;
     }
     setSubmitting(true);
-    // Placeholder: persistência das avaliações requer uma tabela dedicada.
-    await new Promise((r) => setTimeout(r, 400));
+    const { error } = await supabase.rpc("submit_farmer_review", {
+      p_order_id: orderId as string,
+      p_rating: rating,
+      p_comment: comment,
+    });
     setSubmitting(false);
+    if (error) {
+      toast({ title: "Não foi possível enviar", description: error.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Avaliação enviada", description: "Obrigado pelo teu feedback!" });
     navigate("/encomendas");
   };
@@ -74,8 +93,12 @@ const RateFarmer = () => {
         </p>
       )}
 
+      {blocked ? (
+        <p className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">{blocked}</p>
+      ) : !loading && (
       <div className="rounded-2xl border border-border bg-card p-6">
         <p className="mb-3 text-sm font-medium text-foreground">A tua avaliação</p>
+        <p className="mb-3 text-xs text-muted-foreground">Depois de enviada, a avaliação não pode ser alterada.</p>
         <div className="mb-6 flex gap-2">
           {[1, 2, 3, 4, 5].map((n) => {
             const active = (hover || rating) >= n;
@@ -110,6 +133,7 @@ const RateFarmer = () => {
           </Button>
         </div>
       </div>
+      )}
     </main>
   );
 };

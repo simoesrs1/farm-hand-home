@@ -47,6 +47,9 @@ Deno.serve(async (req) => {
       .from("orders")
       .update({ status: "expired", expired_at: now })
       .eq("status", "awaiting_pickup")
+      // Só levantamentos: uma entrega ao domicílio por fazer é falha do
+      // agricultor e segue o processo de queixa (delivery_complaints).
+      .is("delivery_address", null)
       .lt("pickup_deadline", now)
       .select("id, client_id, farmer_id, total");
     if (error) throw error;

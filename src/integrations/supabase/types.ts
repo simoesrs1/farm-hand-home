@@ -197,6 +197,105 @@ export type Database = {
           },
         ]
       }
+      delivery_complaints: {
+        Row: {
+          client_id: string
+          created_at: string
+          deadline_at: string
+          decided_at: string | null
+          id: string
+          order_id: string
+          status: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          deadline_at: string
+          decided_at?: string | null
+          id?: string
+          order_id: string
+          status?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          deadline_at?: string
+          decided_at?: string | null
+          id?: string
+          order_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      farmer_reviews: {
+        Row: {
+          client_id: string
+          comment: string | null
+          context: string
+          created_at: string
+          farmer_id: string
+          id: string
+          order_id: string
+          rating: number
+          removed_at: string | null
+          reviewer_name: string
+        }
+        Insert: {
+          client_id: string
+          comment?: string | null
+          context: string
+          created_at?: string
+          farmer_id: string
+          id?: string
+          order_id: string
+          rating: number
+          removed_at?: string | null
+          reviewer_name: string
+        }
+        Update: {
+          client_id?: string
+          comment?: string | null
+          context?: string
+          created_at?: string
+          farmer_id?: string
+          id?: string
+          order_id?: string
+          rating?: number
+          removed_at?: string | null
+          reviewer_name?: string
+        }
+        Relationships: []
+      }
+      review_removal_requests: {
+        Row: {
+          client_id: string
+          created_at: string
+          decided_at: string | null
+          id: string
+          justification: string
+          review_id: string
+          status: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          justification: string
+          review_id: string
+          status?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          justification?: string
+          review_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       farmer_details: {
         Row: {
           address: string | null
@@ -553,6 +652,7 @@ export type Database = {
           delivery_lng: number | null
           delivery_tracking: boolean
           expired_at: string | null
+          expected_delivery_at: string | null
           farmer_amount: number
           farmer_id: string
           id: string
@@ -579,6 +679,7 @@ export type Database = {
           delivery_lng?: number | null
           delivery_tracking?: boolean
           expired_at?: string | null
+          expected_delivery_at?: string | null
           farmer_amount: number
           farmer_id: string
           id?: string
@@ -605,6 +706,7 @@ export type Database = {
           delivery_lng?: number | null
           delivery_tracking?: boolean
           expired_at?: string | null
+          expected_delivery_at?: string | null
           farmer_amount?: number
           farmer_id?: string
           id?: string
@@ -992,6 +1094,24 @@ export type Database = {
       }
     }
     Functions: {
+      file_delivery_complaint: { Args: { p_order_id: string }; Returns: string }
+      my_order_reviews: {
+        Args: never
+        Returns: {
+          order_id: string
+          removal_status: string | null
+          removed: boolean
+          review_id: string
+        }[]
+      }
+      request_review_removal: {
+        Args: { p_justification: string; p_review_id: string }
+        Returns: string
+      }
+      submit_farmer_review: {
+        Args: { p_comment?: string; p_order_id: string; p_rating: number }
+        Returns: string
+      }
       apply_delivery_defaults: {
         Args: { p_farmer_id: string; p_values: Json }
         Returns: number
