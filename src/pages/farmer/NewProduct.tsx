@@ -578,8 +578,8 @@ const NewProduct = () => {
                 </Label>
                 <p className="text-xs text-muted-foreground">
                   O acompanhamento já está incluído no preço da entrega ao domicílio e não pode ser
-                  cobrado à parte ao cliente. Terá de atualizar o estado da encomenda (embalada, em
-                  trânsito, para entrega) na página Encomendas.
+                  cobrado à parte ao cliente. Terá de atualizar o estado da encomenda (embalada,
+                  expedida da quinta, em trânsito) na página Encomendas.
                 </p>
               </div>
               <Switch

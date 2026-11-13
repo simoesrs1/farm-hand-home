@@ -561,7 +561,7 @@ const Cart = () => {
                     <div>
                       <div className="text-sm font-medium">Com acompanhamento da entrega</div>
                       <p className="text-[11px] text-muted-foreground">
-                        Siga a encomenda passo a passo: aceite, embalada, em trânsito, para entrega e entregue. Sem custo adicional.
+                        Siga a encomenda passo a passo: aceite, embalada, expedida da quinta, em trânsito e entregue. Sem custo adicional.
                       </p>
                     </div>
                   </label>

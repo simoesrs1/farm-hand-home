@@ -50,8 +50,8 @@ type TrackingAction = "packed" | "in_transit" | "out_for_delivery";
 // a cargo da validação do QR code.
 const TRACKING_STEPS: { action: TrackingAction; column: "packed_at" | "in_transit_at" | "out_for_delivery_at"; label: string; done: string }[] = [
   { action: "packed", column: "packed_at", label: "Marcar como embalada", done: "Embalada" },
-  { action: "in_transit", column: "in_transit_at", label: "Marcar em trânsito", done: "Em trânsito" },
-  { action: "out_for_delivery", column: "out_for_delivery_at", label: "Marcar para entrega", done: "Para entrega" },
+  { action: "in_transit", column: "in_transit_at", label: "Marcar como expedida", done: "Expedida da quinta" },
+  { action: "out_for_delivery", column: "out_for_delivery_at", label: "Marcar em trânsito", done: "Em trânsito" },
 ];
 
 const nextTrackingStep = (o: Order) =>

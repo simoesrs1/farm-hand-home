@@ -272,7 +272,7 @@ const MyOrders = () => {
             </div>
             {o.delivery_tracking && (
               <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setTracking(o)}>
-                <Truck className="h-4 w-4" /> Acompanha a tua entrega
+                <Truck className="h-4 w-4" /> Acompanhar
               </Button>
             )}
           </div>
@@ -400,7 +400,7 @@ const MyOrders = () => {
           <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
             {showTracking && (
               <Button variant="outline" className="gap-2" onClick={() => setTracking(o)}>
-                <Truck className="h-4 w-4" /> Ver percurso da entrega
+                <Truck className="h-4 w-4" /> Acompanhar
               </Button>
             )}
             <ReportDialog

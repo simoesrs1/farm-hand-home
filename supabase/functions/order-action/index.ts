@@ -1,6 +1,6 @@
 // Farmer-side order actions: accept the order, or refund it for lack of stock.
 // Nas entregas ao domicílio com acompanhamento, marca também os passos
-// intermédios (embalada → em trânsito → para entrega). "Entregue" só acontece
+// intermédios (embalada → expedida da quinta → em trânsito). "Entregue" só acontece
 // em validate-pickup, quando o QR code é validado.
 import { createClient } from "npm:@supabase/supabase-js@2.110.8";
 
@@ -15,13 +15,13 @@ const TRACKING_STEPS = {
   in_transit: {
     column: "in_transit_at",
     requires: "packed_at",
-    title: "Encomenda em trânsito",
-    message: (farm: string) => `A tua encomenda de ${farm} está em trânsito.`,
+    title: "Encomenda expedida",
+    message: (farm: string) => `A tua encomenda de ${farm} saiu da quinta.`,
   },
   out_for_delivery: {
     column: "out_for_delivery_at",
     requires: "in_transit_at",
-    title: "Encomenda para entrega",
+    title: "Encomenda em trânsito",
     message: (farm: string) =>
       `A tua encomenda de ${farm} está a caminho da tua morada. Tem o QR code pronto para a receber.`,
   },

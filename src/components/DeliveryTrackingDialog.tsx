@@ -24,8 +24,8 @@ type StepKey = "accepted_at" | "packed_at" | "in_transit_at" | "out_for_delivery
 const STEPS: { key: StepKey; label: string; Icon: typeof Package }[] = [
   { key: "accepted_at", label: "Aceite", Icon: CheckCircle2 },
   { key: "packed_at", label: "Embalado", Icon: Package },
-  { key: "in_transit_at", label: "Em trânsito", Icon: Truck },
-  { key: "out_for_delivery_at", label: "Para entrega", Icon: MapPin },
+  { key: "in_transit_at", label: "Expedido da quinta", Icon: Truck },
+  { key: "out_for_delivery_at", label: "Em trânsito", Icon: MapPin },
   { key: "delivered_at", label: "Entregue", Icon: PackageCheck },
 ];
 
