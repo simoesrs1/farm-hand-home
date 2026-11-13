@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import OfferingsPicker from "@/components/OfferingsPicker";
+import type { Offerings } from "@/lib/farmer-offerings";
 import {
   Leaf,
   Upload,
@@ -16,6 +18,7 @@ import {
   Hash,
   AlertCircle,
   Check,
+  Store,
 } from "lucide-react";
 import { toUserMessage } from "@/lib/auth-errors";
 import PickupLocationMap from "@/components/PickupLocationMap";
@@ -116,6 +119,8 @@ const FarmerOnboarding = () => {
   const { toast } = useToast();
 
   const [values, setValues] = useState<FarmerFormValues>(EMPTY_VALUES);
+  const [offerings, setOfferings] = useState<Offerings>({ products: false, experiences: false, stays: false });
+  const noOffering = !offerings.products && !offerings.experiences && !offerings.stays;
   const [touched, setTouched] = useState<Partial<Record<FarmerField, boolean>>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
@@ -289,7 +294,7 @@ const FarmerOnboarding = () => {
 
     setSubmitAttempted(true);
 
-    const blocking = { ...errors, ...takenErrors };
+    const blocking = { ...errors, ...takenErrors, offerings: noOffering ? "required" : undefined };
     if (Object.values(blocking).some(Boolean)) {
       toast({
         title: "Formulário incompleto",
@@ -346,6 +351,9 @@ const FarmerOnboarding = () => {
           pickup_address: values.pickupAddress.trim(),
           pickup_lat: values.pickupLat,
           pickup_lng: values.pickupLng,
+          offers_products: offerings.products,
+          offers_experiences: offerings.experiences,
+          offers_stays: offerings.stays,
           registration_step: 2,
           initial_score: Math.min(certificates.length * 10, 50),
         })
@@ -430,6 +438,21 @@ const FarmerOnboarding = () => {
 
           {/* noValidate: as mensagens de erro são as nossas, não as do browser. */}
           <form onSubmit={handleSubmit} noValidate className="space-y-5 p-6">
+            {/* O que vai disponibilizar: uma, duas ou as três opções. */}
+            <section className="rounded-xl border border-border bg-background/50 p-5" data-invalid={submitAttempted && noOffering}>
+              <div className="mb-1 flex items-center gap-2 text-foreground">
+                <Store className="h-5 w-5 text-primary" />
+                <h2 className="font-display text-base font-semibold">O que vai disponibilizar na plataforma *</h2>
+              </div>
+              <p className="mb-4 text-xs text-muted-foreground">
+                Escolha uma ou mais opções. Pode alterar mais tarde em Informações da exploração.
+              </p>
+              <OfferingsPicker value={offerings} onChange={setOfferings} />
+              {submitAttempted && noOffering && (
+                <p className="mt-2 text-xs text-destructive">Escolha pelo menos uma opção.</p>
+              )}
+            </section>
+
             {/* Identificação da Exploração */}
             <section className="rounded-xl border border-border bg-background/50 p-5">
               <div className="mb-4 flex items-center gap-2 text-foreground">

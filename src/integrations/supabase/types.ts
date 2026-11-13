@@ -500,6 +500,9 @@ export type Database = {
           free_delivery_threshold: number | null
           id: string
           initial_score: number | null
+          offers_experiences: boolean
+          offers_products: boolean
+          offers_stays: boolean
           pause_note: string | null
           paused_until: string | null
           phone: string | null
@@ -535,6 +538,9 @@ export type Database = {
           free_delivery_threshold?: number | null
           id?: string
           initial_score?: number | null
+          offers_experiences?: boolean
+          offers_products?: boolean
+          offers_stays?: boolean
           pause_note?: string | null
           paused_until?: string | null
           phone?: string | null
@@ -570,6 +576,9 @@ export type Database = {
           free_delivery_threshold?: number | null
           id?: string
           initial_score?: number | null
+          offers_experiences?: boolean
+          offers_products?: boolean
+          offers_stays?: boolean
           pause_note?: string | null
           paused_until?: string | null
           phone?: string | null

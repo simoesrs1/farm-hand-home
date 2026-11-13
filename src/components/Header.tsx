@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import NotificationBell from "@/components/NotificationBell";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useFarmerOfferings } from "@/hooks/useFarmerOfferings";
+import type { Offering } from "@/lib/farmer-offerings";
 
 const navLinks = [
   { to: "/", label: "Início" },
@@ -15,15 +17,16 @@ const navLinks = [
   { to: "/missao", label: "Missão" },
 ];
 
-type MenuLink = { to: string; label: string; Icon: LucideIcon };
+// `requires`: só aparece se o agricultor disponibilizar essa opção.
+type MenuLink = { to: string; label: string; Icon: LucideIcon; requires?: Offering };
 
 // Uma só lista para o computador e o telemóvel, para os dois menus não divergirem.
 // Atalhos do agricultor: ícones na barra no computador, lista no menu móvel.
 const farmerLinks: MenuLink[] = [
-  { to: "/agricultor/produtos/novo", label: "Adicionar produto", Icon: Store },
-  { to: "/agricultor/produtos", label: "Os meus produtos", Icon: Boxes },
-  { to: "/agricultor/experiencias", label: "As minhas experiências", Icon: Tent },
-  { to: "/agricultor/alojamento", label: "O meu alojamento", Icon: BedDouble },
+  { to: "/agricultor/produtos/novo", label: "Adicionar produto", Icon: Store, requires: "products" },
+  { to: "/agricultor/produtos", label: "Os meus produtos", Icon: Boxes, requires: "products" },
+  { to: "/agricultor/experiencias", label: "As minhas experiências", Icon: Tent, requires: "experiences" },
+  { to: "/agricultor/alojamento", label: "O meu alojamento", Icon: BedDouble, requires: "stays" },
   { to: "/agricultor/encomendas", label: "Encomendas", Icon: Package },
   { to: "/agricultor/vendas", label: "As minhas vendas", Icon: TrendingUp },
   { to: "/agricultor/disponibilidade", label: "Disponibilidade (porta aberta)", Icon: Clock },
@@ -53,6 +56,9 @@ const Header = () => {
   const isMobile = useIsMobile();
   const isFarmer = !!user && activeMode === "vendedor";
   const isClient = !!user && activeMode === "cliente";
+  const offerings = useFarmerOfferings(isFarmer ? user?.id : null);
+  // Enquanto as escolhas carregam, só os atalhos que não dependem delas.
+  const visibleFarmerLinks = farmerLinks.filter((l) => !l.requires || !!offerings?.[l.requires]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -114,7 +120,7 @@ const Header = () => {
                 </>
               )}
               {isFarmer &&
-                farmerLinks.map(({ to, label, Icon }) => (
+                visibleFarmerLinks.map(({ to, label, Icon }) => (
                   <Link
                     key={to}
                     to={to}
@@ -296,7 +302,7 @@ const Header = () => {
                       </Button>
                     </Link>
                   )}
-                  {[...(isFarmer ? farmerLinks : []), ...accountLinks(isFarmer, isClient)].map(({ to, label, Icon }) => (
+                  {[...(isFarmer ? visibleFarmerLinks : []), ...accountLinks(isFarmer, isClient)].map(({ to, label, Icon }) => (
                     <Link
                       key={to}
                       to={to}

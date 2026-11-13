@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { toUserMessage } from "@/lib/auth-errors";
+import FarmerOfferingsSection from "@/components/FarmerOfferingsSection";
 
 type FarmerDetails = {
   id: string;
@@ -263,6 +264,8 @@ const FarmerInfo = () => {
           </AlertDescription>
         </Alert>
       )}
+
+      {!editing && details.id && <FarmerOfferingsSection farmerId={details.id} />}
 
       {/* Current data — mirrors the onboarding sections */}
       {!editing && (
