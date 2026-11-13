@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import PickupAvailabilityBadge from "@/components/PickupAvailabilityBadge";
 import FarmerReviewsBar from "@/components/FarmerReviewsBar";
+import FarmerExperiences from "@/components/FarmerExperiences";
+import FarmerStays from "@/components/FarmerStays";
 import { formatPickupHours, parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
 import { formatReturnDate, isPaused } from "@/lib/farmer-activity";
 
@@ -314,6 +316,9 @@ const FarmerProfile = () => {
             )}
           </div>
         </div>
+
+        {id && !mockFarmer && <FarmerExperiences farmerId={id} farmName={display.farm} isOwner={isOwner} />}
+        {id && !mockFarmer && <FarmerStays farmerId={id} farmName={display.farm} isOwner={isOwner} />}
 
         {/* Products */}
         <section className="mt-10">

@@ -197,6 +197,33 @@ export type Database = {
           },
         ]
       }
+      booking_gifts: {
+        Row: {
+          extra_price: number
+          id: string
+          order_id: string
+          product_id: string | null
+          product_name: string
+          quantity: number
+        }
+        Insert: {
+          extra_price?: number
+          id?: string
+          order_id: string
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+        }
+        Update: {
+          extra_price?: number
+          id?: string
+          order_id?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+        }
+        Relationships: []
+      }
       delivery_complaints: {
         Row: {
           client_id: string
@@ -299,6 +326,156 @@ export type Database = {
           justification?: string
           review_id?: string
           status?: string
+        }
+        Relationships: []
+      }
+      experience_gifts: {
+        Row: {
+          created_at: string
+          experience_id: string
+          extra_price: number
+          id: string
+          position: number
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          experience_id: string
+          extra_price?: number
+          id?: string
+          position?: number
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          experience_id?: string
+          extra_price?: number
+          id?: string
+          position?: number
+          product_id?: string
+        }
+        Relationships: []
+      }
+      farm_experiences: {
+        Row: {
+          active: boolean
+          base_price: number
+          created_at: string
+          day_prices: Json
+          description: string
+          duration_minutes: number
+          farmer_id: string
+          id: string
+          keep_without_gift: boolean
+          max_people: number
+          media_urls: string[]
+          min_people: number
+          pricing_mode: string
+          sessions: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          base_price: number
+          created_at?: string
+          day_prices?: Json
+          description: string
+          duration_minutes: number
+          farmer_id: string
+          id?: string
+          keep_without_gift?: boolean
+          max_people: number
+          media_urls?: string[]
+          min_people: number
+          pricing_mode: string
+          sessions?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          base_price?: number
+          created_at?: string
+          day_prices?: Json
+          description?: string
+          duration_minutes?: number
+          farmer_id?: string
+          id?: string
+          keep_without_gift?: boolean
+          max_people?: number
+          media_urls?: string[]
+          min_people?: number
+          pricing_mode?: string
+          sessions?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      farm_stays: {
+        Row: {
+          active: boolean
+          base_price: number
+          capacity_per_unit: number
+          check_in_time: string
+          check_out_time: string
+          created_at: string
+          day_prices: Json
+          description: string
+          farmer_id: string
+          id: string
+          keep_without_gift: boolean
+          media_urls: string[]
+          min_nights: number
+          pricing_mode: string
+          registration_number: string
+          registration_type: string
+          title: string
+          units_count: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          base_price: number
+          capacity_per_unit: number
+          check_in_time?: string
+          check_out_time?: string
+          created_at?: string
+          day_prices?: Json
+          description: string
+          farmer_id: string
+          id?: string
+          keep_without_gift?: boolean
+          media_urls?: string[]
+          min_nights?: number
+          pricing_mode: string
+          registration_number: string
+          registration_type: string
+          title: string
+          units_count: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          base_price?: number
+          capacity_per_unit?: number
+          check_in_time?: string
+          check_out_time?: string
+          created_at?: string
+          day_prices?: Json
+          description?: string
+          farmer_id?: string
+          id?: string
+          keep_without_gift?: boolean
+          media_urls?: string[]
+          min_nights?: number
+          pricing_mode?: string
+          registration_number?: string
+          registration_type?: string
+          title?: string
+          units_count?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -648,6 +825,11 @@ export type Database = {
       orders: {
         Row: {
           accepted_at: string | null
+          booking_people: number | null
+          booking_start: string | null
+          booking_units: number | null
+          cancellation_fee: number | null
+          cancelled_by: string | null
           client_id: string
           commission_amount: number
           created_at: string
@@ -659,22 +841,33 @@ export type Database = {
           delivery_tracking: boolean
           expired_at: string | null
           expected_delivery_at: string | null
+          booking_amount: number | null
+          booking_end: string | null
+          experience_id: string | null
           farmer_amount: number
           farmer_id: string
           id: string
           in_transit_at: string | null
+          kind: string
           out_for_delivery_at: string | null
           packed_at: string | null
           paid_at: string | null
           pickup_code: string
           pickup_deadline: string
+          refund_amount: number | null
           scheduled_pickup_at: string | null
           status: Database["public"]["Enums"]["order_status"]
+          stay_id: string | null
           total: number
           updated_at: string
         }
         Insert: {
           accepted_at?: string | null
+          booking_people?: number | null
+          booking_start?: string | null
+          booking_units?: number | null
+          cancellation_fee?: number | null
+          cancelled_by?: string | null
           client_id: string
           commission_amount: number
           created_at?: string
@@ -686,22 +879,33 @@ export type Database = {
           delivery_tracking?: boolean
           expired_at?: string | null
           expected_delivery_at?: string | null
+          booking_amount?: number | null
+          booking_end?: string | null
+          experience_id?: string | null
           farmer_amount: number
           farmer_id: string
           id?: string
           in_transit_at?: string | null
+          kind?: string
           out_for_delivery_at?: string | null
           packed_at?: string | null
           paid_at?: string | null
           pickup_code: string
           pickup_deadline: string
+          refund_amount: number | null
           scheduled_pickup_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
+          stay_id?: string | null
           total: number
           updated_at?: string
         }
         Update: {
           accepted_at?: string | null
+          booking_people?: number | null
+          booking_start?: string | null
+          booking_units?: number | null
+          cancellation_fee?: number | null
+          cancelled_by?: string | null
           client_id?: string
           commission_amount?: number
           created_at?: string
@@ -713,17 +917,23 @@ export type Database = {
           delivery_tracking?: boolean
           expired_at?: string | null
           expected_delivery_at?: string | null
+          booking_amount?: number | null
+          booking_end?: string | null
+          experience_id?: string | null
           farmer_amount?: number
           farmer_id?: string
           id?: string
           in_transit_at?: string | null
+          kind?: string
           out_for_delivery_at?: string | null
           packed_at?: string | null
           paid_at?: string | null
           pickup_code?: string
           pickup_deadline?: string
+          refund_amount?: number | null
           scheduled_pickup_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
+          stay_id?: string | null
           total?: number
           updated_at?: string
         }
@@ -1000,6 +1210,57 @@ export type Database = {
         }
         Relationships: []
       }
+      stay_blocked_dates: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          start_date: string
+          stay_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          start_date: string
+          stay_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          start_date?: string
+          stay_id?: string
+        }
+        Relationships: []
+      }
+      stay_gifts: {
+        Row: {
+          created_at: string
+          extra_price: number
+          id: string
+          position: number
+          product_id: string
+          stay_id: string
+        }
+        Insert: {
+          created_at?: string
+          extra_price?: number
+          id?: string
+          position?: number
+          product_id: string
+          stay_id: string
+        }
+        Update: {
+          created_at?: string
+          extra_price?: number
+          id?: string
+          position?: number
+          product_id?: string
+          stay_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       farmer_public: {
@@ -1100,6 +1361,10 @@ export type Database = {
       }
     }
     Functions: {
+      experience_session_bookings: {
+        Args: { p_experience_id: string; p_from: string; p_to: string }
+        Returns: { booking_start: string; bookings: number; people: number }[]
+      }
       file_delivery_complaint: { Args: { p_order_id: string }; Returns: string }
       hide_review_photo: { Args: { p_review_id: string }; Returns: undefined }
       my_order_reviews: {
@@ -1115,6 +1380,14 @@ export type Database = {
       request_review_removal: {
         Args: { p_justification: string; p_review_id: string }
         Returns: string
+      }
+      set_batch_expiry: {
+        Args: { p_batch_id: string; p_expires_at: string }
+        Returns: number
+      }
+      stay_booked_units: {
+        Args: { p_from: string; p_stay_id: string; p_to: string }
+        Returns: { night: string; units: number }[]
       }
       submit_farmer_review: {
         Args: {

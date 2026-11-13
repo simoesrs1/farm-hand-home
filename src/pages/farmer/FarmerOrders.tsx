@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck, MapPin, AlertTriangle } from "lucide-react";
+import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck, MapPin, AlertTriangle, Tent } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrderChat from "@/components/OrderChat";
 import ValidateDeliveryDialog from "@/components/ValidateDeliveryDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import DeliveryRouteMapDialog, { type RouteStop } from "@/components/DeliveryRouteMapDialog";
 
 interface OrderItem {
@@ -41,8 +51,32 @@ interface Order {
   packed_at: string | null;
   in_transit_at: string | null;
   out_for_delivery_at: string | null;
+  kind: string;
+  booking_start: string | null;
+  booking_end: string | null;
+  booking_people: number | null;
+  booking_units: number | null;
+  cancelled_by: string | null;
+  cancellation_fee: number | null;
   order_items: OrderItem[];
 }
+
+const isBooking = (o: Order) => o.kind === "experience" || o.kind === "stay";
+
+// Reservas de experiências: rótulos próprios.
+const bookingLabel = (o: Order) =>
+  o.status === "awaiting_pickup" ? "Reservada"
+  : o.status === "delivered" ? "Concluída"
+  : o.status === "expired" ? "Sem comparência"
+  : o.status === "refunded" ? (o.cancelled_by === "client" ? "Cancelada pelo cliente" : "Cancelada")
+  : null;
+
+const bookingTitle = (o: Order) =>
+  o.order_items?.find((it) => it.unit === "pessoa" || it.unit === "grupo" || it.unit === "noite")?.product_name ??
+  (o.kind === "stay" ? "Alojamento" : "Experiência");
+
+const formatLisbon = (iso: string, opts: Intl.DateTimeFormatOptions) =>
+  new Date(iso).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon", ...opts });
 
 type TrackingAction = "packed" | "in_transit" | "out_for_delivery";
 
@@ -84,6 +118,7 @@ const FarmerOrders = () => {
   const [farm, setFarm] = useState<{ lat: number; lng: number; name: string } | null>(null);
   // Queixas em aberto por entrega não recebida: prazo por encomenda.
   const [complaintDeadlines, setComplaintDeadlines] = useState<Record<string, string>>({});
+  const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -91,7 +126,7 @@ const FarmerOrders = () => {
     const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,scheduled_pickup_at,delivered_at,expired_at,accepted_at,created_at,delivery_address,delivery_lat,delivery_lng,delivery_tracking,packed_at,in_transit_at,out_for_delivery_at,delivery_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
+        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,scheduled_pickup_at,delivered_at,expired_at,accepted_at,created_at,delivery_address,delivery_lat,delivery_lng,delivery_tracking,packed_at,in_transit_at,out_for_delivery_at,delivery_fee,kind,booking_start,booking_end,booking_people,booking_units,cancelled_by,cancellation_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
         .order("created_at", { ascending: false });
       if (!cancelled) {
         setOrders((data as Order[]) ?? []);
@@ -148,7 +183,7 @@ const FarmerOrders = () => {
     );
   };
 
-  const runAction = async (order: Order, action: "accept" | "refund_no_stock" | TrackingAction) => {
+  const runAction = async (order: Order, action: "accept" | "refund_no_stock" | "cancel_booking" | TrackingAction) => {
     setActing(order.id);
     const { data, error } = await supabase.functions.invoke("order-action", {
       body: { order_id: order.id, action },
@@ -164,7 +199,12 @@ const FarmerOrders = () => {
       return;
     }
     const step = TRACKING_STEPS.find((s) => s.action === action);
-    if (step) {
+    if (action === "cancel_booking") {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === order.id ? { ...o, status: "refunded", cancelled_by: "farmer", farmer_amount: 0 } : o)),
+      );
+      toast({ title: "Reserva cancelada", description: "O cliente foi notificado e recebe o valor na totalidade." });
+    } else if (step) {
       const now = new Date().toISOString();
       setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, [step.column]: now } : o)));
       toast({ title: `Encomenda: ${step.done.toLowerCase()}`, description: "O cliente foi notificado." });
@@ -181,9 +221,10 @@ const FarmerOrders = () => {
 
   // Encomenda com entrega ao domicílio: tem morada/ponto de entrega ou inclui um produto com entrega ao domicílio
   const isHomeDelivery = (o: Order) =>
-    o.delivery_address != null ||
-    o.delivery_lat != null ||
-    (o.order_items ?? []).some((it) => deliveryProductNames.includes(it.product_name));
+    !isBooking(o) &&
+    (o.delivery_address != null ||
+      o.delivery_lat != null ||
+      (o.order_items ?? []).some((it) => deliveryProductNames.includes(it.product_name)));
 
   // Entregas ao domicílio ativas com ponto marcado pelo cliente, para o mapa do percurso
   const routeStops: RouteStop[] = useMemo(() => {
@@ -411,7 +452,7 @@ const FarmerOrders = () => {
             const farmerGets =
               o.status === "delivered"
                 ? o.farmer_amount
-                : o.status === "expired"
+                : o.status === "expired" && !isBooking(o)
                 ? Math.round(o.total * 0.1 * 100) / 100
                 : o.farmer_amount;
             const isHighlighted = highlightId === o.id;
@@ -435,12 +476,12 @@ const FarmerOrders = () => {
                       Comissão (10%): <span className="font-medium text-foreground">{o.commission_amount.toFixed(2)}€</span>
                     </p>
                     <p className="mt-1 font-display text-lg font-semibold text-primary">
-                      {o.status === "delivered" ? "Recebes" : o.status === "expired" ? "Recebeste" : "Vais receber"}: {farmerGets.toFixed(2)}€
+                      {o.status === "delivered" ? "Recebes" : o.status === "expired" || o.status === "refunded" ? "Recebeste" : "Vais receber"}: {farmerGets.toFixed(2)}€
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${m.tone}`}>
-                      <Icon className="h-3.5 w-3.5" /> {m.label}
+                      <Icon className="h-3.5 w-3.5" /> {(isBooking(o) && bookingLabel(o)) || m.label}
                     </span>
                     {o.status === "awaiting_pickup" && !o.accepted_at && (
                       <>
@@ -480,13 +521,34 @@ const FarmerOrders = () => {
                         <Truck className="h-4 w-4" /> {nextStep.label}
                       </Button>
                     )}
+                    {isBooking(o) && o.status === "awaiting_pickup" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 text-destructive hover:text-destructive"
+                        disabled={acting === o.id}
+                        onClick={() => setCancelTarget(o)}
+                      >
+                        <Undo2 className="h-4 w-4" /> Cancelar reserva
+                      </Button>
+                    )}
                     {o.status === "awaiting_pickup" && o.accepted_at && (
                       <Button size="sm" className="gap-1.5" onClick={() => setValidating(o)}>
-                        <ScanLine className="h-4 w-4" /> Validar entrega
+                        <ScanLine className="h-4 w-4" /> {o.kind === "stay" ? "Validar check-in" : isBooking(o) ? "Validar chegada" : "Validar entrega"}
                       </Button>
                     )}
                   </div>
                 </div>
+
+                {isBooking(o) && o.booking_start && (
+                  <p className="mt-3 flex items-center gap-2 rounded-lg bg-primary/5 p-2.5 text-sm text-foreground">
+                    <Tent className="h-4 w-4 shrink-0 text-primary" />
+                    {bookingTitle(o)} ·{" "}
+                    {o.kind === "stay" && o.booking_end
+                      ? `${formatLisbon(o.booking_start, { day: "2-digit", month: "2-digit" })} a ${formatLisbon(o.booking_end, { day: "2-digit", month: "2-digit" })} · ${o.booking_people} hóspede(s) · ${o.booking_units} quarto(s)`
+                      : `${formatLisbon(o.booking_start, { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · ${o.booking_people} ${o.booking_people === 1 ? "pessoa" : "pessoas"}`}
+                  </p>
+                )}
 
                 {o.order_items?.length > 0 && (
                   <ul className="mt-4 space-y-2 border-t border-border pt-4">
@@ -556,6 +618,28 @@ const FarmerOrders = () => {
           })}
         </ul>
       )}
+
+      <AlertDialog open={!!cancelTarget} onOpenChange={(open) => !open && setCancelTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar esta reserva?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O cliente recebe o valor pago na totalidade e os brindes voltam ao stock.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Manter</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (cancelTarget) runAction(cancelTarget, "cancel_booking");
+                setCancelTarget(null);
+              }}
+            >
+              Cancelar reserva
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <ValidateDeliveryDialog
         order={validating}

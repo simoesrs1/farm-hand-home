@@ -11,6 +11,8 @@ export interface ReviewableOrder {
   delivery_address: string | null;
   expected_delivery_at: string | null;
   pickup_deadline: string;
+  /** Reservas: quem cancelou ('client' não pode avaliar como "cancelada"). */
+  cancelled_by?: string | null;
 }
 
 const LATE_GRACE_MS = 24 * 60 * 60 * 1000;
@@ -30,7 +32,7 @@ export const isDeliveryLate = (o: ReviewableOrder, now = Date.now()) =>
 
 export const reviewContext = (o: ReviewableOrder, now = Date.now()): ReviewContext | null => {
   if (o.status === "delivered") return "delivered";
-  if (o.status === "refunded") return "cancelled";
+  if (o.status === "refunded") return o.cancelled_by === "client" ? null : "cancelled";
   return isDeliveryLate(o, now) ? "late" : null;
 };
 

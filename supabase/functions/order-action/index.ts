@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     const action = body?.action;
     const reason = typeof body?.reason === "string" ? body.reason.slice(0, 300) : "";
     if (typeof orderId !== "string" || !orderId) return jsonError(400, "Encomenda inválida");
-    if (action !== "accept" && action !== "refund_no_stock" && !isTrackingAction(action)) {
+    if (action !== "accept" && action !== "refund_no_stock" && action !== "cancel_booking" && !isTrackingAction(action)) {
       return jsonError(400, "Ação inválida");
     }
 
@@ -102,6 +102,22 @@ Deno.serve(async (req) => {
         link: `/encomendas?id=${order.id}`,
       });
       return new Response(JSON.stringify({ ok: true, accepted_at: now }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Reserva de experiência: devolução total e brindes de volta ao stock.
+    if (action === "cancel_booking") {
+      const { data, error } = await admin.rpc("cancel_farm_booking", {
+        p_order_id: order.id,
+        p_actor: userId,
+        p_by: "farmer",
+      });
+      if (error) {
+        if (error.code === "P0001") return jsonError(400, error.message);
+        throw error;
+      }
+      return new Response(JSON.stringify({ ok: true, ...data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

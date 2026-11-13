@@ -38,7 +38,7 @@ const RateFarmer = () => {
       const [{ data }, { data: reviews }, { data: myProfile }] = await Promise.all([
         supabase
           .from("orders")
-          .select("status,delivery_address,expected_delivery_at,pickup_deadline,farmer:farmer_id(id,company_name,pickup_address)")
+          .select("status,delivery_address,expected_delivery_at,pickup_deadline,cancelled_by,farmer:farmer_id(id,company_name,pickup_address)")
           .eq("id", orderId)
           .maybeSingle(),
         supabase.rpc("my_order_reviews"),

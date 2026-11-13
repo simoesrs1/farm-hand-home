@@ -48,6 +48,7 @@ interface Order {
   delivered_at: string | null;
   accepted_at: string | null;
   delivery_fee: number;
+  kind: string;
   expired_at: string | null;
   created_at: string;
   farmer_id: string;
@@ -90,7 +91,7 @@ const OrderStatus = () => {
     const { data } = await supabase
       .from("orders")
       .select(
-        "id,total,status,pickup_code,pickup_deadline,scheduled_pickup_at,paid_at,delivered_at,accepted_at,expired_at,created_at,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),delivery_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)"
+        "id,total,status,pickup_code,pickup_deadline,scheduled_pickup_at,paid_at,delivered_at,accepted_at,expired_at,created_at,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),delivery_fee,kind,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)"
       )
       .eq("id", id)
       .maybeSingle();
@@ -151,6 +152,10 @@ const OrderStatus = () => {
     );
   }
 
+  // Reserva de experiência: a sessão faz as vezes do levantamento.
+  const isBooking = order.kind === "experience" || order.kind === "stay";
+  const isStay = order.kind === "stay";
+
   const steps: { key: StepKey; label: string; description: string; Icon: typeof Clock; done: boolean; failed?: boolean }[] = [
     {
       key: "pending",
@@ -173,12 +178,14 @@ const OrderStatus = () => {
     },
     {
       key: "delivered",
-      label: order.status === "delivered" ? "Levantada" : "Pronta para levantamento",
+      label: isBooking
+        ? order.status === "delivered" ? (isStay ? "Check-in feito" : "Experiência concluída") : "Reservada"
+        : order.status === "delivered" ? "Levantada" : "Pronta para levantamento",
       description:
         order.status === "delivered" && order.delivered_at
-          ? `Levantamento concluído · ${formatDate(order.delivered_at)} às ${formatTime(order.delivered_at)}`
+          ? `${isBooking ? (isStay ? "Check-in confirmado" : "Chegada confirmada") : "Levantamento concluído"} · ${formatDate(order.delivered_at)} às ${formatTime(order.delivered_at)}`
           : order.scheduled_pickup_at
-            ? `Levantamento agendado · ${formatDate(order.scheduled_pickup_at)} às ${formatTime(order.scheduled_pickup_at)}`
+            ? `${isStay ? "Entrada" : isBooking ? "Sessão" : "Levantamento agendado"} · ${formatDate(order.scheduled_pickup_at)} às ${formatTime(order.scheduled_pickup_at)}`
             : order.status === "awaiting_pickup"
               ? `Prazo limite · ${formatDate(order.pickup_deadline)}`
               : "",

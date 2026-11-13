@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
-import { ShoppingBag, Clock, CheckCircle2, XCircle, ArrowLeft, MapPin, Star, ChevronDown, ChevronUp, Truck, PackageX } from "lucide-react";
+import { ShoppingBag, Clock, CheckCircle2, XCircle, ArrowLeft, MapPin, Star, ChevronDown, ChevronUp, Truck, PackageX, Tent, BedDouble } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { canFileDeliveryComplaint, reviewContext } from "@/lib/review-eligibility";
+import { FREE_CANCEL_DAYS, cancellationQuote } from "@/lib/experience-pricing";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import DeliveryTrackingDialog from "@/components/DeliveryTrackingDialog";
 
 interface OrderItem {
@@ -55,6 +57,15 @@ interface Order {
   delivery_address: string | null;
   delivery_tracking: boolean;
   expected_delivery_at: string | null;
+  kind: string;
+  booking_start: string | null;
+  booking_end: string | null;
+  booking_people: number | null;
+  booking_units: number | null;
+  booking_amount: number | null;
+  cancelled_by: string | null;
+  cancellation_fee: number | null;
+  refund_amount: number | null;
   farmer_id: string;
   farmer: FarmerRef | null;
   order_items: OrderItem[];
@@ -74,10 +85,51 @@ const homeDeliveryLabels: Partial<Record<Order["status"], string>> = {
   delivered: "Entregue",
 };
 
-const isHomeDelivery = (o: Order) => o.delivery_address != null;
+// Reservas de experiências.
+const bookingLabels: Partial<Record<Order["status"], string>> = {
+  awaiting_pickup: "Reservada",
+  delivered: "Concluída",
+  expired: "Sem comparência",
+};
 
-const statusLabel = (o: Order) =>
-  (isHomeDelivery(o) && homeDeliveryLabels[o.status]) || statusMeta[o.status].label;
+const isHomeDelivery = (o: Order) => o.delivery_address != null;
+const isBooking = (o: Order) => o.kind === "experience" || o.kind === "stay";
+
+const statusLabel = (o: Order) => {
+  if (isBooking(o)) {
+    if (o.status === "refunded") return o.cancelled_by === "farmer" ? "Cancelada pelo agricultor" : "Cancelada";
+    return bookingLabels[o.status] ?? statusMeta[o.status].label;
+  }
+  return (isHomeDelivery(o) && homeDeliveryLabels[o.status]) || statusMeta[o.status].label;
+};
+
+const formatBookingStart = (iso: string) =>
+  new Date(iso).toLocaleString("pt-PT", {
+    timeZone: "Europe/Lisbon",
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+/** Linha da experiência ou do alojamento (as outras linhas da reserva são brindes). */
+const bookingTitle = (o: Order) =>
+  o.order_items?.find((it) => it.unit === "pessoa" || it.unit === "grupo" || it.unit === "noite")?.product_name ??
+  (o.kind === "stay" ? "Alojamento" : "Experiência");
+
+const formatStayDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("pt-PT", { timeZone: "Europe/Lisbon", weekday: "short", day: "2-digit", month: "2-digit" });
+
+/** Quando e para quantos: sessão da experiência ou datas do alojamento. */
+const bookingDetails = (o: Order) =>
+  o.kind === "stay" && o.booking_start && o.booking_end
+    ? `Entrada ${formatStayDate(o.booking_start)} · Saída ${formatStayDate(o.booking_end)} · ${o.booking_people} hóspede(s) · ${o.booking_units} quarto(s)`
+    : o.booking_start
+      ? `${formatBookingStart(o.booking_start)} · ${o.booking_people} ${o.booking_people === 1 ? "pessoa" : "pessoas"}`
+      : "";
+
+
 
 const mapsUrl = (f: FarmerRef | null) => {
   if (!f) return null;
@@ -115,6 +167,8 @@ const MyOrders = () => {
   const [reportOrderId, setReportOrderId] = useState<string | null>(null);
   const [complaintOrder, setComplaintOrder] = useState<Order | null>(null);
   const [filing, setFiling] = useState(false);
+  const [cancelBooking, setCancelBooking] = useState<Order | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const loadReviewState = useCallback(async () => {
     const [{ data: reviews }, { data: rows }] = await Promise.all([
@@ -125,18 +179,22 @@ const MyOrders = () => {
     setComplaints(Object.fromEntries((rows ?? []).map((c) => [c.order_id, c])));
   }, []);
 
+  const loadOrders = useCallback(async () => {
+    const { data } = await supabase
+      .from("orders")
+      .select("id,total,status,pickup_code,pickup_deadline,paid_at,delivered_at,accepted_at,created_at,delivery_address,delivery_tracking,expected_delivery_at,kind,booking_start,booking_end,booking_people,booking_units,booking_amount,cancelled_by,cancellation_fee,refund_amount,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),delivery_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
+      .order("created_at", { ascending: false });
+    setOrders((data as unknown as Order[]) ?? []);
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("id,total,status,pickup_code,pickup_deadline,paid_at,delivered_at,accepted_at,created_at,delivery_address,delivery_tracking,expected_delivery_at,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),delivery_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
-        .order("created_at", { ascending: false });
-      setOrders((data as unknown as Order[]) ?? []);
+      await loadOrders();
       await loadReviewState();
       setLoading(false);
     })();
-  }, [user, loadReviewState]);
+  }, [user, loadOrders, loadReviewState]);
 
   const { activeOrders, pastOrders } = useMemo(() => {
     const active: Order[] = [];
@@ -169,6 +227,29 @@ const MyOrders = () => {
     }
     toast({ title: "Queixa registada", description: "O agricultor tem 48 horas para entregar a encomenda." });
     loadReviewState();
+  };
+
+  const confirmCancelBooking = async () => {
+    if (!cancelBooking) return;
+    setCancelling(true);
+    const { data, error } = await supabase.functions.invoke("cancel-booking", { body: { order_id: cancelBooking.id } });
+    setCancelling(false);
+    setCancelBooking(null);
+    if (error || (data as { error?: string } | null)?.error) {
+      let msg = (data as { error?: string } | null)?.error ?? "Tenta novamente dentro de momentos.";
+      if (error instanceof FunctionsHttpError) {
+        try {
+          const body = await error.context.json();
+          if (body?.error) msg = body.error;
+        } catch {
+          // resposta sem JSON: fica a mensagem genérica
+        }
+      }
+      toast({ title: "Não foi possível cancelar", description: msg, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Reserva cancelada", description: `Vão ser devolvidos ${Number(data.refund_amount).toFixed(2)}€.` });
+    loadOrders();
   };
 
   const complaintMessage = (c: Complaint) => {
@@ -264,6 +345,20 @@ const MyOrders = () => {
           </div>
         </div>
 
+        {isBooking(o) && o.booking_start && (
+          <div className="mt-4 flex items-start gap-2 rounded-lg bg-primary/5 p-3">
+            {o.kind === "stay" ? (
+              <BedDouble className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            ) : (
+              <Tent className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            )}
+            <div className="text-sm">
+              <p className="font-medium text-foreground">{bookingTitle(o)}</p>
+              <p className="text-muted-foreground">{bookingDetails(o)}</p>
+            </div>
+          </div>
+        )}
+
         {home ? (
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/50 p-3">
             <div className="flex min-w-0 flex-1 items-start gap-2">
@@ -334,11 +429,15 @@ const MyOrders = () => {
 
         {o.status === "awaiting_pickup" && (
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-            <p className="text-sm text-muted-foreground">
-              Prazo: <span className="font-medium text-foreground">{new Date(o.pickup_deadline).toLocaleDateString("pt-PT")}</span>
-            </p>
+            {isBooking(o) ? (
+              <Button variant="outline" onClick={() => setCancelBooking(o)}>Cancelar reserva</Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Prazo: <span className="font-medium text-foreground">{new Date(o.pickup_deadline).toLocaleDateString("pt-PT")}</span>
+              </p>
+            )}
             <Button onClick={() => setSelected(o)}>
-              {home ? "Mostrar QR de entrega" : "Mostrar QR de levantamento"}
+              {isBooking(o) ? "Mostrar QR da reserva" : home ? "Mostrar QR de entrega" : "Mostrar QR de levantamento"}
             </Button>
           </div>
         )}
@@ -395,6 +494,13 @@ const MyOrders = () => {
             </Link>
           </div>
         </div>
+
+        {isBooking(o) && o.status === "refunded" && o.refund_amount != null && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            {bookingTitle(o)}: devolvidos {Number(o.refund_amount).toFixed(2)}€
+            {Number(o.cancellation_fee ?? 0) > 0 && ` (taxa de cancelamento de ${Number(o.cancellation_fee).toFixed(2)}€)`}.
+          </p>
+        )}
 
         {(o.status === "delivered" || o.status === "refunded") && (
           <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
@@ -471,10 +577,12 @@ const MyOrders = () => {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              {selected && isHomeDelivery(selected) ? "Entrega ao domicílio" : "Levantamento na quinta"}
+              {selected && isBooking(selected) ? "Reserva na quinta" : selected && isHomeDelivery(selected) ? "Entrega ao domicílio" : "Levantamento na quinta"}
             </DialogTitle>
             <DialogDescription>
-              {selected && isHomeDelivery(selected)
+              {selected && isBooking(selected)
+                ? "Mostra este QR code (ou o código abaixo) ao agricultor quando chegares à quinta."
+                : selected && isHomeDelivery(selected)
                 ? "Mostra este QR code (ou o código abaixo) ao agricultor quando receberes a encomenda."
                 : "Mostra este QR code (ou o código abaixo) ao agricultor para levantar a encomenda."}
             </DialogDescription>
@@ -497,6 +605,31 @@ const MyOrders = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!cancelBooking} onOpenChange={(o) => !o && setCancelBooking(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar a reserva?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {cancelBooking?.booking_start &&
+                (() => {
+                  const q = cancellationQuote(
+                    Number(cancelBooking.booking_amount ?? 0),
+                    cancelBooking.total,
+                    new Date(cancelBooking.booking_start),
+                  );
+                  return q.free
+                    ? `Ainda estás dentro do prazo de cancelamento grátis (até ${FREE_CANCEL_DAYS} dias antes). Vão ser devolvidos ${q.refund.toFixed(2)}€.`
+                    : `Faltam menos de ${FREE_CANCEL_DAYS} dias para a reserva: são retidos 25% do valor ${cancelBooking.kind === "stay" ? "do alojamento" : "da experiência"} (${q.fee.toFixed(2)}€) e devolvidos ${q.refund.toFixed(2)}€.`;
+                })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Manter reserva</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancelBooking} disabled={cancelling}>Cancelar reserva</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <ReviewRemovalDialog
         reviewId={removalReviewId}

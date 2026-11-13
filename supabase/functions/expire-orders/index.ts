@@ -50,6 +50,8 @@ Deno.serve(async (req) => {
       // Só levantamentos: uma entrega ao domicílio por fazer é falha do
       // agricultor e segue o processo de queixa (delivery_complaints).
       .is("delivery_address", null)
+      // As reservas de experiências têm regras próprias (abaixo).
+      .eq("kind", "product")
       .lt("pickup_deadline", now)
       .select("id, client_id, farmer_id, total");
     if (error) throw error;
@@ -89,8 +91,49 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Reservas (experiências e alojamento): o QR code não foi validado até ao fim
+    // da sessão ou até à saída. Sem devolução; o agricultor recebe o valor normal
+    // (farmer_amount não muda).
+    const { data: noShows, error: noShowErr } = await admin
+      .from("orders")
+      .update({ status: "expired", expired_at: now })
+      .eq("status", "awaiting_pickup")
+      .in("kind", ["experience", "stay"])
+      .lt("pickup_deadline", now)
+      .select("id, client_id, farmer_id, farmer_amount");
+    if (noShowErr) throw noShowErr;
+
+    if (noShows && noShows.length > 0) {
+      const { data: farmers } = await admin
+        .from("farmer_details")
+        .select("id, user_id")
+        .in("id", [...new Set(noShows.map((o) => o.farmer_id))]);
+      const farmerUserMap = new Map(farmers?.map((f) => [f.id, f.user_id]) ?? []);
+      const notifications = noShows.flatMap((o) => {
+        const out = [{
+          user_id: o.client_id,
+          order_id: o.id,
+          type: "booking_no_show",
+          title: "Reserva não utilizada",
+          message: "Não compareceste à reserva. Por isso, o valor pago não é devolvido.",
+        }];
+        const farmerUser = farmerUserMap.get(o.farmer_id);
+        if (farmerUser) {
+          out.push({
+            user_id: farmerUser,
+            order_id: o.id,
+            type: "booking_no_show",
+            title: "Cliente não compareceu",
+            message: `O cliente não compareceu à reserva. Recebes ${Number(o.farmer_amount).toFixed(2)}€.`,
+          });
+        }
+        return out;
+      });
+      await admin.from("notifications").insert(notifications);
+    }
+
     return new Response(
-      JSON.stringify({ expired_count: expired?.length ?? 0 }),
+      JSON.stringify({ expired_count: expired?.length ?? 0, no_show_count: noShows?.length ?? 0 }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {

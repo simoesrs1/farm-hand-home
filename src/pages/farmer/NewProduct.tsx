@@ -76,6 +76,7 @@ const NewProduct = () => {
   const [deliveryDefaults, setDeliveryDefaults] = useState<DeliverySettings | null>(null);
   const [saveAsDefault, setSaveAsDefault] = useState(false);
   const [stockQuantity, setStockQuantity] = useState<string>("");
+  const [stockExpiry, setStockExpiry] = useState<string>("");
   const [lowStockThreshold, setLowStockThreshold] = useState<string>("5");
   const [availabilityStart, setAvailabilityStart] = useState<string>("");
   const [availabilityEnd, setAvailabilityEnd] = useState<string>("");
@@ -244,6 +245,12 @@ const NewProduct = () => {
       toast({ title: "Indique a quantidade disponível", variant: "destructive" });
       return;
     }
+    // Todo o stock à venda tem validade (lote criado abaixo com add_stock_batch).
+    const todayLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    if (!stockExpiry || stockExpiry < todayLocal) {
+      toast({ title: "Indique a validade do stock (hoje ou mais tarde)", variant: "destructive" });
+      return;
+    }
     const pickupEnabled = deliveryMode === DeliveryModesEnum.Pickup || deliveryMode === DeliveryModesEnum.Both;
     if (pickupEnabled && (!availabilityStart || !availabilityEnd)) {
       toast({ title: "Indique as datas de disponibilidade para levantamento", variant: "destructive" });
@@ -266,7 +273,8 @@ const NewProduct = () => {
         mediaUrls.push(path);
       }
 
-      const { error } = await supabase.from("products").insert({
+      // O produto é criado sem stock; o stock entra a seguir como lote com validade.
+      const { data: created, error } = await supabase.from("products").insert({
         farmer_id: farmerId,
         name: name.trim(),
         description: description.trim() || null,
@@ -284,14 +292,28 @@ const NewProduct = () => {
         media_urls: '{' + mediaUrls + '}',
         // Valores normalizados: sem entrega ao domicílio não há acompanhamento nem preço.
         ...settings,
-        stock_quantity: stockNum,
+        stock_quantity: 0,
         low_stock_threshold: Math.max(0, parseInt(lowStockThreshold, 10) || 0),
         availability_start: pickupEnabled ? availabilityStart : null,
         availability_end: pickupEnabled ? availabilityEnd : null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      } as any);
+      } as any).select("id").single();
       if (error) throw error;
+      const { error: stockErr } = await supabase.rpc("add_stock_batch", {
+        p_product_id: created.id,
+        p_quantity: stockNum,
+        p_expires_at: stockExpiry,
+      });
+      if (stockErr) {
+        toast({
+          title: "Produto criado, mas o stock não foi adicionado",
+          description: `${stockErr.message} Adicione o stock em Os meus produtos.`,
+          variant: "destructive",
+        });
+        navigate("/agricultor/produtos");
+        return;
+      }
 
       // Padrão de entrega: com a opção marcada, grava os campos alterados (ou
       // todos, se ainda não havia padrão) e aplica-os aos restantes produtos.
@@ -648,6 +670,19 @@ const NewProduct = () => {
               placeholder="Ex: 25"
             />
             <p className="text-xs text-muted-foreground">Total disponível para venda desta publicação.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="stock-expiry">Validade deste stock *</Label>
+            <Input
+              id="stock-expiry"
+              type="date"
+              value={stockExpiry}
+              onChange={(e) => setStockExpiry(e.target.value)}
+              className="w-44"
+            />
+            <p className="text-xs text-muted-foreground">
+              Todo o stock à venda tem validade. Quando passar, as unidades saem do stock automaticamente.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="low-stock">Avisar quando o stock chegar a</Label>

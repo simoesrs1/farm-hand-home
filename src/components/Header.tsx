@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle, Store, ClipboardList, Boxes, Clock, TrendingUp, Eye, type LucideIcon } from "lucide-react";
+import { Menu, X, User, LogOut, ShoppingCart, Package, ScanLine, ShoppingBag, ChevronDown, Settings as SettingsIcon, Heart, UserCircle, Store, ClipboardList, Boxes, Clock, TrendingUp, Eye, Tent, BedDouble, type LucideIcon } from "lucide-react";
 import logoValorRural from "@/assets/logo-valorrural-horizontal.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +22,8 @@ type MenuLink = { to: string; label: string; Icon: LucideIcon };
 const farmerLinks: MenuLink[] = [
   { to: "/agricultor/produtos/novo", label: "Adicionar produto", Icon: Store },
   { to: "/agricultor/produtos", label: "Os meus produtos", Icon: Boxes },
+  { to: "/agricultor/experiencias", label: "As minhas experiências", Icon: Tent },
+  { to: "/agricultor/alojamento", label: "O meu alojamento", Icon: BedDouble },
   { to: "/agricultor/encomendas", label: "Encomendas", Icon: Package },
   { to: "/agricultor/vendas", label: "As minhas vendas", Icon: TrendingUp },
   { to: "/agricultor/disponibilidade", label: "Disponibilidade (porta aberta)", Icon: Clock },

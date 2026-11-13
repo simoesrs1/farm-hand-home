@@ -35,6 +35,10 @@ import MyProducts from "./pages/farmer/MyProducts";
 import EditProduct from "./pages/farmer/EditProduct";
 import FarmerInfo from "./pages/farmer/FarmerInfo";
 import MyPublicPage from "./pages/farmer/MyPublicPage";
+import MyExperiences from "./pages/farmer/MyExperiences";
+import ExperienceEditor from "./pages/farmer/ExperienceEditor";
+import MyStays from "./pages/farmer/MyStays";
+import StayEditor from "./pages/farmer/StayEditor";
 import FarmerAvailability from "./pages/farmer/Availability";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
@@ -71,6 +75,12 @@ const App = () => (
                       <Route path="/produto/:id" element={<ProductDetail />} />
                       {/* Antes de /agricultor/:id, que apanharia este endereço. */}
                       <Route path="/agricultor/a-minha-pagina" element={<MyPublicPage />} />
+                      <Route path="/agricultor/experiencias" element={<MyExperiences />} />
+                      <Route path="/agricultor/experiencias/nova" element={<ExperienceEditor />} />
+                      <Route path="/agricultor/experiencias/:id/editar" element={<ExperienceEditor />} />
+                      <Route path="/agricultor/alojamento" element={<MyStays />} />
+                      <Route path="/agricultor/alojamento/novo" element={<StayEditor />} />
+                      <Route path="/agricultor/alojamento/:id/editar" element={<StayEditor />} />
                       <Route path="/agricultor/:id" element={<FarmerProfile />} />
                       <Route path="/resultados" element={<SearchResults />} />
                       <Route path="/carrinho" element={<Cart />} />

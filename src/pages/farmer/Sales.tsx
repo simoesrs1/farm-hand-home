@@ -21,6 +21,8 @@ interface Row {
   total: number;
   farmer_amount: number;
   created_at: string;
+  kind: string;
+  cancellation_fee: number | null;
   order_items: { product_name: string; quantity: number; subtotal: number }[];
 }
 
@@ -38,7 +40,7 @@ const Sales = () => {
       const since = new Date(Date.now() - RANGE_DAYS * 86400000).toISOString();
       const { data } = await supabase
         .from("orders")
-        .select("id,status,total,farmer_amount,created_at,order_items(product_name,quantity,subtotal)")
+        .select("id,status,total,farmer_amount,created_at,kind,cancellation_fee,order_items(product_name,quantity,subtotal)")
         .gte("created_at", since)
         .order("created_at", { ascending: true });
       if (!cancelled) {
@@ -52,7 +54,14 @@ const Sales = () => {
   }, [user]);
 
   const paid = useMemo(
-    () => orders.filter((o) => o.status === "awaiting_pickup" || o.status === "delivered"),
+    () =>
+      orders.filter(
+        (o) =>
+          o.status === "awaiting_pickup" ||
+          o.status === "delivered" ||
+          // Reservas: falta do cliente ou cancelamento tardio também pagam o agricultor.
+          ((o.kind === "experience" || o.kind === "stay") && (o.status === "expired" || Number(o.cancellation_fee ?? 0) > 0)),
+      ),
     [orders],
   );
 

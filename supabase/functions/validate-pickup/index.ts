@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
     const { data: order } = await admin
       .from("orders")
-      .select("id, farmer_id, status, farmer_amount, client_id")
+      .select("id, farmer_id, status, farmer_amount, client_id, kind")
       .eq("pickup_code", code)
       .maybeSingle();
 
@@ -108,8 +108,9 @@ Deno.serve(async (req) => {
       user_id: order.client_id,
       order_id: order.id,
       type: "delivered",
-      title: "Encomenda entregue",
-      message: "A tua encomenda foi marcada como entregue. Bom apetite!",
+      ...(order.kind === "experience"
+        ? { title: "Boas-vindas à quinta", message: "A tua reserva foi confirmada à chegada. Aproveita a experiência!" }
+        : { title: "Encomenda entregue", message: "A tua encomenda foi marcada como entregue. Bom apetite!" }),
     });
 
     return new Response(

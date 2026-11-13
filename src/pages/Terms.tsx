@@ -229,6 +229,45 @@ const sections: LegalSection[] = [
     ),
   },
   {
+    id: "experiencias",
+    title: "Experiências na quinta",
+    content: (
+      <>
+        <p>
+          Os Agricultores podem disponibilizar experiências na sua exploração, reservadas e pagas
+          através da plataforma. A reserva é confirmada no momento do pagamento e validada com o
+          código QR à chegada.
+        </p>
+        <p>
+          O cancelamento pelo Cliente é gratuito até 5 dias antes da sessão. Depois disso, são
+          retidos 25% do valor da experiência (20% para o Agricultor e 5% para o {LEGAL.brand}); os
+          brindes extra pagos são devolvidos. Sem comparência, o valor pago não é devolvido. Se o
+          Agricultor cancelar, o Cliente recebe o valor na totalidade.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "alojamento",
+    title: "Alojamento na quinta",
+    content: (
+      <>
+        <p>
+          Os Agricultores podem disponibilizar alojamento na sua exploração agrícola, desde que registado como
+          Alojamento Local ou Turismo no Espaço Rural; o número de registo é indicado pelo Agricultor e mostrado
+          ao Cliente. A reserva é confirmada no momento do pagamento e validada com o código QR no check-in.
+        </p>
+        <p>
+          Aplicam-se as mesmas regras de cancelamento das experiências, contadas a partir da data de entrada:
+          gratuito até 5 dias antes; depois disso, são retidos 25% do valor do alojamento (20% para o Agricultor e
+          5% para o {LEGAL.brand}), com os brindes extra devolvidos. Sem comparência até à data de saída, o valor
+          não é devolvido. A taxa turística, a comunicação de hóspedes às autoridades e a faturação são da
+          responsabilidade do Agricultor.
+        </p>
+      </>
+    ),
+  },
+  {
     id: "avaliacoes",
     title: "Avaliações e conteúdos dos utilizadores",
     content: (

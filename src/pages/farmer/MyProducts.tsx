@@ -83,6 +83,7 @@ const MyProducts = () => {
   const [historyProduct, setHistoryProduct] = useState<ProductRow | null>(null);
   const [expiry, setExpiry] = useState<Record<string, string>>({});
   const [batches, setBatches] = useState<Record<string, Batch[]>>({});
+  const [pendingExpiry, setPendingExpiry] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (authLoading) return;
@@ -172,6 +173,22 @@ const MyProducts = () => {
     return parseInt(sel, 10) || 0;
   };
 
+  // Lote à espera de validade: com a data, as unidades voltam ao stock à venda.
+  const confirmBatchExpiry = async (b: Batch) => {
+    const date = pendingExpiry[b.id];
+    if (!date) return;
+    setSavingId(b.id);
+    const { error } = await supabase.rpc("set_batch_expiry", { p_batch_id: b.id, p_expires_at: date });
+    setSavingId(null);
+    if (error) {
+      toast({ title: "Não foi possível repor o stock", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Stock reposto à venda", description: `${b.quantity_remaining} un. com validade ${formatDate(date)}.` });
+    setPendingExpiry((s) => ({ ...s, [b.id]: "" }));
+    load();
+  };
+
   const applyStockDelta = async (p: ProductRow, sign: 1 | -1) => {
     const amount = resolveAmount(p);
     if (amount <= 0) return;
@@ -181,6 +198,11 @@ const MyProducts = () => {
       return;
     }
     const exp = expiry[p.id] || null;
+    // Todo o stock à venda tem validade.
+    if (sign === 1 && !exp) {
+      toast({ title: "Indique a validade do novo stock", variant: "destructive" });
+      return;
+    }
     if (sign === 1 && exp && exp < todayISO()) {
       toast({ title: "A validade não pode estar no passado", variant: "destructive" });
       return;
@@ -373,7 +395,7 @@ const MyProducts = () => {
                     onChange={(e) => setExpiry((s) => ({ ...s, [p.id]: e.target.value }))}
                     className="h-9 w-36"
                     aria-label="Validade do novo stock"
-                    title="Validade do novo stock (opcional)"
+                    title="Validade do novo stock (obrigatória)"
                   />
                   {sel === "100+" && (
                     <Input
@@ -415,22 +437,46 @@ const MyProducts = () => {
                   </Button>
                 </div>
 
-                {(batches[p.id]?.length ?? 0) > 0 && (
+                {(batches[p.id] ?? []).some((b) => b.expires_at) && (
                   <div className="w-full border-t border-border pt-2 text-xs text-muted-foreground">
                     <p className="mb-1 font-medium text-foreground">
                       Lotes em stock (vende-se primeiro o mais antigo)
                     </p>
                     <ul className="flex flex-wrap gap-2">
-                      {batches[p.id].map((b, i) => (
-                        <li key={b.id} className="rounded-md border border-border bg-muted/50 px-2 py-1">
-                          {i === 0 && <span className="mr-1 font-semibold text-primary">Próximo ·</span>}
-                          Inserido {new Date(b.added_at).toLocaleDateString("pt-PT")} · {b.quantity_remaining} {p.unit}
-                          {b.expires_at ? ` · validade ${formatDate(b.expires_at)}` : " · sem validade"}
-                        </li>
-                      ))}
+                      {batches[p.id]
+                        .filter((b) => b.expires_at)
+                        .map((b, i) => (
+                          <li key={b.id} className="rounded-md border border-border bg-muted/50 px-2 py-1">
+                            {i === 0 && <span className="mr-1 font-semibold text-primary">Próximo ·</span>}
+                            Inserido {new Date(b.added_at).toLocaleDateString("pt-PT")} · {b.quantity_remaining} {p.unit}
+                            {` · validade ${formatDate(b.expires_at!)}`}
+                          </li>
+                        ))}
                     </ul>
                   </div>
                 )}
+
+                {/* Lotes sem validade: fora do stock à venda até o agricultor indicar a data. */}
+                {(batches[p.id] ?? [])
+                  .filter((b) => !b.expires_at)
+                  .map((b) => (
+                    <div key={b.id} className="flex w-full flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/40 p-2 text-xs">
+                      <span className="flex-1 text-foreground">
+                        {b.quantity_remaining} {p.unit} à espera de validade (fora do stock à venda)
+                      </span>
+                      <Input
+                        type="date"
+                        min={todayISO()}
+                        value={pendingExpiry[b.id] ?? ""}
+                        onChange={(e) => setPendingExpiry((s) => ({ ...s, [b.id]: e.target.value }))}
+                        className="h-8 w-36"
+                        aria-label="Validade deste stock"
+                      />
+                      <Button size="sm" className="h-8" disabled={!pendingExpiry[b.id] || savingId === b.id} onClick={() => confirmBatchExpiry(b)}>
+                        Repor à venda
+                      </Button>
+                    </div>
+                  ))}
               </li>
             );
           })}
