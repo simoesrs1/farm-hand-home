@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import ActivityCard from "@/components/ActivityCard";
+import StripePayoutsCard from "@/components/StripePayoutsCard";
 
 interface Row {
   id: string;
@@ -122,6 +123,7 @@ const Sales = () => {
         <h1 className="font-display text-3xl font-bold text-foreground">As minhas vendas</h1>
       </div>
 
+      <StripePayoutsCard userId={user.id} />
       <ActivityCard userId={user.id} />
 
       {loading ? (
