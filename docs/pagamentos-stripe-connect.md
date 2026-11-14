@@ -1,6 +1,6 @@
 # Pagamentos com Stripe Connect
 
-> Estado: em implementação (fase 1) · Última atualização: 14 de novembro de 2026
+> Estado: fase 1 concluída e testada; próximo passo é a comissão de 12% · Última atualização: 14 de novembro de 2026
 
 ## Porquê
 
@@ -55,11 +55,35 @@ Dentro da opção 2, o pagamento pode ser criado "em nome de" do agricultor, com
 
 | Fase | Conteúdo | Estado |
 |---|---|---|
-| 1 | Registo dos agricultores no Connect: tabela `farmer_payment_accounts`, Edge Function `stripe-connect` e cartão em "As minhas vendas" | Em curso |
+| 1 | Registo dos agricultores no Connect: tabela `farmer_payment_accounts`, Edge Function `stripe-connect` e cartão em "As minhas vendas" | Concluída e testada (14 nov 2026), sem commit |
 | — | Comissão de 12%: taxa definida num só sítio, cálculo corrigido e `client_price` dos produtos recalculado | Por fazer |
 | 2 | Checkout, webhook `stripe-webhook` e bloqueio de agricultores sem conta ativa | Por fazer |
 | 3 | Transferências e reembolsos (`validate-pickup`, `order-action`, `expire-orders` e reservas) | Por fazer |
 | 4 | Textos legais (Termos e `src/lib/legal.ts`) e passagem para o modo real | Por fazer |
+
+## Tarefas pendentes
+
+### Arrumação da fase 1
+
+- [ ] **Commit** das alterações da fase 1 (migração, `_shared/stripe.ts`, `stripe-connect`, `StripePayoutsCard`, `Sales.tsx`, `types.ts` e este documento).
+- [ ] **Renovar a chave de teste** do Stripe (Chaves de API → "Renovar chave"), porque a atual foi partilhada num chat. Guardar a nova com `npx supabase secrets set STRIPE_SECRET_KEY=...`.
+- [ ] **Logótipo** no formulário do Stripe (Definições → Connect → Interface de onboarding → Marca). O `public/favicon.png` tem só 64×64 px e o Stripe pede pelo menos 128×128 px. O nome (ValorRural) e a cor de destaque (`#27684A`) já estão configurados.
+- [ ] Opcional: apagar a conta de teste "Teste ValorRural (verificacao v2)" (`acct_1UbhtHAm1bwKrJoZ`) em Connect → Contas conectadas. Foi criada à mão para verificar a Accounts v2 e não está ligada a nenhum agricultor.
+
+### Comissão de 12% (antes da fase 2)
+
+Hoje o preço ao cliente é `preço do agricultor × (1 + comissão) × (1 + IVA)`: a comissão é paga pelo cliente, por isso subir para 12% não reduz o que o agricultor recebe.
+
+- [ ] **Definir a taxa num só sítio.** Os 10% estão hoje escritos à mão em vários ficheiros:
+  - `supabase/functions/create-order/index.ts` (`COMMISSION_RATE`);
+  - as funções SQL das reservas de experiências e de alojamento (`round(v_total * 0.10, 2)` em `20261113120000_farm_experiences.sql`), que precisam de uma migração nova;
+  - `src/pages/farmer/NewProduct.tsx` e `src/pages/farmer/EditProduct.tsx` (`COMMISSION`, usado no preço ao cliente e no texto "comissão de 10%");
+  - `src/pages/farmer/FarmerOrders.tsx`, que volta a calcular `total * 0.1` em vez de usar `commission_amount`;
+  - `src/pages/farmer/ScanPickup.tsx` (texto "90% do valor da encomenda");
+  - `src/lib/legal.ts` (`commissionPercent`) e `src/pages/Terms.tsx`.
+- [ ] **Corrigir o cálculo.** O `create-order` tira 10% ao total pago pelo cliente, com IVA incluído, mas o preço só tinha somado 10% ao preço do agricultor. O agricultor recebe `0,90 × 1,10 = 99%` do que devia (com 12% seriam 98,6%), e a comissão incide sobre o IVA. A comissão deve ser `preço ao cliente − preço do agricultor com IVA`.
+- [ ] **Recalcular o `client_price`** dos produtos existentes com a taxa nova (`farmer_price × 1,12 × (1 + vat_rate/100)`), numa migração.
+- [ ] Não confundir com os 10% de `expire-orders`, que são a compensação ao agricultor quando a encomenda expira e não a comissão. Esta regra é tratada no ponto em aberto sobre encomendas expiradas, mais abaixo.
 
 ## Pontos em aberto
 

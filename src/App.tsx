@@ -12,6 +12,7 @@ import FarmerOnboardingGuard from "./components/FarmerOnboardingGuard";
 import ClientEmailVerificationGate from "./components/ClientEmailVerificationGate";
 import { ConsentProvider } from "./contexts/ConsentContext";
 import CookieConsent from "./components/CookieConsent";
+import { useScrollOnNavigate } from "./hooks/useScrollOnNavigate";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -49,6 +50,12 @@ import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
+// Os hooks do router só funcionam dentro do BrowserRouter, daí este invólucro.
+const ScrollOnNavigate = () => {
+  useScrollOnNavigate();
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -62,6 +69,7 @@ const App = () => (
                 <FarmerOnboardingGuard />
                 <ClientEmailVerificationGate />
                 <CookieConsent />
+                <ScrollOnNavigate />
                 <div className="flex min-h-screen flex-col">
 
                   <Header />

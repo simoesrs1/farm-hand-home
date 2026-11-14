@@ -1,5 +1,4 @@
-import { ReactNode, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { ReactNode } from "react";
 import { LEGAL } from "@/lib/legal";
 
 export interface LegalSection {
@@ -15,19 +14,9 @@ interface Props {
   sections: LegalSection[];
 }
 
+// O scroll para o topo e para âncoras (ex.: /privacidade#cookies) é feito por
+// useScrollOnNavigate, igual para todas as páginas.
 const LegalLayout = ({ eyebrow, title, intro, sections }: Props) => {
-  const { hash } = useLocation();
-
-  // O React Router não faz scroll para âncoras (ex.: /privacidade#cookies).
-  // Adiado para depois do layout, senão o navegador repõe o scroll anterior.
-  useEffect(() => {
-    const id = window.setTimeout(() => {
-      if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: "start" });
-      else window.scrollTo({ top: 0 });
-    }, 50);
-    return () => window.clearTimeout(id);
-  }, [hash]);
-
   return (
     <main className="py-12 md:py-16">
       <div className="container max-w-5xl">
