@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import ProductHistoryDialog from "@/components/ProductHistoryDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -289,34 +290,17 @@ const MyProducts = () => {
             const sel = preset[p.id] ?? "1";
             const avail = availabilityState(p);
             const isExpired = avail === "expired";
+            const datedBatches = (batches[p.id] ?? []).filter((b) => b.expires_at);
+            const pendingBatches = (batches[p.id] ?? []).filter((b) => !b.expires_at);
             return (
               <li
                 key={p.id}
-                className={`flex flex-col gap-3 rounded-2xl border bg-card p-3 sm:flex-row sm:items-center ${
+                className={`overflow-hidden rounded-2xl border bg-card ${
                   isOut || isExpired ? "border-destructive/50" : "border-border"
                 }`}
               >
-                <div className="flex items-center gap-3 sm:flex-1 sm:min-w-0">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                    aria-label={`Editar ${p.name}`}
-                    title="Editar produto"
-                    onClick={() => navigate(`/agricultor/produtos/${p.id}/editar`)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                    aria-label={`Histórico de ${p.name}`}
-                    title="Ver histórico"
-                    onClick={() => setHistoryProduct(p)}
-                  >
-                    <History className="h-4 w-4" />
-                  </Button>
+                {/* 1. Cabeçalho: produto, estado do stock e ações */}
+                <div className="flex flex-wrap items-center gap-3 p-4">
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
                     {thumbs[p.id] ? (
                       <img src={thumbs[p.id]} alt={p.name} className="h-full w-full object-cover" />
@@ -326,22 +310,58 @@ const MyProducts = () => {
                       </div>
                     )}
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-foreground">{p.name}</p>
                     <p className="text-xs text-muted-foreground">por {p.unit}</p>
+                  </div>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      isOut
+                        ? "bg-destructive/10 text-destructive"
+                        : stock <= threshold
+                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                        : "bg-primary/10 text-primary"
+                    }`}
+                  >
+                    {isOut ? "Sem stock" : `${stock} em stock`}
+                  </span>
+                  <div className="flex w-full gap-2 sm:w-auto">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 gap-1.5 sm:flex-none"
+                      onClick={() => navigate(`/agricultor/produtos/${p.id}/editar`)}
+                    >
+                      <Pencil className="h-4 w-4" /> Editar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 gap-1.5 sm:flex-none"
+                      onClick={() => setHistoryProduct(p)}
+                    >
+                      <History className="h-4 w-4" /> Histórico
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 2. Resumo: disponibilidade e stock */}
+                <div className="grid gap-4 border-t border-border p-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Disponibilidade</p>
                     {avail === "none" ? (
-                      <p className="mt-1 text-xs text-muted-foreground">Sem prazo de levantamento</p>
+                      <p className="mt-1 text-sm text-foreground">Sem prazo de levantamento</p>
                     ) : (
                       <p
-                        className={`mt-1 inline-flex items-center gap-1 text-xs ${
+                        className={`mt-1 inline-flex items-center gap-1.5 text-sm ${
                           avail === "expired"
                             ? "font-medium text-destructive"
                             : avail === "ending"
                             ? "font-medium text-amber-700 dark:text-amber-400"
-                            : "text-muted-foreground"
+                            : "text-foreground"
                         }`}
                       >
-                        <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                        <CalendarClock className="h-4 w-4 shrink-0" />
                         <span>
                           {p.availability_start && `${formatDate(p.availability_start)} – `}
                           {formatDate(p.availability_end!)}
@@ -357,126 +377,138 @@ const MyProducts = () => {
                       </p>
                     )}
                   </div>
-                </div>
-
-
-                <div className="flex items-center gap-2 sm:w-32">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      isOut
-                        ? "bg-destructive/10 text-destructive"
-                        : stock <= threshold
-                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                        : "bg-primary/10 text-primary"
-                    }`}
-                  >
-                    {isOut ? "Sem stock" : `${stock} em stock`}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                  <select
-                    value={sel}
-                    onChange={(e) => setPreset((s) => ({ ...s, [p.id]: e.target.value }))}
-                    className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-                    aria-label="Quantidade a adicionar"
-                  >
-                    {Array.from({ length: 100 }, (_, i) => i + 1).map((n) => (
-                      <option key={n} value={String(n)}>
-                        {n}
-                      </option>
-                    ))}
-                    <option value="100+">100+</option>
-                  </select>
-                  <Input
-                    type="date"
-                    min={todayISO()}
-                    value={expiry[p.id] ?? ""}
-                    onChange={(e) => setExpiry((s) => ({ ...s, [p.id]: e.target.value }))}
-                    className="h-9 w-36"
-                    aria-label="Validade do novo stock"
-                    title="Validade do novo stock (obrigatória)"
-                  />
-                  {sel === "100+" && (
-                    <Input
-                      type="number"
-                      min={101}
-                      step={1}
-                      value={custom[p.id] ?? ""}
-                      onChange={(e) =>
-                        setCustom((s) => ({ ...s, [p.id]: e.target.value }))
-                      }
-                      placeholder="Nº exato"
-                      className="h-9 w-28"
-                    />
-                  )}
-                  <Button
-                    size="icon"
-                    onClick={() => applyStockDelta(p, 1)}
-                    disabled={savingId === p.id}
-                    className="h-8 w-8 shrink-0"
-                    aria-label={`Adicionar stock a ${p.name}`}
-                    title="Adicionar stock"
-                  >
-                    {savingId === p.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Plus className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => applyStockDelta(p, -1)}
-                    disabled={savingId === p.id || stock <= 0}
-                    className="h-8 w-8 shrink-0"
-                    aria-label={`Retirar stock a ${p.name}`}
-                    title="Retirar stock"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {(batches[p.id] ?? []).some((b) => b.expires_at) && (
-                  <div className="w-full border-t border-border pt-2 text-xs text-muted-foreground">
-                    <p className="mb-1 font-medium text-foreground">
-                      Lotes em stock (vende-se primeiro o mais antigo)
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Stock à venda</p>
+                    <p className="mt-1 text-sm text-foreground">
+                      {stock} {p.unit} · aviso quando chegar a {threshold}
                     </p>
-                    <ul className="flex flex-wrap gap-2">
-                      {batches[p.id]
-                        .filter((b) => b.expires_at)
-                        .map((b, i) => (
-                          <li key={b.id} className="rounded-md border border-border bg-muted/50 px-2 py-1">
-                            {i === 0 && <span className="mr-1 font-semibold text-primary">Próximo ·</span>}
-                            Inserido {new Date(b.added_at).toLocaleDateString("pt-PT")} · {b.quantity_remaining} {p.unit}
-                            {` · validade ${formatDate(b.expires_at!)}`}
-                          </li>
+                  </div>
+                </div>
+
+                {/* 3. Atualizar stock */}
+                <div className="border-t border-border p-4">
+                  <p className="mb-2 text-sm font-medium text-foreground">Atualizar stock</p>
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor={`qty-${p.id}`} className="text-xs text-muted-foreground">Quantidade</Label>
+                      <select
+                        id={`qty-${p.id}`}
+                        value={sel}
+                        onChange={(e) => setPreset((s) => ({ ...s, [p.id]: e.target.value }))}
+                        className="block h-9 rounded-md border border-input bg-background px-2 text-sm"
+                      >
+                        {Array.from({ length: 100 }, (_, i) => i + 1).map((n) => (
+                          <option key={n} value={String(n)}>
+                            {n}
+                          </option>
                         ))}
+                        <option value="100+">100+</option>
+                      </select>
+                    </div>
+                    {sel === "100+" && (
+                      <div className="space-y-1">
+                        <Label htmlFor={`custom-${p.id}`} className="text-xs text-muted-foreground">Nº exato</Label>
+                        <Input
+                          id={`custom-${p.id}`}
+                          type="number"
+                          min={101}
+                          step={1}
+                          value={custom[p.id] ?? ""}
+                          onChange={(e) => setCustom((s) => ({ ...s, [p.id]: e.target.value }))}
+                          placeholder="Ex.: 150"
+                          className="h-9 w-28"
+                        />
+                      </div>
+                    )}
+                    <div className="space-y-1">
+                      <Label htmlFor={`exp-${p.id}`} className="text-xs text-muted-foreground">
+                        Validade (para adicionar)
+                      </Label>
+                      <Input
+                        id={`exp-${p.id}`}
+                        type="date"
+                        min={todayISO()}
+                        value={expiry[p.id] ?? ""}
+                        onChange={(e) => setExpiry((s) => ({ ...s, [p.id]: e.target.value }))}
+                        className="h-9 w-40"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => applyStockDelta(p, 1)}
+                        disabled={savingId === p.id}
+                        className="h-9 gap-1.5"
+                      >
+                        {savingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                        Adicionar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => applyStockDelta(p, -1)}
+                        disabled={savingId === p.id || stock <= 0}
+                        className="h-9 gap-1.5"
+                      >
+                        <Minus className="h-4 w-4" /> Retirar
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Lotes em stock */}
+                {datedBatches.length > 0 && (
+                  <div className="border-t border-border p-4">
+                    <p className="mb-2 text-sm font-medium text-foreground">
+                      Lotes em stock <span className="font-normal text-muted-foreground">(vende-se primeiro o mais antigo)</span>
+                    </p>
+                    <ul className="divide-y divide-border rounded-lg border border-border text-sm">
+                      {datedBatches.map((b, i) => (
+                        <li key={b.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2">
+                          <span className="w-16 shrink-0 text-xs font-semibold text-primary">{i === 0 ? "Próximo" : ""}</span>
+                          <span className="text-muted-foreground">Inserido {new Date(b.added_at).toLocaleDateString("pt-PT")}</span>
+                          <span className="font-medium text-foreground">{b.quantity_remaining} {p.unit}</span>
+                          <span className="text-muted-foreground">Validade {formatDate(b.expires_at!)}</span>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}
 
-                {/* Lotes sem validade: fora do stock à venda até o agricultor indicar a data. */}
-                {(batches[p.id] ?? [])
-                  .filter((b) => !b.expires_at)
-                  .map((b) => (
-                    <div key={b.id} className="flex w-full flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/40 p-2 text-xs">
-                      <span className="flex-1 text-foreground">
-                        {b.quantity_remaining} {p.unit} à espera de validade (fora do stock à venda)
-                      </span>
-                      <Input
-                        type="date"
-                        min={todayISO()}
-                        value={pendingExpiry[b.id] ?? ""}
-                        onChange={(e) => setPendingExpiry((s) => ({ ...s, [b.id]: e.target.value }))}
-                        className="h-8 w-36"
-                        aria-label="Validade deste stock"
-                      />
-                      <Button size="sm" className="h-8" disabled={!pendingExpiry[b.id] || savingId === b.id} onClick={() => confirmBatchExpiry(b)}>
-                        Repor à venda
-                      </Button>
-                    </div>
-                  ))}
+                {/* 5. Lotes sem validade: fora do stock à venda até o agricultor indicar a data. */}
+                {pendingBatches.length > 0 && (
+                  <div className="border-t border-border bg-muted/30 p-4">
+                    <p className="mb-2 text-sm font-medium text-foreground">
+                      À espera de validade <span className="font-normal text-muted-foreground">(fora do stock à venda)</span>
+                    </p>
+                    <ul className="space-y-2">
+                      {pendingBatches.map((b) => (
+                        <li key={b.id} className="flex flex-wrap items-end gap-3">
+                          <span className="pb-2 text-sm font-medium text-foreground">{b.quantity_remaining} {p.unit}</span>
+                          <div className="space-y-1">
+                            <Label htmlFor={`pending-${b.id}`} className="text-xs text-muted-foreground">Validade</Label>
+                            <Input
+                              id={`pending-${b.id}`}
+                              type="date"
+                              min={todayISO()}
+                              value={pendingExpiry[b.id] ?? ""}
+                              onChange={(e) => setPendingExpiry((s) => ({ ...s, [b.id]: e.target.value }))}
+                              className="h-9 w-40"
+                            />
+                          </div>
+                          <Button
+                            size="sm"
+                            className="h-9"
+                            disabled={!pendingExpiry[b.id] || savingId === b.id}
+                            onClick={() => confirmBatchExpiry(b)}
+                          >
+                            Repor à venda
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </li>
             );
           })}
