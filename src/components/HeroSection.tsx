@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin, Search, Sprout } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import heroImage from "@/assets/hero-farm.jpg";
@@ -42,7 +43,7 @@ const HeroSection = () => {
           Do campo para a sua mesa, sem intermediários
         </h1>
         <p className="mt-4 max-w-xl text-base text-primary-foreground/80 md:text-lg animate-fade-in whitespace-pre-line" style={{ animationDelay: "0.15s" }}>
-          Descubra produtos frescos diretamente de quem cultiva.{"\n"}Apoia o produtor local!
+          Descubra produtos frescos diretamente de quem cultiva.{"\n"}Apoie o produtor local!
         </p>
 
         <div
@@ -64,26 +65,31 @@ const HeroSection = () => {
             <TabsContent value="location" className="mt-4">
               <div className="flex flex-col gap-4 md:flex-row md:items-end">
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-left text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="hero-location"
+                    className="mb-1.5 block text-left text-xs font-medium text-muted-foreground"
+                  >
                     A sua localização
                   </label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <input
+                    <Input
+                      id="hero-location"
                       type="text"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleLocationSearch()}
                       placeholder="Ex: Lisboa, Sintra, Évora..."
-                      className="w-full rounded-lg border border-input bg-background py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="pl-9"
                     />
                   </div>
                 </div>
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-left text-xs font-medium text-muted-foreground">
+                  <p className="mb-1.5 block text-left text-xs font-medium text-muted-foreground">
                     Raio: <span className="font-semibold text-primary">{radius[0]} km</span>
-                  </label>
+                  </p>
                   <Slider
+                    aria-label={`Raio de pesquisa: ${radius[0]} km`}
                     value={radius}
                     onValueChange={setRadius}
                     min={5}
@@ -106,18 +112,22 @@ const HeroSection = () => {
             <TabsContent value="farm" className="mt-4">
               <div className="flex flex-col gap-4 md:flex-row md:items-end">
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-left text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="hero-farm-name"
+                    className="mb-1.5 block text-left text-xs font-medium text-muted-foreground"
+                  >
                     Nome da quinta
                   </label>
                   <div className="relative">
                     <Sprout className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <input
+                    <Input
+                      id="hero-farm-name"
                       type="text"
                       value={farmName}
                       onChange={(e) => setFarmName(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleFarmSearch()}
                       placeholder="Ex: Quinta do Vale Verde, Monte Alentejano..."
-                      className="w-full rounded-lg border border-input bg-background py-2.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="pl-9"
                     />
                   </div>
                 </div>

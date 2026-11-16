@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, Navigate, useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { type Product } from "@/data/products";
 import { getCategoryBySlug } from "@/data/categories";
@@ -44,6 +45,8 @@ type SortableProduct = Product & {
   score: number;
   /** Pontuação de atividade do agricultor (0–100). */
   activityScore: number;
+  /** Limite definido pelo agricultor a partir do qual o stock aparece como baixo. */
+  lowStockThreshold: number;
   lat: number | null;
   lng: number | null;
   pickupWindows: PickupWindow[];
@@ -64,6 +67,10 @@ const distanceKm = (
   return 2 * R * Math.asin(Math.sqrt(h));
 };
 
+/** " (3 dias)" quando o agricultor indicou o prazo; vazio caso contrário. */
+const shippingDaysLabel = (days?: number) =>
+  days == null ? "" : ` (${days} ${days === 1 ? "dia" : "dias"})`;
+
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const category = slug ? getCategoryBySlug(slug) : undefined;
@@ -72,6 +79,7 @@ const CategoryPage = () => {
   const { registerStock } = useStock();
   const { toast } = useToast();
   const [items, setItems] = useState<SortableProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const marketPrices = useMarketPrices();
   const [sort, setSort] = useState<SortOption>("relevancia");
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
@@ -104,20 +112,33 @@ const CategoryPage = () => {
   const highlightId = searchParams.get("produto");
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-
   useEffect(() => {
     if (!category) return;
     let cancelled = false;
+    setLoading(true);
 
     const load = async () => {
       const { data: rows, error } = await supabase
         .from("products")
-        .select("id, name, unit, client_price, discount_percent, stock_quantity, media_urls, delivery_mode, shipping_days, category, farmer_id, is_organic, created_at")
+        .select("id, name, unit, client_price, discount_percent, stock_quantity, low_stock_threshold, media_urls, delivery_mode, shipping_days, category, farmer_id, is_organic, created_at")
         .ilike("category", category.name)
         .eq("active", true)
         .gt("stock_quantity", 0);
+      if (error) {
+        console.error("Erro ao carregar produtos da categoria", error);
+        if (!cancelled) {
+          toast({
+            title: "Não foi possível carregar os produtos",
+            description: "Tente novamente dentro de momentos.",
+            variant: "destructive",
+          });
+        }
+      }
       if (error || !rows || rows.length === 0) {
-        if (!cancelled) setItems([]);
+        if (!cancelled) {
+          setItems([]);
+          setLoading(false);
+        }
         return;
       }
 
@@ -166,9 +187,10 @@ const CategoryPage = () => {
             createdAt: r.created_at,
             score: farmer?.initial_score ?? 0,
             activityScore: farmer?.activity_score ?? 0,
+            lowStockThreshold: r.low_stock_threshold,
             lat: farmer?.pickup_lat ?? null,
             lng: farmer?.pickup_lng ?? null,
-            pickupWindows: parsePickupHours((farmer as any)?.pickup_hours),
+            pickupWindows: parsePickupHours(farmer?.pickup_hours),
           };
           return product;
         })
@@ -177,6 +199,7 @@ const CategoryPage = () => {
       if (!cancelled) {
         setItems(mapped);
         registerStock(mapped.map((p) => ({ id: p.id, quantity: p.stock })));
+        setLoading(false);
       }
     };
 
@@ -184,7 +207,7 @@ const CategoryPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [category, registerStock]);
+  }, [category, registerStock, toast]);
 
   useEffect(() => {
     if (!highlightId) return;
@@ -263,10 +286,14 @@ const CategoryPage = () => {
         </div>
 
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground">{sorted.length}</span> produto
-            {sorted.length !== 1 && "s"} nesta categoria
-          </p>
+          {loading ? (
+            <Skeleton className="h-5 w-40" />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">{sorted.length}</span> produto
+              {sorted.length !== 1 && "s"} nesta categoria
+            </p>
+          )}
           <div className="flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
             <Select value={sort} onValueChange={handleSortChange}>
@@ -290,14 +317,30 @@ const CategoryPage = () => {
           </div>
         </div>
 
-        {sorted.length === 0 ? (
+        {loading ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4" aria-busy="true" aria-label="A carregar produtos">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="overflow-hidden rounded-xl border border-border bg-card">
+                <Skeleton className="h-40 rounded-none" />
+                <div className="space-y-2 p-4">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-3 w-1/3" />
+                  <div className="flex items-end justify-between pt-3">
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-8 w-24" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : sorted.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">
             Ainda não há produtos nesta categoria.
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {sorted.map((p) => {
-
               const available = p.stock;
               const inCart = cartItems.find((i) => i.id === p.id)?.quantity ?? 0;
               const canAdd = inCart < available;
@@ -330,18 +373,17 @@ const CategoryPage = () => {
                       title="Stock definido pelo agricultor"
                     >
                       <div>
-                        <span className={`mt-1 inline-block text-xs font-medium ${available <= 5 ? "text-destructive" : "text-primary"}`}>
+                        <span className={`mt-1 inline-block text-xs font-medium ${available <= p.lowStockThreshold ? "text-destructive" : "text-primary"}`}>
                           {available} em stock
                         </span>
                       </div>
-                      
                     </Link>
                     <PickupAvailabilityBadge windows={p.pickupWindows} />
                     <p className="mt-2 text-xs font-medium text-primary">
                       {p.deliveryMode === "shipping"
-                        ? `Entrega em casa (${p.shippingDays ?? "?"} dias)`
+                        ? `Entrega em casa${shippingDaysLabel(p.shippingDays)}`
                         : p.deliveryMode === "both"
-                        ? `Levantamento ou entrega em casa (${p.shippingDays ?? "?"} dias)`
+                        ? `Levantamento ou entrega em casa${shippingDaysLabel(p.shippingDays)}`
                         : "Apenas levantamento na propriedade"}
                     </p>
                     <SavingsBadge

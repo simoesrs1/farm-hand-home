@@ -1,6 +1,6 @@
 import HeroSection from "@/components/HeroSection";
 import FeaturedFarmers from "@/components/FeaturedFarmers";
-import { ShieldCheck, Truck, Star } from "lucide-react";
+import { ShieldCheck, MapPin, Star } from "lucide-react";
 
 const features = [
   {
@@ -9,14 +9,14 @@ const features = [
     description: "Só quem compra pode avaliar — garantimos transparência total.",
   },
   {
-    icon: Truck,
+    icon: MapPin,
     title: "Proximidade Real",
     description: "Encontre produtores num raio à sua escolha com geolocalização.",
   },
   {
     icon: Star,
     title: "Qualidade Garantida",
-    description: "Agricultores do país, classificados pela comunidade..",
+    description: "Agricultores do país, classificados pela comunidade.",
   },
 ];
 

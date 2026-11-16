@@ -84,7 +84,7 @@ const FeaturedFarmers = () => {
     <section className="py-16 md:py-24">
       <div className="container">
         <div className="mb-10 text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-accent">
+          <p className="text-sm font-semibold uppercase tracking-wider text-primary">
             Destaques
           </p>
           <h2 className="mt-2 font-display text-3xl font-bold text-foreground md:text-4xl">
@@ -100,7 +100,7 @@ const FeaturedFarmers = () => {
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {farmers === null
-            ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-80 rounded-xl" />)
+            ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-80 rounded-xl" />)
             : farmers.map((farmer) => <FarmerCard key={farmer.id} {...farmer} />)}
         </div>
       </div>

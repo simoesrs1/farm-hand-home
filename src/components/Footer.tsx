@@ -19,7 +19,7 @@ const Footer = () => {
               />
             </Link>
             <p className="mt-3 text-sm text-muted-foreground">
-              Conectando consumidores a agricultores locais com transparência e confiança.
+              Ligamos consumidores a agricultores locais, com transparência e confiança.
             </p>
           </div>
           <div>
