@@ -121,6 +121,13 @@ const CookieSection = () => {
         . Pode também apagar cookies nas definições do seu navegador.
       </p>
 
+      <p>
+        No mapa de agricultores, pode usar a localização do seu aparelho para ver os agricultores
+        dentro de um raio. O navegador pede-lhe autorização antes de a partilhar; a localização é
+        usada apenas no seu navegador, para esse filtro, e não é guardada nem enviada para a
+        plataforma.
+      </p>
+
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-foreground">
           {decided
