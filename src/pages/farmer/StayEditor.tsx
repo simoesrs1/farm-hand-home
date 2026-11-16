@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/PageHeader";
 import StayForm, { type StayRow } from "@/components/StayForm";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,7 +70,7 @@ const StayEditor = () => {
       <button onClick={() => navigate("/agricultor/alojamento")} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> O meu alojamento
       </button>
-      <h1 className="mb-6 font-display text-3xl font-bold text-foreground">{stay ? "Editar alojamento" : "Novo alojamento"}</h1>
+      <PageHeader className="mb-6" eyebrow="Área do agricultor" title={stay ? "Editar alojamento" : "Novo alojamento"} />
       <StayForm farmerId={farmerId} stay={stay} gifts={gifts} blocked={blocked} onSaved={() => navigate("/agricultor/alojamento")} />
     </div>
   );

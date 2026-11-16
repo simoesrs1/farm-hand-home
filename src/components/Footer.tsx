@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
 import logoValorRural from "@/assets/logo-valorrural-horizontal.png";
 import { useConsent } from "@/contexts/ConsentContext";
+import { setAnimationsPaused } from "@/lib/animation";
+import { useAnimationsPaused } from "@/hooks/useReducedMotion";
 
 const Footer = () => {
   const { openPreferences } = useConsent();
+  const animationsPaused = useAnimationsPaused();
   return (
     <footer className="border-t border-border bg-card">
       <div className="container py-12">
@@ -50,6 +53,14 @@ const Footer = () => {
             <Link to="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</Link>
             <button type="button" onClick={openPreferences} className="hover:text-primary transition-colors">
               Gerir cookies
+            </button>
+            <button
+              type="button"
+              aria-pressed={animationsPaused}
+              onClick={() => setAnimationsPaused(!animationsPaused)}
+              className="hover:text-primary transition-colors"
+            >
+              {animationsPaused ? "Retomar animações" : "Pausar animações"}
             </button>
             <a
               href="https://www.livroreclamacoes.pt"

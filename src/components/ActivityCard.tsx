@@ -100,8 +100,8 @@ const ActivityCard = ({ userId }: { userId: string }) => {
       </div>
 
       {paused && pausedUntil ? (
-        <p className="mt-4 flex items-start gap-2 rounded-lg bg-accent/10 p-3 text-sm text-foreground">
-          <PauseCircle className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+        <p className="mt-4 flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm text-foreground">
+          <PauseCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           Em pausa até {formatReturnDate(pausedUntil)} — a pontuação está congelada e não perde posição.
         </p>
       ) : row.exempt_reason === "off_season" ? (
@@ -126,14 +126,14 @@ const ActivityCard = ({ userId }: { userId: string }) => {
           </p>
           <div className="mt-4 space-y-2 text-sm">
             <p className="flex items-center gap-2 text-foreground">
-              <Flame className="h-4 w-4 text-accent" />
+              <Flame className="h-4 w-4 text-coral" />
               {row.streak_weeks > 0
                 ? `${row.streak_weeks} ${row.streak_weeks === 1 ? "semana ativa" : "semanas ativas seguidas"}`
                 : "Ainda sem semanas ativas seguidas"}
             </p>
             {row.featured_rank && (
               <p className="flex items-center gap-2 text-foreground">
-                <Star className="h-4 w-4 fill-accent text-accent" />
+                <Star className="h-4 w-4 fill-highlight text-coral" />
                 Em destaque na página inicial
               </p>
             )}

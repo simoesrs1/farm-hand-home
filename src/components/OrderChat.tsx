@@ -196,9 +196,9 @@ const Bubble = ({
 }) => {
   if (m.sender_role === "sistema") {
     return (
-      <div className="mx-auto max-w-md rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
+      <div className="mx-auto max-w-md rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-foreground">
         <div className="flex items-start gap-2">
-          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           <p className="whitespace-pre-wrap">{m.content}</p>
         </div>
       </div>

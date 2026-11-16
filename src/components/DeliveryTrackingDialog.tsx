@@ -102,16 +102,16 @@ const DeliveryTrackingDialog = ({ orderId, farmName, open, onOpenChange }: Deliv
                 <li key={s.key} className="relative flex gap-4 pb-5 last:pb-0">
                   {!isLast && (
                     <span
-                      className={`absolute left-[15px] top-8 h-full w-px ${done && isDone(STEPS[i + 1].key) ? "bg-primary" : "bg-border"}`}
+                      className={`absolute left-[15px] top-8 h-full w-px ${done && isDone(STEPS[i + 1].key) ? "bg-success" : "bg-border"}`}
                       aria-hidden
                     />
                   )}
                   <span
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                       current
-                        ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
+                        ? "bg-success text-success-foreground ring-4 ring-success/20"
                         : done
-                          ? "bg-primary/15 text-primary"
+                          ? "bg-success/15 text-success"
                           : "bg-muted text-muted-foreground"
                     }`}
                   >
@@ -121,7 +121,7 @@ const DeliveryTrackingDialog = ({ orderId, farmName, open, onOpenChange }: Deliv
                     <p className={`text-sm font-medium ${done ? "text-foreground" : "text-muted-foreground"}`}>
                       {s.label}
                       {current && !delivered && (
-                        <span className="ml-2 text-xs font-normal text-primary">Estado atual</span>
+                        <span className="ml-2 text-xs font-normal text-success">Estado atual</span>
                       )}
                     </p>
                     {stamp && <p className="mt-0.5 text-xs text-muted-foreground">{formatStamp(stamp)}</p>}

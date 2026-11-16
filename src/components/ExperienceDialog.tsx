@@ -18,6 +18,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExperienceRow } from "@/components/ExperienceForm";
 import { DAY_LABELS } from "@/lib/pickup-hours";
+import { formatEuro } from "@/lib/format";
 import {
   FREE_CANCEL_DAYS,
   experienceAmount,
@@ -201,7 +202,7 @@ const ExperienceDialog = ({ experience, farmName, isOwner, onOpenChange }: Exper
               <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" /> {formatDuration(exp.duration_minutes)}</span>
               <span className="inline-flex items-center gap-1"><Users className="h-4 w-4" /> {exp.min_people}–{exp.max_people} pessoas</span>
               <span className="font-medium text-foreground">
-                {Number(exp.base_price).toFixed(2)}€ {mode === "per_person" ? "por pessoa" : "por grupo"}
+                {formatEuro(Number(exp.base_price))} {mode === "per_person" ? "por pessoa" : "por grupo"}
               </span>
             </div>
 
@@ -215,7 +216,7 @@ const ExperienceDialog = ({ experience, farmName, isOwner, onOpenChange }: Exper
                   return (
                     <li key={s.day}>
                       {DAY_LABELS[s.day]}: {s.times.join(", ")}
-                      {dayPrice !== Number(exp.base_price) && ` · ${dayPrice.toFixed(2)}€`}
+                      {dayPrice !== Number(exp.base_price) && ` · ${formatEuro(dayPrice)}`}
                     </li>
                   );
                 })}
@@ -304,7 +305,7 @@ const ExperienceDialog = ({ experience, farmName, isOwner, onOpenChange }: Exper
                             }
                           />
                           <span className="flex-1 text-foreground">{g.product?.name}</span>
-                          <span className="text-muted-foreground">+{Number(g.extra_price).toFixed(2)}€</span>
+                          <span className="text-muted-foreground">+{formatEuro(Number(g.extra_price))}</span>
                         </label>
                       ))}
                     </div>
@@ -312,7 +313,7 @@ const ExperienceDialog = ({ experience, farmName, isOwner, onOpenChange }: Exper
 
                   <div className="flex justify-between border-t border-border pt-3 text-sm">
                     <span className="font-medium text-foreground">Total</span>
-                    <span className="font-display text-lg font-bold text-primary">{total.toFixed(2)}€</span>
+                    <span className="font-mono tabular-nums text-lg font-bold text-primary">{formatEuro(total)}</span>
                   </div>
 
                   <label htmlFor="bk-accept" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/40 p-3 text-xs text-foreground">
@@ -327,7 +328,7 @@ const ExperienceDialog = ({ experience, farmName, isOwner, onOpenChange }: Exper
 
                   <Button onClick={book} disabled={submitting || !accepted || !date || !time} className="w-full gap-2">
                     {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Reservar e pagar {total.toFixed(2)}€ (simulado)
+                    Reservar e pagar {formatEuro(total)} (simulado)
                   </Button>
                 </div>
               )}

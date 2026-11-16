@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { MapPin, ArrowLeft, ArrowUpDown, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, ArrowUpDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { type Product } from "@/data/products";
 import { getCategoryByName } from "@/data/categories";
-import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import SavingsBadge from "@/components/SavingsBadge";
+import ProductCard, { ProductCardSkeleton } from "@/components/ProductCard";
+import PageHeader from "@/components/PageHeader";
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import { farmerRank } from "@/lib/farmer-activity";
 
@@ -28,14 +27,13 @@ const sortLabels: Record<SortOption, string> = {
 
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { addItem, items: cartItems } = useCart();
   const { registerStock } = useStock();
-  const { toast } = useToast();
   const location = searchParams.get("location") || "";
   const radius = searchParams.get("radius") || "25";
   const sort = (searchParams.get("sort") as SortOption) || "relevancia";
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   // Atividade + certificados de cada agricultor, para a ordenação "Relevância".
   const [rankByFarmer, setRankByFarmer] = useState<Map<string, number>>(new Map());
   const [originalPrices, setOriginalPrices] = useState<Map<string, number>>(new Map());
@@ -57,7 +55,10 @@ const SearchResults = () => {
         .eq("active", true)
         .gt("stock_quantity", 0);
       if (error || !rows || rows.length === 0) {
-        if (!cancelled) setProducts([]);
+        if (!cancelled) {
+          setProducts([]);
+          setLoading(false);
+        }
         return;
       }
 
@@ -68,18 +69,19 @@ const SearchResults = () => {
         .in("id", farmerIds);
       const farmerById = new Map((farmers ?? []).map((f) => [f.id, f]));
 
-      const mapped = await Promise.all(
-        rows.map(async (r) => {
+      // Fotografias num único pedido (bucket privado: URLs assinados por 1 hora).
+      const paths = rows.map((r) => r.media_urls?.[0]).filter((p): p is string => !!p);
+      const signedByPath = new Map<string, string>();
+      if (paths.length) {
+        const { data: signed } = await supabase.storage.from("product-media").createSignedUrls(paths, 60 * 60);
+        for (const s of signed ?? []) if (s.path && s.signedUrl) signedByPath.set(s.path, s.signedUrl);
+      }
+
+      const mapped = rows.map((r) => {
           const farmer = farmerById.get(r.farmer_id);
           const category = r.category ? getCategoryByName(r.category) : undefined;
-          let image = category?.image ?? FALLBACK_IMAGE;
           const path = r.media_urls?.[0];
-          if (path) {
-            const { data: signed } = await supabase.storage
-              .from("product-media")
-              .createSignedUrl(path, 60 * 60);
-            if (signed?.signedUrl) image = signed.signedUrl;
-          }
+          const image = (path && signedByPath.get(path)) || category?.image || FALLBACK_IMAGE;
           const product: Product = {
             id: r.id,
             name: r.name,
@@ -98,8 +100,7 @@ const SearchResults = () => {
             stock: r.stock_quantity ?? 0,
           };
           return product;
-        })
-      );
+        });
 
       if (!cancelled) {
         setProducts(mapped);
@@ -108,6 +109,7 @@ const SearchResults = () => {
         );
         setOriginalPrices(new Map(rows.map((r) => [r.id, Number(r.client_price)])));
         registerStock(mapped.map((p) => ({ id: p.id, quantity: p.stock })));
+        setLoading(false);
       }
     };
 
@@ -164,22 +166,26 @@ const SearchResults = () => {
         </Link>
 
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">Resultados da Pesquisa</h1>
-          <p className="mt-2 text-muted-foreground">
-            {location ? (
-              <>Produtos disponíveis perto de <span className="font-semibold text-foreground">{location}</span> num raio de <span className="font-semibold text-foreground">{radius} km</span></>
+        <PageHeader
+          title="Resultados da pesquisa"
+          description={
+            location ? (
+              <>Produtos disponíveis perto de <span className="font-semibold text-foreground">{location}</span> num raio de <span className="font-semibold text-foreground">{radius} km</span>.</>
             ) : (
-              "Todos os produtos disponíveis na plataforma"
-            )}
-          </p>
-        </div>
+              "Todos os produtos disponíveis na plataforma."
+            )
+          }
+        />
 
         {/* Sort controls */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground">{filtered.length}</span> produto{filtered.length !== 1 && "s"} encontrado{filtered.length !== 1 && "s"}
-          </p>
+          {loading ? (
+            <Skeleton className="h-5 w-40" />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">{filtered.length}</span> produto{filtered.length !== 1 && "s"} encontrado{filtered.length !== 1 && "s"}
+            </p>
+          )}
           <div className="flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
             <Select value={sort} onValueChange={handleSortChange}>
@@ -202,72 +208,20 @@ const SearchResults = () => {
         </div>
 
         {/* Products grid */}
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {filtered.map((p) => {
-            const available = p.stock;
-            const inCart = cartItems.find((i) => i.id === p.id)?.quantity ?? 0;
-            const canAdd = inCart < available;
-            return (
-            <div key={p.id} className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
-              <div className="relative h-40 overflow-hidden">
-                <img src={p.image} alt={p.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                {p.location && (
-                  <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-xs font-medium text-foreground backdrop-blur-sm">
-                    <MapPin className="h-3 w-3 text-primary" />
-                    {p.location}
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-foreground">{p.name}</h3>
-                <Link to={`/agricultor/${p.farmerId}`} className="text-xs text-primary hover:underline">{p.farmer}</Link>
-                <Link
-                  to={`/agricultor/${p.farmerId}`}
-                  className={`mt-1 block text-xs font-medium hover:underline ${available <= 5 ? "text-destructive" : "text-primary"}`}
-                  title="Stock definido pelo agricultor"
-                >
-                  {available} em stock
-                </Link>
-                <p className="mt-2 text-xs font-medium text-primary">
-                  {p.deliveryMode === "shipping"
-                    ? `Entrega em casa (${p.shippingDays ?? "?"} dias)`
-                    : p.deliveryMode === "both"
-                    ? `Levantamento ou entrega em casa (${p.shippingDays ?? "?"} dias)`
-                    : "Apenas levantamento na propriedade"}
-                </p>
-                <SavingsBadge
-                  price={p.price}
-                  originalPrice={originalPrices.get(p.id)}
-                  unit={p.unit}
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4" aria-busy={loading}>
+          {loading
+            ? Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)
+            : filtered.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={{ ...p, originalPrice: originalPrices.get(p.id) }}
                   market={marketPrices.get(marketKey(p.name))}
+                  showLocation
                 />
-
-                <div className="mt-3 flex items-end justify-between">
-                  <div>
-                    <span className="text-lg font-bold text-primary">{p.price.toFixed(2)}€</span>
-                    <span className="text-xs text-muted-foreground">/{p.unit}</span>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1"
-                    disabled={!canAdd}
-                    onClick={() => {
-                      addItem(p);
-                      toast({ title: "Adicionado ao carrinho", description: p.name });
-                    }}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    {canAdd ? "Adicionar" : "Sem stock"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-            );
-          })}
+              ))}
         </div>
 
-        {filtered.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="py-16 text-center text-muted-foreground">
             Nenhum produto encontrado para esta localização.
           </div>

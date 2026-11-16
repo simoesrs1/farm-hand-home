@@ -2,12 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Clock, Loader2, Pencil, Plus, Tent, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/PageHeader";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExperienceRow } from "@/components/ExperienceForm";
 import { formatDuration } from "@/lib/experience-sessions";
+import { formatEuro } from "@/lib/format";
 
 /** Lista das experiências do agricultor (/agricultor/experiencias). */
 const MyExperiences = () => {
@@ -72,17 +74,19 @@ const MyExperiences = () => {
       <button onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Voltar
       </button>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">As minhas experiências</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Atividades que os clientes podem reservar na sua quinta.</p>
-        </div>
-        <Button asChild className="gap-2">
-          <Link to="/agricultor/experiencias/nova">
-            <Plus className="h-4 w-4" /> Nova experiência
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        className="mb-0"
+        eyebrow="Área do agricultor"
+        title="As minhas experiências"
+        description="Atividades que os clientes podem reservar na sua quinta."
+        actions={
+          <Button asChild className="gap-2">
+            <Link to="/agricultor/experiencias/nova">
+              <Plus className="h-4 w-4" /> Nova experiência
+            </Link>
+          </Button>
+        }
+      />
 
       {experiences.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center">
@@ -96,7 +100,7 @@ const MyExperiences = () => {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-foreground">{exp.title}</p>
                 <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                  <span>{Number(exp.base_price).toFixed(2)}€ {exp.pricing_mode === "per_person" ? "por pessoa" : "por grupo"}</span>
+                  <span>{formatEuro(Number(exp.base_price))} {exp.pricing_mode === "per_person" ? "por pessoa" : "por grupo"}</span>
                   <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {formatDuration(exp.duration_minutes)}</span>
                   <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {exp.min_people}–{exp.max_people} pessoas</span>
                 </p>

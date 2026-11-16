@@ -1413,6 +1413,10 @@ export type Database = {
         Returns: { booking_start: string; bookings: number; people: number }[]
       }
       file_delivery_complaint: { Args: { p_order_id: string }; Returns: string }
+      product_sales_counts: {
+        Args: { p_product_ids: string[] }
+        Returns: { product_id: string; units_sold: number }[]
+      }
       hide_review_photo: { Args: { p_review_id: string }; Returns: undefined }
       my_order_reviews: {
         Args: never

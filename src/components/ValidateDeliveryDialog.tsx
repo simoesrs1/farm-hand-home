@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { formatEuro } from "@/lib/format";
 
 interface ValidatePickupResponse {
   ok?: boolean;
@@ -31,7 +32,6 @@ interface Props {
 const normalize = (raw: string | null | undefined) =>
   (raw ?? "").trim().toUpperCase().replace(/^FC:/, "");
 
-const euros = (value: number | null | undefined) => `${(value ?? 0).toFixed(2)}€`;
 
 const ValidateDeliveryDialog = ({ order, onOpenChange, onValidated }: Props) => {
   const { toast } = useToast();
@@ -69,7 +69,7 @@ const ValidateDeliveryDialog = ({ order, onOpenChange, onValidated }: Props) => 
       }
       const amount = data.farmer_amount ?? order.farmer_amount ?? 0;
       onValidated(order.id, amount);
-      toast({ title: "Entrega confirmada", description: `Recebes ${euros(amount)}` });
+      toast({ title: "Entrega confirmada", description: `Recebes ${formatEuro(amount)}` });
       onOpenChange(false);
     } finally {
       busyRef.current = false;
@@ -164,7 +164,7 @@ const ValidateDeliveryDialog = ({ order, onOpenChange, onValidated }: Props) => 
             {order && (
               <>
                 Encomenda #{order.id.slice(0, 8).toUpperCase()} · vais receber{" "}
-                <span className="font-medium text-primary">{euros(order.farmer_amount)}</span>.
+                <span className="font-medium text-primary">{formatEuro(order.farmer_amount)}</span>.
               </>
             )}
           </DialogDescription>

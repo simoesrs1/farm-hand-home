@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ProductHistoryDialog from "@/components/ProductHistoryDialog";
+import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -256,19 +257,19 @@ const MyProducts = () => {
         <ArrowLeft className="h-4 w-4" /> Voltar
       </button>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Os meus produtos</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Gestão de stock dos artigos já publicados.
-          </p>
-        </div>
-        <Button asChild className="gap-2">
-          <Link to="/agricultor/produtos/novo">
-            <Plus className="h-4 w-4" /> Adicionar produto
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        className="mb-0"
+        eyebrow="Área do agricultor"
+        title="Os meus produtos"
+        description="Gestão de stock dos artigos já publicados."
+        actions={
+          <Button asChild className="gap-2">
+            <Link to="/agricultor/produtos/novo">
+              <Plus className="h-4 w-4" /> Adicionar produto
+            </Link>
+          </Button>
+        }
+      />
 
       {products.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center">
@@ -292,7 +293,7 @@ const MyProducts = () => {
             return (
               <li
                 key={p.id}
-                className={`flex flex-col gap-3 rounded-2xl border bg-card p-3 sm:flex-row sm:items-center ${
+                className={`flex flex-col gap-3 rounded-2xl border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-center ${
                   isOut || isExpired ? "border-destructive/50" : "border-border"
                 }`}
               >
@@ -337,7 +338,7 @@ const MyProducts = () => {
                           avail === "expired"
                             ? "font-medium text-destructive"
                             : avail === "ending"
-                            ? "font-medium text-amber-700 dark:text-amber-400"
+                            ? "font-medium text-warning"
                             : "text-muted-foreground"
                         }`}
                       >
@@ -366,8 +367,8 @@ const MyProducts = () => {
                       isOut
                         ? "bg-destructive/10 text-destructive"
                         : stock <= threshold
-                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                        : "bg-primary/10 text-primary"
+                        ? "bg-warning/10 text-warning"
+                        : "bg-success/10 text-success"
                     }`}
                   >
                     {isOut ? "Sem stock" : `${stock} em stock`}

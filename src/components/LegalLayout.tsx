@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { LEGAL } from "@/lib/legal";
+import PageHeader from "./PageHeader";
 
 export interface LegalSection {
   id: string;
@@ -20,9 +21,12 @@ const LegalLayout = ({ eyebrow, title, intro, sections }: Props) => {
   return (
     <main className="py-12 md:py-16">
       <div className="container max-w-5xl">
-        <p className="text-sm font-semibold uppercase tracking-wider text-accent">{eyebrow}</p>
-        <h1 className="mt-2 font-display text-3xl font-bold text-foreground md:text-4xl">{title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Última atualização: {LEGAL.lastUpdated}</p>
+        <PageHeader
+          className="mb-0"
+          eyebrow={eyebrow}
+          title={title}
+          description={`Última atualização: ${LEGAL.lastUpdated}`}
+        />
         <div className="mt-6 max-w-3xl text-base leading-relaxed text-muted-foreground">{intro}</div>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[220px_1fr]">

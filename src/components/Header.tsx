@@ -56,6 +56,7 @@ const Header = () => {
               {isClient && (
                 <Link
                   to="/carrinho"
+                  data-cart-target
                   className="relative flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
                   aria-label="Carrinho"
                 >

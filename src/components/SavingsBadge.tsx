@@ -1,5 +1,6 @@
 import { TrendingDown, Tag } from "lucide-react";
 import { type MarketPrice } from "@/hooks/useMarketPrices";
+import { formatEuro } from "@/lib/format";
 
 interface SavingsBadgeProps {
   /** Preço final pago pelo cliente (já com desconto do agricultor). */
@@ -10,7 +11,6 @@ interface SavingsBadgeProps {
   market?: MarketPrice;
 }
 
-const euros = (v: number) => `${v.toFixed(2)}€`;
 
 /**
  * Mostra a poupança do cliente: desconto do agricultor e comparação
@@ -29,23 +29,23 @@ const SavingsBadge = ({ price, originalPrice, unit, market }: SavingsBadgeProps)
   return (
     <div className="mt-2 space-y-1">
       {hasDiscount && (
-        <div className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+        <div className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">
           <Tag className="h-3 w-3" />
-          Poupa {euros(discountSaving)} ({discountPercent}%)
-          <span className="font-normal text-muted-foreground line-through">{euros(originalPrice!)}</span>
+          Poupa {formatEuro(discountSaving)} ({discountPercent}%)
+          <span className="font-normal text-muted-foreground line-through">{formatEuro(originalPrice!)}</span>
         </div>
       )}
       {marketSaving > 0 && (
         <div
           className="flex items-start gap-1 text-xs text-muted-foreground"
-          title={`Preço médio de ${market!.avgPrice.toFixed(2)}€/${market!.unit} em ${market!.sampleSize} referências de supermercado, atualizado a ${new Date(market!.collectedAt).toLocaleDateString("pt-PT")}`}
+          title={`Preço médio de ${formatEuro(market!.avgPrice)}/${market!.unit} em ${market!.sampleSize} referências de supermercado, atualizado a ${new Date(market!.collectedAt).toLocaleDateString("pt-PT")}`}
         >
-          <TrendingDown className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
+          <TrendingDown className="mt-0.5 h-3 w-3 shrink-0 text-success" />
           <span>
-            <span className="font-semibold text-primary">
-              −{euros(marketSaving)} ({marketPercent}%)
+            <span className="font-semibold text-success">
+              −{formatEuro(marketSaving)} ({marketPercent}%)
             </span>{" "}
-            face ao supermercado ({euros(market!.avgPrice)}/{unit})
+            face ao supermercado ({formatEuro(market!.avgPrice)}/{unit})
           </span>
         </div>
       )}

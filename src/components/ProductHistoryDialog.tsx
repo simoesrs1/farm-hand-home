@@ -23,23 +23,24 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { formatEuro } from "@/lib/format";
 
 type HistoryRow = Tables<"product_history">;
 type FieldChange = { old: unknown; new: unknown };
 
 const EVENTS: Record<string, { label: string; icon: LucideIcon; tone: string }> = {
-  created: { label: "Produto criado", icon: PlusCircle, tone: "bg-primary/10 text-primary" },
+  created: { label: "Produto criado", icon: PlusCircle, tone: "bg-success/10 text-success" },
   stock_added: {
     label: "Stock adicionado",
     icon: ArrowUpCircle,
-    tone: "bg-primary/10 text-primary",
+    tone: "bg-success/10 text-success",
   },
   stock_removed: {
     label: "Stock retirado",
     icon: ArrowDownCircle,
-    tone: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+    tone: "bg-warning/10 text-warning",
   },
-  sale: { label: "Venda", icon: ShoppingBag, tone: "bg-sky-500/10 text-sky-700 dark:text-sky-400" },
+  sale: { label: "Venda", icon: ShoppingBag, tone: "bg-info/10 text-info" },
   expired: {
     label: "Validade expirada",
     icon: CalendarX,
@@ -47,7 +48,7 @@ const EVENTS: Record<string, { label: string; icon: LucideIcon; tone: string }> 
   },
   updated: { label: "Dados alterados", icon: Pencil, tone: "bg-muted text-muted-foreground" },
   deleted: { label: "Produto eliminado", icon: Trash2, tone: "bg-destructive/10 text-destructive" },
-  restored: { label: "Produto reativado", icon: RotateCcw, tone: "bg-primary/10 text-primary" },
+  restored: { label: "Produto reativado", icon: RotateCcw, tone: "bg-success/10 text-success" },
 };
 
 const FIELD_LABELS: Record<string, string> = {
@@ -85,7 +86,7 @@ const formatDateTime = (iso: string) =>
 const formatValue = (field: string, value: unknown): string => {
   if (value === null || value === undefined || value === "") return "—";
   if (typeof value === "boolean") return value ? "Sim" : "Não";
-  if (field === "farmer_price" || field === "client_price") return `${Number(value).toFixed(2)} €`;
+  if (field === "farmer_price" || field === "client_price") return `${formatEuro(Number(value))}`;
   if (field === "vat_rate" || field === "discount_percent") return `${value}%`;
   if (field === "delivery_mode") return DELIVERY_LABELS[String(value)] ?? String(value);
   if (field === "availability_start" || field === "availability_end") {
@@ -228,8 +229,8 @@ const ProductHistoryDialog = ({
                           <span
                             className={
                               delta > 0
-                                ? "font-semibold text-primary"
-                                : "font-semibold text-amber-700 dark:text-amber-400"
+                                ? "font-semibold text-success"
+                                : "font-semibold text-warning"
                             }
                           >
                             {delta > 0 ? "+" : "−"}

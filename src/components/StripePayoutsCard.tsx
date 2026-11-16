@@ -127,11 +127,11 @@ const StripePayoutsCard = ({ userId }: { userId: string }) => {
           <h2 className="font-display text-lg font-semibold text-foreground">Receber pagamentos</h2>
         </div>
         {active ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-sm font-semibold text-success">
             <CheckCircle2 className="h-4 w-4" /> Ativo
           </span>
         ) : account ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-sm font-semibold text-accent">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-sm font-semibold text-warning">
             <AlertCircle className="h-4 w-4" /> Por concluir
           </span>
         ) : null}

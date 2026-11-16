@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useReveal } from "@/hooks/useReveal";
 import { Link } from "react-router-dom";
 import FarmerCard from "./FarmerCard";
+import SectionHeading from "./SectionHeading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { getCategoryByName } from "@/data/categories";
@@ -24,6 +26,8 @@ interface FeaturedFarmer {
  */
 const FeaturedFarmers = () => {
   const [farmers, setFarmers] = useState<FeaturedFarmer[] | null>(null);
+  const scopeRef = useRef<HTMLElement>(null);
+  useReveal(scopeRef, ".farmer-card", [farmers?.length ?? -1]);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,28 +53,33 @@ const FeaturedFarmers = () => {
         .gt("stock_quantity", 0)
         .order("created_at", { ascending: false });
 
-      const mapped = await Promise.all(
-        featured.map(async (f) => {
-          const own = (products ?? []).filter((p) => p.farmer_id === f.id);
-          const categories = [...new Set(own.map((p) => p.category).filter(Boolean))] as string[];
-          let image = (categories[0] && getCategoryByName(categories[0])?.image) || FALLBACK_IMAGE;
-          const path = own.find((p) => p.media_urls?.length)?.media_urls?.[0];
-          if (path) {
-            const { data: signed } = await supabase.storage
-              .from("product-media")
-              .createSignedUrl(path, 60 * 60);
-            if (signed?.signedUrl) image = signed.signedUrl;
-          }
-          return {
-            id: f.id as string,
-            farm: f.company_name ?? "Agricultor",
-            name: `${own.length} ${own.length === 1 ? "produto disponível" : "produtos disponíveis"}`,
-            image,
-            location: f.address ?? "",
-            products: categories,
-          };
-        }),
-      );
+      // Uma fotografia por agricultor (a do produto mais recente com media), num único pedido.
+      const coverPath = (farmerId: string) =>
+        (products ?? []).find((p) => p.farmer_id === farmerId && p.media_urls?.length)?.media_urls?.[0];
+      const paths = featured.map((f) => coverPath(f.id as string)).filter((p): p is string => !!p);
+      const signedByPath = new Map<string, string>();
+      if (paths.length) {
+        const { data: signed } = await supabase.storage.from("product-media").createSignedUrls(paths, 60 * 60);
+        for (const s of signed ?? []) if (s.path && s.signedUrl) signedByPath.set(s.path, s.signedUrl);
+      }
+
+      const mapped = featured.map((f) => {
+        const own = (products ?? []).filter((p) => p.farmer_id === f.id);
+        const categories = [...new Set(own.map((p) => p.category).filter(Boolean))] as string[];
+        const path = coverPath(f.id as string);
+        const image =
+          (path && signedByPath.get(path)) ||
+          (categories[0] && getCategoryByName(categories[0])?.image) ||
+          FALLBACK_IMAGE;
+        return {
+          id: f.id as string,
+          farm: f.company_name ?? "Agricultor",
+          name: `${own.length} ${own.length === 1 ? "produto disponível" : "produtos disponíveis"}`,
+          image,
+          location: f.address ?? "",
+          products: categories,
+        };
+      });
       if (!cancelled) setFarmers(mapped);
     })();
     return () => {
@@ -78,31 +87,43 @@ const FeaturedFarmers = () => {
     };
   }, []);
 
-  if (farmers !== null && farmers.length === 0) return null;
-
   return (
-    <section className="py-16 md:py-24">
+    <section ref={scopeRef} className="border-t border-border bg-card py-16 md:py-20">
       <div className="container">
-        <div className="mb-10 text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-primary">
-            Destaques
-          </p>
-          <h2 className="mt-2 font-display text-3xl font-bold text-foreground md:text-4xl">
-            Agricultores em destaque
-          </h2>
-          <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
-            Os produtores mais ativos desta semana: stock em dia, respostas rápidas e produtos
-            prontos a encomendar.{" "}
-            <Link to="/termos#ordenacao" className="underline-offset-4 hover:text-primary hover:underline">
-              Como escolhemos?
+        <SectionHeading
+          className="mb-10"
+          eyebrow="Quem cultiva"
+          title="Agricultores em destaque"
+          description={
+            <>
+              Os produtores mais ativos desta semana: stock em dia, respostas rápidas e produtos
+              prontos a encomendar.{" "}
+              <Link to="/termos#ordenacao" className="underline-offset-4 hover:text-primary hover:underline">
+                Como escolhemos?
+              </Link>
+            </>
+          }
+        />
+        {farmers !== null && farmers.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border p-10 text-center">
+            <p className="text-muted-foreground">
+              Ainda não há agricultores em destaque esta semana. Os destaques são atualizados todos os dias.
+            </p>
+            <Link to="/catalogo" className="mt-3 inline-block text-sm font-medium text-primary underline-offset-4 hover:underline">
+              Ver o catálogo
             </Link>
-          </p>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {farmers === null
-            ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-80 rounded-xl" />)
-            : farmers.map((farmer) => <FarmerCard key={farmer.id} {...farmer} />)}
-        </div>
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {farmers === null
+              ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-80 rounded-xl" />)
+              : farmers.map((farmer) => (
+                  <div key={farmer.id} className="farmer-card">
+                    <FarmerCard {...farmer} />
+                  </div>
+                ))}
+          </div>
+        )}
       </div>
     </section>
   );

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, MailCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,14 +59,9 @@ const ClientEmailVerificationGate = () => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <MailCheck className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="font-display text-lg font-bold text-foreground">Verifique o seu perfil de cliente</h2>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
-          </div>
+        <div className="mb-4">
+          <h2 className="font-display text-xl text-foreground">Verifique o seu perfil de cliente</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{user.email}</p>
         </div>
 
         <p className="mb-4 text-sm text-muted-foreground">

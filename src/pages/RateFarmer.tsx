@@ -4,6 +4,7 @@ import { ArrowLeft, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/PageHeader";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
@@ -91,7 +92,7 @@ const RateFarmer = () => {
         <ArrowLeft className="h-4 w-4" /> As minhas encomendas
       </Link>
 
-      <h1 className="mb-2 font-display text-3xl font-bold text-foreground">Avaliar agricultor</h1>
+      <PageHeader className="mb-2" eyebrow="A minha conta" title="Avaliar agricultor" />
       {loading ? (
         <Skeleton className="h-6 w-48" />
       ) : (
@@ -119,7 +120,7 @@ const RateFarmer = () => {
                 className="transition-transform hover:scale-110"
                 aria-label={`${n} estrelas`}
               >
-                <Star className={`h-9 w-9 ${active ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
+                <Star className={`h-9 w-9 ${active ? "fill-highlight text-coral" : "text-muted-foreground"}`} />
               </button>
             );
           })}

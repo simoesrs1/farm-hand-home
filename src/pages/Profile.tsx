@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, User as UserIcon, Save, Upload, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -107,15 +108,7 @@ const Profile = () => {
 
   return (
     <main className="container max-w-2xl py-10">
-      <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-          <UserIcon className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">O meu perfil</h1>
-          <p className="text-sm text-muted-foreground">Edite os seus dados pessoais</p>
-        </div>
-      </div>
+      <PageHeader eyebrow="A minha conta" title="O meu perfil" description="Edite os seus dados pessoais." />
 
       <form onSubmit={handleSave} className="space-y-5 rounded-2xl border border-border bg-card p-6">
         <div>
