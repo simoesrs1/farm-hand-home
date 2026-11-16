@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck, MapPin, AlertTriangle, Tent } from "lucide-react";
+import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck, MapPin, AlertTriangle, Tent, Boxes } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrderChat from "@/components/OrderChat";
 import ValidateDeliveryDialog from "@/components/ValidateDeliveryDialog";
+import LotAllocationDialog from "@/components/LotAllocationDialog";
+import { ordersWithPendingLots } from "@/lib/lot-allocations";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -119,6 +121,9 @@ const FarmerOrders = () => {
   // Queixas em aberto por entrega não recebida: prazo por encomenda.
   const [complaintDeadlines, setComplaintDeadlines] = useState<Record<string, string>>({});
   const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
+  // Encomendas com unidades à espera de indicação do lote.
+  const [pendingLotOrders, setPendingLotOrders] = useState<Set<string>>(new Set());
+  const [lotOrderId, setLotOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -151,6 +156,8 @@ const FarmerOrders = () => {
       if (!cancelled) {
         setComplaintDeadlines(Object.fromEntries((complaints ?? []).map((c) => [c.order_id, c.deadline_at])));
       }
+      const pendingLots = await ordersWithPendingLots();
+      if (!cancelled) setPendingLotOrders(pendingLots);
       if (fd?.id) {
         const { data: prods } = await supabase
           .from("products")
@@ -532,6 +539,11 @@ const FarmerOrders = () => {
                         <Undo2 className="h-4 w-4" /> Cancelar reserva
                       </Button>
                     )}
+                    {o.status === "delivered" && pendingLotOrders.has(o.id) && (
+                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setLotOrderId(o.id)}>
+                        <Boxes className="h-4 w-4" /> Indicar lotes
+                      </Button>
+                    )}
                     {o.status === "awaiting_pickup" && o.accepted_at && (
                       <Button size="sm" className="gap-1.5" onClick={() => setValidating(o)}>
                         <ScanLine className="h-4 w-4" /> {o.kind === "stay" ? "Validar check-in" : isBooking(o) ? "Validar chegada" : "Validar entrega"}
@@ -644,7 +656,26 @@ const FarmerOrders = () => {
       <ValidateDeliveryDialog
         order={validating}
         onOpenChange={(open) => { if (!open) setValidating(null); }}
-        onValidated={(orderId) => markDelivered(orderId)}
+        onValidated={async (orderId) => {
+          markDelivered(orderId);
+          // Produtos com escolha de lote: pergunta logo de que lote saíram.
+          const pending = await ordersWithPendingLots([orderId]);
+          if (pending.has(orderId)) {
+            setPendingLotOrders((prev) => new Set(prev).add(orderId));
+            setLotOrderId(orderId);
+          }
+        }}
+      />
+      <LotAllocationDialog
+        orderId={lotOrderId}
+        onOpenChange={(open) => !open && setLotOrderId(null)}
+        onDone={() =>
+          setPendingLotOrders((prev) => {
+            const next = new Set(prev);
+            if (lotOrderId) next.delete(lotOrderId);
+            return next;
+          })
+        }
       />
     </main>
   );

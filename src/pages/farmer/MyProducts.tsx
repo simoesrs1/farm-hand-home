@@ -18,6 +18,7 @@ import ProductHistoryDialog from "@/components/ProductHistoryDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { pendingLotUnitsByProduct } from "@/lib/lot-allocations";
 
 type ProductRow = {
   id: string;
@@ -85,6 +86,8 @@ const MyProducts = () => {
   const [expiry, setExpiry] = useState<Record<string, string>>({});
   const [batches, setBatches] = useState<Record<string, Batch[]>>({});
   const [pendingExpiry, setPendingExpiry] = useState<Record<string, string>>({});
+  // Unidades vendidas à espera de o agricultor indicar o lote, por produto.
+  const [awaitingLot, setAwaitingLot] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (authLoading) return;
@@ -120,7 +123,7 @@ const MyProducts = () => {
       )
       .eq("farmer_id", farmer.id)
       .eq("active", true)
-      .order("created_at", { ascending: false });
+      .order("name", { ascending: true });
     if (error) {
       toast({ title: "Erro a carregar produtos", description: error.message, variant: "destructive" });
     } else {
@@ -131,10 +134,12 @@ const MyProducts = () => {
       .select("id, product_id, quantity_remaining, expires_at, added_at")
       .eq("farmer_id", farmer.id)
       .gt("quantity_remaining", 0)
+      .order("expires_at", { ascending: true, nullsFirst: false })
       .order("added_at", { ascending: true });
     const map: Record<string, Batch[]> = {};
     for (const row of (b ?? []) as Batch[]) (map[row.product_id] ??= []).push(row);
     setBatches(map);
+    setAwaitingLot(await pendingLotUnitsByProduct());
     setLoading(false);
   };
 
@@ -382,6 +387,11 @@ const MyProducts = () => {
                     <p className="mt-1 text-sm text-foreground">
                       {stock} {p.unit} · aviso quando chegar a {threshold}
                     </p>
+                    {(awaitingLot[p.id] ?? 0) > 0 && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {awaitingLot[p.id]} {p.unit} vendidas à espera de indicação do lote (ainda contam nos lotes).
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -456,24 +466,41 @@ const MyProducts = () => {
                   </div>
                 </div>
 
-                {/* 4. Lotes em stock */}
-                {datedBatches.length > 0 && (
-                  <div className="border-t border-border p-4">
-                    <p className="mb-2 text-sm font-medium text-foreground">
-                      Lotes em stock <span className="font-normal text-muted-foreground">(vende-se primeiro o mais antigo)</span>
-                    </p>
+                {/* 4. Lotes em stock: sempre visível, pela validade que termina primeiro
+                    (é também o primeiro a ser vendido). */}
+                <div className="border-t border-border p-4">
+                  <p className="mb-2 text-sm font-medium text-foreground">
+                    Lotes em stock <span className="font-normal text-muted-foreground">(vende-se primeiro o que termina primeiro)</span>
+                  </p>
+                  {datedBatches.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Sem lotes em stock.</p>
+                  ) : (
                     <ul className="divide-y divide-border rounded-lg border border-border text-sm">
-                      {datedBatches.map((b, i) => (
-                        <li key={b.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2">
-                          <span className="w-16 shrink-0 text-xs font-semibold text-primary">{i === 0 ? "Próximo" : ""}</span>
-                          <span className="text-muted-foreground">Inserido {new Date(b.added_at).toLocaleDateString("pt-PT")}</span>
-                          <span className="font-medium text-foreground">{b.quantity_remaining} {p.unit}</span>
-                          <span className="text-muted-foreground">Validade {formatDate(b.expires_at!)}</span>
-                        </li>
-                      ))}
+                      {datedBatches.map((b, i) => {
+                        const days = daysUntil(b.expires_at!);
+                        return (
+                          <li key={b.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2">
+                            <span className="w-28 shrink-0 text-xs font-semibold text-primary">{i === 0 ? "Vende-se primeiro" : ""}</span>
+                            <span className="font-medium text-foreground">{b.quantity_remaining} {p.unit}</span>
+                            <span className="text-foreground">Validade {formatDate(b.expires_at!)}</span>
+                            <span
+                              className={`text-xs ${
+                                days <= 0
+                                  ? "font-semibold text-destructive"
+                                  : days <= 7
+                                  ? "font-medium text-amber-700 dark:text-amber-400"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {days <= 0 ? "termina hoje" : days === 1 ? "termina amanhã" : `termina em ${days} dias`}
+                            </span>
+                            <span className="text-xs text-muted-foreground">Inserido {new Date(b.added_at).toLocaleDateString("pt-PT")}</span>
+                          </li>
+                        );
+                      })}
                     </ul>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* 5. Lotes sem validade: fora do stock à venda até o agricultor indicar a data. */}
                 {pendingBatches.length > 0 && (

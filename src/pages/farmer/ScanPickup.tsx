@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import LotAllocationDialog from "@/components/LotAllocationDialog";
+import { ordersWithPendingLots } from "@/lib/lot-allocations";
 import { Link, useNavigate } from "react-router-dom";
 import { Html5Qrcode } from "html5-qrcode";
 import { ArrowLeft, ScanLine, Keyboard, CheckCircle2 } from "lucide-react";
@@ -8,6 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+
+interface ValidatePickupResponse {
+  ok?: boolean;
+  order_id?: string;
+  farmer_amount?: number;
+  error?: string;
+}
 
 const SCANNER_ID = "qr-scanner-region";
 
@@ -19,6 +28,7 @@ const ScanPickup = () => {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<{ amount: number } | null>(null);
+  const [lotOrderId, setLotOrderId] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const validatingRef = useRef(false);
 
@@ -27,16 +37,19 @@ const ScanPickup = () => {
     validatingRef.current = true;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("validate-pickup", {
+      const { data, error } = await supabase.functions.invoke<ValidatePickupResponse>("validate-pickup", {
         body: { code: rawCode },
       });
-      if (error || (data as any)?.error) {
-        const msg = (data as any)?.error ?? error?.message ?? "Erro ao validar";
+      if (error || data?.error) {
+        const msg = data?.error ?? error?.message ?? "Erro ao validar";
         toast({ title: "Não foi possível validar", description: msg, variant: "destructive" });
         validatingRef.current = false;
       } else {
-        setSuccess({ amount: (data as any).farmer_amount });
-        toast({ title: "Entrega confirmada", description: `Recebes ${(data as any).farmer_amount.toFixed(2)}€` });
+        setSuccess({ amount: (data?.farmer_amount ?? 0) });
+        // Produtos com escolha de lote: pergunta logo de que lote saíram.
+        const orderId = data?.order_id;
+        if (orderId && (await ordersWithPendingLots([orderId])).has(orderId)) setLotOrderId(orderId);
+        toast({ title: "Entrega confirmada", description: `Recebes ${(data?.farmer_amount ?? 0).toFixed(2)}€` });
         // Stop camera after success
         if (scannerRef.current) {
           try { await scannerRef.current.stop(); } catch { /* noop */ }
@@ -163,6 +176,7 @@ const ScanPickup = () => {
           </Button>
         </TabsContent>
       </Tabs>
+      <LotAllocationDialog orderId={lotOrderId} onOpenChange={(open) => !open && setLotOrderId(null)} />
     </main>
   );
 };

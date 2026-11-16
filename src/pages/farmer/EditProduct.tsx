@@ -70,6 +70,7 @@ const EditProduct = () => {
   const [vatRate, setVatRate] = useState<number>(6);
   const [stockQuantity, setStockQuantity] = useState("");
   const [lowStockThreshold, setLowStockThreshold] = useState("5");
+  const [chooseLotOnSale, setChooseLotOnSale] = useState(false);
   const [shippingDays, setShippingDays] = useState("");
   const [availabilityStart, setAvailabilityStart] = useState("");
   const [availabilityEnd, setAvailabilityEnd] = useState("");
@@ -124,6 +125,7 @@ const EditProduct = () => {
       setVatRate(Number(p.vat_rate ?? 6));
       setStockQuantity(String(p.stock_quantity ?? 0));
       setLowStockThreshold(String(p.low_stock_threshold ?? 5));
+      setChooseLotOnSale(!!p.choose_lot_on_sale);
       setShippingDays(p.shipping_days != null ? String(p.shipping_days) : "");
       setAvailabilityStart(p.availability_start ?? "");
       setAvailabilityEnd(p.availability_end ?? "");
@@ -211,6 +213,7 @@ const EditProduct = () => {
         vat_rate: vatRate,
         // O stock não se grava aqui: é gerido por lotes (com validade) em "Os meus produtos".
         low_stock_threshold: Math.max(0, parseInt(lowStockThreshold, 10) || 0),
+        choose_lot_on_sale: chooseLotOnSale,
         // Valores normalizados: sem entrega ao domicílio não há acompanhamento nem preço.
         ...settings,
         availability_start: availabilityStart || null,
@@ -403,6 +406,16 @@ const EditProduct = () => {
                 </Link>
                 .
               </p>
+            </div>
+            <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+              <div>
+                <Label htmlFor="choose-lot" className="text-sm font-medium">Escolher o lote em cada venda</Label>
+                <p className="text-xs text-muted-foreground">
+                  Desligado, cada venda sai do lote com a validade mais próxima. Ligado, a venda só desce o stock
+                  à venda e, depois de validar o QR code, indica de que lote saíram as unidades.
+                </p>
+              </div>
+              <Switch id="choose-lot" checked={chooseLotOnSale} onCheckedChange={setChooseLotOnSale} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="low-stock">Avisar quando o stock chegar a</Label>

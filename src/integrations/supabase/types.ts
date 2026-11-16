@@ -869,6 +869,33 @@ export type Database = {
         }
         Relationships: []
       }
+      order_lot_allocations: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string
+          quantity: number
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id: string
+          quantity: number
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string
+          quantity?: number
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           accepted_at: string | null
@@ -1118,6 +1145,7 @@ export type Database = {
           availability_end: string | null
           availability_start: string | null
           category: string | null
+          choose_lot_on_sale: boolean
           client_price: number
           created_at: string
           delivery_fee: number
@@ -1147,6 +1175,7 @@ export type Database = {
           availability_end?: string | null
           availability_start?: string | null
           category?: string | null
+          choose_lot_on_sale?: boolean
           client_price: number
           created_at?: string
           delivery_fee?: number
@@ -1176,6 +1205,7 @@ export type Database = {
           availability_end?: string | null
           availability_start?: string | null
           category?: string | null
+          choose_lot_on_sale?: boolean
           client_price?: number
           created_at?: string
           delivery_fee?: number
@@ -1408,6 +1438,10 @@ export type Database = {
       }
     }
     Functions: {
+      allocate_order_lots: {
+        Args: { p_allocations: Json; p_order_id: string }
+        Returns: undefined
+      }
       experience_session_bookings: {
         Args: { p_experience_id: string; p_from: string; p_to: string }
         Returns: { booking_start: string; bookings: number; people: number }[]

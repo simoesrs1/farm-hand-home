@@ -78,6 +78,7 @@ const NewProduct = () => {
   const [stockQuantity, setStockQuantity] = useState<string>("");
   const [stockExpiry, setStockExpiry] = useState<string>("");
   const [lowStockThreshold, setLowStockThreshold] = useState<string>("5");
+  const [chooseLotOnSale, setChooseLotOnSale] = useState(false);
   const [availabilityStart, setAvailabilityStart] = useState<string>("");
   const [availabilityEnd, setAvailabilityEnd] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
@@ -294,6 +295,7 @@ const NewProduct = () => {
         ...settings,
         stock_quantity: 0,
         low_stock_threshold: Math.max(0, parseInt(lowStockThreshold, 10) || 0),
+        choose_lot_on_sale: chooseLotOnSale,
         availability_start: pickupEnabled ? availabilityStart : null,
         availability_end: pickupEnabled ? availabilityEnd : null,
         created_at: new Date().toISOString(),
@@ -683,6 +685,16 @@ const NewProduct = () => {
             <p className="text-xs text-muted-foreground">
               Todo o stock à venda tem validade. Quando passar, as unidades saem do stock automaticamente.
             </p>
+          </div>
+          <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+            <div>
+              <Label htmlFor="choose-lot" className="text-sm font-medium">Escolher o lote em cada venda</Label>
+              <p className="text-xs text-muted-foreground">
+                Desligado, cada venda sai do lote com a validade mais próxima. Ligado, a venda só desce o stock
+                à venda e, depois de validar o QR code, indica de que lote saíram as unidades.
+              </p>
+            </div>
+            <Switch id="choose-lot" checked={chooseLotOnSale} onCheckedChange={setChooseLotOnSale} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="low-stock">Avisar quando o stock chegar a</Label>
