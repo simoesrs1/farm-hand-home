@@ -26,6 +26,8 @@ const Footer = () => {
             <h4 className="mb-3 text-sm font-semibold text-foreground">Navegar</h4>
             <div className="flex flex-col gap-2">
               <Link to="/catalogo" className="text-sm text-muted-foreground hover:text-primary transition-colors">Catálogo</Link>
+              <Link to="/experiencias" className="text-sm text-muted-foreground hover:text-primary transition-colors">Experiências</Link>
+              <Link to="/alojamento" className="text-sm text-muted-foreground hover:text-primary transition-colors">Alojamento</Link>
               <Link to="/sobre" className="text-sm text-muted-foreground hover:text-primary transition-colors">Sobre Nós</Link>
               <Link to="/missao" className="text-sm text-muted-foreground hover:text-primary transition-colors">Missão</Link>
             </div>

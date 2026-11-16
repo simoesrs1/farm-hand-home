@@ -36,12 +36,12 @@ const Header = () => {
           </Link>
         </div>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-0.5 md:flex lg:gap-1">
           {siteLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className={`rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary ${
+              className={`rounded-md px-2 py-2 text-sm font-medium transition-colors hover:bg-secondary lg:px-3 ${
                 location.pathname === link.to ? "text-primary" : "text-muted-foreground"
               }`}
             >

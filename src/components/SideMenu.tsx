@@ -167,12 +167,9 @@ const SideMenu = () => {
               open ? "translate-x-0" : "pointer-events-none -translate-x-full"
             }`}
           >
-        {isMobile && (
-          <>
-            {sectionTitle("Navegar")}
-            {renderLinks(siteLinks)}
-          </>
-        )}
+        {sectionTitle("Explorar")}
+        {renderLinks(siteLinks.filter((l) => l.explore))}
+        {isMobile && renderLinks(siteLinks.filter((l) => !l.explore))}
 
         {user ? (
           <>

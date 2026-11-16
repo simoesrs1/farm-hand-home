@@ -17,6 +17,8 @@ import { useScrollOnNavigate } from "./hooks/useScrollOnNavigate";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Catalog from "./pages/Catalog";
+import Experiences from "./pages/Experiences";
+import Stays from "./pages/Stays";
 import CategoryPage from "./pages/CategoryPage";
 import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
@@ -80,6 +82,8 @@ const App = () => (
                       <Route path="/onboarding/agricultor" element={<FarmerOnboarding />} />
                       <Route path="/catalogo" element={<Catalog />} />
                       <Route path="/catalogo/:slug" element={<CategoryPage />} />
+                      <Route path="/experiencias" element={<Experiences />} />
+                      <Route path="/alojamento" element={<Stays />} />
                       <Route path="/produto/:id" element={<ProductDetail />} />
                       {/* Antes de /agricultor/:id, que apanharia este endereço. */}
                       <Route path="/agricultor/a-minha-pagina" element={<MyPublicPage />} />

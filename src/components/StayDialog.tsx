@@ -42,11 +42,13 @@ interface StayDialogProps {
   farmName: string;
   /** O próprio agricultor a ver a sua página: não pode reservar. */
   isOwner: boolean;
+  /** Fora do perfil da quinta: mostra a ligação para a quinta. */
+  farmId?: string;
   onOpenChange: (open: boolean) => void;
 }
 
 /** Detalhes de um alojamento e reserva (perfil público do agricultor). */
-const StayDialog = ({ stay, farmName, isOwner, onOpenChange }: StayDialogProps) => {
+const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialogProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [media, setMedia] = useState<Record<string, string>>({});
@@ -174,7 +176,16 @@ const StayDialog = ({ stay, farmName, isOwner, onOpenChange }: StayDialogProps) 
           <>
             <DialogHeader>
               <DialogTitle>{stay.title}</DialogTitle>
-              <DialogDescription>Alojamento em {farmName}</DialogDescription>
+              <DialogDescription>
+                Alojamento em{" "}
+                {farmId ? (
+                  <Link to={`/agricultor/${farmId}`} onClick={() => onOpenChange(false)} className="font-medium text-primary hover:underline">
+                    {farmName}
+                  </Link>
+                ) : (
+                  farmName
+                )}
+              </DialogDescription>
             </DialogHeader>
 
             {photos.length > 0 && (

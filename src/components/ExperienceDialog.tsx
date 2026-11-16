@@ -51,11 +51,13 @@ interface ExperienceDialogProps {
   farmName: string;
   /** O próprio agricultor a ver a sua página: não pode reservar. */
   isOwner: boolean;
+  /** Fora do perfil da quinta: mostra a ligação para a quinta. */
+  farmId?: string;
   onOpenChange: (open: boolean) => void;
 }
 
 /** Detalhes de uma experiência e reserva (perfil público do agricultor). */
-const ExperienceDialog = ({ experience, farmName, isOwner, onOpenChange }: ExperienceDialogProps) => {
+const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange }: ExperienceDialogProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [media, setMedia] = useState<{ path: string; url: string }[]>([]);
@@ -182,7 +184,16 @@ const ExperienceDialog = ({ experience, farmName, isOwner, onOpenChange }: Exper
           <>
             <DialogHeader>
               <DialogTitle>{exp.title}</DialogTitle>
-              <DialogDescription>Experiência em {farmName}</DialogDescription>
+              <DialogDescription>
+                Experiência em{" "}
+                {farmId ? (
+                  <Link to={`/agricultor/${farmId}`} onClick={() => onOpenChange(false)} className="font-medium text-primary hover:underline">
+                    {farmName}
+                  </Link>
+                ) : (
+                  farmName
+                )}
+              </DialogDescription>
             </DialogHeader>
 
             {media.length > 0 && (
