@@ -1,5 +1,6 @@
 import { BedDouble, MapPin, Users } from "lucide-react";
 import type { StayRow } from "@/components/StayForm";
+import { formatEuro } from "@/lib/format";
 
 interface StayCardProps {
   stay: StayRow;
@@ -38,7 +39,7 @@ const StayCard = ({ stay: s, thumb, farmName, distance, onClick }: StayCardProps
         <span>mínimo {s.min_nights} noite(s)</span>
       </p>
       <p className="mt-3">
-        <span className="text-lg font-bold text-primary">{Number(s.base_price).toFixed(2)}€</span>
+        <span className="font-mono tabular-nums text-lg font-bold text-primary">{formatEuro(Number(s.base_price))}</span>
         <span className="text-xs text-muted-foreground"> /noite {s.pricing_mode === "per_person" ? "por pessoa" : "por quarto"}</span>
       </p>
     </div>

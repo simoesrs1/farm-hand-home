@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Map, MapPin } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Crosshair, Loader2, Map, MapPin, X } from "lucide-react";
 import MapConsentGate from "@/components/MapConsentGate";
 import { useConsent } from "@/contexts/ConsentContext";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { PT_REGIONS, formatKm, withinRadius, type LatLng } from "@/lib/geo";
 import { isPaused } from "@/lib/farmer-activity";
 
 declare global {
@@ -16,37 +19,29 @@ declare global {
   }
 }
 
-interface MapFarmer {
-  id: string;
-  farm: string;
-  place: string;
-  lat: number;
-  lng: number;
-}
+// O projeto não tem os tipos do SDK do Google Maps (@types/google.maps).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type GMaps = any;
+
+type FarmPoint = LatLng & { id: string; name: string; address: string | null };
+type SearchCenter = LatLng & { label: string };
+
+const PORTUGAL_CENTER = { lat: 39.5, lng: -8.0 };
+const RADIUS_MIN = 5;
+const RADIUS_MAX = 200;
+const RADIUS_DEFAULT = 25;
 
 // Hex equivalentes aos tokens (o Google Maps não lê CSS): tinta, cinzento quente e tomate.
 const MAP_INK = "#1C1A17";
 const MAP_MUTED = "#696159";
 const MAP_PRIMARY = "#BA2E1C";
 
-/** Agricultores com local de recolha definido (a vista pública já expõe estas coordenadas). */
-const fetchMapFarmers = async (): Promise<MapFarmer[]> => {
-  const { data } = await supabase
-    .from("public_farmer_profiles")
-    .select("id, company_name, pickup_address, address, pickup_lat, pickup_lng, paused_until")
-    .not("pickup_lat", "is", null)
-    .not("pickup_lng", "is", null);
-  return (data ?? [])
-    .filter((f) => f.id && !isPaused(f.paused_until))
-    .map((f) => ({
-      id: f.id as string,
-      farm: f.company_name ?? "Quinta",
-      place: f.pickup_address ?? f.address ?? "",
-      lat: f.pickup_lat as number,
-      lng: f.pickup_lng as number,
-    }));
-};
-
+/**
+ * "Ver mapa": agricultores reais no seu ponto de levantamento, com pesquisa por
+ * raio à volta da localização do aparelho, de um distrito ou de um ponto
+ * clicado no mapa. A pesquisa por morada fica para quando a API Places da
+ * Google estiver ativa na chave.
+ */
 const PortugalMapDialog = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -56,12 +51,6 @@ const PortugalMapDialog = () => {
   const circle = useRef<GMaps>(null);
   const centerMarker = useRef<GMaps>(null);
   const mapsAllowed = useConsent().hasConsent("maps");
-  const { data: farmers = [], isLoading } = useQuery({
-    queryKey: ["map-farmers"],
-    queryFn: fetchMapFarmers,
-    enabled: open,
-    staleTime: 5 * 60 * 1000,
-  });
 
   const [farms, setFarms] = useState<FarmPoint[]>([]);
   const [loadingFarms, setLoadingFarms] = useState(false);
@@ -69,26 +58,28 @@ const PortugalMapDialog = () => {
   const [radius, setRadius] = useState(RADIUS_DEFAULT);
   const [locating, setLocating] = useState(false);
 
-  // Agricultores reais com ponto de levantamento (os de demonstração não entram).
+  // Agricultores reais com ponto de levantamento (os de demonstração e os em pausa não entram).
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
     setLoadingFarms(true);
     supabase
       .from("public_farmer_profiles")
-      .select("id, company_name, address, pickup_lat, pickup_lng")
+      .select("id, company_name, pickup_address, address, pickup_lat, pickup_lng, paused_until")
       .not("pickup_lat", "is", null)
       .not("pickup_lng", "is", null)
       .then(({ data }) => {
         if (cancelled) return;
         setFarms(
-          (data ?? []).map((f) => ({
-            id: f.id as string,
-            name: f.company_name ?? "Quinta",
-            address: f.address,
-            lat: Number(f.pickup_lat),
-            lng: Number(f.pickup_lng),
-          })),
+          (data ?? [])
+            .filter((f) => f.id && !isPaused(f.paused_until))
+            .map((f) => ({
+              id: f.id as string,
+              name: f.company_name ?? "Quinta",
+              address: f.pickup_address ?? f.address,
+              lat: Number(f.pickup_lat),
+              lng: Number(f.pickup_lng),
+            })),
         );
         setLoadingFarms(false);
       });
@@ -115,33 +106,6 @@ const PortugalMapDialog = () => {
       console.warn("VITE_GOOGLE_MAPS_BROWSER_KEY não definida — o mapa não será carregado.");
       return;
     }
-
-    const goToFarmer = (id: string) => {
-      setOpen(false);
-      navigate(`/agricultor/${id}`);
-    };
-
-    // Conteúdo da janela construído com nós DOM e textContent: os dados nunca são lidos como HTML.
-    const infoContent = (f: MapFarmer) => {
-      const box = document.createElement("div");
-      box.style.cssText = `font-family:'Schibsted Grotesk',system-ui;max-width:200px;color:${MAP_INK};`;
-      const name = document.createElement("strong");
-      name.textContent = f.farm;
-      const place = document.createElement("div");
-      place.style.cssText = `color:${MAP_MUTED};font-size:12px;margin-top:2px;`;
-      place.textContent = f.place;
-      const link = document.createElement("a");
-      link.href = `/agricultor/${f.id}`;
-      link.textContent = "Ver perfil →";
-      link.style.cssText = `display:inline-block;margin-top:4px;color:${MAP_PRIMARY};font-size:12px;`;
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        goToFarmer(f.id);
-      });
-      box.append(name, place, link);
-      return box;
-    };
-
     const renderMap = () => {
       if (!mapRef.current || !window.google?.maps) return;
       const instance = new window.google.maps.Map(mapRef.current, {
@@ -152,17 +116,9 @@ const PortugalMapDialog = () => {
         fullscreenControl: false,
         clickableIcons: false,
       });
-
-      farmers.forEach((f) => {
-        const marker = new window.google.maps.Marker({
-          position: { lat: f.lat, lng: f.lng },
-          map: mapInstance.current,
-          title: f.farm,
-        });
-        const info = new window.google.maps.InfoWindow({ content: infoContent(f) });
-        marker.addListener("click", () => {
-          info.open({ anchor: marker, map: mapInstance.current });
-        });
+      instance.addListener("click", (e: GMaps) => {
+        if (!e.latLng) return;
+        setCenter({ lat: e.latLng.lat(), lng: e.latLng.lng(), label: "Ponto escolhido no mapa" });
       });
       setMap(instance);
     };
@@ -177,7 +133,7 @@ const PortugalMapDialog = () => {
     script.async = true;
     script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initValorRuralMap`;
     document.head.appendChild(script);
-  }, [open, mapsAllowed, farmers, navigate]);
+  }, [open, mapsAllowed]);
 
   // Ao fechar, o mapa e os marcadores são descartados (o DOM do diálogo desaparece).
   useEffect(() => {
@@ -202,20 +158,20 @@ const PortugalMapDialog = () => {
       const marker = new window.google.maps.Marker({ position: { lat: f.lat, lng: f.lng }, map, title: f.name });
       marker.addListener("click", () => {
         const box = document.createElement("div");
-        box.style.cssText = "font-family: system-ui; max-width: 220px;";
+        box.style.cssText = `font-family:'Schibsted Grotesk',system-ui;max-width:220px;color:${MAP_INK};`;
         const title = document.createElement("strong");
         title.textContent = f.name;
         box.appendChild(title);
         if (f.address) {
           const addr = document.createElement("div");
-          addr.style.cssText = "color:#555;font-size:12px;margin-top:2px;";
+          addr.style.cssText = `color:${MAP_MUTED};font-size:12px;margin-top:2px;`;
           addr.textContent = f.address;
           box.appendChild(addr);
         }
         const link = document.createElement("a");
         link.href = `/agricultor/${f.id}`;
         link.textContent = "Ver perfil →";
-        link.style.cssText = "color:#2d6a4f;font-size:12px;display:inline-block;margin-top:4px;";
+        link.style.cssText = `color:${MAP_PRIMARY};font-size:12px;display:inline-block;margin-top:4px;`;
         link.addEventListener("click", (ev) => {
           ev.preventDefault();
           setOpen(false);
@@ -243,10 +199,10 @@ const PortugalMapDialog = () => {
     if (!circle.current) {
       circle.current = new window.google.maps.Circle({
         map,
-        strokeColor: "#2d6a4f",
+        strokeColor: MAP_PRIMARY,
         strokeOpacity: 0.8,
         strokeWeight: 2,
-        fillColor: "#2d6a4f",
+        fillColor: MAP_PRIMARY,
         fillOpacity: 0.08,
         clickable: false,
       });
@@ -311,33 +267,100 @@ const PortugalMapDialog = () => {
           <DialogTitle>Agricultores perto de si</DialogTitle>
           <DialogDescription>Escolha onde procurar e o raio, à direita. Também pode clicar no mapa.</DialogDescription>
         </DialogHeader>
-        <MapConsentGate className="h-[420px]">
-          <div ref={mapRef} className="h-[420px] w-full rounded-lg border border-border bg-muted" />
-        </MapConsentGate>
-        <div className="mt-4 max-h-40 space-y-2 overflow-y-auto">
-          {isLoading ? (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> A carregar agricultores…
-            </p>
-          ) : farmers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Ainda não há agricultores com local de recolha no mapa.</p>
-          ) : (
-            farmers.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  navigate(`/agricultor/${f.id}`);
-                }}
-                className="flex w-full items-center gap-2 rounded-lg border border-border p-2 text-left text-sm transition-colors hover:bg-accent"
-              >
-                <MapPin className="h-4 w-4 shrink-0 text-primary" />
-                <span className="font-medium text-foreground">{f.farm}</span>
-                <span className="ml-auto truncate text-xs text-muted-foreground">{f.place}</span>
-              </button>
-            ))
-          )}
+
+        <div className="grid gap-4 md:grid-cols-[1fr_300px]">
+          <MapConsentGate className="h-72 md:h-[480px]">
+            <div ref={mapRef} className="h-72 w-full rounded-lg border border-border bg-muted md:h-[480px]" />
+          </MapConsentGate>
+
+          <aside className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">Onde procurar</p>
+              <Button type="button" variant="outline" className="w-full gap-2" onClick={locateMe} disabled={locating}>
+                {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />}
+                Usar a minha localização
+              </Button>
+              <div className="space-y-1">
+                <Label htmlFor="map-region" className="text-xs text-muted-foreground">Ou escolha um distrito</Label>
+                <select
+                  id="map-region"
+                  value=""
+                  onChange={(e) => {
+                    const r = PT_REGIONS.find((x) => x.name === e.target.value);
+                    if (r) setCenter({ lat: r.lat, lng: r.lng, label: r.name });
+                  }}
+                  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                >
+                  <option value="">Escolher distrito...</option>
+                  {PT_REGIONS.map((r) => (
+                    <option key={r.name} value={r.name}>{r.name}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-xs text-muted-foreground">Ou clique no mapa para escolher o centro.</p>
+              {center && (
+                <div className="flex items-center justify-between gap-2 rounded-lg bg-primary/5 px-3 py-2 text-xs">
+                  <span className="text-foreground">Centro: {center.label}</span>
+                  <button type="button" onClick={() => setCenter(null)} className="text-muted-foreground hover:text-foreground" aria-label="Limpar o centro">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium text-foreground">Raio</Label>
+                <span className="text-sm font-semibold text-primary">{radius} km</span>
+              </div>
+              <Slider
+                value={[radius]}
+                onValueChange={(v) => setRadius(v[0])}
+                min={RADIUS_MIN}
+                max={RADIUS_MAX}
+                step={5}
+                aria-label="Raio em quilómetros"
+              />
+              {!center && <p className="text-xs text-muted-foreground">O raio aplica-se depois de escolher onde procurar.</p>}
+            </div>
+
+            <div className="border-t border-border pt-3">
+              <p className="mb-2 text-sm font-medium text-foreground">
+                {loadingFarms
+                  ? "A carregar agricultores…"
+                  : center
+                    ? `${listed.length} agricultor${listed.length === 1 ? "" : "es"} até ${radius} km`
+                    : `${listed.length} agricultor${listed.length === 1 ? "" : "es"}`}
+              </p>
+              {!loadingFarms && listed.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  {center ? "Nenhum agricultor neste raio. Aumente o raio ou escolha outro local." : "Ainda não há agricultores no mapa."}
+                </p>
+              ) : (
+                <ul className="max-h-60 space-y-1.5 overflow-y-auto md:max-h-[220px]">
+                  {listed.map((f) => (
+                    <li key={f.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpen(false);
+                          navigate(`/agricultor/${f.id}`);
+                        }}
+                        className="flex w-full items-start gap-2 rounded-lg border border-border p-2 text-left text-sm transition-colors hover:bg-secondary"
+                      >
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium text-foreground">{f.name}</span>
+                          {f.address && <span className="block truncate text-xs text-muted-foreground">{f.address}</span>}
+                        </span>
+                        {f.distance != null && <span className="shrink-0 text-xs text-muted-foreground">{formatKm(f.distance)}</span>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </aside>
         </div>
       </DialogContent>
     </Dialog>

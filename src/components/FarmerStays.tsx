@@ -4,7 +4,6 @@ import type { StayRow } from "@/components/StayForm";
 import StayDialog from "@/components/StayDialog";
 import StayCard from "@/components/StayCard";
 import { isVideoPath, signMedia } from "@/lib/media-upload";
-import { formatEuro } from "@/lib/format";
 
 interface FarmerStaysProps {
   farmerId: string;
@@ -50,31 +49,7 @@ const FarmerStays = ({ farmerId, farmName, isOwner }: FarmerStaysProps) => {
       <p className="mt-1 text-sm text-muted-foreground">Durma na quinta e leve um brinde da casa.</p>
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {stays.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setSelected(s)}
-            className="group overflow-hidden rounded-xl border border-border bg-card text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div className="flex h-40 items-center justify-center overflow-hidden bg-muted">
-              {thumbs[s.id] ? (
-                <img src={thumbs[s.id]} alt={s.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              ) : (
-                <BedDouble className="h-8 w-8 text-muted-foreground" />
-              )}
-            </div>
-            <div className="p-4">
-              <h3 className="font-semibold text-foreground">{s.title}</h3>
-              <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> até {s.capacity_per_unit} por quarto</span>
-                <span>mínimo {s.min_nights} noite(s)</span>
-              </p>
-              <p className="mt-3">
-                <span className="font-mono tabular-nums text-lg font-bold text-primary">{formatEuro(Number(s.base_price))}</span>
-                <span className="text-xs text-muted-foreground"> /noite {s.pricing_mode === "per_person" ? "por pessoa" : "por quarto"}</span>
-              </p>
-            </div>
-          </button>
+          <StayCard key={s.id} stay={s} thumb={thumbs[s.id]} onClick={() => setSelected(s)} />
         ))}
       </div>
       <StayDialog stay={selected} farmName={farmName} isOwner={isOwner} onOpenChange={(o) => !o && setSelected(null)} />

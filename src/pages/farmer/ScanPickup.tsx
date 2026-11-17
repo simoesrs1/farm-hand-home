@@ -47,8 +47,11 @@ const ScanPickup = () => {
         toast({ title: "Não foi possível validar", description: msg, variant: "destructive" });
         validatingRef.current = false;
       } else {
-        setSuccess({ amount: (data as any).farmer_amount });
-        toast({ title: "Entrega confirmada", description: `Recebes ${formatEuro((data as any).farmer_amount)}` });
+        setSuccess({ amount: (data?.farmer_amount ?? 0) });
+        // Produtos com escolha de lote: pergunta logo de que lote saíram.
+        const orderId = data?.order_id;
+        if (orderId && (await ordersWithPendingLots([orderId])).has(orderId)) setLotOrderId(orderId);
+        toast({ title: "Entrega confirmada", description: `Recebes ${formatEuro(data?.farmer_amount ?? 0)}` });
         // Stop camera after success
         if (scannerRef.current) {
           try { await scannerRef.current.stop(); } catch { /* noop */ }
@@ -125,6 +128,8 @@ const ScanPickup = () => {
             </Button>
           </div>
         </div>
+        {/* O ecrã de sucesso aparece logo após validar: o diálogo dos lotes tem de estar aqui também. */}
+        <LotAllocationDialog orderId={lotOrderId} onOpenChange={(open) => !open && setLotOrderId(null)} />
       </main>
     );
   }

@@ -1,6 +1,7 @@
 import { Clock, MapPin, Tent, Users } from "lucide-react";
 import type { ExperienceRow } from "@/components/ExperienceForm";
 import { formatDuration } from "@/lib/experience-sessions";
+import { formatEuro } from "@/lib/format";
 
 interface ExperienceCardProps {
   experience: ExperienceRow;
@@ -39,7 +40,7 @@ const ExperienceCard = ({ experience: e, thumb, farmName, distance, onClick }: E
         <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {e.min_people}–{e.max_people}</span>
       </p>
       <p className="mt-3">
-        <span className="text-lg font-bold text-primary">{Number(e.base_price).toFixed(2)}€</span>
+        <span className="font-mono tabular-nums text-lg font-bold text-primary">{formatEuro(Number(e.base_price))}</span>
         <span className="text-xs text-muted-foreground"> {e.pricing_mode === "per_person" ? "/pessoa" : "/grupo"}</span>
       </p>
     </div>
