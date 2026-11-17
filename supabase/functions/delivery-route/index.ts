@@ -11,7 +11,9 @@
 // A chave do OpenRouteService fica só no servidor (ORS_API_KEY).
 import { createClient } from "npm:@supabase/supabase-js@2.110.8";
 
-const ORS_BASE = "https://api.openrouteservice.org/v2";
+// api.openrouteservice.org está a ser descontinuado a favor de api.heigit.org
+// (https://ask.openrouteservice.org/t/7912).
+const ORS_BASE = "https://api.heigit.org/openrouteservice/v2";
 // Limites por pedido do OpenRouteService: 50 pontos por percurso.
 const MAX_STOPS = 40;
 

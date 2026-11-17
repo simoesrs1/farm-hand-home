@@ -1,16 +1,10 @@
 /**
  * SDK do Google Maps no `window`, partilhado por todos os mapas da aplicação
- * (MapConsentGate controla quando é carregado).
- *
- * O SDK é carregado por <script> e o projeto não tem os tipos oficiais
- * (@types/google.maps), por isso fica tipado como `any` neste único sítio.
- * Para o tipar a sério: instalar @types/google.maps e trocar por `typeof google`.
+ * (MapConsentGate controla quando é carregado). Tipos de @types/google.maps;
+ * `google` só existe depois de o <script> do SDK carregar.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type GoogleMapsSdk = any;
-
 interface Window {
-  google: GoogleMapsSdk;
+  google?: typeof google;
   /** Callbacks de carregamento do SDK, um por mapa. */
   __initDeliveryPicker?: () => void;
   __initDeliveryRouteMap?: () => void;

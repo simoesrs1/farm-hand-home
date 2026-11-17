@@ -325,14 +325,15 @@ const DeliveryRouteMapDialog = ({ days, children, ...controls }: Props) => {
             </p>
             {days.some((d) => d.road) && (
               <p className="text-[11px] text-muted-foreground">
-                Percursos: © openrouteservice.org by HeiGIT · Dados do mapa ©{" "}
+                {/* Texto exigido pelos termos da HeiGIT (https://account.heigit.org/info/tos). */}
+                © openrouteservice by HeiGIT | Data from{" "}
                 <a
                   href="https://www.openstreetmap.org/copyright"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline-offset-2 hover:underline"
                 >
-                  OpenStreetMap contributors
+                  OpenStreetMap
                 </a>
               </p>
             )}

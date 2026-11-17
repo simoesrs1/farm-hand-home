@@ -13,8 +13,6 @@ import { PT_REGIONS, formatKm, withinRadius, type LatLng } from "@/lib/geo";
 import { isPaused } from "@/lib/farmer-activity";
 
 
-// Objetos do SDK do Google Maps (ver src/google-maps.d.ts).
-type GMaps = GoogleMapsSdk;
 
 type FarmPoint = LatLng & { id: string; name: string; address: string | null };
 type SearchCenter = LatLng & { label: string };
@@ -39,10 +37,10 @@ const PortugalMapDialog = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<GMaps>(null);
-  const markers = useRef<Record<string, GMaps>>({});
-  const circle = useRef<GMaps>(null);
-  const centerMarker = useRef<GMaps>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const markers = useRef<Record<string, google.maps.Marker>>({});
+  const circle = useRef<google.maps.Circle | null>(null);
+  const centerMarker = useRef<google.maps.Marker | null>(null);
   const mapsAllowed = useConsent().hasConsent("maps");
 
   const [farms, setFarms] = useState<FarmPoint[]>([]);
@@ -109,7 +107,7 @@ const PortugalMapDialog = () => {
         fullscreenControl: false,
         clickableIcons: false,
       });
-      instance.addListener("click", (e: GMaps) => {
+      instance.addListener("click", (e: google.maps.MapMouseEvent) => {
         if (!e.latLng) return;
         setCenter({ lat: e.latLng.lat(), lng: e.latLng.lng(), label: "Ponto escolhido no mapa" });
       });

@@ -15,8 +15,8 @@ const PORTUGAL_CENTER = { lat: 39.5, lng: -8.0 };
 
 const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<GoogleMapsSdk>(null);
-  const markerInstance = useRef<GoogleMapsSdk>(null);
+  const mapInstance = useRef<google.maps.Map | null>(null);
+  const markerInstance = useRef<google.maps.Marker | null>(null);
   const [unavailable, setUnavailable] = useState(false);
   const mapsAllowed = useConsent().hasConsent("maps");
 
@@ -55,7 +55,8 @@ const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
         attachDrag();
       }
 
-      mapInstance.current.addListener("click", (e: GoogleMapsSdk) => {
+      mapInstance.current.addListener("click", (e: google.maps.MapMouseEvent) => {
+        if (!e.latLng) return;
         const newLat = e.latLng.lat();
         const newLng = e.latLng.lng();
         placeMarker(newLat, newLng);
@@ -77,8 +78,8 @@ const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
     };
 
     const attachDrag = () => {
-      markerInstance.current.addListener("dragend", (e: GoogleMapsSdk) => {
-        onChange(e.latLng.lat(), e.latLng.lng());
+      markerInstance.current.addListener("dragend", (e: google.maps.MapMouseEvent) => {
+        if (e.latLng) onChange(e.latLng.lat(), e.latLng.lng());
       });
     };
 
@@ -117,8 +118,8 @@ const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
         map: mapInstance.current,
         draggable: true,
       });
-      markerInstance.current.addListener("dragend", (e: GoogleMapsSdk) => {
-        onChange(e.latLng.lat(), e.latLng.lng());
+      markerInstance.current.addListener("dragend", (e: google.maps.MapMouseEvent) => {
+        if (e.latLng) onChange(e.latLng.lat(), e.latLng.lng());
       });
     } else {
       markerInstance.current.setPosition(pos);
