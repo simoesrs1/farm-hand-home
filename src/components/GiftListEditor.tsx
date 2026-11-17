@@ -70,7 +70,7 @@ const GiftListEditor = ({ farmerId, gifts, onGiftsChange, keepWithoutGift, onKee
                   <p className="truncate text-sm font-medium text-foreground">{p?.name ?? "Produto indisponível"}</p>
                   <p className="text-xs text-muted-foreground">{p ? `${p.stock_quantity ?? 0} em stock` : "Já não está ativo"}</p>
                 </div>
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${free ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${free ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
                   {free ? "Grátis" : "Extra pago"}
                 </span>
                 <Input

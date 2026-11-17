@@ -2,11 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, BedDouble, Loader2, Pencil, Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/PageHeader";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { StayRow } from "@/components/StayForm";
+import { formatEuro } from "@/lib/format";
 
 /** Lista do alojamento do agricultor (/agricultor/alojamento). */
 const MyStays = () => {
@@ -71,17 +73,19 @@ const MyStays = () => {
       <button onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Voltar
       </button>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">O meu alojamento</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Quartos e unidades que os clientes podem reservar na sua quinta.</p>
-        </div>
-        <Button asChild className="gap-2">
-          <Link to="/agricultor/alojamento/novo">
-            <Plus className="h-4 w-4" /> Novo alojamento
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        className="mb-0"
+        eyebrow="Área do agricultor"
+        title="O meu alojamento"
+        description="Quartos e unidades que os clientes podem reservar na sua quinta."
+        actions={
+          <Button asChild className="gap-2">
+            <Link to="/agricultor/alojamento/novo">
+              <Plus className="h-4 w-4" /> Novo alojamento
+            </Link>
+          </Button>
+        }
+      />
 
       {stays.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center">
@@ -95,7 +99,7 @@ const MyStays = () => {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-foreground">{s.title}</p>
                 <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                  <span>{Number(s.base_price).toFixed(2)}€ / noite {s.pricing_mode === "per_person" ? "por pessoa" : "por quarto"}</span>
+                  <span>{formatEuro(Number(s.base_price))} / noite {s.pricing_mode === "per_person" ? "por pessoa" : "por quarto"}</span>
                   <span className="inline-flex items-center gap-1"><BedDouble className="h-3.5 w-3.5" /> {s.units_count} quarto(s)</span>
                   <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> até {s.capacity_per_unit} por quarto</span>
                 </p>

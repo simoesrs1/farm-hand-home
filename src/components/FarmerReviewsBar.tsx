@@ -31,7 +31,7 @@ const SECONDS_PER_CARD = 8;
 const Stars = ({ value }: { value: number }) => (
   <div className="flex items-center gap-0.5" aria-label={`${value} em 5 estrelas`}>
     {Array.from({ length: 5 }).map((_, i) => (
-      <Star key={i} className={`h-4 w-4 ${i < Math.round(value) ? "fill-accent text-accent" : "text-border"}`} />
+      <Star key={i} className={`h-4 w-4 ${i < Math.round(value) ? "fill-highlight text-coral" : "text-border"}`} />
     ))}
   </div>
 );

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Image as ImageIcon, Loader2, Sparkles, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/PageHeader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +18,7 @@ import { categories } from "@/data/categories";
 import { DeliveryModesEnum } from "@/data/delivery-modes";
 import { Checkbox } from "@/components/ui/checkbox";
 import DeliveryFeeFields from "@/components/DeliveryFeeFields";
+import { formatEuro } from "@/lib/format";
 import {
   applyDeliveryDefaults,
   changedDeliveryFields,
@@ -375,10 +377,12 @@ const NewProduct = () => {
       >
         <ArrowLeft className="h-4 w-4" /> Voltar
       </button>
-      <h1 className="font-display text-3xl font-bold text-foreground">Adicionar produto</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Preencha os detalhes do artigo que pretende colocar à venda.
-      </p>
+      <PageHeader
+        className="mb-0"
+        eyebrow="Área do agricultor"
+        title="Adicionar produto"
+        description="Preencha os detalhes do artigo que pretende colocar à venda."
+      />
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         {/* Media */}
@@ -779,7 +783,7 @@ const NewProduct = () => {
             <div className="space-y-2">
               <Label>Preço final para o cliente</Label>
               <div className="flex h-10 items-center rounded-md border border-input bg-muted px-3 text-sm font-semibold text-foreground">
-                {clientPrice.toFixed(2)} € / {unit || "un"}
+                {formatEuro(clientPrice)} / {unit || "un"}
               </div>
               <p className="text-xs text-muted-foreground">Inclui {Math.round(COMMISSION * 100)}% da ValorRural e IVA de {vatRate}%.</p>
             </div>

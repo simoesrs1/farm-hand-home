@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import DeliveryPointPicker from "@/components/DeliveryPointPicker";
+import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
@@ -40,6 +41,7 @@ import {
 import { computeDeliveryFee, type DeliveryFeeProduct } from "@/lib/delivery-fee";
 import { CalendarClock } from "lucide-react";
 import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
+import { formatEuro } from "@/lib/format";
 
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
@@ -345,12 +347,7 @@ const Cart = () => {
           Continuar a comprar
         </Link>
 
-        <div className="mb-8 flex items-center gap-3">
-          <ShoppingCart className="h-7 w-7 text-primary" />
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            O seu carrinho
-          </h1>
-        </div>
+        <PageHeader title="O seu carrinho" />
 
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           {/* Items grouped by farmer */}
@@ -389,7 +386,7 @@ const Cart = () => {
                               {item.name}
                             </h3>
                             <p className="text-xs text-muted-foreground">
-                              {item.price.toFixed(2)}€ / {item.unit}
+                              {formatEuro(item.price)} / {item.unit}
                             </p>
                             <p className="text-[11px] text-muted-foreground">
                               {available} em stock
@@ -424,8 +421,8 @@ const Cart = () => {
                               <Plus className="h-3.5 w-3.5" />
                             </button>
                           </div>
-                          <span className="font-bold text-primary">
-                            {(item.price * item.quantity).toFixed(2)}€
+                          <span className="font-mono tabular-nums font-bold text-primary">
+                            {formatEuro(item.price * item.quantity)}
                           </span>
                         </div>
                       </div>
@@ -452,17 +449,17 @@ const Cart = () => {
             <div className="mt-4 space-y-2 text-sm">
               <div className="flex justify-between text-muted-foreground">
                 <span>Subtotal</span>
-                <span>{totalPrice.toFixed(2)}€</span>
+                <span>{formatEuro(totalPrice)}</span>
               </div>
               {deliveryFee ? (
                 <>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Entrega ao domicílio</span>
-                    <span>{deliveryFee.fee > 0 ? `${deliveryFee.fee.toFixed(2)}€` : "Grátis"}</span>
+                    <span>{deliveryFee.fee > 0 ? `${formatEuro(deliveryFee.fee)}` : "Grátis"}</span>
                   </div>
                   {deliveryFee.remainingForFree != null && (
                     <p className="text-[11px] text-primary">
-                      Faltam {deliveryFee.remainingForFree.toFixed(2)}€ para a entrega ser grátis.
+                      Faltam {formatEuro(deliveryFee.remainingForFree)} para a entrega ser grátis.
                     </p>
                   )}
                 </>
@@ -475,8 +472,8 @@ const Cart = () => {
             </div>
             <div className="mt-4 flex justify-between border-t border-border pt-4">
               <span className="font-semibold text-foreground">Total</span>
-              <span className="font-display text-xl font-bold text-primary">
-                {orderTotal.toFixed(2)}€
+              <span className="font-mono tabular-nums text-xl font-bold text-primary">
+                {formatEuro(orderTotal)}
               </span>
             </div>
 
@@ -574,9 +571,8 @@ const Cart = () => {
             </div>
             )}
 
-            <div className="mt-4 flex gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
-
-              <AlertTriangle className="h-4 w-4 shrink-0" />
+            <div className="mt-4 flex gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs text-foreground">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
               <p>
                 Se não levantar a encomenda no prazo indicado, <strong>perderá 100% do valor pago</strong>.
               </p>
@@ -593,7 +589,7 @@ const Cart = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-amber-600" />
+              <ShieldAlert className="h-5 w-5 text-warning" />
               Aviso de segurança
             </AlertDialogTitle>
             <AlertDialogDescription asChild>

@@ -32,10 +32,12 @@ const defaultImagesBySlug: Record<string, string> = {
   horticolas: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&h=400&fit=crop",
   laticinios: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600&h=400&fit=crop",
   "oleos-essenciais": "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=600&h=400&fit=crop",
-  "outros-produtos": "https://images.unsplash.com/photo-1506617420156-8e4536971650?w=600&h=400&fit=crop",
+  // Cestos numa banca de mercado — Lumin Osity, Unsplash License (unsplash.com/photos/GPxxXAbzsXU)
+  "outros-produtos": "https://images.unsplash.com/photo-1765480953875-a7338f896e91?w=600&h=400&fit=crop",
   ovos: "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=600&h=400&fit=crop",
   "pao-artesanal": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&h=400&fit=crop",
-  salgados: "https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=600&h=400&fit=crop",
+  // Croquetes — Poul Hoang, Unsplash License (unsplash.com/photos/kEYieb7pzAM)
+  salgados: "https://images.unsplash.com/photo-1713517915303-ae3b3429f939?w=600&h=400&fit=crop",
   "temperos-e-especiarias": "https://images.unsplash.com/photo-1532336414038-cf19250c5757?w=600&h=400&fit=crop",
 };
 

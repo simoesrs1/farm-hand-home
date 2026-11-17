@@ -17,6 +17,7 @@ import {
 import { downloadPickupIcs } from "@/lib/pickup-ical";
 
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/PageHeader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
@@ -98,9 +99,9 @@ const PauseCard = ({ farmerId, pausedUntil, pauseNote, onChange }: PauseCardProp
 
   if (paused && pausedUntil) {
     return (
-      <Card className="mt-5 border-accent/40 bg-accent/10 p-4">
+      <Card className="mt-5 border-warning/40 bg-warning/10 p-4">
         <div className="flex items-start gap-3">
-          <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+          <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
           <div className="flex-1 text-sm">
             <p className="font-medium text-foreground">
               Está em pausa até {formatReturnDate(pausedUntil)}.
@@ -360,10 +361,12 @@ const FarmerAvailability = () => {
         <ArrowLeft className="h-4 w-4" /> Voltar
       </button>
 
-      <h1 className="font-display text-3xl font-bold text-foreground">Disponibilidade</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Indique os dias e horas em que tem a porta aberta para entregar as encomendas.
-      </p>
+      <PageHeader
+        className="mb-0"
+        eyebrow="Área do agricultor"
+        title="Disponibilidade"
+        description="Indique os dias e horas em que tem a porta aberta para entregar as encomendas."
+      />
 
       <div className="mt-5 flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/10 p-4">
         <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-primary" />

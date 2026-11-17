@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExperienceRow } from "@/components/ExperienceForm";
 import ExperienceDialog from "@/components/ExperienceDialog";
-import ExperienceCard from "@/components/ExperienceCard";
+import { formatDuration } from "@/lib/experience-sessions";
+import { formatEuro } from "@/lib/format";
 
 interface FarmerExperiencesProps {
   farmerId: string;
@@ -53,7 +54,31 @@ const FarmerExperiences = ({ farmerId, farmName, isOwner }: FarmerExperiencesPro
       <p className="mt-1 text-sm text-muted-foreground">Atividades para viver a quinta por dentro, com um brinde para levar.</p>
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {experiences.map((e) => (
-          <ExperienceCard key={e.id} experience={e} thumb={thumbs[e.id]} onClick={() => setSelected(e)} />
+          <button
+            key={e.id}
+            type="button"
+            onClick={() => setSelected(e)}
+            className="group overflow-hidden rounded-xl border border-border bg-card text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="flex h-40 items-center justify-center overflow-hidden bg-muted">
+              {thumbs[e.id] ? (
+                <img src={thumbs[e.id]} alt={e.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              ) : (
+                <Tent className="h-8 w-8 text-muted-foreground" />
+              )}
+            </div>
+            <div className="p-4">
+              <h3 className="font-semibold text-foreground">{e.title}</h3>
+              <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {formatDuration(e.duration_minutes)}</span>
+                <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {e.min_people}–{e.max_people}</span>
+              </p>
+              <p className="mt-3">
+                <span className="font-mono tabular-nums text-lg font-bold text-primary">{formatEuro(Number(e.base_price))}</span>
+                <span className="text-xs text-muted-foreground"> {e.pricing_mode === "per_person" ? "/pessoa" : "/grupo"}</span>
+              </p>
+            </div>
+          </button>
         ))}
       </div>
       <ExperienceDialog experience={selected} farmName={farmName} isOwner={isOwner} onOpenChange={(o) => !o && setSelected(null)} />

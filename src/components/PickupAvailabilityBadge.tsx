@@ -15,7 +15,7 @@ const PickupAvailabilityBadge = ({ windows, className = "" }: Props) => {
     <span
       className={`mt-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
         status.open
-          ? "border-primary/40 bg-primary/10 text-primary"
+          ? "border-success/40 bg-success/10 text-success"
           : "border-border bg-muted text-muted-foreground"
       } ${className}`}
     >

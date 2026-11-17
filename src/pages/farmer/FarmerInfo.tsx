@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { toUserMessage } from "@/lib/auth-errors";
 import FarmerOfferingsSection from "@/components/FarmerOfferingsSection";
+import PageHeader from "@/components/PageHeader";
 
 type FarmerDetails = {
   id: string;
@@ -229,15 +230,12 @@ const FarmerInfo = () => {
 
   return (
     <main className="container max-w-3xl py-10">
-      <header className="mb-6 flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-          <ShieldCheck className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Informações da exploração</h1>
-          <p className="text-sm text-muted-foreground">Dados submetidos no registo inicial</p>
-        </div>
-      </header>
+      <PageHeader
+        className="mb-6"
+        eyebrow="Área do agricultor"
+        title="Informações da exploração"
+        description="Dados submetidos no registo inicial."
+      />
 
       {/* Status banner */}
       {isLocked ? (
@@ -347,7 +345,7 @@ const FarmerInfo = () => {
       {editing && (
         <section className="space-y-6">
           {!acknowledged ? (
-            <Alert variant="destructive" className="border-amber-500/40 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+            <Alert className="border-warning/40 bg-warning/10 [&>svg]:text-warning">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Antes de continuar</AlertTitle>
               <AlertDescription className="space-y-2">

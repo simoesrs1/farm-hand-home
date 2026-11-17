@@ -20,6 +20,7 @@ import type { StayRow } from "@/components/StayForm";
 import { FREE_CANCEL_DAYS, freeCancellationUntil } from "@/lib/experience-pricing";
 import { addDaysISO, lisbonParts } from "@/lib/experience-sessions";
 import { isVideoPath, signMedia } from "@/lib/media-upload";
+import { formatEuro } from "@/lib/format";
 import {
   REGISTRATION_LABELS,
   overlapsBlocked,
@@ -207,7 +208,7 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
               <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" /> entrada {stay.check_in_time} · saída {stay.check_out_time}</span>
             </div>
             <p className="text-sm font-medium text-foreground">
-              Desde {Number(stay.base_price).toFixed(2)}€ / noite {mode === "per_person" ? "por pessoa" : "por quarto"}
+              Desde {formatEuro(Number(stay.base_price))} / noite {mode === "per_person" ? "por pessoa" : "por quarto"}
             </p>
 
             <p className="whitespace-pre-line text-sm text-foreground">{stay.description}</p>
@@ -287,7 +288,7 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
                             }
                           />
                           <span className="flex-1 text-foreground">{g.product?.name}</span>
-                          <span className="text-muted-foreground">+{Number(g.extra_price).toFixed(2)}€</span>
+                          <span className="text-muted-foreground">+{formatEuro(Number(g.extra_price))}</span>
                         </label>
                       ))}
                     </div>
@@ -297,7 +298,7 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
                     <span className="font-medium text-foreground">
                       Total{nights.length > 0 && ` (${nights.length} noite${nights.length === 1 ? "" : "s"}, ${formatDate(checkIn)} a ${formatDate(checkOut)})`}
                     </span>
-                    <span className="font-display text-lg font-bold text-primary">{total.toFixed(2)}€</span>
+                    <span className="font-mono tabular-nums text-lg font-bold text-primary">{formatEuro(total)}</span>
                   </div>
 
                   <label htmlFor="st-accept" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/40 p-3 text-xs text-foreground">
@@ -312,7 +313,7 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
 
                   <Button onClick={book} disabled={submitting || !accepted || !nights.length || !!problem} className="w-full gap-2">
                     {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Reservar e pagar {total.toFixed(2)}€ (simulado)
+                    Reservar e pagar {formatEuro(total)} (simulado)
                   </Button>
                 </div>
               )}

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrderChat from "@/components/OrderChat";
+import { formatEuro } from "@/lib/format";
 
 interface OrderItem {
   id: string;
@@ -238,7 +239,7 @@ const OrderStatus = () => {
               Encomendada em {formatDate(order.created_at)} às {formatTime(order.created_at)}
             </p>
           </div>
-          <p className="font-display text-xl font-semibold text-foreground">{order.total.toFixed(2)}€</p>
+          <p className="font-mono tabular-nums text-xl font-semibold text-foreground">{formatEuro(order.total)}</p>
         </div>
 
         {/* Linha temporal do estado */}
@@ -251,7 +252,7 @@ const OrderStatus = () => {
                 {!isLast && <span className="absolute left-[15px] top-8 h-full w-px bg-border" aria-hidden />}
                 <span
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                    s.done ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                    s.done ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -346,16 +347,16 @@ const OrderStatus = () => {
                   <div className="flex-1">
                     <p className="font-medium text-foreground">{it.product_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {it.quantity} {it.unit ?? ""} × {it.unit_price.toFixed(2)}€
+                      {it.quantity} {it.unit ?? ""} × {formatEuro(it.unit_price)}
                     </p>
                   </div>
-                  <p className="font-medium text-foreground">{it.subtotal.toFixed(2)}€</p>
+                  <p className="font-medium text-foreground">{formatEuro(it.subtotal)}</p>
                 </li>
               ))}
               {order.delivery_fee > 0 && (
                 <li className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Entrega ao domicílio</span>
-                  <span className="font-medium text-foreground">{order.delivery_fee.toFixed(2)}€</span>
+                  <span className="font-medium text-foreground">{formatEuro(order.delivery_fee)}</span>
                 </li>
               )}
             </ul>

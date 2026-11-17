@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import PageHeader from "@/components/PageHeader";
+import { formatEuro } from "@/lib/format";
 
 interface ValidatePickupResponse {
   ok?: boolean;
@@ -45,11 +47,8 @@ const ScanPickup = () => {
         toast({ title: "Não foi possível validar", description: msg, variant: "destructive" });
         validatingRef.current = false;
       } else {
-        setSuccess({ amount: (data?.farmer_amount ?? 0) });
-        // Produtos com escolha de lote: pergunta logo de que lote saíram.
-        const orderId = data?.order_id;
-        if (orderId && (await ordersWithPendingLots([orderId])).has(orderId)) setLotOrderId(orderId);
-        toast({ title: "Entrega confirmada", description: `Recebes ${(data?.farmer_amount ?? 0).toFixed(2)}€` });
+        setSuccess({ amount: (data as any).farmer_amount });
+        toast({ title: "Entrega confirmada", description: `Recebes ${formatEuro((data as any).farmer_amount)}` });
         // Stop camera after success
         if (scannerRef.current) {
           try { await scannerRef.current.stop(); } catch { /* noop */ }
@@ -110,12 +109,12 @@ const ScanPickup = () => {
     return (
       <main className="container max-w-md py-12">
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success">
             <CheckCircle2 className="h-8 w-8" />
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground">Entrega confirmada</h1>
           <p className="mt-2 text-muted-foreground">
-            Vais receber <span className="font-semibold text-primary">{success.amount.toFixed(2)}€</span> (90% do valor da encomenda).
+            Vais receber <span className="font-semibold text-primary">{formatEuro(success.amount)}</span> (90% do valor da encomenda).
           </p>
           <div className="mt-6 flex flex-col gap-2">
             <Button onClick={() => { setSuccess(null); setCode(""); validatingRef.current = false; }}>
@@ -136,10 +135,7 @@ const ScanPickup = () => {
         <ArrowLeft className="h-4 w-4" /> Encomendas
       </Link>
 
-      <div className="mb-6 flex items-center gap-3">
-        <ScanLine className="h-7 w-7 text-primary" />
-        <h1 className="font-display text-2xl font-bold text-foreground">Validar entrega</h1>
-      </div>
+      <PageHeader className="mb-6" eyebrow="Área do agricultor" title="Validar entrega" />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as "camera" | "manual")}>
         <TabsList className="grid w-full grid-cols-2">

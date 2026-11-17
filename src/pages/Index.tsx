@@ -1,46 +1,24 @@
 import HeroSection from "@/components/HeroSection";
+import SeasonalStrip from "@/components/SeasonalStrip";
+import CategoryShowcase from "@/components/CategoryShowcase";
 import FeaturedFarmers from "@/components/FeaturedFarmers";
-import { ShieldCheck, MapPin, Star } from "lucide-react";
+import HowItWorks from "@/components/HowItWorks";
+import FarmExperiencesRail from "@/components/FarmExperiencesRail";
+import ImpactCounters from "@/components/ImpactCounters";
+import FarmerCta from "@/components/FarmerCta";
 
-const features = [
-  {
-    icon: ShieldCheck,
-    title: "Avaliações Verificadas",
-    description: "Só quem compra pode avaliar — garantimos transparência total.",
-  },
-  {
-    icon: MapPin,
-    title: "Proximidade Real",
-    description: "Encontre produtores num raio à sua escolha com geolocalização.",
-  },
-  {
-    icon: Star,
-    title: "Qualidade Garantida",
-    description: "Agricultores do país, classificados pela comunidade.",
-  },
-];
-
+// Ordem das secções: ver docs/planos/2026-11-16-ui-pagina-inicial-catalogo.md (fase 2).
 const Index = () => {
   return (
     <main>
       <HeroSection />
-
-      {/* Value props */}
-      <section className="border-b border-border bg-card py-12">
-        <div className="container grid gap-8 md:grid-cols-3">
-          {features.map((f) => (
-            <div key={f.title} className="flex flex-col items-center text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                <f.icon className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="mt-4 font-display text-lg font-semibold text-foreground">{f.title}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{f.description}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
+      <SeasonalStrip />
+      <CategoryShowcase />
       <FeaturedFarmers />
+      <HowItWorks />
+      <FarmExperiencesRail />
+      <ImpactCounters />
+      <FarmerCta />
     </main>
   );
 };

@@ -40,6 +40,7 @@ import {
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import type { Product } from "@/data/products";
 import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
+import { formatEuro } from "@/lib/format";
 
 interface Detail extends Product {
   description: string;
@@ -291,7 +292,7 @@ const ProductDetail = () => {
               {product.name}
             </h1>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-primary">{product.price.toFixed(2)}€</span>
+              <span className="font-mono tabular-nums text-2xl font-bold text-primary">{formatEuro(product.price)}</span>
               <span className="text-sm text-muted-foreground">/ {product.unit}</span>
               <span className="text-xs text-muted-foreground">· IVA {product.vatRate}%</span>
             </div>
@@ -311,7 +312,7 @@ const ProductDetail = () => {
 
             <div className="mt-4 flex flex-wrap gap-2">
               {product.isOrganic && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                <span className="inline-flex items-center gap-1 rounded-full bg-leaf-light px-2.5 py-1 text-xs font-medium text-kale">
                   <Leaf className="h-3 w-3" /> Biológico
                 </span>
               )}
@@ -337,7 +338,7 @@ const ProductDetail = () => {
                   <Package className="h-4 w-4" />
                   <span className="text-xs uppercase tracking-wide">Stock</span>
                 </div>
-                <p className={`mt-1 font-semibold ${product.stock <= 5 ? "text-destructive" : "text-foreground"}`}>
+                <p className={`mt-1 font-semibold ${product.stock <= 5 ? "text-destructive" : "text-success"}`}>
                   {product.stock} {product.unit} disponíveis
                 </p>
               </div>
@@ -527,7 +528,7 @@ const ProductDetail = () => {
                 onClick={handleAdd}
               >
                 <ShoppingCart className="h-4 w-4" />
-                {maxAddable <= 0 ? "Sem stock disponível" : `Adicionar ao carrinho · ${(product.price * qty).toFixed(2)}€`}
+                {maxAddable <= 0 ? "Sem stock disponível" : `Adicionar ao carrinho · ${formatEuro(product.price * qty)}`}
               </Button>
               {inCart > 0 && (
                 <Link to="/carrinho" className="mt-2 block text-center text-xs text-primary underline">

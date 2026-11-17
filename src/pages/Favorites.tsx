@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { farmers } from "@/data/farmers";
 import FarmerCard from "@/components/FarmerCard";
+import PageHeader from "@/components/PageHeader";
 
 const Favorites = () => {
   const { user, loading: authLoading } = useAuth();
@@ -40,17 +41,11 @@ const Favorites = () => {
 
   return (
     <main className="container py-10">
-      <div className="mb-8 flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-          <Heart className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Os meus favoritos</h1>
-          <p className="text-sm text-muted-foreground">
-            Receba notificações sobre renovação de disponibilidade e novos produtos
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="A minha conta"
+        title="Os meus favoritos"
+        description="Receba notificações sobre renovação de disponibilidade e novos produtos."
+      />
 
       {favoriteFarmers.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">

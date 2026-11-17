@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import OfferingsPicker from "@/components/OfferingsPicker";
 import type { Offerings } from "@/lib/farmer-offerings";
 import {
-  Leaf,
   Upload,
   X,
   Loader2,
@@ -415,14 +414,12 @@ const FarmerOnboarding = () => {
         <div className="w-full max-w-2xl rounded-2xl border border-border bg-card shadow-xl">
           {/* Header */}
           <div className="border-b border-border p-6 text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-              <Leaf className="h-6 w-6" />
-            </div>
-            <h1 className="font-display text-xl font-bold text-foreground">
+            <p className="text-sm font-semibold uppercase tracking-wider text-primary">Passo 2 de 2</p>
+            <h1 className="mt-2 font-display text-2xl text-foreground">
               Complete o seu perfil de agricultor
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Passo 2 de 2 — Preencha os dados oficiais da sua exploração
+              Preencha os dados oficiais da sua exploração.
             </p>
 
             <div className="mx-auto mt-5 flex max-w-xs items-center gap-2">

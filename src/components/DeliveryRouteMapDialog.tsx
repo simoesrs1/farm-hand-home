@@ -38,7 +38,20 @@ const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: num
   return 2 * R * Math.asin(Math.sqrt(s));
 };
 
-const DAY_COLORS = ["#2d6a4f", "#b45309", "#1d4ed8", "#9333ea", "#be123c", "#0f766e", "#a16207"];
+// O Google Maps não lê os tokens CSS: hex equivalentes à paleta (src/index.css).
+// Todas as cores têm contraste suficiente para o número branco do marcador.
+const DAY_COLORS = [
+  "#BA2E1C", // tomate (--primary)
+  "#14532D", // couve (--kale)
+  "#1B4F98", // azul (--info)
+  "#914D08", // âmbar (--warning)
+  "#6B2FB3", // beringela
+  "#0F766E", // verde-água
+  "#C2410C", // laranja-escuro
+];
+const MAP_INK = "#1C1A17"; // --foreground
+const MAP_PAPER = "#FFF4E2"; // --background
+const MAP_MUTED = "#696159"; // --muted-foreground
 
 // Route-planning map: farm as origin, one marker per delivery, grouped by day,
 // with the straight-line distance from the farm to each stop.
@@ -91,9 +104,9 @@ const DeliveryRouteMapDialog = ({ farm, stops, children }: Props) => {
           icon: {
             path: window.google.maps.SymbolPath.CIRCLE,
             scale: 10,
-            fillColor: "#1a2e1f",
+            fillColor: MAP_INK,
             fillOpacity: 1,
-            strokeColor: "#ffffff",
+            strokeColor: MAP_PAPER,
             strokeWeight: 2,
           },
         });
@@ -114,14 +127,14 @@ const DeliveryRouteMapDialog = ({ farm, stops, children }: Props) => {
               scale: 12,
               fillColor: color,
               fillOpacity: 1,
-              strokeColor: "#ffffff",
+              strokeColor: MAP_PAPER,
               strokeWeight: 2,
             },
           });
           const info = new window.google.maps.InfoWindow({
-            content: `<div style="font-family:system-ui;max-width:220px;">
+            content: `<div style="font-family:'Schibsted Grotesk',system-ui;max-width:220px;color:${MAP_INK};">
               <strong>${s.label}</strong><br/>
-              <span style="color:#666;font-size:12px;">${s.address ?? "Morada por confirmar"}</span><br/>
+              <span style="color:${MAP_MUTED};font-size:12px;">${s.address ?? "Morada por confirmar"}</span><br/>
               <span style="font-size:12px;">${s.when.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}${s.km != null ? ` · ${s.km.toFixed(1)} km` : ""}</span>
             </div>`,
           });

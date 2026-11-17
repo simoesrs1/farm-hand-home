@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Package, Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck, MapPin, AlertTriangle, Tent, Boxes } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck, MapPin, AlertTriangle, Tent } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import SectionHeading from "@/components/SectionHeading";
 import OrderChat from "@/components/OrderChat";
 import ValidateDeliveryDialog from "@/components/ValidateDeliveryDialog";
 import LotAllocationDialog from "@/components/LotAllocationDialog";
@@ -21,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import DeliveryRouteMapDialog, { type RouteStop } from "@/components/DeliveryRouteMapDialog";
+import { formatEuro } from "@/lib/format";
 
 interface OrderItem {
   id: string;
@@ -99,8 +101,8 @@ const lastTrackingStep = (o: Order) =>
   [...TRACKING_STEPS].reverse().find((s) => o[s.column]) ?? null;
 
 const meta = {
-  awaiting_pickup: { label: "A aguardar", tone: "bg-primary/15 text-primary", Icon: Clock },
-  delivered: { label: "Entregue", tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", Icon: CheckCircle2 },
+  awaiting_pickup: { label: "A aguardar", tone: "bg-info/15 text-info", Icon: Clock },
+  delivered: { label: "Entregue", tone: "bg-success/15 text-success", Icon: CheckCircle2 },
   expired: { label: "Expirada", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
   refunded: { label: "Devolvida", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
   pending_payment: { label: "Pendente", tone: "bg-muted text-muted-foreground", Icon: Clock },
@@ -297,10 +299,7 @@ const FarmerOrders = () => {
       </Link>
 
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Package className="h-7 w-7 text-primary" />
-          <h1 className="font-display text-3xl font-bold text-foreground">Encomendas da tua quinta</h1>
-        </div>
+        <SectionHeading as="h1" eyebrow="Área do agricultor" title="Encomendas da tua quinta" />
         <div className="flex flex-wrap items-center gap-2">
           <DeliveryRouteMapDialog farm={farm} stops={routeStops}>
             <div className="mt-6 border-t border-border pt-4">
@@ -325,7 +324,7 @@ const FarmerOrders = () => {
                           <p className="text-xs text-muted-foreground">
                             Encomenda #{o.id.slice(0, 8).toUpperCase()} ·{" "}
                             {new Date(o.created_at).toLocaleDateString("pt-PT")} ·{" "}
-                            <span className="font-medium text-foreground">{o.total.toFixed(2)}€</span>
+                            <span className="font-medium text-foreground">{formatEuro(o.total)}</span>
                           </p>
                           <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${m.tone}`}>
                             <Icon className="h-3 w-3" /> {m.label}
@@ -372,11 +371,11 @@ const FarmerOrders = () => {
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Recebido (entregues)</p>
-          <p className="mt-1 font-display text-2xl font-bold text-primary">{earnedDelivered.toFixed(2)}€</p>
+          <p className="mt-1 font-mono tabular-nums text-2xl font-bold text-primary">{formatEuro(earnedDelivered)}</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Compensação (expiradas)</p>
-          <p className="mt-1 font-display text-2xl font-bold text-foreground">{earnedExpired.toFixed(2)}€</p>
+          <p className="mt-1 font-mono tabular-nums text-2xl font-bold text-foreground">{formatEuro(earnedExpired)}</p>
         </div>
       </div>
 
@@ -417,7 +416,7 @@ const FarmerOrders = () => {
                             · Encomenda #{o.id.slice(0, 8).toUpperCase()}
                           </span>
                         </p>
-                        <span className="text-sm font-medium text-foreground">{o.total.toFixed(2)}€</span>
+                        <span className="text-sm font-medium text-foreground">{formatEuro(o.total)}</span>
                       </div>
                       {o.delivery_address && (
                         <p className="mt-2 flex items-center gap-2 text-sm text-foreground">
@@ -478,12 +477,12 @@ const FarmerOrders = () => {
                       Encomenda #{o.id.slice(0, 8).toUpperCase()} · {new Date(o.created_at).toLocaleString("pt-PT")}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Total: <span className="font-medium text-foreground">{o.total.toFixed(2)}€</span>
+                      Total: <span className="font-medium text-foreground">{formatEuro(o.total)}</span>
                       {" · "}
-                      Comissão (10%): <span className="font-medium text-foreground">{o.commission_amount.toFixed(2)}€</span>
+                      Comissão (10%): <span className="font-medium text-foreground">{formatEuro(o.commission_amount)}</span>
                     </p>
-                    <p className="mt-1 font-display text-lg font-semibold text-primary">
-                      {o.status === "delivered" ? "Recebes" : o.status === "expired" || o.status === "refunded" ? "Recebeste" : "Vais receber"}: {farmerGets.toFixed(2)}€
+                    <p className="mt-1 font-mono tabular-nums text-lg font-semibold text-primary">
+                      {o.status === "delivered" ? "Recebes" : o.status === "expired" || o.status === "refunded" ? "Recebeste" : "Vais receber"}: {formatEuro(farmerGets)}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -572,16 +571,16 @@ const FarmerOrders = () => {
                         <div className="flex-1">
                           <p className="font-medium text-foreground">{it.product_name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {it.quantity} {it.unit ?? ""} × {it.unit_price.toFixed(2)}€
+                            {it.quantity} {it.unit ?? ""} × {formatEuro(it.unit_price)}
                           </p>
                         </div>
-                        <p className="font-medium text-foreground">{it.subtotal.toFixed(2)}€</p>
+                        <p className="font-medium text-foreground">{formatEuro(it.subtotal)}</p>
                       </li>
                     ))}
                     {o.delivery_fee > 0 && (
                       <li className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Entrega ao domicílio</span>
-                        <span className="font-medium text-foreground">{o.delivery_fee.toFixed(2)}€</span>
+                        <span className="font-medium text-foreground">{formatEuro(o.delivery_fee)}</span>
                       </li>
                     )}
                   </ul>

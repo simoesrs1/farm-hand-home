@@ -5,14 +5,14 @@ import { downloadPickupIcs } from "@/lib/pickup-ical";
 
 import { Button } from "@/components/ui/button";
 import { farmers } from "@/data/farmers";
-import { type Product } from "@/data/products";
 import { getCategoryByName } from "@/data/categories";
-import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStock } from "@/contexts/StockContext";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import PickupAvailabilityBadge from "@/components/PickupAvailabilityBadge";
+import ProductCard, { type ProductCardProduct } from "@/components/ProductCard";
+import SectionHeading from "@/components/SectionHeading";
+import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import FarmerReviewsBar from "@/components/FarmerReviewsBar";
 import FarmerExperiences from "@/components/FarmerExperiences";
 import FarmerStays from "@/components/FarmerStays";
@@ -41,12 +41,11 @@ const FarmerProfile = () => {
   const [pickupNote, setPickupNote] = useState<string>("");
   const [pause, setPause] = useState<{ until: string; note: string } | null>(null);
   const mockFarmer = farmers.find((f) => f.id === id);
-  const { addItem, items: cartItems } = useCart();
   const { registerStock } = useStock();
-  const { toast } = useToast();
 
   const [dbFarmer, setDbFarmer] = useState<FarmerDisplay | null>(null);
-  const [dbProducts, setDbProducts] = useState<Product[]>([]);
+  const [dbProducts, setDbProducts] = useState<ProductCardProduct[]>([]);
+  const marketPrices = useMarketPrices();
   const [loaded, setLoaded] = useState(false);
   const { user } = useAuth();
   // O próprio agricultor a ver a sua página: mostra a faixa de pré-visualização.
@@ -107,28 +106,32 @@ const FarmerProfile = () => {
 
       const { data: rows } = await supabase
         .from("products")
-        .select("id, name, unit, client_price, discount_percent, stock_quantity, media_urls, delivery_mode, shipping_days, category")
+        .select("id, name, unit, client_price, discount_percent, stock_quantity, low_stock_threshold, media_urls, delivery_mode, shipping_days, category, is_organic")
         .eq("farmer_id", id)
         .eq("active", true)
         .gt("stock_quantity", 0);
 
-      const mapped = await Promise.all(
-        (rows ?? []).map(async (r) => {
+      // Fotografias num único pedido (bucket privado: URLs assinados por 1 hora).
+      const paths = (rows ?? []).map((r) => r.media_urls?.[0]).filter((p): p is string => !!p);
+      const signedByPath = new Map<string, string>();
+      if (paths.length) {
+        const { data: signed } = await supabase.storage.from("product-media").createSignedUrls(paths, 60 * 60);
+        for (const s of signed ?? []) if (s.path && s.signedUrl) signedByPath.set(s.path, s.signedUrl);
+      }
+
+      const mapped = (rows ?? []).map((r) => {
           const category = r.category ? getCategoryByName(r.category) : undefined;
-          let image = category?.image ?? FALLBACK_FARM_IMAGE;
           const path = r.media_urls?.[0];
-          if (path) {
-            const { data: signed } = await supabase.storage
-              .from("product-media")
-              .createSignedUrl(path, 60 * 60);
-            if (signed?.signedUrl) image = signed.signedUrl;
-          }
-          const product: Product = {
+          const image = (path && signedByPath.get(path)) || category?.image || FALLBACK_FARM_IMAGE;
+          const product: ProductCardProduct = {
             id: r.id,
             name: r.name,
             farmerId: id,
             farmer: farmer.company_name,
             price: Math.round(r.client_price * (1 - (r.discount_percent ?? 0) / 100) * 100) / 100,
+            originalPrice: r.client_price,
+            isOrganic: r.is_organic,
+            lowStockThreshold: r.low_stock_threshold,
             unit: r.unit,
             category: r.category ?? "",
             image,
@@ -141,8 +144,7 @@ const FarmerProfile = () => {
             stock: r.stock_quantity ?? 0,
           };
           return product;
-        })
-      );
+        });
 
       if (!cancelled) {
         setDbFarmer({
@@ -254,7 +256,7 @@ const FarmerProfile = () => {
                 <div className="flex items-center gap-1.5">
                   <div className="flex items-center gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className={`h-4 w-4 ${i < Math.floor(display.rating) ? "fill-accent text-accent" : "text-border"}`} />
+                      <Star key={i} className={`h-4 w-4 ${i < Math.floor(display.rating) ? "fill-highlight text-coral" : "text-border"}`} />
                     ))}
                   </div>
                   <span className="text-sm font-semibold text-foreground">{display.rating.toFixed(1)}</span>
@@ -264,8 +266,8 @@ const FarmerProfile = () => {
             </div>
 
             {pause && (
-              <div className="mt-4 flex items-start gap-3 rounded-lg border border-accent/40 bg-accent/10 p-4">
-                <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+              <div className="mt-4 flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4">
+                <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
                 <div className="text-sm">
                   <p className="font-medium text-foreground">
                     Em pausa até {formatReturnDate(pause.until)}
@@ -308,7 +310,7 @@ const FarmerProfile = () => {
             {display.tags.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {display.tags.map((p) => (
-                  <span key={p} className="rounded-full bg-leaf-light px-3 py-1 text-xs font-medium text-primary">
+                  <span key={p} className="rounded-full bg-leaf-light px-3 py-1 text-xs font-medium text-kale">
                     {p}
                   </span>
                 ))}
@@ -322,60 +324,15 @@ const FarmerProfile = () => {
 
         {/* Products */}
         <section className="mt-10">
-          <h2 className="font-display text-2xl font-bold text-foreground">Produtos Disponíveis</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Produtos frescos diretamente desta exploração.</p>
+          <SectionHeading title="Produtos disponíveis" description="Produtos frescos diretamente desta exploração." />
 
           {farmerProducts.length === 0 ? (
             <p className="mt-8 text-center text-muted-foreground">Nenhum produto disponível de momento.</p>
           ) : (
-            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {farmerProducts.map((p) => {
-                const available = p.stock;
-                const inCart = cartItems.find((i) => i.id === p.id)?.quantity ?? 0;
-                const canAdd = inCart < available;
-                return (
-                <div key={p.id} className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
-                  <div className="relative h-40 overflow-hidden">
-                    <img src={p.image} alt={p.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-foreground">{p.name}</h3>
-                    <a
-                      href={`#stock-${p.id}`}
-                      onClick={(e) => e.preventDefault()}
-                      className={`mt-1 inline-block text-xs font-medium hover:underline ${available <= 5 ? "text-destructive" : "text-primary"}`}
-                      title="Stock definido pelo agricultor"
-                    >
-                      {available} em stock
-                    </a>
-                    <p className="mt-2 text-xs font-medium text-primary">
-                      {p.deliveryMode === "shipping"
-                        ? `Entrega em casa (${p.shippingDays ?? "?"} dias)`
-                        : p.deliveryMode === "both"
-                        ? `Levantamento ou entrega em casa (${p.shippingDays ?? "?"} dias)`
-                        : "Apenas levantamento na propriedade"}
-                    </p>
-                    <div className="mt-3 flex items-end justify-between">
-                      <div>
-                        <span className="text-lg font-bold text-primary">{p.price.toFixed(2)}€</span>
-                        <span className="text-xs text-muted-foreground">/{p.unit}</span>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={!canAdd}
-                        onClick={() => {
-                          addItem(p);
-                          toast({ title: "Adicionado ao carrinho", description: p.name });
-                        }}
-                      >
-                        {canAdd ? "Adicionar" : "Sem stock"}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                );
-              })}
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
+              {farmerProducts.map((p) => (
+                <ProductCard key={p.id} product={p} market={marketPrices.get(marketKey(p.name))} />
+              ))}
             </div>
           )}
         </section>

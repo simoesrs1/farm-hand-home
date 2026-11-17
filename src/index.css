@@ -3,94 +3,126 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * Identidade "Feira de verão" (paleta) com a tipografia "Azulejo e citrinos".
+   * Ver docs/planos/2026-11-16-ui-pagina-inicial-catalogo.md.
+   * Regra: o girassol (--highlight) e o coral nunca são cor de texto sobre fundo claro.
+   */
   :root {
-    --background: 40 33% 97%;
-    --foreground: 160 10% 15%;
+    --background: 37 100% 94%;      /* papel #FFF4E2 */
+    --foreground: 36 10% 10%;       /* tinta #1C1A17 */
 
-    --card: 40 25% 95%;
-    --card-foreground: 160 10% 15%;
+    --card: 40 100% 98%;
+    --card-foreground: 36 10% 10%;
 
-    --popover: 40 33% 97%;
-    --popover-foreground: 160 10% 15%;
+    --popover: 40 100% 98%;
+    --popover-foreground: 36 10% 10%;
 
-    --primary: 152 45% 28%;
-    --primary-foreground: 40 33% 97%;
+    /* Tomate, um pouco mais escuro que #C8321E para passar AA também sobre --muted */
+    --primary: 7 74% 42%;
+    --primary-foreground: 37 100% 94%;
 
-    --secondary: 35 30% 88%;
-    --secondary-foreground: 160 10% 15%;
+    --secondary: 37 70% 88%;
+    --secondary-foreground: 36 10% 10%;
 
-    --muted: 35 15% 91%;
-    --muted-foreground: 160 5% 45%;
+    --muted: 37 45% 89%;
+    --muted-foreground: 30 8% 38%;
 
-    --accent: 35 72% 52%;
-    --accent-foreground: 40 33% 97%;
+    /* Nos componentes shadcn, accent é o fundo ao passar o rato: girassol claro */
+    --accent: 43 100% 90%;
+    --accent-foreground: 36 10% 10%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 40 33% 97%;
+    --destructive: 0 72% 40%;
+    --destructive-foreground: 37 100% 94%;
 
-    --border: 35 15% 85%;
-    --input: 35 15% 85%;
-    --ring: 152 45% 28%;
+    --border: 37 45% 82%;
+    --input: 37 45% 82%;
+    --ring: 7 74% 42%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 40 25% 95%;
-    --sidebar-foreground: 160 10% 15%;
-    --sidebar-primary: 152 45% 28%;
-    --sidebar-primary-foreground: 40 33% 97%;
-    --sidebar-accent: 35 30% 88%;
-    --sidebar-accent-foreground: 160 10% 15%;
-    --sidebar-border: 35 15% 85%;
-    --sidebar-ring: 152 45% 28%;
+    /* Cores da marca */
+    --highlight: 43 100% 62%;       /* girassol #FFC93C */
+    --highlight-foreground: 36 10% 10%;
+    --coral: 11 88% 59%;            /* coral #F25C3B */
+    --coral-foreground: 36 10% 10%;
+    --kale: 144 61% 20%;            /* couve #14532D */
+    --kale-foreground: 37 100% 94%;
+    --leaf: 144 61% 20%;
+    --leaf-light: 144 40% 90%;
 
-    --earth-warm: 30 40% 50%;
-    --earth-light: 40 40% 94%;
-    --leaf: 120 35% 40%;
-    --leaf-light: 120 25% 92%;
+    /* Estados: usar sempre estes tokens (nunca a primária nem cores fixas) */
+    --success: 144 61% 20%;         /* concluído, ativo, aberto, disponível, poupança */
+    --success-foreground: 37 100% 94%;
+    --warning: 30 90% 30%;          /* pausa, stock baixo, por concluir, avisos */
+    --warning-foreground: 37 100% 94%;
+    --info: 215 70% 35%;            /* em curso, a aguardar, vendas */
+    --info-foreground: 37 100% 94%;
+
+    --sidebar-background: 40 100% 98%;
+    --sidebar-foreground: 36 10% 10%;
+    --sidebar-primary: 7 74% 42%;
+    --sidebar-primary-foreground: 37 100% 94%;
+    --sidebar-accent: 43 100% 90%;
+    --sidebar-accent-foreground: 36 10% 10%;
+    --sidebar-border: 37 45% 82%;
+    --sidebar-ring: 7 74% 42%;
   }
 
   .dark {
-    --background: 160 10% 8%;
-    --foreground: 40 20% 92%;
+    --background: 30 10% 8%;
+    --foreground: 37 60% 92%;
 
-    --card: 160 10% 12%;
-    --card-foreground: 40 20% 92%;
+    --card: 30 10% 11%;
+    --card-foreground: 37 60% 92%;
 
-    --popover: 160 10% 8%;
-    --popover-foreground: 40 20% 92%;
+    --popover: 30 10% 9%;
+    --popover-foreground: 37 60% 92%;
 
-    --primary: 152 45% 45%;
-    --primary-foreground: 160 10% 8%;
+    /* Em fundo escuro, a primária passa a coral (mais clara) com texto escuro */
+    --primary: 11 88% 62%;
+    --primary-foreground: 30 10% 8%;
 
-    --secondary: 35 15% 18%;
-    --secondary-foreground: 40 20% 92%;
+    --secondary: 30 8% 18%;
+    --secondary-foreground: 37 60% 92%;
 
-    --muted: 160 8% 18%;
-    --muted-foreground: 40 10% 60%;
+    --muted: 30 8% 16%;
+    --muted-foreground: 37 15% 68%;
 
-    --accent: 35 72% 52%;
-    --accent-foreground: 160 10% 8%;
+    --accent: 43 40% 20%;
+    --accent-foreground: 37 60% 92%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 40 20% 92%;
+    --destructive-foreground: 37 60% 92%;
 
-    --border: 160 8% 18%;
-    --input: 160 8% 18%;
-    --ring: 152 45% 45%;
+    --border: 30 8% 20%;
+    --input: 30 8% 20%;
+    --ring: 11 88% 62%;
 
-    --sidebar-background: 160 10% 10%;
-    --sidebar-foreground: 40 20% 92%;
-    --sidebar-primary: 152 45% 45%;
-    --sidebar-primary-foreground: 160 10% 8%;
-    --sidebar-accent: 160 8% 18%;
-    --sidebar-accent-foreground: 40 20% 92%;
-    --sidebar-border: 160 8% 18%;
-    --sidebar-ring: 152 45% 45%;
+    --highlight: 43 100% 62%;
+    --highlight-foreground: 36 10% 10%;
+    --coral: 11 88% 62%;
+    --coral-foreground: 30 10% 8%;
+    --kale: 144 45% 55%;
+    --kale-foreground: 30 10% 8%;
+    --leaf: 144 45% 55%;
+    --leaf-light: 144 25% 16%;
 
-    --earth-warm: 30 40% 50%;
-    --earth-light: 40 15% 15%;
-    --leaf: 120 35% 50%;
-    --leaf-light: 120 15% 15%;
+    --success: 144 45% 55%;
+    --success-foreground: 30 10% 8%;
+    --warning: 38 90% 60%;
+    --warning-foreground: 30 10% 8%;
+    --info: 210 80% 68%;
+    --info-foreground: 30 10% 8%;
+
+    --sidebar-background: 30 10% 10%;
+    --sidebar-foreground: 37 60% 92%;
+    --sidebar-primary: 11 88% 62%;
+    --sidebar-primary-foreground: 30 10% 8%;
+    --sidebar-accent: 43 40% 20%;
+    --sidebar-accent-foreground: 37 60% 92%;
+    --sidebar-border: 30 8% 20%;
+    --sidebar-ring: 11 88% 62%;
   }
 }
 
@@ -103,8 +135,19 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 
-  h1, h2, h3, h4 {
+  /* Títulos de página e de secção em Young Serif; títulos pequenos (h3, h4) ficam na letra de texto */
+  h1, h2 {
     @apply font-display;
+  }
+
+  /* A Young Serif só tem peso 400: impede o negrito artificial quando há font-bold */
+  h1, h2, .font-display {
+    font-synthesis: none;
+  }
+
+  /* "Pausar animações" no rodapé (ver src/lib/animation.ts): para as animações contínuas em CSS */
+  html.motion-paused .animate-reviews-marquee {
+    animation: none;
   }
 }
 

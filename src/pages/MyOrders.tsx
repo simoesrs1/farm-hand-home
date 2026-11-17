@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
-import { ShoppingBag, Clock, CheckCircle2, XCircle, ArrowLeft, MapPin, Star, ChevronDown, ChevronUp, Truck, PackageX, Tent, BedDouble } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, ArrowLeft, MapPin, Star, ChevronDown, ChevronUp, Truck, PackageX, Tent, BedDouble } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageHeader from "@/components/PageHeader";
 import OrderChat, { ReportDialog } from "@/components/OrderChat";
 import ReviewRemovalDialog from "@/components/ReviewRemovalDialog";
 import {
@@ -24,6 +25,7 @@ import { canFileDeliveryComplaint, reviewContext } from "@/lib/review-eligibilit
 import { FREE_CANCEL_DAYS, cancellationQuote } from "@/lib/experience-pricing";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import DeliveryTrackingDialog from "@/components/DeliveryTrackingDialog";
+import { formatEuro } from "@/lib/format";
 
 interface OrderItem {
   id: string;
@@ -73,8 +75,8 @@ interface Order {
 
 const statusMeta: Record<Order["status"], { label: string; tone: string; Icon: typeof Clock }> = {
   pending_payment: { label: "A aguardar pagamento", tone: "bg-muted text-muted-foreground", Icon: Clock },
-  awaiting_pickup: { label: "A aguardar levantamento", tone: "bg-primary/15 text-primary", Icon: Clock },
-  delivered: { label: "Levantada", tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", Icon: CheckCircle2 },
+  awaiting_pickup: { label: "A aguardar levantamento", tone: "bg-info/15 text-info", Icon: Clock },
+  delivered: { label: "Levantada", tone: "bg-success/15 text-success", Icon: CheckCircle2 },
   expired: { label: "Expirada", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
   refunded: { label: "Devolvida", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
 };
@@ -248,7 +250,7 @@ const MyOrders = () => {
       toast({ title: "Não foi possível cancelar", description: msg, variant: "destructive" });
       return;
     }
-    toast({ title: "Reserva cancelada", description: `Vão ser devolvidos ${Number(data.refund_amount).toFixed(2)}€.` });
+    toast({ title: "Reserva cancelada", description: `Vão ser devolvidos ${formatEuro(Number(data.refund_amount))}.` });
     loadOrders();
   };
 
@@ -325,7 +327,7 @@ const MyOrders = () => {
                 {o.farmer?.company_name ?? "Quinta"}
               </Link>
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">{o.total.toFixed(2)}€</p>
+            <p className="mt-1 text-sm text-muted-foreground">{formatEuro(o.total)}</p>
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${meta.tone}`}>
@@ -410,16 +412,16 @@ const MyOrders = () => {
                     <div className="flex-1">
                       <p className="font-medium text-foreground">{it.product_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {it.quantity} {it.unit ?? ""} × {it.unit_price.toFixed(2)}€
+                        {it.quantity} {it.unit ?? ""} × {formatEuro(it.unit_price)}
                       </p>
                     </div>
-                    <p className="font-medium text-foreground">{it.subtotal.toFixed(2)}€</p>
+                    <p className="font-medium text-foreground">{formatEuro(it.subtotal)}</p>
                   </li>
                 ))}
                 {o.delivery_fee > 0 && (
                   <li className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Entrega ao domicílio</span>
-                    <span className="font-medium text-foreground">{o.delivery_fee.toFixed(2)}€</span>
+                    <span className="font-medium text-foreground">{formatEuro(o.delivery_fee)}</span>
                   </li>
                 )}
               </ul>
@@ -479,7 +481,7 @@ const MyOrders = () => {
               </Link>
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {o.total.toFixed(2)}€ · {o.order_items?.length ?? 0} {(o.order_items?.length ?? 0) === 1 ? "artigo" : "artigos"}
+              {formatEuro(o.total)} · {o.order_items?.length ?? 0} {(o.order_items?.length ?? 0) === 1 ? "artigo" : "artigos"}
             </p>
           </div>
           <div className="flex flex-col items-end gap-1.5">
@@ -497,8 +499,8 @@ const MyOrders = () => {
 
         {isBooking(o) && o.status === "refunded" && o.refund_amount != null && (
           <p className="mt-3 text-sm text-muted-foreground">
-            {bookingTitle(o)}: devolvidos {Number(o.refund_amount).toFixed(2)}€
-            {Number(o.cancellation_fee ?? 0) > 0 && ` (taxa de cancelamento de ${Number(o.cancellation_fee).toFixed(2)}€)`}.
+            {bookingTitle(o)}: devolvidos {formatEuro(Number(o.refund_amount))}
+            {Number(o.cancellation_fee ?? 0) > 0 && ` (taxa de cancelamento de ${formatEuro(Number(o.cancellation_fee))})`}.
           </p>
         )}
 
@@ -528,10 +530,7 @@ const MyOrders = () => {
         <ArrowLeft className="h-4 w-4" /> Início
       </Link>
 
-      <div className="mb-8 flex items-center gap-3">
-        <ShoppingBag className="h-7 w-7 text-primary" />
-        <h1 className="font-display text-3xl font-bold text-foreground">As minhas encomendas</h1>
-      </div>
+      <PageHeader eyebrow="A minha conta" title="As minhas encomendas" />
 
       {loading ? (
         <div className="space-y-3">
@@ -619,8 +618,8 @@ const MyOrders = () => {
                     new Date(cancelBooking.booking_start),
                   );
                   return q.free
-                    ? `Ainda estás dentro do prazo de cancelamento grátis (até ${FREE_CANCEL_DAYS} dias antes). Vão ser devolvidos ${q.refund.toFixed(2)}€.`
-                    : `Faltam menos de ${FREE_CANCEL_DAYS} dias para a reserva: são retidos 25% do valor ${cancelBooking.kind === "stay" ? "do alojamento" : "da experiência"} (${q.fee.toFixed(2)}€) e devolvidos ${q.refund.toFixed(2)}€.`;
+                    ? `Ainda estás dentro do prazo de cancelamento grátis (até ${FREE_CANCEL_DAYS} dias antes). Vão ser devolvidos ${formatEuro(q.refund)}.`
+                    : `Faltam menos de ${FREE_CANCEL_DAYS} dias para a reserva: são retidos 25% do valor ${cancelBooking.kind === "stay" ? "do alojamento" : "da experiência"} (${formatEuro(q.fee)}) e devolvidos ${formatEuro(q.refund)}.`;
                 })()}
             </AlertDialogDescription>
           </AlertDialogHeader>

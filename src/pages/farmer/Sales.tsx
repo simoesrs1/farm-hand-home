@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, TrendingUp, Euro, Package, Trophy } from "lucide-react";
+import { ArrowLeft, Euro, Package, Trophy } from "lucide-react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -15,6 +15,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import ActivityCard from "@/components/ActivityCard";
 import StripePayoutsCard from "@/components/StripePayoutsCard";
+import PageHeader from "@/components/PageHeader";
+import { formatEuro } from "@/lib/format";
 
 interface Row {
   id: string;
@@ -118,10 +120,7 @@ const Sales = () => {
         <ArrowLeft className="h-4 w-4" /> Início
       </Link>
 
-      <div className="mb-8 flex items-center gap-3">
-        <TrendingUp className="h-7 w-7 text-primary" />
-        <h1 className="font-display text-3xl font-bold text-foreground">As minhas vendas</h1>
-      </div>
+      <PageHeader eyebrow="Área do agricultor" title="As minhas vendas" />
 
       <StripePayoutsCard userId={user.id} />
       <ActivityCard userId={user.id} />
@@ -135,7 +134,7 @@ const Sales = () => {
               <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
                 <Euro className="h-3.5 w-3.5" /> Receita total (30 dias)
               </p>
-              <p className="mt-1 font-display text-2xl font-bold text-primary">{revenue.toFixed(2)}€</p>
+              <p className="mt-1 font-mono tabular-nums text-2xl font-bold text-primary">{formatEuro(revenue)}</p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4">
               <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
@@ -167,7 +166,7 @@ const Sales = () => {
                       color: "hsl(var(--foreground))",
                     }}
                     formatter={(value: number, name) =>
-                      name === "receita" ? [`${Number(value).toFixed(2)}€`, "Receita"] : [value, "Encomendas"]
+                      name === "receita" ? [`${formatEuro(Number(value))}`, "Receita"] : [value, "Encomendas"]
                     }
                   />
                   <Bar dataKey="encomendas" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
@@ -189,7 +188,7 @@ const Sales = () => {
                     </span>
                     <p className="flex-1 truncate font-medium text-foreground">{p.name}</p>
                     <span className="text-sm text-muted-foreground">{p.qty} un.</span>
-                    <span className="w-20 text-right font-medium text-foreground">{p.total.toFixed(2)}€</span>
+                    <span className="w-20 text-right font-medium text-foreground">{formatEuro(p.total)}</span>
                   </li>
                 ))}
               </ul>

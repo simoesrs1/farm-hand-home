@@ -112,6 +112,13 @@ As três direções de identidade têm todos os pares principais verificados par
 
 Regra fixa: nunca texto branco sobre laranja, rosa ou lima (contraste abaixo de 3:1). Sobre essas cores, o texto é sempre marinho.
 
+**Decisão do Ruben (2026-11-16):** paleta da **opção A** ("Feira de verão") com a **tipografia da opção B** (Young Serif, Schibsted Grotesk, Azeret Mono). O logótipo fica como está por agora. Notas da implementação:
+- O tomate ficou ligeiramente mais escuro (`7 74% 42%` em vez de `#C8321E`) para passar AA também sobre `--muted`.
+- O `--accent` do shadcn (fundo ao passar o rato) passou a girassol claro; o girassol forte é o token novo `--highlight`. Tokens novos: `--highlight`, `--coral`, `--kale`.
+- O girassol e o coral nunca são cor de texto. Estrelas: girassol com contorno coral. Stock disponível: couve.
+- A Young Serif só tem peso 400: os títulos usam `font-synthesis: none`.
+- Comparação visual das opções: artefacto "Paletas ValorRural" (privado).
+
 **Exceções ao GSAP:**
 - Hover, focus e mudanças de cor em botões, ligações e cartões ficam em Tailwind (`transition-colors`, `transition-transform`), por serem triviais de estado. Também passam a respeitar `motion-reduce:`.
 - A abertura e o fecho de `Dialog`, `Select`, `Sheet` e `Tabs` (Radix/shadcn) não se reescrevem.
@@ -132,6 +139,12 @@ A forma de tratamento da interface mantém-se em **"você"** ("Descubra", "a sua
 | `index.html` / `src/index.css` | Substituir o `@import` das fontes por `<link rel="preconnect">` e `<link rel="stylesheet">` no `index.html` | S |
 
 ### Fase 1: Identidade e base de animação
+
+**Estado (2026-11-16):** feita, dividida em 1a (tokens, cores e fontes), 1b (base GSAP, entrada do hero, botão "Pausar animações") e 1c (`ProductCard`, `SectionHeading`, variantes do `Badge`). Fase 0 também feita. Ainda sem commit; à espera da revisão do Ruben.
+
+Estados positivos, avisos e informação: resolvido com os tokens `success`, `warning` e `info` (decisão do Ruben, 2026-11-16). Tema e `PageHeader` aplicados a todo o site.
+
+**Fases 2 e 3 (2026-11-16):** feitas. Página inicial com hero e colagem de produtos, faixa "Da época", mosaico de categorias, "Quem cultiva", "Como funciona", carrossel de experiências, contadores (escondidos abaixo dos mínimos) e apelo aos agricultores; mapa com agricultores reais. Catálogo com mosaico, pesquisa e chips (Flip); categoria com filtros, ordenações reais (avaliação média do agricultor; "Mais vendidos" pela função `product_sales_counts`, migração `20261116120000_product_sales_ranking.sql` por aplicar) e "voar para o cesto". Imagens de "Outros produtos" (cestos numa banca) e "Salgados" (croquetes) trocadas por fotos Unsplash escolhidas pelo Ruben.
 - **Instalar o GSAP:** `npm i gsap @gsap/react` (versões atuais: `gsap` 3.15.1 e `@gsap/react` 2.1.2). Licença "Standard no-charge": uso comercial gratuito, incluindo SplitText, ScrollTrigger e Flip.
 - **Criar `src/lib/animation.ts`:**
   - regista os plugins uma só vez com `gsap.registerPlugin(useGSAP, ScrollTrigger, Flip, SplitText, Observer)`;

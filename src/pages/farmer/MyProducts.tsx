@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ProductHistoryDialog from "@/components/ProductHistoryDialog";
+import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -262,19 +263,19 @@ const MyProducts = () => {
         <ArrowLeft className="h-4 w-4" /> Voltar
       </button>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Os meus produtos</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Gestão de stock dos artigos já publicados.
-          </p>
-        </div>
-        <Button asChild className="gap-2">
-          <Link to="/agricultor/produtos/novo">
-            <Plus className="h-4 w-4" /> Adicionar produto
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        className="mb-0"
+        eyebrow="Área do agricultor"
+        title="Os meus produtos"
+        description="Gestão de stock dos artigos já publicados."
+        actions={
+          <Button asChild className="gap-2">
+            <Link to="/agricultor/produtos/novo">
+              <Plus className="h-4 w-4" /> Adicionar produto
+            </Link>
+          </Button>
+        }
+      />
 
       {products.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center">
@@ -300,7 +301,7 @@ const MyProducts = () => {
             return (
               <li
                 key={p.id}
-                className={`overflow-hidden rounded-2xl border bg-card ${
+                className={`flex flex-col gap-3 rounded-2xl border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-center ${
                   isOut || isExpired ? "border-destructive/50" : "border-border"
                 }`}
               >
@@ -362,8 +363,8 @@ const MyProducts = () => {
                           avail === "expired"
                             ? "font-medium text-destructive"
                             : avail === "ending"
-                            ? "font-medium text-amber-700 dark:text-amber-400"
-                            : "text-foreground"
+                            ? "font-medium text-warning"
+                            : "text-muted-foreground"
                         }`}
                       >
                         <CalendarClock className="h-4 w-4 shrink-0" />
@@ -382,10 +383,90 @@ const MyProducts = () => {
                       </p>
                     )}
                   </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">Stock à venda</p>
-                    <p className="mt-1 text-sm text-foreground">
-                      {stock} {p.unit} · aviso quando chegar a {threshold}
+                </div>
+
+
+                <div className="flex items-center gap-2 sm:w-32">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      isOut
+                        ? "bg-destructive/10 text-destructive"
+                        : stock <= threshold
+                        ? "bg-warning/10 text-warning"
+                        : "bg-success/10 text-success"
+                    }`}
+                  >
+                    {isOut ? "Sem stock" : `${stock} em stock`}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                  <select
+                    value={sel}
+                    onChange={(e) => setPreset((s) => ({ ...s, [p.id]: e.target.value }))}
+                    className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                    aria-label="Quantidade a adicionar"
+                  >
+                    {Array.from({ length: 100 }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={String(n)}>
+                        {n}
+                      </option>
+                    ))}
+                    <option value="100+">100+</option>
+                  </select>
+                  <Input
+                    type="date"
+                    min={todayISO()}
+                    value={expiry[p.id] ?? ""}
+                    onChange={(e) => setExpiry((s) => ({ ...s, [p.id]: e.target.value }))}
+                    className="h-9 w-36"
+                    aria-label="Validade do novo stock"
+                    title="Validade do novo stock (obrigatória)"
+                  />
+                  {sel === "100+" && (
+                    <Input
+                      type="number"
+                      min={101}
+                      step={1}
+                      value={custom[p.id] ?? ""}
+                      onChange={(e) =>
+                        setCustom((s) => ({ ...s, [p.id]: e.target.value }))
+                      }
+                      placeholder="Nº exato"
+                      className="h-9 w-28"
+                    />
+                  )}
+                  <Button
+                    size="icon"
+                    onClick={() => applyStockDelta(p, 1)}
+                    disabled={savingId === p.id}
+                    className="h-8 w-8 shrink-0"
+                    aria-label={`Adicionar stock a ${p.name}`}
+                    title="Adicionar stock"
+                  >
+                    {savingId === p.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={() => applyStockDelta(p, -1)}
+                    disabled={savingId === p.id || stock <= 0}
+                    className="h-8 w-8 shrink-0"
+                    aria-label={`Retirar stock a ${p.name}`}
+                    title="Retirar stock"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {(batches[p.id] ?? []).some((b) => b.expires_at) && (
+                  <div className="w-full border-t border-border pt-2 text-xs text-muted-foreground">
+                    <p className="mb-1 font-medium text-foreground">
+                      Lotes em stock (vende-se primeiro o mais antigo)
                     </p>
                     {(awaitingLot[p.id] ?? 0) > 0 && (
                       <p className="mt-1 text-xs text-muted-foreground">

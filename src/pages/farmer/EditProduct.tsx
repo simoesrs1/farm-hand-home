@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, History, Loader2, Save, Tag, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/PageHeader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +37,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { categories } from "@/data/categories";
+import { formatEuro } from "@/lib/format";
 
 const COMMISSION = 0.1;
 const VAT_OPTIONS = [
@@ -304,17 +306,17 @@ const EditProduct = () => {
         <ArrowLeft className="h-4 w-4" /> Voltar
       </button>
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Editar produto</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Atualize as informações do artigo e aplique descontos.
-          </p>
-        </div>
-        <Button variant="outline" className="gap-2" onClick={() => setHistoryOpen(true)}>
-          <History className="h-4 w-4" /> Histórico
-        </Button>
-      </div>
+      <PageHeader
+        className="mb-0"
+        eyebrow="Área do agricultor"
+        title="Editar produto"
+        description="Atualize as informações do artigo e aplique descontos."
+        actions={
+          <Button variant="outline" className="gap-2" onClick={() => setHistoryOpen(true)}>
+            <History className="h-4 w-4" /> Histórico
+          </Button>
+        }
+      />
       <DeliveryScopeDialog
         open={scopeFields !== null}
         fields={scopeFields ?? []}
@@ -433,7 +435,7 @@ const EditProduct = () => {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Preço ao cliente (com comissão de 10% e IVA de {vatRate}%): <strong>{clientPrice.toFixed(2)} €</strong>
+            Preço ao cliente (com comissão de 10% e IVA de {vatRate}%): <strong>{formatEuro(clientPrice)}</strong>
           </p>
         </Card>
 
@@ -484,9 +486,9 @@ const EditProduct = () => {
           <div className="rounded-lg border border-border bg-secondary/40 p-3 text-sm">
             Preço com desconto:{" "}
             {discount > 0 && (
-              <span className="mr-2 text-muted-foreground line-through">{clientPrice.toFixed(2)} €</span>
+              <span className="mr-2 text-muted-foreground line-through">{formatEuro(clientPrice)}</span>
             )}
-            <strong className="text-primary">{finalPrice.toFixed(2)} €</strong>
+            <strong className="text-primary">{formatEuro(finalPrice)}</strong>
           </div>
         </Card>
 
