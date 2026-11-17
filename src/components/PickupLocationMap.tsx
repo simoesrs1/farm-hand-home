@@ -2,12 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import MapConsentGate from "@/components/MapConsentGate";
 import { useConsent } from "@/contexts/ConsentContext";
 
-declare global {
-  interface Window {
-    google: any;
-    __initPickupMap?: () => void;
-  }
-}
 
 interface Props {
   lat: number | null;
@@ -21,8 +15,8 @@ const PORTUGAL_CENTER = { lat: 39.5, lng: -8.0 };
 
 const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<any>(null);
-  const markerInstance = useRef<any>(null);
+  const mapInstance = useRef<GoogleMapsSdk>(null);
+  const markerInstance = useRef<GoogleMapsSdk>(null);
   const [unavailable, setUnavailable] = useState(false);
   const mapsAllowed = useConsent().hasConsent("maps");
 
@@ -61,7 +55,7 @@ const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
         attachDrag();
       }
 
-      mapInstance.current.addListener("click", (e: any) => {
+      mapInstance.current.addListener("click", (e: GoogleMapsSdk) => {
         const newLat = e.latLng.lat();
         const newLng = e.latLng.lng();
         placeMarker(newLat, newLng);
@@ -83,7 +77,7 @@ const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
     };
 
     const attachDrag = () => {
-      markerInstance.current.addListener("dragend", (e: any) => {
+      markerInstance.current.addListener("dragend", (e: GoogleMapsSdk) => {
         onChange(e.latLng.lat(), e.latLng.lng());
       });
     };
@@ -123,7 +117,7 @@ const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
         map: mapInstance.current,
         draggable: true,
       });
-      markerInstance.current.addListener("dragend", (e: any) => {
+      markerInstance.current.addListener("dragend", (e: GoogleMapsSdk) => {
         onChange(e.latLng.lat(), e.latLng.lng());
       });
     } else {

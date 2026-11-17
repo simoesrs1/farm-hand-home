@@ -12,16 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { PT_REGIONS, formatKm, withinRadius, type LatLng } from "@/lib/geo";
 import { isPaused } from "@/lib/farmer-activity";
 
-declare global {
-  interface Window {
-    google: any;
-    __initValorRuralMap?: () => void;
-  }
-}
 
-// O projeto não tem os tipos do SDK do Google Maps (@types/google.maps).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type GMaps = any;
+// Objetos do SDK do Google Maps (ver src/google-maps.d.ts).
+type GMaps = GoogleMapsSdk;
 
 type FarmPoint = LatLng & { id: string; name: string; address: string | null };
 type SearchCenter = LatLng & { label: string };

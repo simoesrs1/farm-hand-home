@@ -18,6 +18,7 @@ import FarmerExperiences from "@/components/FarmerExperiences";
 import FarmerStays from "@/components/FarmerStays";
 import { formatPickupHours, parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
 import { formatReturnDate, isPaused } from "@/lib/farmer-activity";
+import { farmerDeliversFromProfile } from "@/lib/fulfillment";
 
 const FALLBACK_FARM_IMAGE =
   "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1200&h=500&fit=crop";
@@ -84,7 +85,7 @@ const FarmerProfile = () => {
     const load = async () => {
       const { data: farmer } = await supabase
         .from("public_farmer_profiles")
-        .select("id, company_name, address, description, pickup_hours, pickup_hours_note, paused_until, pause_note")
+        .select("id, company_name, address, description, pickup_hours, pickup_hours_note, paused_until, pause_note, delivery_radius_km, pickup_lat, pickup_lng")
         .eq("id", id)
         .maybeSingle();
       if (!farmer) {
@@ -93,10 +94,8 @@ const FarmerProfile = () => {
       }
 
       if (!cancelled) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setPickupWindows(parsePickupHours((farmer as any).pickup_hours));
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setPickupNote(((farmer as any).pickup_hours_note as string) ?? "");
+        setPickupWindows(parsePickupHours(farmer.pickup_hours));
+        setPickupNote(farmer.pickup_hours_note ?? "");
         setPause(
           isPaused(farmer.paused_until)
             ? { until: farmer.paused_until as string, note: farmer.pause_note ?? "" }
@@ -141,6 +140,7 @@ const FarmerProfile = () => {
             region: "",
             deliveryMode: r.delivery_mode,
             shippingDays: r.shipping_days ?? undefined,
+            deliveryAvailable: farmerDeliversFromProfile(farmer),
             stock: r.stock_quantity ?? 0,
           };
           return product;

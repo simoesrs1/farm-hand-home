@@ -120,8 +120,9 @@ const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
       if (error) throw error;
       setText("");
       setFile(null);
-    } catch (e: any) {
-      toast.error(e.message ?? "Não foi possível enviar a mensagem");
+    } catch (e) {
+      // Os erros do Supabase são objetos com `message`, não instâncias de Error.
+      toast.error((e as { message?: string })?.message ?? "Não foi possível enviar a mensagem");
     } finally {
       setSending(false);
     }
@@ -281,8 +282,8 @@ export const ReportDialog = ({
       setProof(null);
       setWarningAccepted(false);
       onOpenChange(false);
-    } catch (e: any) {
-      toast.error(e.message ?? "Não foi possível abrir a denúncia");
+    } catch (e) {
+      toast.error((e as { message?: string })?.message ?? "Não foi possível abrir a denúncia");
     } finally {
       setSubmitting(false);
     }

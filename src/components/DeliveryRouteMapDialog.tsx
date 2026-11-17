@@ -1,42 +1,31 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Map as MapIcon, MapPin, Navigation } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { ExternalLink, Loader2, Map as MapIcon, MapPin, Navigation, Route as RouteIcon, Undo2 } from "lucide-react";
 import MapConsentGate from "@/components/MapConsentGate";
 import { useConsent } from "@/contexts/ConsentContext";
+import { formatKm } from "@/lib/geo";
+import type { RouteDay, RouteFarm } from "@/hooks/useDeliveryRoute";
 
-declare global {
-  interface Window {
-    google: any;
-    __initDeliveryRouteMap?: () => void;
-  }
+
+export interface RouteControlsProps {
+  farm: RouteFarm | null;
+  /** Ordem mais curta a partir da quinta (true) ou pela hora marcada (false). */
+  optimized: boolean;
+  onOptimizedChange: (value: boolean) => void;
+  returnToOrigin: boolean;
+  onReturnToOriginChange: (value: boolean) => void;
 }
 
-export interface RouteStop {
-  orderId: string;
-  label: string;
-  address: string | null;
-  lat: number;
-  lng: number;
-  when: Date;
-}
-
-interface Props {
-  farm: { lat: number; lng: number; name: string } | null;
-  stops: RouteStop[];
+interface Props extends RouteControlsProps {
+  /** Entregas por dia, já pela ordem do percurso (ver useDeliveryRoute). */
+  days: RouteDay[];
   /** Conteúdo extra mostrado por baixo do mapa (ex.: lista das encomendas). */
   children?: ReactNode;
 }
-
-const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
-  const R = 6371;
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const s =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(s));
-};
 
 // O Google Maps não lê os tokens CSS: hex equivalentes à paleta (src/index.css).
 // Todas as cores têm contraste suficiente para o número branco do marcador.
@@ -53,40 +42,108 @@ const MAP_INK = "#1C1A17"; // --foreground
 const MAP_PAPER = "#FFF4E2"; // --background
 const MAP_MUTED = "#696159"; // --muted-foreground
 
-// Route-planning map: farm as origin, one marker per delivery, grouped by day,
-// with the straight-line distance from the farm to each stop.
-const DeliveryRouteMapDialog = ({ farm, stops, children }: Props) => {
+const formatTime = (d: Date) => d.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
+
+const formatMinutes = (min: number) => {
+  const total = Math.max(1, Math.round(min));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return h > 0 ? `${h} h ${String(m).padStart(2, "0")} min` : `${m} min`;
+};
+
+/** Botão "Organizar rota" e opção de regresso à quinta (no diálogo e na lista de planeamento). */
+export const DeliveryRouteControls = ({
+  farm,
+  optimized,
+  onOptimizedChange,
+  returnToOrigin,
+  onReturnToOriginChange,
+}: RouteControlsProps) => {
+  const switchId = useId();
+  if (!farm) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Para organizar a rota, marca a localização da quinta em{" "}
+        <Link to="/agricultor/disponibilidade" className="font-medium text-primary underline-offset-2 hover:underline">
+          Disponibilidade
+        </Link>
+        .
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <Button
+        size="sm"
+        variant={optimized ? "outline" : "default"}
+        className="gap-1.5"
+        onClick={() => onOptimizedChange(!optimized)}
+      >
+        {optimized ? <Undo2 className="h-4 w-4" /> : <RouteIcon className="h-4 w-4" />}
+        {optimized ? "Ordenar por hora" : "Organizar rota"}
+      </Button>
+      <div className="flex items-center gap-2">
+        <Switch id={switchId} checked={returnToOrigin} onCheckedChange={onReturnToOriginChange} />
+        <Label htmlFor={switchId} className="text-sm font-normal text-foreground">
+          Voltar à quinta no fim
+        </Label>
+      </div>
+    </div>
+  );
+};
+
+/** Km do dia e links para seguir o percurso no Google Maps. */
+export const RouteDaySummary = ({ day }: { day: RouteDay }) => (
+  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+    {day.road ? (
+      <span className="font-medium text-foreground">
+        {formatKm(day.road.distanceKm)} · {formatMinutes(day.road.durationMin)} por estrada
+      </span>
+    ) : day.roadLoading ? (
+      <span className="inline-flex items-center gap-1 text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" /> A calcular o percurso por estrada…
+      </span>
+    ) : (
+      day.totalKm != null && <span className="text-muted-foreground">≈ {formatKm(day.totalKm)} em linha reta</span>
+    )}
+    {day.roadError && !day.road && (
+      <span className="text-muted-foreground" title={day.roadError}>
+        (percurso por estrada indisponível)
+      </span>
+    )}
+    {day.mapsUrls.map((url, i) => (
+      <a
+        key={url}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 font-medium text-primary underline-offset-2 hover:underline"
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+        Abrir no Google Maps{day.mapsUrls.length > 1 ? ` (parte ${i + 1})` : ""}
+      </a>
+    ))}
+  </div>
+);
+
+// Mapa do percurso: a quinta como origem, um marcador numerado por entrega,
+// agrupado por dia, pela ordem recebida (por hora ou organizada).
+const DeliveryRouteMapDialog = ({ days, children, ...controls }: Props) => {
+  const { farm, optimized, returnToOrigin } = controls;
   const [open, setOpen] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapsAllowed = useConsent().hasConsent("maps");
-
-  const byDay = useMemo(() => {
-    const map = new Map<string, { date: Date; stops: (RouteStop & { km: number | null })[] }>();
-    for (const s of stops) {
-      const key = s.when.toDateString();
-      if (!map.has(key)) map.set(key, { date: s.when, stops: [] });
-      map.get(key)!.stops.push({
-        ...s,
-        km: farm ? haversineKm(farm, s) : null,
-      });
-    }
-    return Array.from(map.entries())
-      .map(([key, v]) => ({
-        key,
-        date: v.date,
-        stops: v.stops.sort((a, b) => a.when.getTime() - b.when.getTime()),
-      }))
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
-  }, [stops, farm]);
+  const hasStops = days.some((d) => d.stops.length > 0);
 
   useEffect(() => {
-    if (!open || !mapsAllowed) return;
+    if (!open || !mapsAllowed || !hasStops) return;
     const browserKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
     if (!browserKey) return;
 
     const renderMap = () => {
       if (!mapRef.current || !window.google?.maps) return;
-      const center = farm ?? (stops[0] ? { lat: stops[0].lat, lng: stops[0].lng } : { lat: 39.5, lng: -8.0 });
+      const firstStop = days[0]?.stops[0];
+      const center = farm ?? (firstStop ? { lat: firstStop.lat, lng: firstStop.lng } : { lat: 39.5, lng: -8.0 });
       const map = new window.google.maps.Map(mapRef.current, {
         center,
         zoom: 10,
@@ -113,7 +170,23 @@ const DeliveryRouteMapDialog = ({ farm, stops, children }: Props) => {
         bounds.extend(farm);
       }
 
-      byDay.forEach((day, dayIndex) => {
+      // Conteúdo do balão com nós DOM e textContent: a morada vem do cliente e nunca é lida como HTML.
+      const infoContent = (s: RouteDay["stops"][number]) => {
+        const box = document.createElement("div");
+        box.style.cssText = `font-family:'Schibsted Grotesk',system-ui;max-width:220px;color:${MAP_INK};`;
+        const title = document.createElement("strong");
+        title.textContent = s.label;
+        const address = document.createElement("div");
+        address.style.cssText = `color:${MAP_MUTED};font-size:12px;margin-top:2px;`;
+        address.textContent = s.address ?? "Morada por confirmar";
+        const extra = document.createElement("div");
+        extra.style.cssText = "font-size:12px;margin-top:2px;";
+        extra.textContent = `${formatTime(s.when)}${s.km != null ? ` · ${formatKm(s.km)}` : ""}`;
+        box.append(title, address, extra);
+        return box;
+      };
+
+      days.forEach((day, dayIndex) => {
         const color = DAY_COLORS[dayIndex % DAY_COLORS.length];
         const path: { lat: number; lng: number }[] = farm ? [farm] : [];
         day.stops.forEach((s, i) => {
@@ -131,18 +204,25 @@ const DeliveryRouteMapDialog = ({ farm, stops, children }: Props) => {
               strokeWeight: 2,
             },
           });
-          const info = new window.google.maps.InfoWindow({
-            content: `<div style="font-family:'Schibsted Grotesk',system-ui;max-width:220px;color:${MAP_INK};">
-              <strong>${s.label}</strong><br/>
-              <span style="color:${MAP_MUTED};font-size:12px;">${s.address ?? "Morada por confirmar"}</span><br/>
-              <span style="font-size:12px;">${s.when.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}${s.km != null ? ` · ${s.km.toFixed(1)} km` : ""}</span>
-            </div>`,
-          });
+          const info = new window.google.maps.InfoWindow({ content: infoContent(s) });
           marker.addListener("click", () => info.open({ anchor: marker, map }));
           bounds.extend({ lat: s.lat, lng: s.lng });
           path.push({ lat: s.lat, lng: s.lng });
         });
-        if (path.length > 1) {
+        if (farm && returnToOrigin && day.stops.length > 0) path.push(farm);
+        if (day.road && day.road.path.length > 1) {
+          // Trajeto real por estrada (OpenRouteService).
+          const roadPath = day.road.path.map(([lat, lng]) => ({ lat, lng }));
+          roadPath.forEach((p) => bounds.extend(p));
+          new window.google.maps.Polyline({
+            path: roadPath,
+            map,
+            strokeColor: color,
+            strokeOpacity: 0.85,
+            strokeWeight: 4,
+          });
+        } else if (path.length > 1) {
+          // Estimativa em linha reta.
           new window.google.maps.Polyline({
             path,
             map,
@@ -168,7 +248,7 @@ const DeliveryRouteMapDialog = ({ farm, stops, children }: Props) => {
     script.async = true;
     script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initDeliveryRouteMap`;
     document.head.appendChild(script);
-  }, [open, farm, stops, byDay, mapsAllowed]);
+  }, [open, farm, days, returnToOrigin, mapsAllowed, hasStops]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -186,17 +266,18 @@ const DeliveryRouteMapDialog = ({ farm, stops, children }: Props) => {
           </DialogTitle>
         </DialogHeader>
 
-        {stops.length === 0 ? (
+        {!hasStops ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             Ainda não há entregas ativas com ponto de entrega marcado pelo cliente.
           </p>
         ) : (
           <>
+            <DeliveryRouteControls {...controls} />
             <MapConsentGate className="h-[400px]">
               <div ref={mapRef} className="h-[400px] w-full rounded-lg border border-border bg-muted" />
             </MapConsentGate>
-            <div className="mt-4 max-h-56 space-y-3 overflow-y-auto">
-              {byDay.map((day, dayIndex) => (
+            <div className="mt-4 max-h-72 space-y-4 overflow-y-auto">
+              {days.map((day, dayIndex) => (
                 <div key={day.key}>
                   <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                     <span
@@ -209,7 +290,10 @@ const DeliveryRouteMapDialog = ({ farm, stops, children }: Props) => {
                       month: "long",
                     })}
                   </p>
-                  <ul className="mt-1 space-y-1">
+                  <div className="mt-1">
+                    <RouteDaySummary day={day} />
+                  </div>
+                  <ul className="mt-2 space-y-1">
                     {day.stops.map((s, i) => (
                       <li
                         key={s.orderId}
@@ -222,12 +306,10 @@ const DeliveryRouteMapDialog = ({ farm, stops, children }: Props) => {
                         <span className="flex-1 truncate text-foreground">
                           {s.address ?? s.label}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {s.when.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}
-                        </span>
+                        <span className="text-xs text-muted-foreground">{formatTime(s.when)}</span>
                         {s.km != null && (
                           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                            {s.km.toFixed(1)} km
+                            {formatKm(s.km)}
                           </span>
                         )}
                       </li>
@@ -237,9 +319,23 @@ const DeliveryRouteMapDialog = ({ farm, stops, children }: Props) => {
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              Distâncias em linha reta desde a sua exploração. A numeração sugere a ordem do percurso
-              em cada dia.
+              {optimized
+                ? "Ordem organizada pelo percurso mais rápido por estrada a partir da tua quinta. Se o cálculo por estrada falhar, usa-se a distância em linha reta."
+                : "Ordem pela hora marcada, com distâncias em linha reta. Usa \"Organizar rota\" para obter o percurso mais rápido por estrada a partir da tua quinta."}
             </p>
+            {days.some((d) => d.road) && (
+              <p className="text-[11px] text-muted-foreground">
+                Percursos: © openrouteservice.org by HeiGIT · Dados do mapa ©{" "}
+                <a
+                  href="https://www.openstreetmap.org/copyright"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline-offset-2 hover:underline"
+                >
+                  OpenStreetMap contributors
+                </a>
+              </p>
+            )}
           </>
         )}
         {children}

@@ -13,6 +13,7 @@ import { type MarketPrice } from "@/hooks/useMarketPrices";
 import { type PickupWindow } from "@/lib/pickup-hours";
 import { cn } from "@/lib/utils";
 import { formatEuro } from "@/lib/format";
+import { deliveryModeLabel } from "@/lib/fulfillment";
 import { gsap } from "@/lib/animation";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
@@ -75,16 +76,7 @@ interface ProductCardProps {
   className?: string;
 }
 
-/** " (3 dias)" quando o agricultor indicou o prazo; vazio caso contrário. */
-const shippingDaysLabel = (days?: number) =>
-  days == null ? "" : ` (${days} ${days === 1 ? "dia" : "dias"})`;
-
-const deliveryLabel = (p: Product) =>
-  p.deliveryMode === "shipping"
-    ? `Entrega em casa${shippingDaysLabel(p.shippingDays)}`
-    : p.deliveryMode === "both"
-    ? `Levantamento ou entrega em casa${shippingDaysLabel(p.shippingDays)}`
-    : "Apenas levantamento na propriedade";
+const deliveryLabel = (p: Product) => deliveryModeLabel(p.deliveryMode, p.deliveryAvailable !== false);
 
 /**
  * Cartão de produto partilhado (categoria, resultados de pesquisa).

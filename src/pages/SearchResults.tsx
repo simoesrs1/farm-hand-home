@@ -11,6 +11,7 @@ import ProductCard, { ProductCardSkeleton } from "@/components/ProductCard";
 import PageHeader from "@/components/PageHeader";
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import { farmerRank } from "@/lib/farmer-activity";
+import { farmerDeliversFromProfile } from "@/lib/fulfillment";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&h=400&fit=crop";
@@ -65,7 +66,7 @@ const SearchResults = () => {
       const farmerIds = [...new Set(rows.map((r) => r.farmer_id))];
       const { data: farmers } = await supabase
         .from("public_farmer_profiles")
-        .select("id, company_name, address, initial_score, activity_score")
+        .select("id, company_name, address, initial_score, activity_score, delivery_radius_km, pickup_lat, pickup_lng")
         .in("id", farmerIds);
       const farmerById = new Map((farmers ?? []).map((f) => [f.id, f]));
 
@@ -97,6 +98,7 @@ const SearchResults = () => {
             region: "",
             deliveryMode: r.delivery_mode,
             shippingDays: r.shipping_days ?? undefined,
+            deliveryAvailable: farmerDeliversFromProfile(farmer),
             stock: r.stock_quantity ?? 0,
           };
           return product;

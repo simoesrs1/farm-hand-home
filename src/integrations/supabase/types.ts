@@ -527,7 +527,6 @@ export type Database = {
           default_delivery_fee: number | null
           default_delivery_mode: Database["public"]["Enums"]["delivery_mode"] | null
           default_delivery_tracking: boolean | null
-          default_local_delivery: boolean | null
           default_shipping_days: number | null
           delivery_hours: Json
           delivery_note: string | null
@@ -565,7 +564,6 @@ export type Database = {
           default_delivery_fee?: number | null
           default_delivery_mode?: Database["public"]["Enums"]["delivery_mode"] | null
           default_delivery_tracking?: boolean | null
-          default_local_delivery?: boolean | null
           default_shipping_days?: number | null
           delivery_hours?: Json
           delivery_note?: string | null
@@ -603,7 +601,6 @@ export type Database = {
           default_delivery_fee?: number | null
           default_delivery_mode?: Database["public"]["Enums"]["delivery_mode"] | null
           default_delivery_tracking?: boolean | null
-          default_local_delivery?: boolean | null
           default_shipping_days?: number | null
           delivery_hours?: Json
           delivery_note?: string | null
@@ -1159,7 +1156,6 @@ export type Database = {
           id: string
           is_lactose_free: boolean
           is_organic: boolean
-          local_delivery: boolean
           low_stock_threshold: number
           media_urls: string[]
           modifications_description: string | null
@@ -1189,7 +1185,6 @@ export type Database = {
           id?: string
           is_lactose_free?: boolean
           is_organic?: boolean
-          local_delivery?: boolean
           low_stock_threshold?: number
           media_urls?: string[]
           modifications_description?: string | null
@@ -1219,7 +1214,6 @@ export type Database = {
           id?: string
           is_lactose_free?: boolean
           is_organic?: boolean
-          local_delivery?: boolean
           low_stock_threshold?: number
           media_urls?: string[]
           modifications_description?: string | null

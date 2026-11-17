@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Clock, CheckCircle2, XCircle, ArrowLeft, ScanLine, ThumbsUp, Undo2, CalendarClock, Truck, MapPin, AlertTriangle, Tent, Boxes } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,8 +21,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import DeliveryRouteMapDialog, { type RouteStop } from "@/components/DeliveryRouteMapDialog";
+import DeliveryRouteMapDialog, { DeliveryRouteControls, RouteDaySummary } from "@/components/DeliveryRouteMapDialog";
+import { useDeliveryRoute, type RouteStop } from "@/hooks/useDeliveryRoute";
 import { formatEuro } from "@/lib/format";
+import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
+
+/** Escolhas do agricultor na rota das entregas, guardadas no browser. */
+interface RoutePrefs {
+  optimized: boolean;
+  returnToOrigin: boolean;
+}
 
 interface OrderItem {
   id: string;
@@ -52,6 +60,7 @@ interface Order {
   delivery_lat: number | null;
   delivery_lng: number | null;
   delivery_tracking: boolean;
+  expected_delivery_at: string | null;
   packed_at: string | null;
   in_transit_at: string | null;
   out_for_delivery_at: string | null;
@@ -66,6 +75,9 @@ interface Order {
 }
 
 const isBooking = (o: Order) => o.kind === "experience" || o.kind === "stay";
+
+// Dia/hora da entrega: a marcada pelo cliente, a prevista (prazo de preparação) ou o prazo limite.
+const deliveryWhen = (o: Order) => o.scheduled_pickup_at ?? o.expected_delivery_at ?? o.pickup_deadline;
 
 // Reservas de experiências: rótulos próprios.
 const bookingLabel = (o: Order) =>
@@ -118,7 +130,6 @@ const FarmerOrders = () => {
   const highlightId = searchParams.get("id");
   const refs = useRef<Record<string, HTMLLIElement | null>>({});
   const [validating, setValidating] = useState<Order | null>(null);
-  const [deliveryProductNames, setDeliveryProductNames] = useState<string[]>([]);
   const [farm, setFarm] = useState<{ lat: number; lng: number; name: string } | null>(null);
   // Queixas em aberto por entrega não recebida: prazo por encomenda.
   const [complaintDeadlines, setComplaintDeadlines] = useState<Record<string, string>>({});
@@ -126,6 +137,19 @@ const FarmerOrders = () => {
   // Encomendas com unidades à espera de indicação do lote.
   const [pendingLotOrders, setPendingLotOrders] = useState<Set<string>>(new Set());
   const [lotOrderId, setLotOrderId] = useState<string | null>(null);
+  // Percurso das entregas ao domicílio: por hora (por defeito) ou organizado a partir da quinta.
+  // As escolhas ficam guardadas no browser; a ordem é recalculada a partir delas.
+  const [routePrefs, setRoutePrefs] = useState<RoutePrefs>(
+    () => scopedStorage.get<RoutePrefs>(STORAGE_KEYS.deliveryRoute) ?? { optimized: false, returnToOrigin: false },
+  );
+  const updateRoutePrefs = (patch: Partial<RoutePrefs>) =>
+    setRoutePrefs((prev) => {
+      const next = { ...prev, ...patch };
+      scopedStorage.set(STORAGE_KEYS.deliveryRoute, next);
+      return next;
+    });
+  const routeOptimized = routePrefs.optimized === true;
+  const routeReturnToFarm = routePrefs.returnToOrigin === true;
 
   useEffect(() => {
     if (!user) return;
@@ -133,7 +157,7 @@ const FarmerOrders = () => {
     const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,scheduled_pickup_at,delivered_at,expired_at,accepted_at,created_at,delivery_address,delivery_lat,delivery_lng,delivery_tracking,packed_at,in_transit_at,out_for_delivery_at,delivery_fee,kind,booking_start,booking_end,booking_people,booking_units,cancelled_by,cancellation_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
+        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,scheduled_pickup_at,delivered_at,expired_at,accepted_at,created_at,delivery_address,delivery_lat,delivery_lng,delivery_tracking,expected_delivery_at,packed_at,in_transit_at,out_for_delivery_at,delivery_fee,kind,booking_start,booking_end,booking_people,booking_units,cancelled_by,cancellation_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
         .order("created_at", { ascending: false });
       if (!cancelled) {
         setOrders((data as Order[]) ?? []);
@@ -160,14 +184,6 @@ const FarmerOrders = () => {
       }
       const pendingLots = await ordersWithPendingLots();
       if (!cancelled) setPendingLotOrders(pendingLots);
-      if (fd?.id) {
-        const { data: prods } = await supabase
-          .from("products")
-          .select("name")
-          .eq("farmer_id", fd.id)
-          .eq("local_delivery", true);
-        if (!cancelled) setDeliveryProductNames(((prods as { name: string }[]) ?? []).map((p) => p.name));
-      }
     };
     load();
     const ch = supabase
@@ -228,12 +244,11 @@ const FarmerOrders = () => {
     }
   };
 
-  // Encomenda com entrega ao domicílio: tem morada/ponto de entrega ou inclui um produto com entrega ao domicílio
-  const isHomeDelivery = (o: Order) =>
-    !isBooking(o) &&
-    (o.delivery_address != null ||
-      o.delivery_lat != null ||
-      (o.order_items ?? []).some((it) => deliveryProductNames.includes(it.product_name)));
+  // Encomenda com entrega ao domicílio: o cliente escolheu receber em casa (tem morada de entrega).
+  const isHomeDelivery = useCallback(
+    (o: Order) => !isBooking(o) && (o.delivery_address != null || o.delivery_lat != null),
+    [],
+  );
 
   // Entregas ao domicílio ativas com ponto marcado pelo cliente, para o mapa do percurso
   const routeStops: RouteStop[] = useMemo(() => {
@@ -250,9 +265,49 @@ const FarmerOrders = () => {
         address: o.delivery_address,
         lat: Number(o.delivery_lat),
         lng: Number(o.delivery_lng),
-        when: new Date(o.scheduled_pickup_at ?? o.pickup_deadline),
+        when: new Date(deliveryWhen(o)),
       }));
   }, [orders]);
+
+  // Ordem do percurso por dia: a mesma no diálogo e na lista de planeamento.
+  const routeControls = {
+    farm,
+    optimized: routeOptimized,
+    onOptimizedChange: (optimized: boolean) => updateRoutePrefs({ optimized }),
+    returnToOrigin: routeReturnToFarm,
+    onReturnToOriginChange: (returnToOrigin: boolean) => updateRoutePrefs({ returnToOrigin }),
+  };
+  const routeDays = useDeliveryRoute(farm, routeStops, { optimized: routeOptimized, returnToOrigin: routeReturnToFarm });
+
+  // Planeamento de entregas ao domicílio: encomendas ativas com produtos de entrega ao domicílio,
+  // agrupadas por dia e pela ordem do percurso. As que não têm ponto marcado ficam no fim, por hora.
+  const deliveryPlan = useMemo(() => {
+    const routeByDay = new Map(routeDays.map((d) => [d.key, d]));
+    const whenOf = (o: Order) => new Date(deliveryWhen(o)).getTime();
+    const byDay = new Map<string, Order[]>();
+    for (const o of orders) {
+      if (o.status !== "awaiting_pickup" || !isHomeDelivery(o)) continue;
+      const key = new Date(whenOf(o)).toDateString();
+      if (!byDay.has(key)) byDay.set(key, []);
+      byDay.get(key)!.push(o);
+    }
+    return [...byDay.entries()]
+      .map(([key, list]) => {
+        const route = routeByDay.get(key) ?? null;
+        const stopNumber = new Map(route?.stops.map((s, i) => [s.orderId, i + 1]) ?? []);
+        return {
+          key,
+          date: new Date(key),
+          route,
+          stopNumber,
+          orders: list.sort(
+            (a, b) =>
+              (stopNumber.get(a.id) ?? Infinity) - (stopNumber.get(b.id) ?? Infinity) || whenOf(a) - whenOf(b),
+          ),
+        };
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [orders, isHomeDelivery, routeDays]);
 
   if (!user || profile?.profile_type !== "vendedor") {
     return (
@@ -269,28 +324,9 @@ const FarmerOrders = () => {
     .filter((o) => o.status === "expired")
     .reduce((acc, o) => acc + Math.round(o.total * 0.1 * 100) / 100, 0);
 
-  // Planeamento de entregas ao domicílio: encomendas ativas com produtos de entrega ao domicílio, agrupadas por dia
   const allHomeDeliveryOrders = orders.filter(isHomeDelivery);
   const homeDeliveryOrders = allHomeDeliveryOrders.filter((o) => o.status === "awaiting_pickup");
   const homeDeliveredCount = allHomeDeliveryOrders.filter((o) => o.status === "delivered").length;
-  const byDay = new Map<string, Order[]>();
-  for (const o of homeDeliveryOrders) {
-    const when = o.scheduled_pickup_at ?? o.pickup_deadline;
-    const key = new Date(when).toDateString();
-    if (!byDay.has(key)) byDay.set(key, []);
-    byDay.get(key)!.push(o);
-  }
-  const deliveryPlan = [...byDay.entries()]
-    .map(([key, list]) => ({
-      key,
-      date: new Date(key),
-      orders: list.sort(
-        (a, b) =>
-          new Date(a.scheduled_pickup_at ?? a.pickup_deadline).getTime() -
-          new Date(b.scheduled_pickup_at ?? b.pickup_deadline).getTime(),
-      ),
-    }))
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
 
   return (
     <main className="container max-w-5xl py-8">
@@ -301,7 +337,7 @@ const FarmerOrders = () => {
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <SectionHeading as="h1" eyebrow="Área do agricultor" title="Encomendas da tua quinta" />
         <div className="flex flex-wrap items-center gap-2">
-          <DeliveryRouteMapDialog farm={farm} stops={routeStops}>
+          <DeliveryRouteMapDialog days={routeDays} {...routeControls}>
             <div className="mt-6 border-t border-border pt-4">
               <h3 className="font-display text-lg font-semibold text-foreground">
                 Encomendas com entrega ao domicílio
@@ -390,6 +426,11 @@ const FarmerOrders = () => {
           <p className="mt-1 text-sm text-muted-foreground">
             Organiza o teu dia: entregas em mão por dia, com horário e produtos.
           </p>
+          {routeStops.length > 0 && (
+            <div className="mt-3">
+              <DeliveryRouteControls {...routeControls} />
+            </div>
+          )}
           <div className="mt-4 space-y-4">
             {deliveryPlan.map((day) => (
               <div key={day.key} className="rounded-xl border border-border bg-background p-4">
@@ -400,11 +441,24 @@ const FarmerOrders = () => {
                     month: "long",
                   })}
                 </p>
+                {day.route && (
+                  <div className="mt-1">
+                    <RouteDaySummary day={day.route} />
+                  </div>
+                )}
                 <ul className="mt-3 space-y-3">
                   {day.orders.map((o) => (
                     <li key={o.id} className="rounded-lg border border-border bg-card p-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                          {day.stopNumber.has(o.id) ? (
+                            <span
+                              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold"
+                              title="Ordem no percurso"
+                            >
+                              {day.stopNumber.get(o.id)}
+                            </span>
+                          ) : null}
                           <CalendarClock className="h-4 w-4 text-primary" />
                           {o.scheduled_pickup_at
                             ? new Date(o.scheduled_pickup_at).toLocaleTimeString("pt-PT", {
@@ -422,6 +476,11 @@ const FarmerOrders = () => {
                         <p className="mt-2 flex items-center gap-2 text-sm text-foreground">
                           <MapPin className="h-4 w-4 shrink-0 text-primary" />
                           {o.delivery_address}
+                        </p>
+                      )}
+                      {!day.stopNumber.has(o.id) && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Sem ponto de entrega marcado: fica fora do percurso.
                         </p>
                       )}
                       <ul className="mt-2 space-y-1">

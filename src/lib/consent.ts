@@ -164,6 +164,10 @@ const isScopedEntry = <T,>(v: unknown): v is ScopedEntry<T> =>
 export const STORAGE_KEYS = {
   cart: "farmconnect_cart",
   pickupSlot: "farmconnect_pickup_slot",
+  /** Preferência "pickup" | "delivery" escolhida na página do artigo. */
+  fulfillment: "farmconnect_fulfillment",
+  /** Escolhas do agricultor na rota das entregas: { optimized, returnToOrigin }. */
+  deliveryRoute: "farmconnect_delivery_route",
 } as const;
 
 type ScopedKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getCategoryByName } from "@/data/categories";
 import { isPaused } from "@/lib/farmer-activity";
+import { farmerDeliversFromProfile } from "@/lib/fulfillment";
 import type { ProductCardProduct } from "@/components/ProductCard";
 
 /** Produto à venda, com os campos que a página inicial usa. */
@@ -31,7 +32,7 @@ const fetchHomeProducts = async (): Promise<HomeProduct[]> => {
   const farmerIds = [...new Set(rows.map((r) => r.farmer_id))];
   const { data: farmers } = await supabase
     .from("public_farmer_profiles")
-    .select("id, company_name, address, paused_until")
+    .select("id, company_name, address, paused_until, delivery_radius_km, pickup_lat, pickup_lng")
     .in("id", farmerIds);
   // Agricultores em pausa não aparecem na página inicial.
   const farmerById = new Map(
@@ -70,6 +71,7 @@ const fetchHomeProducts = async (): Promise<HomeProduct[]> => {
         region: "",
         deliveryMode: r.delivery_mode,
         shippingDays: r.shipping_days ?? undefined,
+        deliveryAvailable: farmerDeliversFromProfile(farmer),
         stock: r.stock_quantity ?? 0,
         isOrganic: r.is_organic,
         lowStockThreshold: r.low_stock_threshold,

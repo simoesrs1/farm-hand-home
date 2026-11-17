@@ -237,7 +237,13 @@ const sections: LegalSection[] = [
           <li>
             <strong>Prestadores de serviços</strong> que tratam dados por nossa conta, com
             contrato de subcontratação: alojamento, base de dados e autenticação (Supabase),
-            alojamento da aplicação (Cloudflare), autenticação Google e Google Maps (Google).
+            alojamento da aplicação (Cloudflare), autenticação Google e Google Maps (Google) e
+            cálculo de percursos por estrada (openrouteservice, da HeiGIT gGmbH, Alemanha).
+          </li>
+          <li>
+            <strong>Cálculo de percursos:</strong> quando o Agricultor organiza a rota das
+            entregas ao domicílio, os pontos de entrega (coordenadas, sem nome nem morada) são
+            enviados ao openrouteservice para calcular o percurso mais rápido por estrada.
           </li>
           <li>
             <strong>Autoridades</strong>, quando a lei o exija.

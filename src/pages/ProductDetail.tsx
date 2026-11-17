@@ -41,6 +41,15 @@ import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import type { Product } from "@/data/products";
 import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
 import { formatEuro } from "@/lib/format";
+import {
+  deliveryModeLabel,
+  earliestDelivery,
+  farmerDeliversFromProfile,
+  FULFILLMENT_LABELS,
+  modeAllowsDelivery,
+  modeAllowsPickup,
+  type Fulfillment,
+} from "@/lib/fulfillment";
 
 interface Detail extends Product {
   description: string;
@@ -55,7 +64,8 @@ interface Detail extends Product {
   lat: number | null;
   lng: number | null;
   images: string[];
-  localDelivery: boolean;
+  /** O agricultor tem entregas configuradas (raio e localização da quinta). */
+  farmerDelivers: boolean;
   deliveryRadiusKm: number | null;
   deliveryWindows: PickupWindow[];
   deliveryNote: string;
@@ -75,6 +85,10 @@ const ProductDetail = () => {
   const [activeImage, setActiveImage] = useState(0);
   const [pickupDay, setPickupDay] = useState("");
   const [pickupTime, setPickupTime] = useState("");
+  // Preferência "levantar / receber em casa"; segue para o carrinho.
+  const [chosenFulfillment, setChosenFulfillment] = useState<Fulfillment | null>(() =>
+    scopedStorage.get<Fulfillment>(STORAGE_KEYS.fulfillment),
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -84,7 +98,7 @@ const ProductDetail = () => {
       const { data: r } = await supabase
         .from("products")
         .select(
-          "id, name, description, unit, client_price, discount_percent, stock_quantity, media_urls, delivery_mode, shipping_days, local_delivery, category, farmer_id, is_organic, is_lactose_free, has_modifications, modifications_description, vat_rate",
+          "id, name, description, unit, client_price, discount_percent, stock_quantity, media_urls, delivery_mode, shipping_days, category, farmer_id, is_organic, is_lactose_free, has_modifications, modifications_description, vat_rate",
         )
         .eq("id", id)
         .eq("active", true)
@@ -145,7 +159,7 @@ const ProductDetail = () => {
         pickupAddress: ((farmer as any)?.pickup_address as string) ?? (farmer as any)?.address ?? "",
         lat: (farmer as any)?.pickup_lat ?? null,
         lng: (farmer as any)?.pickup_lng ?? null,
-        localDelivery: !!(r as any).local_delivery,
+        farmerDelivers: farmerDeliversFromProfile(farmer),
         deliveryRadiusKm:
           (farmer as any)?.delivery_radius_km != null
             ? Number((farmer as any).delivery_radius_km)
@@ -182,10 +196,33 @@ const ProductDetail = () => {
     return `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
   }, [product]);
 
-  const slots = useMemo(
-    () => (product ? pickupSlots(product.pickupWindows) : []),
-    [product],
-  );
+  // Formas de receber este produto: levantamento e/ou entrega (se o agricultor entregar).
+  const fulfillmentChoices = useMemo<Fulfillment[]>(() => {
+    if (!product?.deliveryMode) return [];
+    const choices: Fulfillment[] = [];
+    if (modeAllowsPickup(product.deliveryMode)) choices.push("pickup");
+    if (modeAllowsDelivery(product.deliveryMode) && product.farmerDelivers) choices.push("delivery");
+    return choices;
+  }, [product]);
+  const fulfillment: Fulfillment | null =
+    chosenFulfillment && fulfillmentChoices.includes(chosenFulfillment)
+      ? chosenFulfillment
+      : fulfillmentChoices[0] ?? null;
+  const isDelivery = fulfillment === "delivery";
+
+  // Levantamento: porta aberta. Entrega: horário de entregas, depois do prazo de preparação.
+  const slots = useMemo(() => {
+    if (!product || !fulfillment) return [];
+    return fulfillment === "delivery"
+      ? pickupSlots(product.deliveryWindows, { earliest: earliestDelivery(product.shippingDays ?? 0) })
+      : pickupSlots(product.pickupWindows);
+  }, [product, fulfillment]);
+
+  const chooseFulfillment = (value: Fulfillment) => {
+    setChosenFulfillment(value);
+    setPickupDay("");
+    setPickupTime("");
+  };
 
   const dayKey = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -230,21 +267,22 @@ const ProductDetail = () => {
     const amount = Math.min(qty, maxAddable);
     addItem(product);
     if (inCart + amount > 1) updateQuantity(product.id, inCart + amount);
+    if (fulfillment) scopedStorage.set(STORAGE_KEYS.fulfillment, fulfillment);
     if (pickupTime) scopedStorage.set(STORAGE_KEYS.pickupSlot, pickupTime);
     toast({
       title: "Adicionado ao carrinho",
       description: pickupTime
-        ? `${amount} × ${product.name} · levantamento ${formatSlotDate(new Date(pickupTime))} às ${formatSlotTime(new Date(pickupTime))}`
+        ? `${amount} × ${product.name} · ${isDelivery ? "entrega" : "levantamento"} ${formatSlotDate(new Date(pickupTime))} às ${formatSlotTime(new Date(pickupTime))}`
         : `${amount} × ${product.name}`,
     });
   };
 
-  const deliveryLabel =
-    product.deliveryMode === "shipping"
-      ? `Entrega em casa (${product.shippingDays ?? "?"} dias)`
-      : product.deliveryMode === "both"
-      ? `Levantamento ou entrega em casa (${product.shippingDays ?? "?"} dias)`
-      : "Apenas levantamento na propriedade";
+  const deliveryLabel = deliveryModeLabel(product.deliveryMode, product.farmerDelivers);
+  const offersPickup = fulfillmentChoices.includes("pickup");
+  const offersDelivery = fulfillmentChoices.includes("delivery");
+  // Produto com entrega, mas o agricultor ainda não configurou raio/localização.
+  const deliveryPending = !!product.deliveryMode && modeAllowsDelivery(product.deliveryMode) && !product.farmerDelivers;
+  const prepDays = Math.max(0, product.shippingDays ?? 0);
 
   const hours = formatPickupHours(product.pickupWindows);
   const deliveryHours = formatPickupHours(product.deliveryWindows);
@@ -348,7 +386,7 @@ const ProductDetail = () => {
                   <span className="text-xs uppercase tracking-wide">Entrega</span>
                 </div>
                 <p className="mt-1 text-sm font-semibold text-foreground">{deliveryLabel}</p>
-                {product.localDelivery && (
+                {offersDelivery && (
                   <p className="mt-1 text-xs text-primary">
                     O agricultor entrega em mão
                     {product.deliveryRadiusKm != null
@@ -356,10 +394,15 @@ const ProductDetail = () => {
                       : ""}
                   </p>
                 )}
+                {deliveryPending && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Este produto também pode ser entregue ao domicílio, mas o agricultor ainda não definiu a zona de entrega.
+                  </p>
+                )}
               </div>
             </div>
 
-            {product.localDelivery && (
+            {offersDelivery && (
               <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Truck className="h-4 w-4 text-primary" />
@@ -369,6 +412,7 @@ const ProductDetail = () => {
                   {product.deliveryRadiusKm != null
                     ? `Entrega em mão até ${product.deliveryRadiusKm} km da quinta.`
                     : "Entrega em mão feita pelo próprio agricultor."}
+                  {prepDays > 0 ? ` Prazo mínimo de preparação: ${prepDays} dia(s).` : ""}
                 </p>
                 {deliveryHours.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -426,6 +470,36 @@ const ProductDetail = () => {
                 <span className="text-sm text-muted-foreground">{product.unit}</span>
               </div>
 
+              {fulfillmentChoices.length > 1 && (
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm font-medium text-foreground">Como quer receber?</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {fulfillmentChoices.map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => chooseFulfillment(f)}
+                        aria-pressed={fulfillment === f}
+                        className={`flex items-center gap-2 rounded-lg border p-3 text-left text-sm transition-colors ${
+                          fulfillment === f ? "border-primary bg-primary/10" : "border-border hover:bg-secondary/50"
+                        }`}
+                      >
+                        {f === "delivery" ? (
+                          <Truck className="h-4 w-4 shrink-0 text-primary" />
+                        ) : (
+                          <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                        )}
+                        <span className="font-medium text-foreground">{FULFILLMENT_LABELS[f]}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    A escolha segue para o carrinho e pode ser alterada antes do pagamento.
+                  </p>
+                </div>
+              )}
+
+              {offersPickup && !isDelivery && (
               <div className="mt-4 rounded-lg border border-border bg-muted/40 p-3">
                 <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
                   <MapPin className="h-4 w-4 text-primary" />
@@ -449,8 +523,9 @@ const ProductDetail = () => {
                   </Link>
                 </div>
               </div>
+              )}
 
-              {hours.length > 0 && (
+              {!isDelivery && hours.length > 0 && (
                 <div className="mt-4">
                   <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                     Horários do produtor
@@ -476,7 +551,7 @@ const ProductDetail = () => {
                 <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <CalendarClock className="h-4 w-4 text-primary" />
-                    Escolher horário de levantamento
+                    {isDelivery ? "Escolher horário de entrega" : "Escolher horário de levantamento"}
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <Select
@@ -486,7 +561,7 @@ const ProductDetail = () => {
                         setPickupTime("");
                       }}
                     >
-                      <SelectTrigger aria-label="Dia de levantamento">
+                      <SelectTrigger aria-label={isDelivery ? "Dia de entrega" : "Dia de levantamento"}>
                         <SelectValue placeholder="Escolher dia" />
                       </SelectTrigger>
                       <SelectContent className="max-h-72">
@@ -502,7 +577,7 @@ const ProductDetail = () => {
                       onValueChange={setPickupTime}
                       disabled={!pickupDay}
                     >
-                      <SelectTrigger aria-label="Hora de levantamento">
+                      <SelectTrigger aria-label={isDelivery ? "Hora de entrega" : "Hora de levantamento"}>
                         <SelectValue placeholder="Escolher hora" />
                       </SelectTrigger>
                       <SelectContent className="max-h-72">
@@ -515,8 +590,12 @@ const ProductDetail = () => {
                     </Select>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    Só aparecem dias e horas dentro da porta aberta do agricultor. A escolha segue
-                    para o carrinho e pode ser alterada antes do pagamento.
+                    {isDelivery
+                      ? `Só aparecem dias e horas dentro do horário de entregas do agricultor${
+                          prepDays > 0 ? `, a partir de ${prepDays} dia(s) depois da compra` : ""
+                        }.`
+                      : "Só aparecem dias e horas dentro da porta aberta do agricultor."}{" "}
+                    A escolha segue para o carrinho e pode ser alterada antes do pagamento.
                   </p>
                 </div>
               )}
@@ -532,7 +611,7 @@ const ProductDetail = () => {
               </Button>
               {inCart > 0 && (
                 <Link to="/carrinho" className="mt-2 block text-center text-xs text-primary underline">
-                  Já tens {inCart} no carrinho — ir para o carrinho
+                  Já tem {inCart} no carrinho — ir para o carrinho
                 </Link>
               )}
             </div>

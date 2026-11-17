@@ -94,12 +94,20 @@ export const isWithinPickupWindows = (windows: PickupWindow[], date: Date): bool
 /**
  * Bookable pickup moments for the coming `days`, in `stepMinutes` steps,
  * restricted to the farmer's open-door windows and always in the future.
+ * `earliest` (ex.: prazo mínimo de preparação da entrega) adia o primeiro
+ * momento possível; os `days` contam a partir daí.
  */
 export const pickupSlots = (
   windows: PickupWindow[],
-  { days = 14, stepMinutes = 30, from = new Date() }: { days?: number; stepMinutes?: number; from?: Date } = {},
+  {
+    days = 14,
+    stepMinutes = 30,
+    from: now = new Date(),
+    earliest,
+  }: { days?: number; stepMinutes?: number; from?: Date; earliest?: Date } = {},
 ): Date[] => {
   if (windows.length === 0) return [];
+  const from = earliest && earliest.getTime() > now.getTime() ? earliest : now;
   const slots: Date[] = [];
   for (let offset = 0; offset < days; offset++) {
     const base = new Date(from);

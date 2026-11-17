@@ -12,9 +12,13 @@ import type { Database, Json } from "@/integrations/supabase/types";
 
 export type DeliveryModeValue = Database["public"]["Enums"]["delivery_mode"];
 
+/**
+ * delivery_mode é a única fonte da entrega: "shipping" é a entrega ao
+ * domicílio feita pelo próprio agricultor (ver @/lib/fulfillment).
+ * shipping_days é o prazo mínimo de preparação da entrega, em dias.
+ */
 export interface DeliverySettings {
   delivery_mode: DeliveryModeValue;
-  local_delivery: boolean;
   delivery_tracking: boolean;
   shipping_days: number;
   delivery_fee: number;
@@ -27,23 +31,27 @@ export interface FarmerDeliveryDefaults {
 }
 
 export const DELIVERY_FIELD_LABELS: Record<keyof DeliverySettings, string> = {
-  delivery_mode: "Modo de entrega",
-  local_delivery: "Entrega ao domicílio",
+  delivery_mode: "Forma de entrega",
   delivery_tracking: "Acompanhamento da entrega",
-  shipping_days: "Dias de envio",
+  shipping_days: "Prazo mínimo de preparação",
   delivery_fee: "Preço da entrega",
 };
 
-/** O preço da entrega aplica-se a envio ao domicílio ou a entrega em mão. */
-export const hasHomeDelivery = (s: Pick<DeliverySettings, "delivery_mode" | "local_delivery">) =>
-  s.delivery_mode !== "pickup" || s.local_delivery;
+/** Opções do formulário de produto (um só controlo para a entrega). */
+export const DELIVERY_MODE_OPTIONS: { value: DeliveryModeValue; label: string; hint: string }[] = [
+  { value: "pickup", label: "Levantamento na quinta", hint: "O cliente vai buscar a encomenda." },
+  { value: "shipping", label: "Entrega ao domicílio", hint: "Entrega em mão feita por si." },
+  { value: "both", label: "Ambos", hint: "Levantamento ou entrega, à escolha do cliente." },
+];
+
+/** Tracking, preço e prazo de preparação só existem com entrega ao domicílio. */
+export const hasHomeDelivery = (s: Pick<DeliverySettings, "delivery_mode">) => s.delivery_mode !== "pickup";
 
 /** Valores coerentes antes de comparar ou gravar. */
 export const normalizeDeliverySettings = (s: DeliverySettings): DeliverySettings => ({
   delivery_mode: s.delivery_mode,
-  local_delivery: s.local_delivery,
-  delivery_tracking: s.local_delivery && s.delivery_tracking,
-  shipping_days: s.delivery_mode === "pickup" ? 0 : Math.max(1, Math.round(s.shipping_days || 1)),
+  delivery_tracking: hasHomeDelivery(s) && s.delivery_tracking,
+  shipping_days: hasHomeDelivery(s) ? Math.max(0, Math.round(s.shipping_days || 0)) : 0,
   delivery_fee: hasHomeDelivery(s) ? Math.round(Math.max(0, s.delivery_fee || 0) * 100) / 100 : 0,
 });
 
@@ -57,7 +65,7 @@ export const loadDeliveryDefaults = async (farmerId: string): Promise<FarmerDeli
   const { data } = await supabase
     .from("farmer_details")
     .select(
-      "default_delivery_mode, default_local_delivery, default_delivery_tracking, default_shipping_days, default_delivery_fee, free_delivery_threshold",
+      "default_delivery_mode, default_delivery_tracking, default_shipping_days, default_delivery_fee, free_delivery_threshold",
     )
     .eq("id", farmerId)
     .maybeSingle();
@@ -65,7 +73,6 @@ export const loadDeliveryDefaults = async (farmerId: string): Promise<FarmerDeli
     data?.default_delivery_mode != null
       ? {
           delivery_mode: data.default_delivery_mode,
-          local_delivery: !!data.default_local_delivery,
           delivery_tracking: !!data.default_delivery_tracking,
           shipping_days: data.default_shipping_days ?? 0,
           delivery_fee: Number(data.default_delivery_fee ?? 0),

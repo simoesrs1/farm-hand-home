@@ -21,12 +21,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import ProductHistoryDialog from "@/components/ProductHistoryDialog";
-import DeliveryFeeFields from "@/components/DeliveryFeeFields";
+import DeliveryModeFields from "@/components/DeliveryModeFields";
 import DeliveryScopeDialog, { type DeliveryScope } from "@/components/DeliveryScopeDialog";
 import {
   applyDeliveryDefaults,
   changedDeliveryFields,
-  hasHomeDelivery,
   loadDeliveryDefaults,
   normalizeDeliverySettings,
   parseEuro,
@@ -47,11 +46,6 @@ const VAT_OPTIONS = [
   { value: 23, label: "Normal — 23%" },
 ];
 const DISCOUNT_PRESETS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
-const DELIVERY_OPTIONS = [
-  { value: "pickup", label: "Levantamento na quinta", hint: "O cliente vai buscar a encomenda." },
-  { value: "shipping", label: "Envio de encomenda", hint: "Entrega ao domicílio por transportadora." },
-  { value: "both", label: "Ambos", hint: "Levantamento ou envio, à escolha do cliente." },
-];
 
 const EditProduct = () => {
   const navigate = useNavigate();
@@ -79,8 +73,7 @@ const EditProduct = () => {
   const [isOrganic, setIsOrganic] = useState(false);
   const [isLactoseFree, setIsLactoseFree] = useState(false);
   const [discount, setDiscount] = useState(0);
-  const [deliveryMode, setDeliveryMode] = useState<string>("pickup");
-  const [localDelivery, setLocalDelivery] = useState(false);
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryModeValue>("pickup");
   const [deliveryTracking, setDeliveryTracking] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState("");
   const [freeThreshold, setFreeThreshold] = useState("");
@@ -135,13 +128,11 @@ const EditProduct = () => {
       setIsLactoseFree(!!p.is_lactose_free);
       setDiscount(p.discount_percent ?? 0);
       setDeliveryMode(p.delivery_mode ?? "pickup");
-      setLocalDelivery(!!p.local_delivery);
       setDeliveryTracking(!!p.delivery_tracking);
       setDeliveryFee(Number(p.delivery_fee ?? 0) > 0 ? String(p.delivery_fee).replace(".", ",") : "");
       setOriginalDelivery(
         normalizeDeliverySettings({
           delivery_mode: p.delivery_mode ?? "pickup",
-          local_delivery: !!p.local_delivery,
           delivery_tracking: !!p.delivery_tracking,
           shipping_days: Number(p.shipping_days ?? 0),
           delivery_fee: Number(p.delivery_fee ?? 0),
@@ -190,10 +181,9 @@ const EditProduct = () => {
       return;
     }
     const settings = normalizeDeliverySettings({
-      delivery_mode: deliveryMode as DeliveryModeValue,
-      local_delivery: localDelivery,
+      delivery_mode: deliveryMode,
       delivery_tracking: deliveryTracking,
-      shipping_days: shippingDays ? parseInt(shippingDays, 10) : 1,
+      shipping_days: shippingDays ? parseInt(shippingDays, 10) || 0 : 0,
       delivery_fee: feeNum,
     });
     const changed = originalDelivery ? changedDeliveryFields(settings, originalDelivery) : [];
@@ -494,81 +484,19 @@ const EditProduct = () => {
 
         <Card className="p-5 space-y-4">
           <h2 className="font-medium">Entrega e disponibilidade</h2>
-          <div className="space-y-2">
-            <Label>Forma de entrega</Label>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {DELIVERY_OPTIONS.map((o) => (
-                <button
-                  key={o.value}
-                  type="button"
-                  onClick={() => setDeliveryMode(o.value)}
-                  className={`rounded-lg border p-3 text-left text-sm transition-colors ${
-                    deliveryMode === o.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-background hover:bg-secondary"
-                  }`}
-                >
-                  <span className="block font-medium">{o.label}</span>
-                  <span className="block text-xs text-muted-foreground">{o.hint}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
-            <div>
-              <Label htmlFor="local-delivery" className="text-sm font-medium">
-                Entrego eu ao domicílio
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Entrega em mão feita por si, dentro da distância definida na sua disponibilidade.
-              </p>
-            </div>
-            <Switch
-              id="local-delivery"
-              checked={localDelivery}
-              onCheckedChange={setLocalDelivery}
-            />
-          </div>
-          {localDelivery && (
-            <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
-              <div>
-                <Label htmlFor="delivery-tracking" className="text-sm font-medium">
-                  Disponibilizo acompanhamento da entrega
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  O acompanhamento já está incluído no preço da entrega ao domicílio e não pode ser
-                  cobrado à parte ao cliente. Terá de atualizar o estado da encomenda (embalada,
-                  expedida da quinta, em trânsito) na página Encomendas.
-                </p>
-              </div>
-              <Switch
-                id="delivery-tracking"
-                checked={deliveryTracking}
-                onCheckedChange={setDeliveryTracking}
-              />
-            </div>
-          )}
-          {hasHomeDelivery({ delivery_mode: deliveryMode as DeliveryModeValue, local_delivery: localDelivery }) && (
-            <DeliveryFeeFields
-              fee={deliveryFee}
-              onFeeChange={setDeliveryFee}
-              freeThreshold={freeThreshold}
-              onFreeThresholdChange={setFreeThreshold}
-            />
-          )}
-          {deliveryMode !== "pickup" && (
-            <div className="space-y-2">
-              <Label htmlFor="days">Dias de envio</Label>
-              <Input
-                id="days"
-                type="number"
-                min={1}
-                value={shippingDays}
-                onChange={(e) => setShippingDays(e.target.value)}
-                className="w-32"
-              />
-            </div>
-          )}
+          <DeliveryModeFields
+            farmerId={farmerId}
+            mode={deliveryMode}
+            onModeChange={setDeliveryMode}
+            tracking={deliveryTracking}
+            onTrackingChange={setDeliveryTracking}
+            fee={deliveryFee}
+            onFeeChange={setDeliveryFee}
+            freeThreshold={freeThreshold}
+            onFreeThresholdChange={setFreeThreshold}
+            preparationDays={shippingDays}
+            onPreparationDaysChange={setShippingDays}
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="start">Início da disponibilidade</Label>

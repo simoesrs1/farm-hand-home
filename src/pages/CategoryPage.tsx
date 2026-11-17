@@ -14,6 +14,7 @@ import { parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { farmerRank } from "@/lib/farmer-activity";
+import { farmerDeliversFromProfile, modeAllowsDelivery } from "@/lib/fulfillment";
 import { Flip, gsap, useGSAP } from "@/lib/animation";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +56,8 @@ type SortableProduct = ProductCardProduct & {
   pickupWindows: PickupWindow[];
   /** Unidades vendidas nos últimos 90 dias (função product_sales_counts). */
   unitsSold: number;
+  /** O agricultor tem zona de entrega (raio e localização da quinta). */
+  deliveryAvailable: boolean;
 };
 
 const filters: { key: FilterKey; label: string; test: (p: SortableProduct) => boolean }[] = [
@@ -62,7 +65,11 @@ const filters: { key: FilterKey; label: string; test: (p: SortableProduct) => bo
   { key: "sem-lactose", label: "Sem lactose", test: (p) => p.isLactoseFree },
   { key: "promocao", label: "Em promoção", test: (p) => p.originalPrice > p.price },
   { key: "levantamento", label: "Levantar na quinta", test: (p) => p.deliveryMode !== "shipping" },
-  { key: "entrega", label: "Entrega em casa", test: (p) => p.deliveryMode === "shipping" || p.deliveryMode === "both" },
+  {
+    key: "entrega",
+    label: "Entrega ao domicílio",
+    test: (p) => !!p.deliveryMode && modeAllowsDelivery(p.deliveryMode) && p.deliveryAvailable,
+  },
 ];
 
 const distanceKm = (
@@ -193,7 +200,7 @@ const CategoryPage = () => {
       const [farmersRes, reviewsRes, salesRes, signedRes] = await Promise.all([
         supabase
           .from("public_farmer_profiles")
-          .select("id, company_name, address, initial_score, activity_score, pickup_lat, pickup_lng, pickup_hours")
+          .select("id, company_name, address, initial_score, activity_score, pickup_lat, pickup_lng, pickup_hours, delivery_radius_km")
           .in("id", farmerIds),
         supabase.from("farmer_reviews").select("farmer_id, rating").in("farmer_id", farmerIds).is("removed_at", null),
         supabase.rpc("product_sales_counts", { p_product_ids: rows.map((r) => r.id) }),
@@ -249,6 +256,7 @@ const CategoryPage = () => {
           lng: farmer?.pickup_lng ?? null,
           pickupWindows: parsePickupHours(farmer?.pickup_hours),
           unitsSold: soldById.get(r.id) ?? 0,
+          deliveryAvailable: farmerDeliversFromProfile(farmer),
         };
       });
 

@@ -13,6 +13,8 @@ export interface Product {
   region: string;
   deliveryMode?: "pickup" | "shipping" | "both";
   shippingDays?: number;
+  /** O agricultor tem zona de entrega (raio e localização); sem valor, assume-se que sim. */
+  deliveryAvailable?: boolean;
   /** Stock inicial definido pelo agricultor. O stock disponível
    *  em tempo real é (stock - vendido), gerido pelo StockContext. */
   stock: number;

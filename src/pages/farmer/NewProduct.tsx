@@ -9,32 +9,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { toast } from "@/hooks/use-toast";
 import { categories } from "@/data/categories";
-import { DeliveryModesEnum } from "@/data/delivery-modes";
 import { Checkbox } from "@/components/ui/checkbox";
-import DeliveryFeeFields from "@/components/DeliveryFeeFields";
+import DeliveryModeFields from "@/components/DeliveryModeFields";
 import { formatEuro } from "@/lib/format";
 import {
   applyDeliveryDefaults,
   changedDeliveryFields,
-  hasHomeDelivery,
   loadDeliveryDefaults,
   normalizeDeliverySettings,
   parseEuro,
   type DeliveryModeValue,
   type DeliverySettings,
 } from "@/lib/delivery-defaults";
-
-const MODE_FROM_VALUE: Record<DeliveryModeValue, DeliveryModesEnum> = {
-  pickup: DeliveryModesEnum.Pickup,
-  shipping: DeliveryModesEnum.Shipping,
-  both: DeliveryModesEnum.Both,
-};
 
 const COMMISSION = 0.10;
 
@@ -68,9 +59,9 @@ const NewProduct = () => {
   const [modificationsDescription, setModificationsDescription] = useState("");
   const [farmerPrice, setFarmerPrice] = useState<string>("");
   const [vatRate, setVatRate] = useState<number>(6);
-  const [deliveryMode, setDeliveryMode] = useState<DeliveryModesEnum>(DeliveryModesEnum.Pickup);
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryModeValue>("pickup");
+  // Prazo mínimo de preparação da entrega, em dias (products.shipping_days).
   const [shippingDays, setShippingDays] = useState<string>("");
-  const [localDelivery, setLocalDelivery] = useState(false);
   const [deliveryTracking, setDeliveryTracking] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState("");
   const [freeThreshold, setFreeThreshold] = useState("");
@@ -173,8 +164,7 @@ const NewProduct = () => {
         }
         if (defaults.settings) {
           const s = defaults.settings;
-          setDeliveryMode(MODE_FROM_VALUE[s.delivery_mode]);
-          setLocalDelivery(s.local_delivery);
+          setDeliveryMode(s.delivery_mode);
           setDeliveryTracking(s.delivery_tracking);
           setShippingDays(s.shipping_days > 0 ? String(s.shipping_days) : "");
           setDeliveryFee(s.delivery_fee > 0 ? String(s.delivery_fee).replace(".", ",") : "");
@@ -208,10 +198,6 @@ const NewProduct = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Removido: switch morto que tentava "normalizar" deliveryMode aqui.
-    // setDeliveryMode é assíncrono, então este código nunca via o valor
-    // atualizado antes das validações abaixo — e já não é necessário porque
-    // deliveryMode já chega correto do RadioGroup (ver mapeamento mais abaixo).
 
     if (!user || !farmerId) {
       toast({ title: "Perfil de agricultor não encontrado", variant: "destructive" });
@@ -225,9 +211,9 @@ const NewProduct = () => {
       toast({ title: "Defina um preço válido", variant: "destructive" });
       return;
     }
-    const shippingDaysNum = parseInt(shippingDays, 10);
-    if ((deliveryMode === DeliveryModesEnum.Shipping || deliveryMode === DeliveryModesEnum.Both) && (!Number.isFinite(shippingDaysNum) || shippingDaysNum <= 0)) {
-      toast({ title: "Indique os dias de envio", variant: "destructive" });
+    const shippingDaysNum = shippingDays.trim() ? parseInt(shippingDays, 10) : 0;
+    if (deliveryMode !== "pickup" && (!Number.isFinite(shippingDaysNum) || shippingDaysNum < 0)) {
+      toast({ title: "Indique um prazo de preparação válido", variant: "destructive" });
       return;
     }
     const feeNum = deliveryFee.trim() ? parseEuro(deliveryFee) : 0;
@@ -237,10 +223,9 @@ const NewProduct = () => {
       return;
     }
     const settings = normalizeDeliverySettings({
-      delivery_mode: DeliveryModesEnum[deliveryMode].toLowerCase() as DeliveryModeValue,
-      local_delivery: localDelivery,
+      delivery_mode: deliveryMode,
       delivery_tracking: deliveryTracking,
-      shipping_days: deliveryMode === DeliveryModesEnum.Pickup ? 0 : shippingDaysNum,
+      shipping_days: shippingDaysNum,
       delivery_fee: feeNum,
     });
     const stockNum = parseFloat(stockQuantity);
@@ -254,7 +239,7 @@ const NewProduct = () => {
       toast({ title: "Indique a validade do stock (hoje ou mais tarde)", variant: "destructive" });
       return;
     }
-    const pickupEnabled = deliveryMode === DeliveryModesEnum.Pickup || deliveryMode === DeliveryModesEnum.Both;
+    const pickupEnabled = deliveryMode !== "shipping";
     if (pickupEnabled && (!availabilityStart || !availabilityEnd)) {
       toast({ title: "Indique as datas de disponibilidade para levantamento", variant: "destructive" });
       return;
@@ -550,99 +535,19 @@ const NewProduct = () => {
         <Card className="p-5 space-y-4">
           <h2 className="font-medium">Entrega</h2>
           <p className="text-xs text-muted-foreground">Escolha como o cliente pode receber o produto.</p>
-          {/* DeliveryModesEnum é numérico (Pickup=0, Shipping=1, Both=2), mas o
-             RadioGroup do radix só aceita value como string. Por isso:
-             - value: converte o número do estado para a KEY do enum ("Pickup"/"Shipping"/"Both")
-             - RadioGroupItem value: usa a mesma KEY (não o número nem string arbitrária)
-             - onValueChange: recebe a KEY (string) e converte de volta para o número do enum */}
-          <RadioGroup
-            value={DeliveryModesEnum[deliveryMode]}
-            onValueChange={(v) => setDeliveryMode(DeliveryModesEnum[v as keyof typeof DeliveryModesEnum])}
-            className="gap-2"
-          >
-            <label htmlFor="dm-pickup" className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-secondary/50">
-              <RadioGroupItem value={DeliveryModesEnum[DeliveryModesEnum.Pickup]} id="dm-pickup" className="mt-0.5" />
-              <div>
-                <div className="text-sm font-medium">Apenas levantamento na propriedade</div>
-                <p className="text-xs text-muted-foreground">O cliente vai buscar à sua exploração.</p>
-              </div>
-            </label>
-            <label htmlFor="dm-shipping" className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-secondary/50">
-              <RadioGroupItem value={DeliveryModesEnum[DeliveryModesEnum.Shipping]} id="dm-shipping" className="mt-0.5" />
-              <div>
-                <div className="text-sm font-medium">Apenas envio ao domicílio</div>
-                <p className="text-xs text-muted-foreground">Faz sempre entrega em casa do cliente.</p>
-              </div>
-            </label>
-            <label htmlFor="dm-both" className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-secondary/50">
-              <RadioGroupItem value={DeliveryModesEnum[DeliveryModesEnum.Both]} id="dm-both" className="mt-0.5" />
-              <div>
-                <div className="text-sm font-medium">Ambos (levantamento ou envio)</div>
-                <p className="text-xs text-muted-foreground">O cliente escolhe a opção.</p>
-              </div>
-            </label>
-          </RadioGroup>
-          <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
-            <div>
-              <Label htmlFor="local-delivery" className="text-sm font-medium">
-                Entrego eu ao domicílio
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Entrega em mão feita por si, dentro da distância e horários definidos na sua
-                disponibilidade.
-              </p>
-            </div>
-            <Switch
-              id="local-delivery"
-              checked={localDelivery}
-              onCheckedChange={setLocalDelivery}
-            />
-          </div>
-          {localDelivery && (
-            <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
-              <div>
-                <Label htmlFor="delivery-tracking" className="text-sm font-medium">
-                  Disponibilizo acompanhamento da entrega
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  O acompanhamento já está incluído no preço da entrega ao domicílio e não pode ser
-                  cobrado à parte ao cliente. Terá de atualizar o estado da encomenda (embalada,
-                  expedida da quinta, em trânsito) na página Encomendas.
-                </p>
-              </div>
-              <Switch
-                id="delivery-tracking"
-                checked={deliveryTracking}
-                onCheckedChange={setDeliveryTracking}
-              />
-            </div>
-          )}
-          {hasHomeDelivery({
-            delivery_mode: DeliveryModesEnum[deliveryMode].toLowerCase() as DeliveryModeValue,
-            local_delivery: localDelivery,
-          }) && (
-            <DeliveryFeeFields
-              fee={deliveryFee}
-              onFeeChange={setDeliveryFee}
-              freeThreshold={freeThreshold}
-              onFreeThresholdChange={setFreeThreshold}
-            />
-          )}
-          {(deliveryMode === DeliveryModesEnum.Shipping || deliveryMode === DeliveryModesEnum.Both) && (
-            <div className="space-y-2">
-              <Label htmlFor="shipping-days">Dias estimados para entrega em casa *</Label>
-              <Input
-                id="shipping-days"
-                type="number"
-                min="1"
-                step="1"
-                value={shippingDays}
-                onChange={(e) => setShippingDays(e.target.value)}
-                placeholder="Ex: 3"
-              />
-              <p className="text-xs text-muted-foreground">Número médio de dias úteis até o produto chegar ao cliente.</p>
-            </div>
-          )}
+          <DeliveryModeFields
+            farmerId={farmerId}
+            mode={deliveryMode}
+            onModeChange={setDeliveryMode}
+            tracking={deliveryTracking}
+            onTrackingChange={setDeliveryTracking}
+            fee={deliveryFee}
+            onFeeChange={setDeliveryFee}
+            freeThreshold={freeThreshold}
+            onFreeThresholdChange={setFreeThreshold}
+            preparationDays={shippingDays}
+            onPreparationDaysChange={setShippingDays}
+          />
           <label htmlFor="save-delivery-default" className="flex cursor-pointer items-start gap-3 rounded-lg bg-muted/40 p-3">
             <Checkbox
               id="save-delivery-default"
@@ -715,7 +620,7 @@ const NewProduct = () => {
               Recebe uma notificação quando as unidades disponíveis descerem até este valor (e outra quando esgotar).
             </p>
           </div>
-          {(deliveryMode === DeliveryModesEnum.Pickup || deliveryMode === DeliveryModesEnum.Both) && (
+          {deliveryMode !== "shipping" && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="avail-start">Disponível a partir de *</Label>

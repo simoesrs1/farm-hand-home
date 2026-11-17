@@ -11,6 +11,9 @@ import {
   CreditCard,
   CalendarClock,
   RefreshCw,
+  Package,
+  Truck,
+  Navigation,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,6 +52,12 @@ interface Order {
   delivered_at: string | null;
   accepted_at: string | null;
   delivery_fee: number;
+  delivery_address: string | null;
+  delivery_tracking: boolean;
+  expected_delivery_at: string | null;
+  packed_at: string | null;
+  in_transit_at: string | null;
+  out_for_delivery_at: string | null;
   kind: string;
   expired_at: string | null;
   created_at: string;
@@ -76,7 +85,14 @@ const formatDate = (iso: string | null) =>
 const formatTime = (iso: string | null) =>
   iso ? new Date(iso).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }) : null;
 
-type StepKey = "pending" | "accepted" | "delivered" | "problem";
+type StepKey = "pending" | "accepted" | "packed" | "in_transit" | "out_for_delivery" | "delivered" | "problem";
+
+// Passos do acompanhamento da entrega, marcados pelo agricultor (ver order-action).
+const TRACKING_STEPS = [
+  { key: "packed", column: "packed_at", label: "Embalada", Icon: Package },
+  { key: "in_transit", column: "in_transit_at", label: "Expedida da quinta", Icon: Truck },
+  { key: "out_for_delivery", column: "out_for_delivery_at", label: "Em trânsito", Icon: Navigation },
+] as const;
 
 const OrderStatus = () => {
   const { id } = useParams<{ id: string }>();
@@ -92,7 +108,7 @@ const OrderStatus = () => {
     const { data } = await supabase
       .from("orders")
       .select(
-        "id,total,status,pickup_code,pickup_deadline,scheduled_pickup_at,paid_at,delivered_at,accepted_at,expired_at,created_at,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),delivery_fee,kind,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)"
+        "id,total,status,pickup_code,pickup_deadline,scheduled_pickup_at,paid_at,delivered_at,accepted_at,expired_at,created_at,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),delivery_fee,delivery_address,delivery_tracking,expected_delivery_at,packed_at,in_transit_at,out_for_delivery_at,kind,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)"
       )
       .eq("id", id)
       .maybeSingle();
@@ -156,6 +172,39 @@ const OrderStatus = () => {
   // Reserva de experiência: a sessão faz as vezes do levantamento.
   const isBooking = order.kind === "experience" || order.kind === "stay";
   const isStay = order.kind === "stay";
+  // Entrega ao domicílio: o cliente escolheu receber em casa (tem morada de entrega).
+  const isDelivery = !isBooking && order.delivery_address != null;
+
+  const trackingSteps: { key: StepKey; label: string; description: string; Icon: typeof Clock; done: boolean }[] =
+    isDelivery && order.delivery_tracking
+      ? TRACKING_STEPS.map((s) => {
+          const at = order[s.column];
+          return {
+            key: s.key,
+            label: s.label,
+            description: at ? `${formatDate(at)} às ${formatTime(at)}` : "",
+            Icon: s.Icon,
+            done: !!at || order.status === "delivered",
+          };
+        })
+      : [];
+
+  const deliveredLabel = isBooking
+    ? order.status === "delivered" ? (isStay ? "Check-in feito" : "Experiência concluída") : "Reservada"
+    : isDelivery
+      ? order.status === "delivered" ? "Entregue" : "A preparar a entrega"
+      : order.status === "delivered" ? "Levantada" : "Pronta para levantamento";
+
+  const deliveredDescription =
+    order.status === "delivered" && order.delivered_at
+      ? `${isBooking ? (isStay ? "Check-in confirmado" : "Chegada confirmada") : isDelivery ? "Entrega concluída" : "Levantamento concluído"} · ${formatDate(order.delivered_at)} às ${formatTime(order.delivered_at)}`
+      : order.scheduled_pickup_at
+        ? `${isStay ? "Entrada" : isBooking ? "Sessão" : isDelivery ? "Entrega marcada" : "Levantamento agendado"} · ${formatDate(order.scheduled_pickup_at)} às ${formatTime(order.scheduled_pickup_at)}`
+        : isDelivery && order.expected_delivery_at && order.status === "awaiting_pickup"
+          ? `Entrega prevista · ${formatDate(order.expected_delivery_at)}`
+          : order.status === "awaiting_pickup"
+            ? `Prazo limite · ${formatDate(order.pickup_deadline)}`
+            : "";
 
   const steps: { key: StepKey; label: string; description: string; Icon: typeof Clock; done: boolean; failed?: boolean }[] = [
     {
@@ -177,19 +226,11 @@ const OrderStatus = () => {
       Icon: CheckCircle2,
       done: !!order.accepted_at,
     },
+    ...trackingSteps,
     {
       key: "delivered",
-      label: isBooking
-        ? order.status === "delivered" ? (isStay ? "Check-in feito" : "Experiência concluída") : "Reservada"
-        : order.status === "delivered" ? "Levantada" : "Pronta para levantamento",
-      description:
-        order.status === "delivered" && order.delivered_at
-          ? `${isBooking ? (isStay ? "Check-in confirmado" : "Chegada confirmada") : "Levantamento concluído"} · ${formatDate(order.delivered_at)} às ${formatTime(order.delivered_at)}`
-          : order.scheduled_pickup_at
-            ? `${isStay ? "Entrada" : isBooking ? "Sessão" : "Levantamento agendado"} · ${formatDate(order.scheduled_pickup_at)} às ${formatTime(order.scheduled_pickup_at)}`
-            : order.status === "awaiting_pickup"
-              ? `Prazo limite · ${formatDate(order.pickup_deadline)}`
-              : "",
+      label: deliveredLabel,
+      description: deliveredDescription,
       Icon: PackageCheck,
       done: order.status === "delivered",
     },
@@ -283,16 +324,23 @@ const OrderStatus = () => {
           )}
         </ol>
 
-        {/* Data e hora do levantamento */}
+        {/* Data e hora do levantamento ou da entrega */}
         {isActive && (
           <div className="mt-6 flex items-start gap-3 rounded-xl bg-primary/10 p-4">
             <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div>
-              <p className="text-sm font-medium text-foreground">Data e hora do levantamento</p>
+              <p className="text-sm font-medium text-foreground">
+                {isDelivery ? "Data e hora da entrega" : "Data e hora do levantamento"}
+              </p>
               {order.scheduled_pickup_at ? (
                 <p className="mt-0.5 text-sm text-muted-foreground">
                   {formatDate(order.scheduled_pickup_at)} às{" "}
                   <span className="font-semibold text-foreground">{formatTime(order.scheduled_pickup_at)}</span>
+                </p>
+              ) : isDelivery && order.expected_delivery_at ? (
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Sem hora marcada — entrega prevista para {formatDate(order.expected_delivery_at)}. Combina a hora
+                  com o agricultor pelo chat.
                 </p>
               ) : (
                 <p className="mt-0.5 text-sm text-muted-foreground">
@@ -303,17 +351,29 @@ const OrderStatus = () => {
           </div>
         )}
 
-        {/* QR de levantamento */}
+        {/* QR de levantamento ou de entrega */}
         {order.status === "awaiting_pickup" && (
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
-              Mostra o QR ao agricultor no levantamento.
+              {isDelivery
+                ? "Mostra o QR ao agricultor quando receberes a encomenda."
+                : "Mostra o QR ao agricultor no levantamento."}
             </p>
-            <Button onClick={() => setShowQr(true)}>Mostrar QR de levantamento</Button>
+            <Button onClick={() => setShowQr(true)}>
+              {isDelivery ? "Mostrar QR de entrega" : "Mostrar QR de levantamento"}
+            </Button>
           </div>
         )}
 
-        {order.farmer?.pickup_address && (
+        {isDelivery ? (
+          <div className="mt-6 flex items-start gap-2 border-t border-border pt-4">
+            <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted-foreground">Entrega ao domicílio em</p>
+              <p className="text-sm text-foreground">{order.delivery_address}</p>
+            </div>
+          </div>
+        ) : order.farmer?.pickup_address && (
           <div className="mt-6 flex items-start gap-2 border-t border-border pt-4">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <div className="flex-1 min-w-0">
@@ -382,7 +442,7 @@ const OrderStatus = () => {
       <Dialog open={showQr} onOpenChange={setShowQr}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Levantamento na quinta</DialogTitle>
+            <DialogTitle>{isDelivery ? "Entrega ao domicílio" : "Levantamento na quinta"}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-2">
             <div className="rounded-xl bg-white p-4">

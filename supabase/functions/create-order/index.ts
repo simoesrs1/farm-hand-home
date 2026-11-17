@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Mock checkout — creates an order with simulated payment success
 import { createClient } from "npm:@supabase/supabase-js@2.110.8";
+import {
+  distanceKm,
+  fulfillmentOptions,
+  isWithinWindows,
+  parseWindows,
+  type DeliveryMode,
+  type Fulfillment,
+} from "../_shared/fulfillment.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,57 +35,8 @@ function generatePickupCode(): string {
   return code;
 }
 
-interface PickupWindow {
-  day: number;
-  start: string;
-  end: string;
-}
-
-function parsePickupWindows(raw: unknown): PickupWindow[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.filter(
-    (w): w is PickupWindow =>
-      !!w &&
-      typeof w === "object" &&
-      typeof (w as PickupWindow).day === "number" &&
-      typeof (w as PickupWindow).start === "string" &&
-      typeof (w as PickupWindow).end === "string" &&
-      (w as PickupWindow).start < (w as PickupWindow).end,
-  );
-}
-
 const LISBON = "Europe/Lisbon";
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-/** Weekday + minutes-of-day of a Date, as seen in Europe/Lisbon. */
-function lisbonParts(date: Date): { day: number; minutes: number } {
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    timeZone: LISBON,
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  const parts = fmt.formatToParts(date);
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-  const day = WEEKDAYS.indexOf(get("weekday"));
-  const hour = parseInt(get("hour"), 10) % 24;
-  const minute = parseInt(get("minute"), 10);
-  return { day, minutes: hour * 60 + minute };
-}
-
-function toMinutes(hhmm: string): number {
-  const [h, m] = hhmm.split(":").map((n) => parseInt(n, 10));
-  return (h || 0) * 60 + (m || 0);
-}
-
-function isWithinWindows(windows: PickupWindow[], date: Date): boolean {
-  if (windows.length === 0) return true;
-  const { day, minutes } = lisbonParts(date);
-  return windows.some(
-    (w) => w.day === day && toMinutes(w.start) <= minutes && minutes < toMinutes(w.end),
-  );
-}
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function jsonError(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), {
@@ -123,7 +82,7 @@ Deno.serve(async (req) => {
     }
     const { data: dbProducts, error: productsErr } = await admin
       .from("products")
-      .select("id, name, client_price, discount_percent, unit, active, stock_quantity, farmer_id, local_delivery, delivery_tracking, delivery_fee, shipping_days")
+      .select("id, name, client_price, discount_percent, unit, active, stock_quantity, farmer_id, delivery_mode, delivery_tracking, delivery_fee, shipping_days")
       .in("id", productIds);
     if (productsErr) throw productsErr;
     const productById = new Map((dbProducts ?? []).map((p) => [p.id, p]));
@@ -178,7 +137,7 @@ Deno.serve(async (req) => {
 
     const { data: farmerRow } = await admin
       .from("farmer_details")
-      .select("id, pickup_days, user_id, pickup_hours, paused_until, free_delivery_threshold")
+      .select("id, pickup_days, user_id, pickup_hours, paused_until, free_delivery_threshold, delivery_hours, delivery_radius_km, pickup_lat, pickup_lng")
       .eq("id", farmerId)
       .maybeSingle();
     if (!farmerRow) return jsonError(400, "Agricultor indisponível para receber a encomenda.");
@@ -190,9 +149,52 @@ Deno.serve(async (req) => {
     }
     const pickupDays = farmerRow.pickup_days ?? 7;
 
-    // Optional pickup scheduling — must land inside the farmer's open-door
-    // windows (stored as weekday + HH:MM in Europe/Lisbon local time).
-    const windows = parsePickupWindows(farmerRow.pickup_hours);
+    // Levantamento ou entrega: só as opções comuns a todos os produtos. A
+    // entrega exige que o agricultor tenha raio e localização da quinta.
+    // Lido de productById: o objeto `resolved` só guarda id/nome/preço/unidade.
+    const orderProducts = resolved.map((r) => productById.get(r.product.id)!);
+    const farmPoint =
+      farmerRow.pickup_lat != null && farmerRow.pickup_lng != null
+        ? { lat: Number(farmerRow.pickup_lat), lng: Number(farmerRow.pickup_lng) }
+        : null;
+    const radiusKm = Number(farmerRow.delivery_radius_km ?? 0);
+    const options = fulfillmentOptions(
+      orderProducts.map((p) => p.delivery_mode as DeliveryMode),
+      radiusKm > 0 && farmPoint != null,
+    );
+    // Pedido sem `fulfillment` vem do frontend antigo (ainda em cache): entrega
+    // se trouxer morada, senão levantamento.
+    const legacyRequest = body?.fulfillment == null;
+    const fulfillment: Fulfillment = legacyRequest
+      ? typeof body?.delivery_address === "string" && body.delivery_address.trim() !== ""
+        ? "delivery"
+        : "pickup"
+      : body.fulfillment;
+    if (fulfillment !== "pickup" && fulfillment !== "delivery") return jsonError(400, "Forma de entrega inválida");
+    if (options.length === 0) {
+      return jsonError(400, "Estes produtos não têm uma forma de entrega em comum. Finalize-os em encomendas separadas.");
+    }
+    if (!options.includes(fulfillment)) {
+      return jsonError(
+        400,
+        fulfillment === "delivery"
+          ? "Esta encomenda não pode ser entregue ao domicílio. Escolha o levantamento na quinta."
+          : "Esta encomenda só pode ser entregue ao domicílio.",
+      );
+    }
+    const needsDelivery = fulfillment === "delivery";
+
+    // Prazo mínimo de preparação da entrega: o maior entre os produtos.
+    const preparationDays = Math.max(0, ...orderProducts.map((p) => Math.round(Number(p.shipping_days ?? 0))));
+    const earliestDelivery = new Date(Date.now() + preparationDays * DAY_MS);
+
+    // Agendamento: dentro da porta aberta (levantamento) ou do horário de
+    // entregas (entrega), em Europe/Lisbon. O frontend antigo agendava sempre
+    // na porta aberta, por isso esses pedidos continuam a ser validados assim.
+    const windows = parseWindows(
+      needsDelivery && !legacyRequest ? farmerRow.delivery_hours : farmerRow.pickup_hours,
+    );
+    const what = needsDelivery ? "entrega" : "levantamento";
     let scheduledAt: Date | null = null;
     const rawScheduled = body?.scheduled_pickup_at;
     if (rawScheduled != null && rawScheduled !== "") {
@@ -200,23 +202,19 @@ Deno.serve(async (req) => {
       scheduledAt = new Date(rawScheduled);
       if (Number.isNaN(scheduledAt.getTime())) return jsonError(400, "Agendamento inválido");
       if (scheduledAt.getTime() < Date.now() - 60_000) {
-        return jsonError(400, "A data de levantamento já passou.");
+        return jsonError(400, `A data de ${what} já passou.`);
       }
       if (!isWithinWindows(windows, scheduledAt)) {
         return jsonError(400, "O horário escolhido está fora da disponibilidade do agricultor.");
       }
+      if (needsDelivery && !legacyRequest && scheduledAt.getTime() < earliestDelivery.getTime() - 60_000) {
+        return jsonError(400, `A entrega só pode ser agendada a partir de ${preparationDays} dia(s) depois da compra.`);
+      }
     } else if (windows.length > 0) {
-      return jsonError(400, "Escolha um horário de levantamento dentro da disponibilidade do agricultor.");
+      return jsonError(400, `Escolha um horário de ${what} dentro da disponibilidade do agricultor.`);
     }
 
-
-    // Home delivery: when any product is marked for farmer home delivery, the
-    // client must provide a delivery address and map point.
-    // Lido de productById: o objeto `resolved` só guarda id/nome/preço/unidade.
-    const deliveryProducts = resolved
-      .map((r) => productById.get(r.product.id))
-      .filter((p) => p?.local_delivery === true);
-    const needsDelivery = deliveryProducts.length > 0;
+    // Entrega ao domicílio: morada, ponto exato no mapa e dentro do raio.
     let deliveryAddress: string | null = null;
     let deliveryLat: number | null = null;
     let deliveryLng: number | null = null;
@@ -232,27 +230,30 @@ Deno.serve(async (req) => {
       if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
         return jsonError(400, "Marque no mapa o ponto exato da entrega.");
       }
+      if (farmPoint && distanceKm(farmPoint, { lat, lng }) > radiusKm) {
+        return jsonError(400, `A morada está fora da zona de entrega do agricultor (até ${radiusKm} km da quinta).`);
+      }
       deliveryAddress = rawAddress.trim().slice(0, 300);
       deliveryLat = lat;
       deliveryLng = lng;
     }
 
-    // Acompanhamento da entrega: só se o cliente o pedir e algum produto com
-    // entrega ao domicílio o oferecer (incluído no preço, sem custo extra).
-    const wantsTracking = body?.delivery_tracking === true;
-    if (wantsTracking && !deliveryProducts.some((p) => p?.delivery_tracking === true)) {
+    // Acompanhamento da entrega: só se o cliente o pedir e algum produto o
+    // oferecer (incluído no preço, sem custo extra).
+    const wantsTracking = needsDelivery && body?.delivery_tracking === true;
+    if (wantsTracking && !orderProducts.some((p) => p.delivery_tracking === true)) {
       return jsonError(400, "Esta encomenda não tem acompanhamento da entrega disponível.");
     }
-    const deliveryTracking = needsDelivery && wantsTracking;
+    const deliveryTracking = wantsTracking;
 
     const productsTotal = Math.round(resolved.reduce((acc, r) => acc + r.subtotal * 100, 0)) / 100;
 
-    // Preço da entrega: uma por encomenda, o mais alto entre os produtos com
-    // entrega ao domicílio; grátis se os produtos atingirem o limite do
-    // agricultor. Mesma regra de src/lib/delivery-fee.ts.
+    // Preço da entrega: uma por encomenda, o mais alto entre os produtos;
+    // grátis se os produtos atingirem o limite do agricultor. Mesma regra de
+    // src/lib/delivery-fee.ts.
     let deliveryFee = 0;
     if (needsDelivery) {
-      const baseFee = Math.max(0, ...deliveryProducts.map((p) => Number(p?.delivery_fee ?? 0)));
+      const baseFee = Math.max(0, ...orderProducts.map((p) => Number(p.delivery_fee ?? 0)));
       const threshold = Number(farmerRow.free_delivery_threshold ?? 0);
       deliveryFee = threshold > 0 && productsTotal >= threshold ? 0 : Math.round(baseFee * 100) / 100;
     }
@@ -277,7 +278,7 @@ Deno.serve(async (req) => {
     }
 
     const now = new Date();
-    let deadline = new Date(now.getTime() + pickupDays * 24 * 60 * 60 * 1000);
+    let deadline = new Date(now.getTime() + pickupDays * DAY_MS);
     // A scheduled pickup must always fit inside the escrow deadline.
     if (scheduledAt && scheduledAt.getTime() > deadline.getTime()) {
       deadline = new Date(scheduledAt.getTime() + 24 * 60 * 60 * 1000);
@@ -285,15 +286,14 @@ Deno.serve(async (req) => {
 
 
     // Data prevista da entrega ao domicílio: a agendada ou, sem agendamento, o
-    // pagamento mais o maior número de dias de envio. Sem nenhuma das duas fica
-    // NULL e conta o prazo limite.
-    const maxShippingDays = Math.max(0, ...deliveryProducts.map((p) => Number(p?.shipping_days ?? 0)));
+    // pagamento mais o prazo de preparação. Sem nenhuma das duas fica NULL e
+    // conta o prazo limite.
     const expectedDeliveryAt = !needsDelivery
       ? null
       : scheduledAt
         ? scheduledAt.toISOString()
-        : maxShippingDays > 0
-          ? new Date(now.getTime() + maxShippingDays * 24 * 60 * 60 * 1000).toISOString()
+        : preparationDays > 0
+          ? new Date(now.getTime() + preparationDays * DAY_MS).toISOString()
           : null;
 
     const { data: order, error: orderErr } = await admin
@@ -354,7 +354,7 @@ Deno.serve(async (req) => {
         resolved.length === 1
           ? `${resolved[0].quantity} × ${resolved[0].product.name}`
           : `${resolved.length} produtos`
-      } — código de levantamento ${pickupCode}.`,
+      } — código de ${needsDelivery ? "entrega" : "levantamento"} ${pickupCode}.`,
       link: "/encomendas",
     });
 
@@ -364,7 +364,11 @@ Deno.serve(async (req) => {
         order_id: order.id,
         type: "new_order",
         title: "Nova encomenda",
-        message: scheduledAt
+        message: needsDelivery
+          ? scheduledAt
+            ? `Recebeste uma nova encomenda no valor de ${total.toFixed(2)}€, com entrega ao domicílio marcada para ${scheduledAt.toLocaleString("pt-PT", { timeZone: LISBON })}.`
+            : `Recebeste uma nova encomenda no valor de ${total.toFixed(2)}€, com entrega ao domicílio${expectedDeliveryAt ? ` prevista para ${new Date(expectedDeliveryAt).toLocaleDateString("pt-PT", { timeZone: LISBON })}` : ""}.`
+          : scheduledAt
           ? `Recebeste uma nova encomenda no valor de ${total.toFixed(2)}€. O cliente agendou o levantamento para ${scheduledAt.toLocaleString("pt-PT", { timeZone: LISBON })}.`
           : `Recebeste uma nova encomenda no valor de ${total.toFixed(2)}€. Aguarda o levantamento até ${deadline.toLocaleDateString("pt-PT")}.`,
 

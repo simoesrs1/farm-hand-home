@@ -5,12 +5,6 @@ import { MapPin } from "lucide-react";
 import MapConsentGate from "@/components/MapConsentGate";
 import { useConsent } from "@/contexts/ConsentContext";
 
-declare global {
-  interface Window {
-    google: any;
-    __initDeliveryPicker?: () => void;
-  }
-}
 
 interface Props {
   open: boolean;
@@ -22,7 +16,7 @@ interface Props {
 // Map picker for the client to mark the exact home-delivery point.
 const DeliveryPointPicker = ({ open, onOpenChange, value, onConfirm }: Props) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const markerRef = useRef<any>(null);
+  const markerRef = useRef<GoogleMapsSdk>(null);
   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(value);
   const mapsAllowed = useConsent().hasConsent("maps");
 
@@ -48,7 +42,7 @@ const DeliveryPointPicker = ({ open, onOpenChange, value, onConfirm }: Props) =>
       if (value) {
         markerRef.current = new window.google.maps.Marker({ position: value, map });
       }
-      map.addListener("click", (e: any) => {
+      map.addListener("click", (e: GoogleMapsSdk) => {
         const point = { lat: e.latLng.lat(), lng: e.latLng.lng() };
         setPicked(point);
         if (markerRef.current) {

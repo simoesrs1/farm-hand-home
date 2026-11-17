@@ -62,8 +62,11 @@ const FIELD_LABELS: Record<string, string> = {
   discount_percent: "Desconto",
   low_stock_threshold: "Aviso de stock baixo",
   delivery_mode: "Forma de entrega",
+  // Coluna removida (20261118130000); fica o rótulo para os registos antigos do histórico.
   local_delivery: "Entrega ao domicílio",
-  shipping_days: "Dias de envio",
+  shipping_days: "Prazo de preparação (dias)",
+  delivery_tracking: "Acompanhamento da entrega",
+  delivery_fee: "Preço da entrega",
   availability_start: "Início da disponibilidade",
   availability_end: "Fim da disponibilidade",
   is_organic: "Biológico",
@@ -76,8 +79,8 @@ const FIELD_LABELS: Record<string, string> = {
 
 const DELIVERY_LABELS: Record<string, string> = {
   pickup: "Levantamento",
-  shipping: "Envio",
-  both: "Levantamento ou envio",
+  shipping: "Entrega ao domicílio",
+  both: "Levantamento ou entrega",
 };
 
 const formatDateTime = (iso: string) =>

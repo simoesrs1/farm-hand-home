@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle, ShieldAlert, MapPin, Truck } from "lucide-react";
+import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle, ShieldAlert, MapPin, Truck, Store } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -38,10 +38,30 @@ import {
   pickupSlots,
   type PickupWindow,
 } from "@/lib/pickup-hours";
-import { computeDeliveryFee, type DeliveryFeeProduct } from "@/lib/delivery-fee";
+import { computeDeliveryFee } from "@/lib/delivery-fee";
+import {
+  earliestDelivery,
+  farmerDelivers,
+  FULFILLMENT_LABELS,
+  fulfillmentOptions,
+  isWithinDeliveryRadius,
+  preparationDays,
+  type DeliveryMode,
+  type Fulfillment,
+} from "@/lib/fulfillment";
+import type { LatLng } from "@/lib/geo";
 import { CalendarClock } from "lucide-react";
 import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
 import { formatEuro } from "@/lib/format";
+
+/** Campos de entrega de cada produto do carrinho, lidos da base de dados. */
+interface CartProduct {
+  id: string;
+  delivery_mode: DeliveryMode;
+  delivery_tracking: boolean;
+  delivery_fee: number | null;
+  shipping_days: number | null;
+}
 
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
@@ -53,39 +73,40 @@ const Cart = () => {
   const [safetyOpen, setSafetyOpen] = useState(false);
   const [pickupWindows, setPickupWindows] = useState<PickupWindow[]>([]);
   const [pickupNote, setPickupNote] = useState<string>("");
+  const [deliveryWindows, setDeliveryWindows] = useState<PickupWindow[]>([]);
+  const [deliveryNote, setDeliveryNote] = useState<string>("");
+  const [deliveryRadiusKm, setDeliveryRadiusKm] = useState<number | null>(null);
+  const [farmPoint, setFarmPoint] = useState<LatLng | null>(null);
+  const [farmerLoaded, setFarmerLoaded] = useState(false);
   const [slot, setSlot] = useState<string>("");
-  const [needsDelivery, setNeedsDelivery] = useState(false);
+  const [cartProducts, setCartProducts] = useState<CartProduct[] | null>(null);
+  // Escolha do cliente; começa pela preferência indicada na página do artigo.
+  const [chosenFulfillment, setChosenFulfillment] = useState<Fulfillment | null>(() =>
+    scopedStorage.get<Fulfillment>(STORAGE_KEYS.fulfillment),
+  );
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryPoint, setDeliveryPoint] = useState<{ lat: number; lng: number } | null>(null);
   const [mapOpen, setMapOpen] = useState(false);
-  const [trackingAvailable, setTrackingAvailable] = useState(false);
   const [withTracking, setWithTracking] = useState(false);
-  const [deliveryFeeProducts, setDeliveryFeeProducts] = useState<DeliveryFeeProduct[]>([]);
   const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number | null>(null);
 
-  // Sabe logo ao abrir o carrinho se há produtos com entrega ao domicílio (e
-  // com acompanhamento), para mostrar a secção certa antes de pagar.
+  // Formas de entrega de cada produto, para mostrar as opções certas antes de pagar.
   const itemIdsKey = useMemo(() => [...new Set(items.map((i) => i.id))].sort().join(","), [items]);
   useEffect(() => {
     const ids = itemIdsKey ? itemIdsKey.split(",") : [];
     if (ids.length === 0) {
-      setNeedsDelivery(false);
-      setTrackingAvailable(false);
-      setDeliveryFeeProducts([]);
+      setCartProducts([]);
       return;
     }
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from("products")
-        .select("id, local_delivery, delivery_tracking, delivery_fee")
+        .select("id, delivery_mode, delivery_tracking, delivery_fee, shipping_days")
         .eq("active", true)
         .in("id", ids);
       if (cancelled) return;
-      const delivery = (data ?? []).filter((p) => p.local_delivery === true);
-      setNeedsDelivery(delivery.length > 0);
-      setTrackingAvailable(delivery.some((p) => p.delivery_tracking === true));
-      setDeliveryFeeProducts(delivery);
+      setCartProducts(data ?? []);
     })();
     return () => {
       cancelled = true;
@@ -133,12 +154,17 @@ const Cart = () => {
 
   const farmerId = grouped.length === 1 ? grouped[0].farmerId : null;
 
-  // Load the farmer's "porta aberta" windows so the client can only schedule
-  // the pickup inside a real availability slot.
+  // Horários de porta aberta e de entregas, raio e localização da quinta: o
+  // cliente só pode agendar dentro de horários reais do agricultor.
   useEffect(() => {
+    setFarmerLoaded(false);
     if (!farmerId) {
       setPickupWindows([]);
       setPickupNote("");
+      setDeliveryWindows([]);
+      setDeliveryNote("");
+      setDeliveryRadiusKm(null);
+      setFarmPoint(null);
       setSlot("");
       setFreeDeliveryThreshold(null);
       return;
@@ -147,29 +173,73 @@ const Cart = () => {
     (async () => {
       const { data } = await supabase
         .from("public_farmer_profiles")
-        .select("pickup_hours, pickup_hours_note, free_delivery_threshold")
+        .select(
+          "pickup_hours, pickup_hours_note, free_delivery_threshold, delivery_hours, delivery_note, delivery_radius_km, pickup_lat, pickup_lng",
+        )
         .eq("id", farmerId)
         .maybeSingle();
       if (cancelled) return;
-      setPickupWindows(parsePickupHours((data as any)?.pickup_hours));
-      setPickupNote(((data as any)?.pickup_hours_note as string) ?? "");
+      setPickupWindows(parsePickupHours(data?.pickup_hours));
+      setPickupNote(data?.pickup_hours_note ?? "");
+      setDeliveryWindows(parsePickupHours(data?.delivery_hours));
+      setDeliveryNote(data?.delivery_note ?? "");
+      setDeliveryRadiusKm(data?.delivery_radius_km != null ? Number(data.delivery_radius_km) : null);
+      setFarmPoint(
+        data?.pickup_lat != null && data?.pickup_lng != null
+          ? { lat: Number(data.pickup_lat), lng: Number(data.pickup_lng) }
+          : null,
+      );
       setFreeDeliveryThreshold(data?.free_delivery_threshold ?? null);
       setSlot("");
+      setFarmerLoaded(true);
     })();
     return () => {
       cancelled = true;
     };
   }, [farmerId]);
 
+  // Levantar ou receber em casa: só as opções comuns a todos os produtos.
+  const delivers = farmerDelivers(deliveryRadiusKm, farmPoint);
+  const options = useMemo(
+    () => (cartProducts ? fulfillmentOptions(cartProducts.map((p) => p.delivery_mode), { delivers }) : []),
+    [cartProducts, delivers],
+  );
+  const fulfillment: Fulfillment | null =
+    chosenFulfillment && options.includes(chosenFulfillment) ? chosenFulfillment : options[0] ?? null;
+  const isDelivery = fulfillment === "delivery";
+  const noCommonOption = grouped.length === 1 && cartProducts !== null && farmerLoaded && options.length === 0;
+  const chooseFulfillment = (value: Fulfillment) => {
+    setChosenFulfillment(value);
+    scopedStorage.set(STORAGE_KEYS.fulfillment, value);
+  };
+
   // Valor indicativo: o preço cobrado é calculado de novo no create-order.
   const deliveryFee = useMemo(
-    () => (needsDelivery ? computeDeliveryFee(deliveryFeeProducts, totalPrice, freeDeliveryThreshold) : null),
-    [needsDelivery, deliveryFeeProducts, totalPrice, freeDeliveryThreshold],
+    () => (isDelivery ? computeDeliveryFee(cartProducts ?? [], totalPrice, freeDeliveryThreshold) : null),
+    [isDelivery, cartProducts, totalPrice, freeDeliveryThreshold],
   );
   const orderTotal = totalPrice + (deliveryFee?.fee ?? 0);
+  const trackingAvailable = isDelivery && (cartProducts ?? []).some((p) => p.delivery_tracking);
+  const outOfRadius =
+    isDelivery &&
+    deliveryPoint != null &&
+    farmPoint != null &&
+    deliveryRadiusKm != null &&
+    !isWithinDeliveryRadius(farmPoint, deliveryPoint, deliveryRadiusKm);
 
-  const slots = useMemo(() => pickupSlots(pickupWindows), [pickupWindows]);
-  const needsSchedule = pickupWindows.length > 0;
+  // Entrega: horário de entregas, a partir do prazo de preparação dos produtos.
+  const prepDays = useMemo(() => preparationDays(cartProducts ?? []), [cartProducts]);
+  const activeWindows = isDelivery ? deliveryWindows : pickupWindows;
+  const slots = useMemo(
+    () => pickupSlots(activeWindows, { earliest: isDelivery ? earliestDelivery(prepDays) : undefined }),
+    [activeWindows, isDelivery, prepDays],
+  );
+  const needsSchedule = activeWindows.length > 0;
+
+  // Ao trocar entre levantamento e entrega, o horário escolhido pode deixar de valer.
+  useEffect(() => {
+    if (slot && !slots.some((d) => d.toISOString() === slot)) setSlot("");
+  }, [slots, slot]);
 
   // Pre-fill with the slot the client already picked on the product page.
   useEffect(() => {
@@ -192,12 +262,51 @@ const Cart = () => {
       });
       return;
     }
-    if (needsSchedule && !slot) {
+    if (!fulfillment) {
       toast({
-        title: "Escolha o horário de levantamento",
-        description: "Só é possível agendar dentro do horário de porta aberta do agricultor.",
+        title: "Sem forma de entrega em comum",
+        description: "Estes produtos não podem ser levantados nem entregues juntos. Finalize-os em encomendas separadas.",
         variant: "destructive",
       });
+      return;
+    }
+    if (needsSchedule && !slot) {
+      toast({
+        title: isDelivery ? "Escolha o horário de entrega" : "Escolha o horário de levantamento",
+        description: isDelivery
+          ? "Só é possível agendar dentro do horário de entregas do agricultor."
+          : "Só é possível agendar dentro do horário de porta aberta do agricultor.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (isDelivery) {
+      if (deliveryAddress.trim().length < 5) {
+        toast({
+          title: "Morada de entrega em falta",
+          description: "Indique a morada onde quer receber a encomenda.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!deliveryPoint) {
+        toast({
+          title: "Ponto de entrega em falta",
+          description: "Marque no mapa o ponto exato onde o agricultor deve entregar.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (outOfRadius) {
+        toast({
+          title: "Fora da zona de entrega",
+          description: `O agricultor só entrega até ${deliveryRadiusKm} km da quinta. Escolha outro ponto ou o levantamento.`,
+          variant: "destructive",
+        });
+        return;
+      }
+      // O aviso de segurança é sobre deslocações à quinta: na entrega não se aplica.
+      handleCheckout();
       return;
     }
 
@@ -218,37 +327,16 @@ const Cart = () => {
       const ids = [...new Set(items.map((i) => i.id))];
       const { data: valid, error: checkErr } = await supabase
         .from("products")
-        .select("id, stock_quantity, local_delivery, delivery_tracking")
+        .select("id, stock_quantity, delivery_mode, delivery_tracking, delivery_fee, shipping_days")
         .eq("active", true)
         .in("id", ids);
       if (checkErr) {
-        toast({ title: "Não foi possível pagar", description: "Erro ao validar o carrinho. Tenta novamente.", variant: "destructive" });
+        toast({ title: "Não foi possível pagar", description: "Erro ao validar o carrinho. Tente novamente.", variant: "destructive" });
         return;
       }
-      const availableById = new Map((valid ?? []).map((p) => [p.id, p.stock_quantity ?? 0]));
-      const deliveryProducts = (valid ?? []).filter((p) => p.local_delivery === true);
-      const hasDelivery = deliveryProducts.length > 0;
-      const hasTracking = deliveryProducts.some((p) => p.delivery_tracking === true);
-      setNeedsDelivery(hasDelivery);
-      setTrackingAvailable(hasTracking);
-      if (hasDelivery) {
-        if (deliveryAddress.trim().length < 5) {
-          toast({
-            title: "Morada de entrega em falta",
-            description: "Este carrinho tem produtos com entrega ao domicílio. Indique a morada de entrega.",
-            variant: "destructive",
-          });
-          return;
-        }
-        if (!deliveryPoint) {
-          toast({
-            title: "Ponto de entrega em falta",
-            description: "Marque no mapa o ponto exato onde o agricultor deve entregar.",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
+      const fresh = valid ?? [];
+      setCartProducts(fresh);
+      const availableById = new Map(fresh.map((p) => [p.id, p.stock_quantity ?? 0]));
       const unavailable = items.filter((i) => !availableById.has(i.id));
       const overStock = items.filter((i) => {
         const avail = availableById.get(i.id);
@@ -261,8 +349,18 @@ const Cart = () => {
         toast({
           title: "Carrinho atualizado",
           description: unavailable.length > 0
-            ? `Alguns produtos já não estão disponíveis e foram removidos (${names}). Confirma o carrinho e tenta novamente.`
-            : `Ajustámos as quantidades ao stock disponível (${names}). Confirma o carrinho e tenta novamente.`,
+            ? `Alguns produtos já não estão disponíveis e foram removidos (${names}). Confirme o carrinho e tente novamente.`
+            : `Ajustámos as quantidades ao stock disponível (${names}). Confirme o carrinho e tente novamente.`,
+          variant: "destructive",
+        });
+        return;
+      }
+      // As formas de entrega podem ter mudado desde que o carrinho foi aberto.
+      const freshOptions = fulfillmentOptions(fresh.map((p) => p.delivery_mode), { delivers });
+      if (!fulfillment || !freshOptions.includes(fulfillment)) {
+        toast({
+          title: "Formas de entrega atualizadas",
+          description: "As opções de entrega destes produtos mudaram. Confirme a escolha e tente novamente.",
           variant: "destructive",
         });
         return;
@@ -273,13 +371,12 @@ const Cart = () => {
           product_id: i.id,
           quantity: i.quantity,
         })),
+        fulfillment,
         scheduled_pickup_at: slot || null,
-        // Usa os valores acabados de validar, não o estado: setNeedsDelivery só
-        // fica visível no próximo render.
-        delivery_address: hasDelivery ? deliveryAddress.trim() : null,
-        delivery_lat: hasDelivery ? deliveryPoint?.lat ?? null : null,
-        delivery_lng: hasDelivery ? deliveryPoint?.lng ?? null : null,
-        delivery_tracking: hasDelivery && hasTracking && withTracking,
+        delivery_address: isDelivery ? deliveryAddress.trim() : null,
+        delivery_lat: isDelivery ? deliveryPoint?.lat ?? null : null,
+        delivery_lng: isDelivery ? deliveryPoint?.lng ?? null : null,
+        delivery_tracking: isDelivery && fresh.some((p) => p.delivery_tracking) && withTracking,
       };
 
       const { data, error } = await supabase.functions.invoke("create-order", { body: payload });
@@ -308,7 +405,12 @@ const Cart = () => {
       // Decrement stock for each purchased line so it reflects everywhere
       consume(items.map((i) => ({ id: i.id, quantity: i.quantity })));
       clearCart();
-      toast({ title: "Pagamento simulado com sucesso!", description: "A tua encomenda está pronta para levantar." });
+      toast({
+        title: "Pagamento simulado com sucesso!",
+        description: isDelivery
+          ? "A sua encomenda foi criada. O agricultor vai entregá-la na morada indicada."
+          : "A sua encomenda está pronta para levantar.",
+      });
       navigate("/encomendas");
     } finally {
       setPaying(false);
@@ -463,12 +565,12 @@ const Cart = () => {
                     </p>
                   )}
                 </>
-              ) : (
+              ) : fulfillment === "pickup" ? (
                 <div className="flex justify-between text-muted-foreground">
                   <span>Levantamento</span>
                   <span>Na quinta com QR</span>
                 </div>
-              )}
+              ) : null}
             </div>
             <div className="mt-4 flex justify-between border-t border-border pt-4">
               <span className="font-semibold text-foreground">Total</span>
@@ -477,107 +579,167 @@ const Cart = () => {
               </span>
             </div>
 
-            {/* Scheduling — restricted to the farmer's open-door windows */}
             {grouped.length > 1 ? (
               <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
                 O carrinho tem produtos de vários agricultores. Finalize um agricultor de cada vez
-                para poder agendar o levantamento.
+                para poder agendar o levantamento ou a entrega.
               </p>
-            ) : needsSchedule ? (
-              <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <CalendarClock className="h-4 w-4 text-primary" />
-                  Agendar levantamento
-                </div>
-                <Select value={slot} onValueChange={setSlot}>
-                  <SelectTrigger aria-label="Horário de levantamento">
-                    <SelectValue placeholder="Escolher data e hora" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    {slots.map((d) => (
-                      <SelectItem key={d.toISOString()} value={d.toISOString()}>
-                        {formatSlotDate(d)} · {formatSlotTime(d)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-[11px] text-muted-foreground">
-                  Apenas datas e horas dentro da porta aberta do agricultor estão disponíveis.
-                  {pickupNote ? ` ${pickupNote}` : ""}
-                </p>
-              </div>
+            ) : noCommonOption ? (
+              <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-foreground">
+                Não há uma forma de entrega comum a todos estes produtos: uns só podem ser levantados
+                na quinta e outros só entregues em casa, ou o agricultor ainda não configurou as
+                entregas. Remova alguns produtos ou finalize-os em encomendas separadas.
+              </p>
             ) : (
-              <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                Este agricultor ainda não publicou horários de porta aberta. Combine o levantamento
-                pelo chat da encomenda.
-              </p>
-            )}
+              <>
+                {/* Levantar ou receber em casa, quando os produtos permitem as duas. */}
+                {options.length > 1 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm font-medium text-foreground">Como quer receber a encomenda?</p>
+                    <RadioGroup
+                      value={fulfillment ?? undefined}
+                      onValueChange={(v) => chooseFulfillment(v as Fulfillment)}
+                      className="grid grid-cols-2 gap-2"
+                    >
+                      {options.map((o) => (
+                        <label
+                          key={o}
+                          htmlFor={`fulfillment-${o}`}
+                          className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm transition-colors ${
+                            fulfillment === o ? "border-primary bg-primary/10" : "border-border hover:bg-secondary/50"
+                          }`}
+                        >
+                          <RadioGroupItem value={o} id={`fulfillment-${o}`} className="sr-only" />
+                          {o === "delivery" ? (
+                            <Truck className="h-4 w-4 shrink-0 text-primary" />
+                          ) : (
+                            <Store className="h-4 w-4 shrink-0 text-primary" />
+                          )}
+                          <span className="font-medium text-foreground">{FULFILLMENT_LABELS[o]}</span>
+                        </label>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                )}
 
-            {/* Home delivery — address + exact map point, required when the
-                cart has products the farmer delivers himself. */}
-            {needsDelivery && (
-            <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Truck className="h-4 w-4 text-primary" />
-                Entrega ao domicílio
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                O carrinho tem produtos com entrega em mão pelo agricultor. Indique a morada e
-                marque o ponto exato no mapa.
-              </p>
-              <Label htmlFor="delivery-address" className="text-xs">Morada de entrega</Label>
-              <Input
-                id="delivery-address"
-                value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)}
-                placeholder="Rua, n.º, código postal, localidade"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setMapOpen(true)}
-              >
-                <MapPin className="h-4 w-4" />
-                {deliveryPoint ? "Ponto marcado — alterar" : "Marcar ponto no mapa"}
-              </Button>
-              {deliveryPoint && (
-                <p className="text-[11px] text-muted-foreground">
-                  Ponto: {deliveryPoint.lat.toFixed(5)}, {deliveryPoint.lng.toFixed(5)}
-                </p>
-              )}
-              {trackingAvailable && (
-                <RadioGroup
-                  value={withTracking ? "with" : "without"}
-                  onValueChange={(v) => setWithTracking(v === "with")}
-                  className="gap-2 pt-2"
-                >
-                  <label htmlFor="tracking-with" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
-                    <RadioGroupItem value="with" id="tracking-with" className="mt-0.5" />
-                    <div>
-                      <div className="text-sm font-medium">Com acompanhamento da entrega</div>
-                      <p className="text-[11px] text-muted-foreground">
-                        Siga a encomenda passo a passo: aceite, embalada, expedida da quinta, em trânsito e entregue. Sem custo adicional.
-                      </p>
+                {/* Agendamento: porta aberta (levantamento) ou horário de entregas. */}
+                {fulfillment && (needsSchedule ? (
+                  <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <CalendarClock className="h-4 w-4 text-primary" />
+                      {isDelivery ? "Agendar entrega" : "Agendar levantamento"}
                     </div>
-                  </label>
-                  <label htmlFor="tracking-without" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
-                    <RadioGroupItem value="without" id="tracking-without" className="mt-0.5" />
-                    <div className="text-sm font-medium">Sem acompanhamento</div>
-                  </label>
-                </RadioGroup>
-              )}
-            </div>
+                    <Select value={slot} onValueChange={setSlot}>
+                      <SelectTrigger aria-label={isDelivery ? "Horário de entrega" : "Horário de levantamento"}>
+                        <SelectValue placeholder="Escolher data e hora" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {slots.map((d) => (
+                          <SelectItem key={d.toISOString()} value={d.toISOString()}>
+                            {formatSlotDate(d)} · {formatSlotTime(d)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground">
+                      {isDelivery
+                        ? `Apenas datas e horas dentro do horário de entregas do agricultor${
+                            prepDays > 0 ? `, a partir de ${prepDays} dia(s) depois da compra` : ""
+                          }.${deliveryNote ? ` ${deliveryNote}` : ""}`
+                        : `Apenas datas e horas dentro da porta aberta do agricultor estão disponíveis.${
+                            pickupNote ? ` ${pickupNote}` : ""
+                          }`}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                    {isDelivery
+                      ? `Este agricultor ainda não publicou horários de entrega.${
+                          prepDays > 0 ? ` A entrega fica prevista para daqui a ${prepDays} dia(s).` : ""
+                        } Combine os detalhes pelo chat da encomenda.`
+                      : "Este agricultor ainda não publicou horários de porta aberta. Combine o levantamento pelo chat da encomenda."}
+                  </p>
+                ))}
+
+                {/* Entrega ao domicílio: morada e ponto exato no mapa, dentro do raio do agricultor. */}
+                {isDelivery && (
+                  <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <Truck className="h-4 w-4 text-primary" />
+                      Entrega ao domicílio
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      O agricultor entrega em mão
+                      {deliveryRadiusKm != null ? ` até ${deliveryRadiusKm} km da quinta` : ""}. Indique a
+                      morada e marque o ponto exato no mapa.
+                    </p>
+                    <Label htmlFor="delivery-address" className="text-xs">Morada de entrega</Label>
+                    <Input
+                      id="delivery-address"
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      placeholder="Rua, n.º, código postal, localidade"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => setMapOpen(true)}
+                    >
+                      <MapPin className="h-4 w-4" />
+                      {deliveryPoint ? "Ponto marcado — alterar" : "Marcar ponto no mapa"}
+                    </Button>
+                    {deliveryPoint && (
+                      <p className="text-[11px] text-muted-foreground">
+                        Ponto: {deliveryPoint.lat.toFixed(5)}, {deliveryPoint.lng.toFixed(5)}
+                      </p>
+                    )}
+                    {outOfRadius && (
+                      <p className="text-[11px] font-medium text-destructive">
+                        Este ponto está fora da zona de entrega do agricultor (até {deliveryRadiusKm} km da quinta).
+                      </p>
+                    )}
+                    {trackingAvailable && (
+                      <RadioGroup
+                        value={withTracking ? "with" : "without"}
+                        onValueChange={(v) => setWithTracking(v === "with")}
+                        className="gap-2 pt-2"
+                      >
+                        <label htmlFor="tracking-with" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
+                          <RadioGroupItem value="with" id="tracking-with" className="mt-0.5" />
+                          <div>
+                            <div className="text-sm font-medium">Com acompanhamento da entrega</div>
+                            <p className="text-[11px] text-muted-foreground">
+                              Siga a encomenda passo a passo: aceite, embalada, expedida da quinta, em trânsito e entregue. Sem custo adicional.
+                            </p>
+                          </div>
+                        </label>
+                        <label htmlFor="tracking-without" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
+                          <RadioGroupItem value="without" id="tracking-without" className="mt-0.5" />
+                          <div className="text-sm font-medium">Sem acompanhamento</div>
+                        </label>
+                      </RadioGroup>
+                    )}
+                  </div>
+                )}
+              </>
             )}
 
-            <div className="mt-4 flex gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs text-foreground">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
-              <p>
-                Se não levantar a encomenda no prazo indicado, <strong>perderá 100% do valor pago</strong>.
-              </p>
-            </div>
-            <Button onClick={onCheckoutClick} disabled={paying} className="mt-6 w-full gap-2" size="lg">
+            {fulfillment === "pickup" && (
+              <div className="mt-4 flex gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs text-foreground">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
+                <p>
+                  Se não levantar a encomenda no prazo indicado, <strong>perderá 100% do valor pago</strong>.
+                </p>
+              </div>
+            )}
+            <Button
+              onClick={onCheckoutClick}
+              disabled={paying || noCommonOption}
+              className="mt-6 w-full gap-2"
+              size="lg"
+            >
               <CreditCard className="h-4 w-4" />
               {paying ? "A processar…" : "Pagar (simulado)"}
             </Button>
