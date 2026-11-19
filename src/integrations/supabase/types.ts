@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_copy_usage: {
+        Row: {
+          created_at: string
+          farmer_id: string
+          id: string
+          input_tokens: number
+          kind: string
+          output_tokens: number
+        }
+        Insert: {
+          created_at?: string
+          farmer_id: string
+          id?: string
+          input_tokens?: number
+          kind: string
+          output_tokens?: number
+        }
+        Update: {
+          created_at?: string
+          farmer_id?: string
+          id?: string
+          input_tokens?: number
+          kind?: string
+          output_tokens?: number
+        }
+        Relationships: []
+      }
       farmer_activity: {
         Row: {
           components: Json

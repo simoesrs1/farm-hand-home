@@ -18,6 +18,7 @@ import type { PricingMode } from "@/lib/experience-pricing";
 import { uploadMedia } from "@/lib/media-upload";
 import GiftListEditor, { type GiftDraft } from "@/components/GiftListEditor";
 import MediaListEditor from "@/components/MediaListEditor";
+import AiDescriptionAssistant from "@/components/AiDescriptionAssistant";
 
 export type ExperienceRow = Tables<"farm_experiences">;
 
@@ -156,6 +157,20 @@ const ExperienceForm = ({ farmerId, experience, gifts: initialGifts = [], onSave
             value={description}
             onChange={(e) => setDescription(e.target.value.slice(0, 5000))}
             placeholder="O que vão fazer, de que vão falar, o que devem trazer..."
+          />
+          <AiDescriptionAssistant
+            kind="experience"
+            draft={description}
+            facts={{
+              Título: title,
+              "Duração (minutos)": duration,
+              "Número de pessoas": `${minPeople} a ${maxPeople}`,
+              "Preço por": pricingMode === "per_person" ? "pessoa" : "grupo",
+              "Inclui brinde da quinta": gifts.length > 0,
+            }}
+            files={files}
+            storedPaths={existingMedia}
+            onAccept={(text) => setDescription(text.slice(0, 5000))}
           />
         </div>
         <div className="space-y-2">

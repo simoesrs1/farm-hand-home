@@ -21,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import ProductHistoryDialog from "@/components/ProductHistoryDialog";
+import AiDescriptionAssistant from "@/components/AiDescriptionAssistant";
 import DeliveryModeFields from "@/components/DeliveryModeFields";
 import DeliveryScopeDialog, { type DeliveryScope } from "@/components/DeliveryScopeDialog";
 import {
@@ -72,6 +73,8 @@ const EditProduct = () => {
   const [availabilityEnd, setAvailabilityEnd] = useState("");
   const [isOrganic, setIsOrganic] = useState(false);
   const [isLactoseFree, setIsLactoseFree] = useState(false);
+  // Fotografias já guardadas, para a IA escrever a descrição.
+  const [mediaPaths, setMediaPaths] = useState<string[]>([]);
   const [discount, setDiscount] = useState(0);
   const [deliveryMode, setDeliveryMode] = useState<DeliveryModeValue>("pickup");
   const [deliveryTracking, setDeliveryTracking] = useState(false);
@@ -114,6 +117,7 @@ const EditProduct = () => {
       const p = data as any;
       setName(p.name ?? "");
       setDescription(p.description ?? "");
+      setMediaPaths(p.media_urls ?? []);
       setCategory(p.category ?? "");
       setUnit(p.unit ?? "");
       setFarmerPrice(String(p.farmer_price ?? ""));
@@ -354,6 +358,19 @@ const EditProduct = () => {
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+            />
+            <AiDescriptionAssistant
+              kind="product"
+              draft={description}
+              facts={{
+                Nome: name,
+                Categoria: category,
+                "Unidade de venda": unit,
+                Biológico: isOrganic,
+                "Sem lactose": isLactoseFree,
+              }}
+              storedPaths={mediaPaths}
+              onAccept={setDescription}
             />
           </div>
         </Card>

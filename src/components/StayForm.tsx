@@ -18,6 +18,7 @@ import { uploadMedia } from "@/lib/media-upload";
 import { REGISTRATION_LABELS, type BlockedRange, type StayPricingMode } from "@/lib/stay-pricing";
 import GiftListEditor, { type GiftDraft } from "@/components/GiftListEditor";
 import MediaListEditor from "@/components/MediaListEditor";
+import AiDescriptionAssistant from "@/components/AiDescriptionAssistant";
 
 export type StayRow = Tables<"farm_stays">;
 
@@ -176,6 +177,23 @@ const StayForm = ({ farmerId, stay, gifts: initialGifts = [], blocked: initialBl
             value={description}
             onChange={(e) => setDescription(e.target.value.slice(0, 5000))}
             placeholder="O quarto, as comodidades, o pequeno-almoço, o que há para fazer na quinta..."
+          />
+          <AiDescriptionAssistant
+            kind="stay"
+            draft={description}
+            facts={{
+              Título: title,
+              "Quartos iguais deste tipo": unitsCount,
+              "Lotação por quarto": capacity,
+              "Mínimo de noites": minNights,
+              "Entrada a partir das": checkInTime,
+              "Saída até às": checkOutTime,
+              Registo: REGISTRATION_LABELS[registrationType] ?? "",
+              "Inclui brinde da quinta": gifts.length > 0,
+            }}
+            files={files}
+            storedPaths={existingMedia}
+            onAccept={(text) => setDescription(text.slice(0, 5000))}
           />
         </div>
         <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">

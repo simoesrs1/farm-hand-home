@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Image as ImageIcon, Loader2, Sparkles, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/PageHeader";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { FunctionsHttpError } from "@supabase/supabase-js";
+import AiDescriptionAssistant from "@/components/AiDescriptionAssistant";
 import { toast } from "@/hooks/use-toast";
 import { categories } from "@/data/categories";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -76,62 +76,6 @@ const NewProduct = () => {
   const [availabilityEnd, setAvailabilityEnd] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [generating, setGenerating] = useState(false);
-
-  const fileToDataUrl = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-
-  const handleGenerateDescription = async () => {
-    if (!name.trim() && files.length === 0) {
-      toast({ title: "Adicione o nome ou uma fotografia primeiro", variant: "destructive" });
-      return;
-    }
-    setGenerating(true);
-    try {
-      const images = await Promise.all(
-        files.filter((f) => f.type.startsWith("image/") && f.size < 4_000_000).slice(0, 3).map(fileToDataUrl)
-      );
-      const { data, error } = await supabase.functions.invoke("generate-product-description", {
-        body: {
-          name,
-          category,
-          unit,
-          isOrganic,
-          isLactoseFree,
-          modifications: hasModifications ? modificationsDescription : "",
-          farmName: (profile as any)?.full_name ?? "",
-          images,
-        },
-      });
-      if (error) {
-        // Numa resposta não-2xx o supabase-js dá uma mensagem genérica; a razão real
-        // ({ error: "..." }) está no corpo da resposta, em error.context (como no Cart.tsx).
-        let msg = error.message;
-        if (error instanceof FunctionsHttpError) {
-          try {
-            const body = await error.context.json();
-            if (body?.error) msg = body.error;
-          } catch {
-            // corpo não é JSON: fica a mensagem genérica
-          }
-        }
-        throw new Error(msg);
-      }
-      if (data?.error) throw new Error(data.error);
-      if (!data?.description) throw new Error("Não foi possível gerar a descrição.");
-      setDescription(data.description);
-      toast({ title: "Descrição gerada", description: "Pode editar o texto antes de publicar." });
-    } catch (err: any) {
-      toast({ title: "Erro a gerar descrição", description: err.message, variant: "destructive" });
-    } finally {
-      setGenerating(false);
-    }
-  };
 
 
 
@@ -470,26 +414,27 @@ const NewProduct = () => {
             </select>
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="description">Descrição</Label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleGenerateDescription}
-                disabled={generating}
-                className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
-              >
-                {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                {generating ? "A escrever..." : "Escrever com IA"}
-              </Button>
-            </div>
+            <Label htmlFor="description">Descrição</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
               placeholder="Conte mais sobre o produto, origem, sabor, como é cultivado..."
+            />
+            <AiDescriptionAssistant
+              kind="product"
+              draft={description}
+              facts={{
+                Nome: name,
+                Categoria: category,
+                "Unidade de venda": unit,
+                Biológico: isOrganic,
+                "Sem lactose": isLactoseFree,
+                Processamento: hasModifications ? modificationsDescription : "",
+              }}
+              files={files}
+              onAccept={setDescription}
             />
           </div>
         </Card>

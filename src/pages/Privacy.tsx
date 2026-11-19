@@ -241,6 +241,13 @@ const sections: LegalSection[] = [
             cálculo de percursos por estrada (openrouteservice, da HeiGIT gGmbH, Alemanha).
           </li>
           <li>
+            <strong>Descrições com IA:</strong> quando o Agricultor usa "Escrever com IA" num
+            produto, experiência ou alojamento, o texto que escreveu, os dados desse formulário e
+            até 3 fotografias são enviados à Anthropic (fornecedora do modelo Claude), apenas para
+            propor a descrição. Nada é enviado sem o Agricultor carregar no botão, e a proposta só
+            substitui o texto se o Agricultor a aceitar.
+          </li>
+          <li>
             <strong>Cálculo de percursos:</strong> quando o Agricultor organiza a rota das
             entregas ao domicílio, os pontos de entrega (coordenadas, sem nome nem morada) são
             enviados ao openrouteservice para calcular o percurso mais rápido por estrada.
