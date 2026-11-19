@@ -5,12 +5,18 @@
  */
 import { unitPriceFor } from "@/lib/experience-pricing";
 import { addDaysISO, weekdayOf } from "@/lib/experience-sessions";
+import i18n from "@/i18n";
 
 export type StayPricingMode = "per_room" | "per_person";
 
+/** Tipo de registo do alojamento, no idioma atual. */
 export const REGISTRATION_LABELS: Record<string, string> = {
-  AL: "Alojamento Local",
-  TER: "Turismo no Espaço Rural",
+  get AL() {
+    return i18n.t("common:registration.AL");
+  },
+  get TER() {
+    return i18n.t("common:registration.TER");
+  },
 };
 
 export interface BlockedRange {

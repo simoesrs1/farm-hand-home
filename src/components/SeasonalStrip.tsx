@@ -3,9 +3,11 @@ import { Link } from "react-router-dom";
 import { gsap, useGSAP } from "@/lib/animation";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { isInSeason, useHomeProducts, type HomeProduct } from "@/hooks/useHomeProducts";
-import { formatEuro } from "@/lib/format";
+import { formatDate, formatEuro } from "@/lib/format";
+import { useTranslation } from "react-i18next";
+import TranslatedText from "@/components/TranslatedText";
 
-const monthName = () => new Date().toLocaleDateString("pt-PT", { month: "long" });
+const monthName = () => formatDate(new Date(), { month: "long" });
 
 const StripItem = ({ p, hidden = false }: { p: HomeProduct; hidden?: boolean }) => (
   <Link
@@ -15,7 +17,7 @@ const StripItem = ({ p, hidden = false }: { p: HomeProduct; hidden?: boolean }) 
     className="flex shrink-0 items-center gap-3 rounded-full bg-background/70 py-1.5 pl-1.5 pr-4 text-highlight-foreground transition-colors hover:bg-background"
   >
     <img src={p.image} alt="" className="h-9 w-9 rounded-full object-cover" loading="lazy" />
-    <span className="whitespace-nowrap text-sm font-semibold">{p.name}</span>
+    <TranslatedText type="product" id={p.id} field="name" text={p.name} className="whitespace-nowrap text-sm font-semibold" />
     <span className="whitespace-nowrap font-mono text-sm tabular-nums">{formatEuro(p.price)}</span>
   </Link>
 );
@@ -31,6 +33,7 @@ const SeasonalStrip = () => {
   const reducedMotion = useReducedMotion();
   const scopeRef = useRef<HTMLElement>(null);
   const tweenRef = useRef<gsap.core.Tween | null>(null);
+  const { t } = useTranslation("home");
 
   useGSAP(
     () => {
@@ -54,12 +57,12 @@ const SeasonalStrip = () => {
   return (
     <section
       ref={scopeRef}
-      aria-label={`Produtos da época em ${monthName()}`}
+      aria-label={t("seasonal.aria", { month: monthName() })}
       className="border-b border-border bg-highlight text-highlight-foreground"
     >
       <div className="flex items-center gap-4 py-3">
         <p className="shrink-0 pl-[max(1.5rem,env(safe-area-inset-left))] font-display text-lg md:text-xl">
-          Da época · <span className="capitalize">{monthName()}</span>
+          {t("seasonal.title")} · <span className="capitalize">{monthName()}</span>
         </p>
         <div
           className={reducedMotion ? "min-w-0 flex-1 overflow-x-auto" : "min-w-0 flex-1 overflow-hidden"}

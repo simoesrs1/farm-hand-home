@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import AiDescriptionAssistant from "@/components/AiDescriptionAssistant";
 import { toast } from "@/hooks/use-toast";
-import { categories } from "@/data/categories";
+import { categories, categoryLabel } from "@/data/categories";
 import { Checkbox } from "@/components/ui/checkbox";
 import DeliveryModeFields from "@/components/DeliveryModeFields";
 import { formatEuro } from "@/lib/format";
@@ -26,20 +26,18 @@ import {
   type DeliveryModeValue,
   type DeliverySettings,
 } from "@/lib/delivery-defaults";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 const COMMISSION = 0.10;
 
 /** Taxas de IVA em Portugal continental. O agricultor escolhe a aplicável. */
-const VAT_OPTIONS = [
-  { value: 0, label: "Isento / não aplicável (0%)" },
-  { value: 6, label: "Reduzida — 6%" },
-  { value: 13, label: "Intermédia — 13%" },
-  { value: 23, label: "Normal — 23%" },
-];
+const VAT_OPTIONS = [0, 6, 13, 23] as const;
 
 const NewProduct = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { t } = useTranslation(["farmer", "common"]);
   const [farmerId, setFarmerId] = useState<string | null>(null);
   const [loadingFarmer, setLoadingFarmer] = useState(true);
 
@@ -95,7 +93,7 @@ const NewProduct = () => {
         .eq("user_id", user.id)
         .maybeSingle();
       if (error) {
-        toast({ title: "Erro a carregar perfil", description: error.message, variant: "destructive" });
+        toast({ title: i18n.t("farmer:productForm.profileError"), description: error.message, variant: "destructive" });
       }
       setFarmerId(data?.id ?? null);
       // Preenche o cartão "Entrega" com o padrão do agricultor, se existir.
@@ -144,26 +142,26 @@ const NewProduct = () => {
     e.preventDefault();
 
     if (!user || !farmerId) {
-      toast({ title: "Perfil de agricultor não encontrado", variant: "destructive" });
+      toast({ title: t("productForm.noFarmer"), variant: "destructive" });
       return;
     }
     if (!name.trim()) {
-      toast({ title: "Indique o nome do produto", variant: "destructive" });
+      toast({ title: t("productForm.errName"), variant: "destructive" });
       return;
     }
     if (farmerPriceNumber <= 0) {
-      toast({ title: "Defina um preço válido", variant: "destructive" });
+      toast({ title: t("productForm.errPrice"), variant: "destructive" });
       return;
     }
     const shippingDaysNum = shippingDays.trim() ? parseInt(shippingDays, 10) : 0;
     if (deliveryMode !== "pickup" && (!Number.isFinite(shippingDaysNum) || shippingDaysNum < 0)) {
-      toast({ title: "Indique um prazo de preparação válido", variant: "destructive" });
+      toast({ title: t("productForm.errPrepDays"), variant: "destructive" });
       return;
     }
     const feeNum = deliveryFee.trim() ? parseEuro(deliveryFee) : 0;
     const thresholdNum = freeThreshold.trim() ? parseEuro(freeThreshold) : null;
     if (feeNum === null || (freeThreshold.trim() && thresholdNum === null)) {
-      toast({ title: "Indique valores de entrega válidos", variant: "destructive" });
+      toast({ title: t("productForm.errDelivery"), variant: "destructive" });
       return;
     }
     const settings = normalizeDeliverySettings({
@@ -174,22 +172,22 @@ const NewProduct = () => {
     });
     const stockNum = parseFloat(stockQuantity);
     if (!Number.isFinite(stockNum) || stockNum <= 0) {
-      toast({ title: "Indique a quantidade disponível", variant: "destructive" });
+      toast({ title: t("productForm.errStock"), variant: "destructive" });
       return;
     }
     // Todo o stock à venda tem validade (lote criado abaixo com add_stock_batch).
     const todayLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     if (!stockExpiry || stockExpiry < todayLocal) {
-      toast({ title: "Indique a validade do stock (hoje ou mais tarde)", variant: "destructive" });
+      toast({ title: t("productForm.errExpiry"), variant: "destructive" });
       return;
     }
     const pickupEnabled = deliveryMode !== "shipping";
     if (pickupEnabled && (!availabilityStart || !availabilityEnd)) {
-      toast({ title: "Indique as datas de disponibilidade para levantamento", variant: "destructive" });
+      toast({ title: t("productForm.errAvailability"), variant: "destructive" });
       return;
     }
     if (pickupEnabled && availabilityEnd < availabilityStart) {
-      toast({ title: "A data de fim deve ser posterior à data de início", variant: "destructive" });
+      toast({ title: t("productForm.errDates"), variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -240,8 +238,8 @@ const NewProduct = () => {
       });
       if (stockErr) {
         toast({
-          title: "Produto criado, mas o stock não foi adicionado",
-          description: `${stockErr.message} Adicione o stock em Os meus produtos.`,
+          title: t("productForm.createdNoStock"),
+          description: `${stockErr.message} ${t("productForm.createdNoStockText")}`,
           variant: "destructive",
         });
         navigate("/agricultor/produtos");
@@ -263,7 +261,7 @@ const NewProduct = () => {
         const defaultsErr = await applyDeliveryDefaults(farmerId, defaultsUpdate);
         if (defaultsErr) {
           toast({
-            title: "Produto adicionado, mas o padrão de entrega não foi guardado",
+            title: t("productForm.addedNoDefault"),
             description: defaultsErr.message,
             variant: "destructive",
           });
@@ -272,10 +270,10 @@ const NewProduct = () => {
         }
       }
 
-      toast({ title: "Produto adicionado", description: "O artigo está agora disponível." });
+      toast({ title: t("productForm.added"), description: t("productForm.addedText") });
       navigate("/catalogo");
     } catch (err: any) {
-      toast({ title: "Erro a guardar produto", description: err.message, variant: "destructive" });
+      toast({ title: t("productForm.saveError"), description: err.message, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -292,8 +290,8 @@ const NewProduct = () => {
   if (!farmerId) {
     return (
       <div className="container py-16 text-center">
-        <p className="text-muted-foreground">Complete o registo de agricultor para adicionar produtos.</p>
-        <Button className="mt-4" onClick={() => navigate("/onboarding/agricultor")}>Completar perfil</Button>
+        <p className="text-muted-foreground">{t("productForm.completeProfile")}</p>
+        <Button className="mt-4" onClick={() => navigate("/onboarding/agricultor")}>{t("editors.completeProfile")}</Button>
       </div>
     );
   }
@@ -304,20 +302,20 @@ const NewProduct = () => {
         onClick={() => navigate(-1)}
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Voltar
+        <ArrowLeft className="h-4 w-4" /> {t("common:actions.back")}
       </button>
       <PageHeader
         className="mb-0"
-        eyebrow="Área do agricultor"
-        title="Adicionar produto"
-        description="Preencha os detalhes do artigo que pretende colocar à venda."
+        eyebrow={t("area")}
+        title={t("common:menu.farmer.addProduct")}
+        description={t("productForm.newDescription")}
       />
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         {/* Media */}
         <Card className="p-5">
-          <Label className="text-base">Fotografias e vídeos</Label>
-          <p className="text-xs text-muted-foreground mt-1">Até 8 ficheiros (imagens ou vídeos).</p>
+          <Label className="text-base">{t("productForm.media")}</Label>
+          <p className="text-xs text-muted-foreground mt-1">{t("productForm.mediaHint", { count: 8 })}</p>
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
             {files.map((file, i) => (
               <div key={i} className="relative aspect-square rounded-lg border border-border bg-muted overflow-hidden">
@@ -330,7 +328,7 @@ const NewProduct = () => {
                   type="button"
                   onClick={() => removeFile(i)}
                   className="absolute top-1 right-1 rounded-md bg-background/90 p-1 text-destructive hover:bg-background"
-                  aria-label="Remover"
+                  aria-label={t("common:actions.remove")}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -339,7 +337,7 @@ const NewProduct = () => {
             {files.length < 8 && (
               <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border text-muted-foreground hover:bg-secondary">
                 <Upload className="h-5 w-5" />
-                <span className="text-xs">Adicionar</span>
+                <span className="text-xs">{t("common:actions.add")}</span>
                 <input
                   type="file"
                   multiple
@@ -355,11 +353,11 @@ const NewProduct = () => {
         {/* Basic */}
         <Card className="p-5 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome do produto *</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Tomate cherry" />
+            <Label htmlFor="name">{t("productForm.name")}</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("productForm.namePlaceholder")} />
           </div>
           <div className="space-y-2">
-            <Label>Unidade de venda *</Label>
+            <Label>{t("productForm.unit")}</Label>
             <div className="flex flex-wrap items-center gap-2">
               <div className="inline-flex rounded-md border border-border overflow-hidden">
                 {(["Kg", "g", "L", "mL"] as const).map((m) => (
@@ -392,35 +390,35 @@ const NewProduct = () => {
                   step="1"
                   value={qtyCustom}
                   onChange={(e) => setQtyCustom(e.target.value)}
-                  placeholder="Nº exato"
+                  placeholder={t("products.exact")}
                   className="w-32"
                 />
               )}
-              <span className="text-sm text-muted-foreground">= {unit} por unidade</span>
+              <span className="text-sm text-muted-foreground">{t("productForm.perUnit", { unit })}</span>
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="category">Categoria *</Label>
+            <Label htmlFor="category">{t("productForm.category")}</Label>
             <select
               id="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
-              <option value="">Selecione uma categoria</option>
+              <option value="">{t("productForm.chooseCategory")}</option>
               {categories.map((c) => (
-                <option key={c.slug} value={c.name}>{c.name}</option>
+                <option key={c.slug} value={c.name}>{categoryLabel(c.slug)}</option>
               ))}
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+            <Label htmlFor="description">{t("productForm.description")}</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              placeholder="Conte mais sobre o produto, origem, sabor, como é cultivado..."
+              placeholder={t("productForm.descriptionPlaceholder")}
             />
             <AiDescriptionAssistant
               kind="product"
@@ -441,26 +439,26 @@ const NewProduct = () => {
 
         {/* Properties */}
         <Card className="p-5 space-y-4">
-          <h2 className="font-medium">Características</h2>
+          <h2 className="font-medium">{t("productForm.properties")}</h2>
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div>
-              <Label htmlFor="organic" className="cursor-pointer">Biológico</Label>
-              <p className="text-xs text-muted-foreground">Cultivado sem químicos sintéticos.</p>
+              <Label htmlFor="organic" className="cursor-pointer">{t("productForm.organic")}</Label>
+              <p className="text-xs text-muted-foreground">{t("productForm.organicHint")}</p>
             </div>
             <Switch id="organic" checked={isOrganic} onCheckedChange={setIsOrganic} />
           </div>
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div>
-              <Label htmlFor="lactose" className="cursor-pointer">Sem lactose</Label>
-              <p className="text-xs text-muted-foreground">Indique se o produto não contém lactose.</p>
+              <Label htmlFor="lactose" className="cursor-pointer">{t("productForm.lactoseFree")}</Label>
+              <p className="text-xs text-muted-foreground">{t("productForm.lactoseFreeHint")}</p>
             </div>
             <Switch id="lactose" checked={isLactoseFree} onCheckedChange={setIsLactoseFree} />
           </div>
           <div className="rounded-lg border border-border p-3">
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="modified" className="cursor-pointer">Foi alterado / processado</Label>
-                <p className="text-xs text-muted-foreground">Ex: pasteurizado, fermentado, seco.</p>
+                <Label htmlFor="modified" className="cursor-pointer">{t("productForm.modified")}</Label>
+                <p className="text-xs text-muted-foreground">{t("productForm.modifiedHint")}</p>
               </div>
               <Switch id="modified" checked={hasModifications} onCheckedChange={setHasModifications} />
             </div>
@@ -470,7 +468,7 @@ const NewProduct = () => {
                 rows={3}
                 value={modificationsDescription}
                 onChange={(e) => setModificationsDescription(e.target.value)}
-                placeholder="Descreva o que foi feito ao produto."
+                placeholder={t("productForm.modifiedPlaceholder")}
               />
             )}
           </div>
@@ -478,8 +476,8 @@ const NewProduct = () => {
 
         {/* Delivery */}
         <Card className="p-5 space-y-4">
-          <h2 className="font-medium">Entrega</h2>
-          <p className="text-xs text-muted-foreground">Escolha como o cliente pode receber o produto.</p>
+          <h2 className="font-medium">{t("productForm.delivery")}</h2>
+          <p className="text-xs text-muted-foreground">{t("productForm.deliveryHint")}</p>
           <DeliveryModeFields
             farmerId={farmerId}
             mode={deliveryMode}
@@ -501,11 +499,9 @@ const NewProduct = () => {
               className="mt-0.5"
             />
             <div>
-              <div className="text-sm font-medium">Guardar como padrão para todos os produtos</div>
+              <div className="text-sm font-medium">{t("productForm.saveDefault")}</div>
               <p className="text-xs text-muted-foreground">
-                {deliveryDefaults
-                  ? "Atualiza o padrão de entrega e aplica-o a todos os seus produtos. Os produtos novos vêm já preenchidos."
-                  : "Os produtos novos vêm já preenchidos com esta entrega, e os produtos que já tem passam a usá-la."}
+                {deliveryDefaults ? t("productForm.saveDefaultUpdate") : t("productForm.saveDefaultNew")}
               </p>
             </div>
           </label>
@@ -513,9 +509,9 @@ const NewProduct = () => {
 
         {/* Availability */}
         <Card className="p-5 space-y-4">
-          <h2 className="font-medium">Quantidade e disponibilidade</h2>
+          <h2 className="font-medium">{t("productForm.quantitySection")}</h2>
           <div className="space-y-2">
-            <Label htmlFor="stock-qty">Quantidade disponível (nº de produtos) *</Label>
+            <Label htmlFor="stock-qty">{t("productForm.stock")}</Label>
             <Input
               id="stock-qty"
               type="number"
@@ -523,12 +519,12 @@ const NewProduct = () => {
               step="0.01"
               value={stockQuantity}
               onChange={(e) => setStockQuantity(e.target.value)}
-              placeholder="Ex: 25"
+              placeholder={t("productForm.stockPlaceholder")}
             />
-            <p className="text-xs text-muted-foreground">Total disponível para venda desta publicação.</p>
+            <p className="text-xs text-muted-foreground">{t("productForm.stockHint")}</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="stock-expiry">Validade deste stock *</Label>
+            <Label htmlFor="stock-expiry">{t("productForm.stockExpiry")}</Label>
             <Input
               id="stock-expiry"
               type="date"
@@ -537,21 +533,20 @@ const NewProduct = () => {
               className="w-44"
             />
             <p className="text-xs text-muted-foreground">
-              Todo o stock à venda tem validade. Quando passar, as unidades saem do stock automaticamente.
+              {t("productForm.stockExpiryHint")}
             </p>
           </div>
           <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
             <div>
-              <Label htmlFor="choose-lot" className="text-sm font-medium">Escolher o lote em cada venda</Label>
+              <Label htmlFor="choose-lot" className="text-sm font-medium">{t("productForm.chooseLot")}</Label>
               <p className="text-xs text-muted-foreground">
-                Desligado, cada venda sai do lote com a validade mais próxima. Ligado, a venda só desce o stock
-                à venda e, depois de validar o QR code, indica de que lote saíram as unidades.
+                {t("productForm.chooseLotHint")}
               </p>
             </div>
             <Switch id="choose-lot" checked={chooseLotOnSale} onCheckedChange={setChooseLotOnSale} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="low-stock">Avisar quando o stock chegar a</Label>
+            <Label htmlFor="low-stock">{t("productForm.lowStock")}</Label>
             <Input
               id="low-stock"
               type="number"
@@ -559,16 +554,16 @@ const NewProduct = () => {
               step="1"
               value={lowStockThreshold}
               onChange={(e) => setLowStockThreshold(e.target.value)}
-              placeholder="Ex: 5"
+              placeholder={t("productForm.lowStockPlaceholder")}
             />
             <p className="text-xs text-muted-foreground">
-              Recebe uma notificação quando as unidades disponíveis descerem até este valor (e outra quando esgotar).
+              {t("productForm.lowStockHint")}
             </p>
           </div>
           {deliveryMode !== "shipping" && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="avail-start">Disponível a partir de *</Label>
+                <Label htmlFor="avail-start">{t("productForm.availFrom")}</Label>
                 <Input
                   id="avail-start"
                   type="date"
@@ -576,10 +571,10 @@ const NewProduct = () => {
                   onChange={(e) => setAvailabilityStart(e.target.value)}
                   max="2099-12-31"
                 />
-                <p className="text-xs text-muted-foreground">Primeiro dia em que o cliente pode levantar.</p>
+                <p className="text-xs text-muted-foreground">{t("productForm.availFromHint")}</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="avail-end">Disponível até *</Label>
+                <Label htmlFor="avail-end">{t("productForm.availTo")}</Label>
                 <Input
                   id="avail-end"
                   type="date"
@@ -588,7 +583,7 @@ const NewProduct = () => {
                   min={availabilityStart || undefined}
                   max="2099-12-31"
                 />
-                <p className="text-xs text-muted-foreground">Último dia disponível para levantamento.</p>
+                <p className="text-xs text-muted-foreground">{t("productForm.availToHint")}</p>
               </div>
             </div>
           )}
@@ -596,10 +591,10 @@ const NewProduct = () => {
 
         {/* Pricing */}
         <Card className="p-5 space-y-4">
-          <h2 className="font-medium">Preço</h2>
+          <h2 className="font-medium">{t("productForm.price")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="farmer-price">Quanto quer receber (€) *</Label>
+              <Label htmlFor="farmer-price">{t("productForm.farmerPrice")}</Label>
               <Input
                 id="farmer-price"
                 type="number"
@@ -609,44 +604,43 @@ const NewProduct = () => {
                 onChange={(e) => setFarmerPrice(e.target.value)}
                 placeholder="0.00"
               />
-              <p className="text-xs text-muted-foreground">Valor que recebe por {unit || "unidade"}.</p>
+              <p className="text-xs text-muted-foreground">{t("productForm.farmerPriceHint", { unit: unit || t("productForm.unitFallback") })}</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="vat">Taxa de IVA a cobrar *</Label>
+              <Label htmlFor="vat">{t("productForm.vat")}</Label>
               <select
                 id="vat"
                 value={vatRate}
                 onChange={(e) => setVatRate(parseInt(e.target.value, 10))}
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
-                {VAT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
+                {VAT_OPTIONS.map((rate) => (
+                  <option key={rate} value={rate}>
+                    {t(`productForm.vatOptions.${rate}`)}
                   </option>
                 ))}
               </select>
               <p className="text-xs text-muted-foreground">
-                Informe-se previamente sobre a taxa correta para este produto — a
-                responsabilidade fiscal é do agricultor.
+                {t("productForm.vatHint")}
               </p>
             </div>
             <div className="space-y-2">
-              <Label>Preço final para o cliente</Label>
+              <Label>{t("productForm.clientPrice")}</Label>
               <div className="flex h-10 items-center rounded-md border border-input bg-muted px-3 text-sm font-semibold text-foreground">
-                {formatEuro(clientPrice)} / {unit || "un"}
+                {formatEuro(clientPrice)} / {unit || t("productForm.unitShort")}
               </div>
-              <p className="text-xs text-muted-foreground">Inclui {Math.round(COMMISSION * 100)}% da ValorRural e IVA de {vatRate}%.</p>
+              <p className="text-xs text-muted-foreground">{t("productForm.clientPriceHint", { commission: Math.round(COMMISSION * 100), vat: vatRate })}</p>
             </div>
           </div>
         </Card>
 
         <div className="flex justify-end gap-3">
           <Button type="button" variant="outline" onClick={() => navigate(-1)} disabled={submitting}>
-            Cancelar
+            {t("common:actions.cancel")}
           </Button>
           <Button type="submit" disabled={submitting}>
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-            Publicar produto
+            {t("productForm.publish")}
           </Button>
         </div>
       </form>

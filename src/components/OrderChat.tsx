@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import TranslatedText from "@/components/TranslatedText";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,10 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { AlertTriangle, Paperclip, Send, ShieldAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { formatDateTime } from "@/lib/format";
+import { translateServerMessage } from "@/lib/server-messages";
 
 interface Message {
   id: string;
@@ -49,6 +54,7 @@ async function uploadToOrder(orderId: string, file: File) {
 }
 
 const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
+  const { t } = useTranslation("orders");
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
@@ -104,7 +110,7 @@ const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
       let attachment_url: string | null = null;
       let attachment_mime: string | null = null;
       if (file) {
-        if (file.size > MAX_FILE) throw new Error("Ficheiro acima de 8MB");
+        if (file.size > MAX_FILE) throw new Error(i18n.t("orders:chat.fileTooBig"));
         const up = await uploadToOrder(orderId, file);
         attachment_url = up.url;
         attachment_mime = up.mime;
@@ -122,7 +128,7 @@ const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
       setFile(null);
     } catch (e) {
       // Os erros do Supabase são objetos com `message`, não instâncias de Error.
-      toast.error((e as { message?: string })?.message ?? "Não foi possível enviar a mensagem");
+      toast.error(translateServerMessage((e as { message?: string })?.message ?? t("chat.sendFailed")));
     } finally {
       setSending(false);
     }
@@ -131,7 +137,7 @@ const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
   if (closed) {
     return (
       <div className="rounded-xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-        A conversa desta encomenda foi arquivada (mais de 5 dias após a entrega).
+        {t("chat.archived")}
       </div>
     );
   }
@@ -139,7 +145,7 @@ const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
   return (
     <div className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-        <p className="text-sm font-medium text-foreground">Conversa da encomenda</p>
+        <p className="text-sm font-medium text-foreground">{t("chat.title")}</p>
         <ReportDialog
           orderId={orderId}
           reporterRole={viewerRole}
@@ -151,7 +157,7 @@ const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
       <div ref={scroller} className="max-h-80 overflow-y-auto px-4 py-3 space-y-2">
         {messages.length === 0 ? (
           <p className="py-6 text-center text-xs text-muted-foreground">
-            Sem mensagens. Envia a primeira para começares a conversa.
+            {t("chat.empty")}
           </p>
         ) : (
           messages.map((m) => <Bubble key={m.id} m={m} viewerRole={viewerRole} />)
@@ -159,7 +165,7 @@ const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
       </div>
 
       <div className="flex items-end gap-2 border-t border-border p-3">
-        <label className="cursor-pointer rounded-md p-2 hover:bg-muted" title="Anexar ficheiro">
+        <label className="cursor-pointer rounded-md p-2 hover:bg-muted" title={t("chat.attach")}>
           <Paperclip className="h-4 w-4 text-muted-foreground" />
           <input
             type="file"
@@ -175,7 +181,7 @@ const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value.slice(0, MAX_LEN))}
-            placeholder={`Mensagem para o ${viewerRole === "cliente" ? "agricultor" : "cliente"}...`}
+            placeholder={viewerRole === "cliente" ? t("chat.toFarmer") : t("chat.toClient")}
             rows={2}
             className="resize-none"
           />
@@ -200,7 +206,9 @@ const Bubble = ({
       <div className="mx-auto max-w-md rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-foreground">
         <div className="flex items-start gap-2">
           <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-          <p className="whitespace-pre-wrap">{m.content}</p>
+          <div>
+            <TranslatedText type="chat" id={m.id} field="content" text={m.content} as="p" className="whitespace-pre-wrap" toggle />
+          </div>
         </div>
       </div>
     );
@@ -213,7 +221,21 @@ const Bubble = ({
           mine ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
         }`}
       >
-        {m.content && <p className="whitespace-pre-wrap break-words">{m.content}</p>}
+        {/* As mensagens da outra parte são traduzidas para o idioma de quem lê; as próprias ficam como foram escritas. */}
+        {m.content &&
+          (mine ? (
+            <p className="whitespace-pre-wrap break-words">{m.content}</p>
+          ) : (
+            <TranslatedText
+              type="chat"
+              id={m.id}
+              field="content"
+              text={m.content}
+              as="p"
+              className="whitespace-pre-wrap break-words"
+              toggle
+            />
+          ))}
         {m.attachment_url && (
           <a
             href={m.attachment_url}
@@ -221,11 +243,11 @@ const Bubble = ({
             rel="noopener noreferrer"
             className="mt-1 inline-flex items-center gap-1 text-xs underline opacity-90"
           >
-            <Paperclip className="h-3 w-3" /> Anexo
+            <Paperclip className="h-3 w-3" /> {i18n.t("orders:chat.attachment")}
           </a>
         )}
         <p className="mt-1 text-[10px] opacity-70">
-          {new Date(m.created_at).toLocaleString("pt-PT")}
+          {formatDateTime(m.created_at)}
         </p>
       </div>
     </div>
@@ -244,6 +266,7 @@ export const ReportDialog = ({
   onOpenChange: (o: boolean) => void;
 }) => {
   const { user } = useAuth();
+  const { t } = useTranslation("orders");
   const [reason, setReason] = useState("");
   const [proof, setProof] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -254,15 +277,15 @@ export const ReportDialog = ({
   const submit = async () => {
     if (!user) return;
     if (reason.trim().length < 5) {
-      toast.error("Descreve o motivo (mínimo 5 caracteres)");
+      toast.error(t("report.reasonTooShort"));
       return;
     }
     if (!proof) {
-      toast.error("A prova é obrigatória para abrir uma denúncia");
+      toast.error(t("report.proofRequired"));
       return;
     }
     if (proof.size > MAX_FILE) {
-      toast.error("Prova acima de 8MB");
+      toast.error(t("report.proofTooBig"));
       return;
     }
     setSubmitting(true);
@@ -277,13 +300,13 @@ export const ReportDialog = ({
         proof_mime: up.mime,
       });
       if (error) throw error;
-      toast.success("Denúncia registada para análise da equipa.");
+      toast.success(t("report.filed"));
       setReason("");
       setProof(null);
       setWarningAccepted(false);
       onOpenChange(false);
     } catch (e) {
-      toast.error((e as { message?: string })?.message ?? "Não foi possível abrir a denúncia");
+      toast.error(translateServerMessage((e as { message?: string })?.message ?? t("report.failed")));
     } finally {
       setSubmitting(false);
     }
@@ -293,27 +316,26 @@ export const ReportDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-1.5 text-destructive hover:text-destructive">
-          <AlertTriangle className="h-4 w-4" /> Denunciar
+          <AlertTriangle className="h-4 w-4" /> {t("report.button")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Abrir denúncia</DialogTitle>
+          <DialogTitle>{t("report.title")}</DialogTitle>
           <DialogDescription>
-            Descreve o que se passou e anexa uma prova (foto, PDF). A denúncia fica registada para
-            análise da equipa da plataforma.
+            {t("report.description")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <Textarea
             value={reason}
             onChange={(e) => setReason(e.target.value.slice(0, 2000))}
-            placeholder="Descreve o problema..."
+            placeholder={t("report.placeholder")}
             rows={4}
           />
           <div>
             <label className="text-sm font-medium text-foreground">
-              Prova (obrigatória) <span className="text-destructive">*</span>
+              {t("report.proof")} <span className="text-destructive">*</span>
             </label>
             <input
               type="file"
@@ -332,14 +354,12 @@ export const ReportDialog = ({
                 className="mt-0.5"
               />
               <span>
-                Para denunciar um abuso por parte do agricultor, tens de apresentar provas concretas
-                de que esse abuso aconteceu. Se não existirem provas, o agricultor pode avançar com
-                um processo judicial por difamação.
+                {t("report.warning")}
               </span>
             </label>
           )}
           <Button onClick={submit} disabled={submitting || (needsWarning && !warningAccepted)} className="w-full">
-            {submitting ? "A enviar..." : "Enviar denúncia"}
+            {submitting ? t("report.sending") : t("report.send")}
           </Button>
         </div>
       </DialogContent>

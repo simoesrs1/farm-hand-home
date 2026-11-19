@@ -17,10 +17,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { StayRow } from "@/components/StayForm";
+import TranslatedText from "@/components/TranslatedText";
 import { FREE_CANCEL_DAYS, freeCancellationUntil } from "@/lib/experience-pricing";
 import { addDaysISO, lisbonParts } from "@/lib/experience-sessions";
 import { isVideoPath, signMedia } from "@/lib/media-upload";
-import { formatEuro } from "@/lib/format";
+import { formatDate, formatDateTime, formatEuro } from "@/lib/format";
 import {
   REGISTRATION_LABELS,
   overlapsBlocked,
@@ -29,6 +30,7 @@ import {
   type BlockedRange,
   type StayPricingMode,
 } from "@/lib/stay-pricing";
+import { useTranslation } from "react-i18next";
 
 type GiftOption = {
   id: string;
@@ -36,7 +38,7 @@ type GiftOption = {
   product: { id: string; name: string; stock_quantity: number | null; active: boolean } | null;
 };
 
-const formatDate = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("pt-PT", { timeZone: "UTC" });
+const formatDay = (iso: string) => formatDate(`${iso}T12:00:00Z`, { timeZone: "UTC" });
 
 interface StayDialogProps {
   stay: StayRow | null;
@@ -52,6 +54,7 @@ interface StayDialogProps {
 const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialogProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation("offerings");
   const [media, setMedia] = useState<Record<string, string>>({});
   const [gifts, setGifts] = useState<GiftOption[]>([]);
   const [blocked, setBlocked] = useState<BlockedRange[]>([]);
@@ -126,13 +129,13 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
 
   const problem = !stay || !checkIn || !checkOut
     ? null
-    : checkOut <= checkIn ? "A data de saída tem de ser depois da entrada."
-    : nights.length < stay.min_nights ? `A estadia mínima é de ${stay.min_nights} noite(s).`
-    : overlapsBlocked(blocked, checkIn, checkOut) ? "O alojamento está fechado em parte destas datas."
-    : freeUnits <= 0 ? "Não há quartos livres em todas estas noites."
-    : !Number.isInteger(unitsNum) || unitsNum < 1 || unitsNum > freeUnits ? `Há ${freeUnits} quarto(s) livre(s) nestas datas.`
+    : checkOut <= checkIn ? t("stayDialog.errCheckout")
+    : nights.length < stay.min_nights ? t("stayDialog.errMinNights", { count: stay.min_nights })
+    : overlapsBlocked(blocked, checkIn, checkOut) ? t("stayDialog.errClosed")
+    : freeUnits <= 0 ? t("stayDialog.errNoRooms")
+    : !Number.isInteger(unitsNum) || unitsNum < 1 || unitsNum > freeUnits ? t("stayDialog.errRooms", { count: freeUnits })
     : !Number.isInteger(guestsNum) || guestsNum < 1 || guestsNum > unitsNum * stay.capacity_per_unit
-      ? `Para ${unitsNum} quarto(s), o máximo é de ${unitsNum * stay.capacity_per_unit} hóspedes.`
+      ? t("stayDialog.errGuests", { count: unitsNum, max: unitsNum * stay.capacity_per_unit })
     : null;
 
   const amount = stay && nights.length && Number.isInteger(unitsNum) && Number.isInteger(guestsNum)
@@ -151,7 +154,7 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
     });
     setSubmitting(false);
     if (error || (data as { error?: string } | null)?.error) {
-      let msg = (data as { error?: string } | null)?.error ?? "Não foi possível concluir a reserva.";
+      let msg = (data as { error?: string } | null)?.error ?? t("booking.failed");
       if (error instanceof FunctionsHttpError) {
         try {
           const body = await error.context.json();
@@ -160,10 +163,10 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
           // resposta sem JSON: fica a mensagem genérica
         }
       }
-      toast({ title: "Reserva não concluída", description: msg, variant: "destructive" });
+      toast({ title: t("booking.notCompleted"), description: msg, variant: "destructive" });
       return;
     }
-    toast({ title: "Reserva confirmada", description: "Pagamento simulado. O QR code está nas suas encomendas." });
+    toast({ title: t("booking.confirmed"), description: t("booking.confirmedText") });
     onOpenChange(false);
     navigate("/encomendas");
   };
@@ -176,9 +179,11 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
         {stay && (
           <>
             <DialogHeader>
-              <DialogTitle>{stay.title}</DialogTitle>
+              <DialogTitle>
+                <TranslatedText type="stay" id={stay.id} field="title" text={stay.title} />
+              </DialogTitle>
               <DialogDescription>
-                Alojamento em{" "}
+                {t("stayDialog.at")}{" "}
                 {farmId ? (
                   <Link to={`/agricultor/${farmId}`} onClick={() => onOpenChange(false)} className="font-medium text-primary hover:underline">
                     {farmName}
@@ -202,43 +207,56 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
             )}
 
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-1"><Users className="h-4 w-4" /> até {stay.capacity_per_unit} por quarto</span>
-              <span className="inline-flex items-center gap-1"><BedDouble className="h-4 w-4" /> {stay.units_count} quarto(s)</span>
-              <span className="inline-flex items-center gap-1"><Moon className="h-4 w-4" /> mínimo {stay.min_nights} noite(s)</span>
-              <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" /> entrada {stay.check_in_time} · saída {stay.check_out_time}</span>
+              <span className="inline-flex items-center gap-1"><Users className="h-4 w-4" /> {t("stayCard.capacity", { count: stay.capacity_per_unit })}</span>
+              <span className="inline-flex items-center gap-1"><BedDouble className="h-4 w-4" /> {t("stayDialog.rooms", { count: stay.units_count })}</span>
+              <span className="inline-flex items-center gap-1"><Moon className="h-4 w-4" /> {t("stayCard.minNights", { count: stay.min_nights })}</span>
+              <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" /> {t("stayDialog.checkTimes", { in: stay.check_in_time, out: stay.check_out_time })}</span>
             </div>
             <p className="text-sm font-medium text-foreground">
-              Desde {formatEuro(Number(stay.base_price))} / noite {mode === "per_person" ? "por pessoa" : "por quarto"}
+              {t(mode === "per_person" ? "stayDialog.fromPerson" : "stayDialog.fromRoom", { price: formatEuro(Number(stay.base_price)) })}
             </p>
 
-            <p className="whitespace-pre-line text-sm text-foreground">{stay.description}</p>
+            <div>
+              <TranslatedText
+                type="stay"
+                id={stay.id}
+                field="description"
+                text={stay.description}
+                as="p"
+                className="whitespace-pre-line text-sm text-foreground"
+                toggle
+              />
+            </div>
 
             <p className="flex items-center gap-2 text-xs text-muted-foreground">
               <FileCheck className="h-4 w-4 shrink-0" />
-              {REGISTRATION_LABELS[stay.registration_type] ?? "Registo"} n.º {stay.registration_number}
+              {t("stayDialog.registration", { type: REGISTRATION_LABELS[stay.registration_type] ?? t("stayDialog.registrationFallback"), number: stay.registration_number })}
             </p>
 
             {freeGift && (
               <p className="flex items-center gap-2 rounded-lg bg-primary/10 p-3 text-sm text-foreground">
-                <Gift className="h-4 w-4 shrink-0 text-primary" /> Inclui um brinde: {freeGift.product?.name}
+                <Gift className="h-4 w-4 shrink-0 text-primary" /> {t("experienceDialog.includesGift")}{" "}
+                {freeGift.product && (
+                  <TranslatedText type="product" id={freeGift.product.id} field="name" text={freeGift.product.name} />
+                )}
               </p>
             )}
 
             <div className="border-t border-border pt-4">
               {isOwner ? (
-                <p className="text-sm text-muted-foreground">É o seu alojamento: os clientes reservam a partir daqui.</p>
+                <p className="text-sm text-muted-foreground">{t("stayDialog.isOwner")}</p>
               ) : unavailable ? (
-                <p className="text-sm text-muted-foreground">Indisponível de momento.</p>
+                <p className="text-sm text-muted-foreground">{t("booking.unavailable")}</p>
               ) : !user ? (
                 <Button asChild className="w-full">
-                  <Link to="/auth">Iniciar sessão para reservar</Link>
+                  <Link to="/auth">{t("booking.loginToBook")}</Link>
                 </Button>
               ) : (
                 <div className="space-y-3">
-                  <h3 className="font-medium text-foreground">Reservar</h3>
+                  <h3 className="font-medium text-foreground">{t("booking.book")}</h3>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1">
-                      <Label htmlFor="st-in" className="text-xs">Entrada</Label>
+                      <Label htmlFor="st-in" className="text-xs">{t("stayDialog.checkIn")}</Label>
                       <Input
                         id="st-in"
                         type="date"
@@ -253,7 +271,7 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="st-out" className="text-xs">Saída</Label>
+                      <Label htmlFor="st-out" className="text-xs">{t("stayDialog.checkOut")}</Label>
                       <Input
                         id="st-out"
                         type="date"
@@ -264,11 +282,11 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="st-units" className="text-xs">Quartos</Label>
+                      <Label htmlFor="st-units" className="text-xs">{t("stayDialog.roomsLabel")}</Label>
                       <Input id="st-units" type="number" min={1} max={Math.max(1, freeUnits)} value={units} onChange={(e) => setUnits(e.target.value)} className="h-9" />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="st-guests" className="text-xs">Hóspedes</Label>
+                      <Label htmlFor="st-guests" className="text-xs">{t("stayDialog.guests")}</Label>
                       <Input id="st-guests" type="number" min={1} value={guests} onChange={(e) => setGuests(e.target.value)} className="h-9" />
                     </div>
                   </div>
@@ -277,7 +295,7 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
 
                   {paidGifts.length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-xs font-medium text-foreground">Brindes extra (opcional)</p>
+                      <p className="text-xs font-medium text-foreground">{t("booking.extraGifts")}</p>
                       {paidGifts.map((g) => (
                         <label key={g.id} htmlFor={`st-gift-${g.id}`} className="flex cursor-pointer items-center gap-3 text-sm">
                           <Checkbox
@@ -287,7 +305,9 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
                               setPaidGiftIds((ids) => (v === true ? [...ids, g.id] : ids.filter((x) => x !== g.id)))
                             }
                           />
-                          <span className="flex-1 text-foreground">{g.product?.name}</span>
+                          <span className="flex-1 text-foreground">
+                            {g.product && <TranslatedText type="product" id={g.product.id} field="name" text={g.product.name} />}
+                          </span>
                           <span className="text-muted-foreground">+{formatEuro(Number(g.extra_price))}</span>
                         </label>
                       ))}
@@ -296,7 +316,9 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
 
                   <div className="flex justify-between border-t border-border pt-3 text-sm">
                     <span className="font-medium text-foreground">
-                      Total{nights.length > 0 && ` (${nights.length} noite${nights.length === 1 ? "" : "s"}, ${formatDate(checkIn)} a ${formatDate(checkOut)})`}
+                      {t("booking.total")}
+                      {nights.length > 0 &&
+                        ` (${t("stayDialog.nightsRange", { count: nights.length, from: formatDay(checkIn), to: formatDay(checkOut) })})`}
                     </span>
                     <span className="font-mono tabular-nums text-lg font-bold text-primary">{formatEuro(total)}</span>
                   </div>
@@ -304,16 +326,19 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
                   <label htmlFor="st-accept" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/40 p-3 text-xs text-foreground">
                     <Checkbox id="st-accept" checked={accepted} onCheckedChange={(v) => setAccepted(v === true)} className="mt-0.5" />
                     <span>
-                      Cancelamento grátis até {FREE_CANCEL_DAYS} dias antes da entrada
-                      {freeUntil ? ` (até ${freeUntil.toLocaleString("pt-PT", { timeZone: "UTC", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })})` : ""}.
-                      Depois disso, são retidos 25% do valor do alojamento, e os brindes extra são devolvidos.
-                      Sem comparência, o valor não é devolvido.
+                      {t("stayDialog.cancelPolicy", { count: FREE_CANCEL_DAYS })}
+                      {freeUntil
+                        ? ` (${t("booking.until", {
+                            date: formatDateTime(freeUntil, { timeZone: "UTC", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
+                          })})`
+                        : ""}
+                      . {t("stayDialog.cancelPolicyRest")}
                     </span>
                   </label>
 
                   <Button onClick={book} disabled={submitting || !accepted || !nights.length || !!problem} className="w-full gap-2">
                     {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Reservar e pagar {formatEuro(total)} (simulado)
+                    {t("booking.payButton", { price: formatEuro(total) })}
                   </Button>
                 </div>
               )}

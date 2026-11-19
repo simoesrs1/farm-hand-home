@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 /**
  * "Ver a minha página": reencaminha o agricultor para o seu perfil público
@@ -11,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 const MyPublicPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(["farmer", "common"]);
   const { user, loading: authLoading } = useAuth();
   const [farmerId, setFarmerId] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
@@ -44,9 +46,9 @@ const MyPublicPage = () => {
   if (!farmerId) {
     return (
       <div className="container py-16 text-center">
-        <p className="text-muted-foreground">Complete o registo de agricultor para ter uma página pública.</p>
+        <p className="text-muted-foreground">{t("editors.completeForPage")}</p>
         <Button className="mt-4" onClick={() => navigate("/onboarding/agricultor")}>
-          Completar perfil
+          {t("editors.completeProfile")}
         </Button>
       </div>
     );

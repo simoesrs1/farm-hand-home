@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import PageHeader from "@/components/PageHeader";
 import { formatEuro } from "@/lib/format";
+import { Trans, useTranslation } from "react-i18next";
 
 interface ValidatePickupResponse {
   ok?: boolean;
@@ -26,6 +27,7 @@ const ScanPickup = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation(["farmer", "common", "orders"]);
   const [tab, setTab] = useState<"camera" | "manual">("camera");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,15 +45,15 @@ const ScanPickup = () => {
         body: { code: rawCode },
       });
       if (error || data?.error) {
-        const msg = data?.error ?? error?.message ?? "Erro ao validar";
-        toast({ title: "Não foi possível validar", description: msg, variant: "destructive" });
+        const msg = data?.error ?? error?.message ?? t("validate.error");
+        toast({ title: t("validate.failed"), description: msg, variant: "destructive" });
         validatingRef.current = false;
       } else {
         setSuccess({ amount: (data?.farmer_amount ?? 0) });
         // Produtos com escolha de lote: pergunta logo de que lote saíram.
         const orderId = data?.order_id;
         if (orderId && (await ordersWithPendingLots([orderId])).has(orderId)) setLotOrderId(orderId);
-        toast({ title: "Entrega confirmada", description: `Recebes ${formatEuro(data?.farmer_amount ?? 0)}` });
+        toast({ title: t("validate.confirmed"), description: t("validate.youReceive", { amount: formatEuro(data?.farmer_amount ?? 0) }) });
         // Stop camera after success
         if (scannerRef.current) {
           try { await scannerRef.current.stop(); } catch { /* noop */ }
@@ -80,8 +82,8 @@ const ScanPickup = () => {
       .catch((err) => {
         console.warn("camera start failed", err);
         toast({
-          title: "Câmara indisponível",
-          description: "Usa o modo manual para inserir o código.",
+          title: t("validate.noCamera"),
+          description: t("validate.useManual"),
         });
       });
     return () => {
@@ -103,7 +105,7 @@ const ScanPickup = () => {
   if (!user || profile?.profile_type !== "vendedor") {
     return (
       <main className="container py-16 text-center">
-        <p className="text-muted-foreground">Esta área é exclusiva para agricultores.</p>
+        <p className="text-muted-foreground">{t("farmersOnly")}</p>
       </main>
     );
   }
@@ -115,16 +117,21 @@ const ScanPickup = () => {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success">
             <CheckCircle2 className="h-8 w-8" />
           </div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Entrega confirmada</h1>
+          <h1 className="font-display text-2xl font-bold text-foreground">{t("validate.confirmed")}</h1>
           <p className="mt-2 text-muted-foreground">
-            Vais receber <span className="font-semibold text-primary">{formatEuro(success.amount)}</span> (90% do valor da encomenda).
+            <Trans
+              t={t}
+              i18nKey="validate.willReceive"
+              values={{ amount: formatEuro(success.amount) }}
+              components={{ b: <span className="font-semibold text-primary" /> }}
+            />
           </p>
           <div className="mt-6 flex flex-col gap-2">
             <Button onClick={() => { setSuccess(null); setCode(""); validatingRef.current = false; }}>
-              Validar outra
+              {t("validate.another")}
             </Button>
             <Button variant="outline" onClick={() => navigate("/agricultor/encomendas")}>
-              Ver encomendas
+              {t("validate.seeOrders")}
             </Button>
           </div>
         </div>
@@ -137,15 +144,15 @@ const ScanPickup = () => {
   return (
     <main className="container max-w-md py-8">
       <Link to="/agricultor/encomendas" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Encomendas
+        <ArrowLeft className="h-4 w-4" /> {t("common:menu.farmer.orders")}
       </Link>
 
-      <PageHeader className="mb-6" eyebrow="Área do agricultor" title="Validar entrega" />
+      <PageHeader className="mb-6" eyebrow={t("area")} title={t("common:menu.farmer.validateDelivery")} />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as "camera" | "manual")}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="camera" className="gap-2"><ScanLine className="h-4 w-4" /> Câmara</TabsTrigger>
-          <TabsTrigger value="manual" className="gap-2"><Keyboard className="h-4 w-4" /> Código</TabsTrigger>
+          <TabsTrigger value="camera" className="gap-2"><ScanLine className="h-4 w-4" /> {t("validate.camera")}</TabsTrigger>
+          <TabsTrigger value="manual" className="gap-2"><Keyboard className="h-4 w-4" /> {t("validate.code")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="camera" className="mt-4">
@@ -153,13 +160,13 @@ const ScanPickup = () => {
             <div id={SCANNER_ID} className="aspect-square w-full bg-black" />
           </div>
           <p className="mt-3 text-center text-xs text-muted-foreground">
-            Aponta a câmara ao QR code do cliente.
+            {t("validate.point")}
           </p>
         </TabsContent>
 
         <TabsContent value="manual" className="mt-4 space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">Código de levantamento</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">{t("validate.pickupCode")}</label>
             <Input
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
@@ -173,7 +180,7 @@ const ScanPickup = () => {
             onClick={() => { validatingRef.current = false; validate(code); }}
             className="w-full"
           >
-            {loading ? "A validar…" : "Confirmar entrega"}
+            {loading ? t("validate.validating") : t("validate.confirm")}
           </Button>
         </TabsContent>
       </Tabs>

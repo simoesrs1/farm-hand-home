@@ -7,10 +7,12 @@ import StayForm, { type StayRow } from "@/components/StayForm";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { BlockedRange } from "@/lib/stay-pricing";
+import { useTranslation } from "react-i18next";
 
 /** Criar (/agricultor/alojamento/novo) ou editar (/agricultor/alojamento/:id/editar). */
 const StayEditor = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(["farmer", "common"]);
   const { id } = useParams<{ id: string }>();
   const { user, loading: authLoading } = useAuth();
   const [farmerId, setFarmerId] = useState<string | null>(null);
@@ -57,9 +59,9 @@ const StayEditor = () => {
   if (!farmerId || notFound) {
     return (
       <div className="container py-16 text-center">
-        <p className="text-muted-foreground">{notFound ? "Alojamento não encontrado." : "Complete o registo de agricultor para criar alojamento."}</p>
+        <p className="text-muted-foreground">{notFound ? t("editors.stayNotFound") : t("editors.completeForStays")}</p>
         <Button className="mt-4" onClick={() => navigate(notFound ? "/agricultor/alojamento" : "/onboarding/agricultor")}>
-          {notFound ? "O meu alojamento" : "Completar perfil"}
+          {notFound ? t("common:menu.farmer.myStays") : t("editors.completeProfile")}
         </Button>
       </div>
     );
@@ -68,9 +70,9 @@ const StayEditor = () => {
   return (
     <div className="container max-w-3xl py-8">
       <button onClick={() => navigate("/agricultor/alojamento")} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> O meu alojamento
+        <ArrowLeft className="h-4 w-4" /> {t("common:menu.farmer.myStays")}
       </button>
-      <PageHeader className="mb-6" eyebrow="Área do agricultor" title={stay ? "Editar alojamento" : "Novo alojamento"} />
+      <PageHeader className="mb-6" eyebrow={t("area")} title={stay ? t("editors.editStay") : t("editors.newStay")} />
       <StayForm farmerId={farmerId} stay={stay} gifts={gifts} blocked={blocked} onSaved={() => navigate("/agricultor/alojamento")} />
     </div>
   );

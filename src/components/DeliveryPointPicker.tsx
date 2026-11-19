@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import MapConsentGate from "@/components/MapConsentGate";
 import { useConsent } from "@/contexts/ConsentContext";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 
 interface Props {
@@ -16,6 +18,7 @@ interface Props {
 // Map picker for the client to mark the exact home-delivery point.
 const DeliveryPointPicker = ({ open, onOpenChange, value, onConfirm }: Props) => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
   const markerRef = useRef<google.maps.Marker | null>(null);
   const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(value);
   const mapsAllowed = useConsent().hasConsent("maps");
@@ -63,7 +66,7 @@ const DeliveryPointPicker = ({ open, onOpenChange, value, onConfirm }: Props) =>
     const script = document.createElement("script");
     script.id = "gmaps-sdk";
     script.async = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initDeliveryPicker`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&language=${i18n.resolvedLanguage ?? "pt"}&loading=async&callback=__initDeliveryPicker`;
     document.head.appendChild(script);
   }, [open, value, mapsAllowed]);
 
@@ -71,10 +74,10 @@ const DeliveryPointPicker = ({ open, onOpenChange, value, onConfirm }: Props) =>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Marcar o ponto de entrega</DialogTitle>
+          <DialogTitle>{t("maps.pointTitle")}</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          Toque no mapa no local exato onde o agricultor deve entregar a encomenda.
+          {t("maps.pointText")}
         </p>
         <MapConsentGate className="h-[380px]">
           <div ref={mapRef} className="h-[380px] w-full rounded-lg border border-border bg-muted" />
@@ -82,8 +85,8 @@ const DeliveryPointPicker = ({ open, onOpenChange, value, onConfirm }: Props) =>
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">
             {picked
-              ? `Ponto marcado: ${picked.lat.toFixed(5)}, ${picked.lng.toFixed(5)}`
-              : "Ainda sem ponto marcado."}
+              ? t("maps.pointPicked", { coords: `${picked.lat.toFixed(5)}, ${picked.lng.toFixed(5)}` })
+              : t("maps.pointNone")}
           </p>
           <Button
             disabled={!picked}
@@ -95,7 +98,7 @@ const DeliveryPointPicker = ({ open, onOpenChange, value, onConfirm }: Props) =>
             }}
             className="gap-2"
           >
-            <MapPin className="h-4 w-4" /> Confirmar ponto
+            <MapPin className="h-4 w-4" /> {t("maps.pointConfirm")}
           </Button>
         </div>
       </DialogContent>

@@ -3,6 +3,7 @@ import { MapPinOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useConsent } from "@/contexts/ConsentContext";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   children: ReactNode;
@@ -16,6 +17,7 @@ interface Props {
  */
 const MapConsentGate = ({ children, className }: Props) => {
   const { hasConsent, grant, openPreferences } = useConsent();
+  const { t } = useTranslation();
 
   if (hasConsent("maps")) return <>{children}</>;
 
@@ -28,18 +30,17 @@ const MapConsentGate = ({ children, className }: Props) => {
     >
       <MapPinOff className="h-8 w-8 text-muted-foreground" />
       <div className="max-w-sm">
-        <p className="text-sm font-medium text-foreground">Mapa desativado</p>
+        <p className="text-sm font-medium text-foreground">{t("maps.disabled")}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Os mapas são fornecidos pela Google, que pode definir cookies e recolher o seu endereço
-          IP. Para ver o mapa, autorize os cookies de mapas.
+          {t("maps.disabledText")}
         </p>
       </div>
       <div className="flex flex-wrap justify-center gap-2">
         <Button type="button" size="sm" onClick={() => grant("maps")}>
-          Ativar mapas
+          {t("maps.enable")}
         </Button>
         <Button type="button" size="sm" variant="ghost" onClick={openPreferences}>
-          Preferências
+          {t("maps.preferences")}
         </Button>
       </div>
     </div>

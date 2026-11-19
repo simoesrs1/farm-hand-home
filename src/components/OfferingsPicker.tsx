@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/components/ui/checkbox";
 import { OFFERINGS, type Offerings } from "@/lib/farmer-offerings";
 
@@ -8,7 +9,10 @@ interface OfferingsPickerProps {
 }
 
 /** Escolha do que o agricultor disponibiliza (uma, duas ou as três opções). */
-const OfferingsPicker = ({ value, onChange, disabled }: OfferingsPickerProps) => (
+const OfferingsPicker = ({ value, onChange, disabled }: OfferingsPickerProps) => {
+  // Volta a desenhar quando muda o idioma (os nomes vêm de OFFERINGS).
+  useTranslation();
+  return (
   <div className="grid gap-2 sm:grid-cols-3">
     {OFFERINGS.map((o) => (
       <label
@@ -33,5 +37,6 @@ const OfferingsPicker = ({ value, onChange, disabled }: OfferingsPickerProps) =>
     ))}
   </div>
 );
+};
 
 export default OfferingsPicker;

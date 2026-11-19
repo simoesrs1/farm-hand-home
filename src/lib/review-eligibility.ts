@@ -4,6 +4,8 @@
  * A mesma regra está na função SQL order_review_context, que é a que conta;
  * esta versão serve para a interface mostrar os botões certos.
  */
+import i18n from "@/i18n";
+
 export type ReviewContext = "delivered" | "cancelled" | "late";
 
 export interface ReviewableOrder {
@@ -20,8 +22,12 @@ const LATE_GRACE_MS = 24 * 60 * 60 * 1000;
 /** Etiqueta pública da avaliação; quem recebeu a encomenda não tem etiqueta. */
 export const REVIEW_CONTEXT_LABELS: Record<ReviewContext, string | null> = {
   delivered: null,
-  cancelled: "Encomenda cancelada",
-  late: "Entrega atrasada",
+  get cancelled() {
+    return i18n.t("common:reviewContext.cancelled");
+  },
+  get late() {
+    return i18n.t("common:reviewContext.late");
+  },
 };
 
 /** Entrega ao domicílio por entregar, 24 h depois da data prevista. */

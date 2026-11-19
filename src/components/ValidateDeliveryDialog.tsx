@@ -15,6 +15,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { formatEuro } from "@/lib/format";
+import { Trans, useTranslation } from "react-i18next";
 
 interface ValidatePickupResponse {
   ok?: boolean;
@@ -35,6 +36,7 @@ const normalize = (raw: string | null | undefined) =>
 
 const ValidateDeliveryDialog = ({ order, onOpenChange, onValidated }: Props) => {
   const { toast } = useToast();
+  const { t } = useTranslation(["farmer", "common", "orders"]);
   const [tab, setTab] = useState<"scan" | "manual">("scan");
   const [loading, setLoading] = useState(false);
   // Callback ref: the scanner is only built once the container is really in the DOM
@@ -63,13 +65,13 @@ const ValidateDeliveryDialog = ({ order, onOpenChange, onValidated }: Props) => 
         body: { code: rawCode },
       });
       if (error || data?.error || !data?.ok) {
-        const msg = data?.error ?? error?.message ?? "Erro ao validar";
-        toast({ title: "Não foi possível validar", description: msg, variant: "destructive" });
+        const msg = data?.error ?? error?.message ?? t("validate.error");
+        toast({ title: t("validate.failed"), description: msg, variant: "destructive" });
         return;
       }
       const amount = data.farmer_amount ?? order.farmer_amount ?? 0;
       onValidated(order.id, amount);
-      toast({ title: "Entrega confirmada", description: `Recebes ${formatEuro(amount)}` });
+      toast({ title: t("validate.confirmed"), description: t("validate.youReceive", { amount: formatEuro(amount) }) });
       onOpenChange(false);
     } finally {
       busyRef.current = false;
@@ -85,8 +87,8 @@ const ValidateDeliveryDialog = ({ order, onOpenChange, onValidated }: Props) => 
     if (!belongsToOrder(decoded)) {
       busyRef.current = true;
       toast({
-        title: "QR code de outra encomenda",
-        description: "Este código não corresponde a esta encomenda.",
+        title: t("validate.otherOrder"),
+        description: t("validate.mismatch"),
         variant: "destructive",
       });
       // Allow another attempt shortly after, without spamming the toast
@@ -99,8 +101,8 @@ const ValidateDeliveryDialog = ({ order, onOpenChange, onValidated }: Props) => 
   const submitCode = () => {
     if (!belongsToOrder(code)) {
       toast({
-        title: "Código incorreto",
-        description: "Este código não corresponde a esta encomenda.",
+        title: t("validate.wrongCode"),
+        description: t("validate.mismatch"),
         variant: "destructive",
       });
       return;
@@ -114,8 +116,8 @@ const ValidateDeliveryDialog = ({ order, onOpenChange, onValidated }: Props) => 
     const cameraUnavailable = (err: unknown) => {
       console.warn("inline scanner unavailable", err);
       toast({
-        title: "Câmara indisponível",
-        description: "Usa o separador \"Código\" para inserir o código do cliente.",
+        title: t("validate.noCamera"),
+        description: t("validate.useCodeTab"),
       });
     };
 
@@ -159,12 +161,16 @@ const ValidateDeliveryDialog = ({ order, onOpenChange, onValidated }: Props) => 
     <Dialog open={!!order} onOpenChange={(open) => { if (!loading) onOpenChange(open); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Validar entrega</DialogTitle>
+          <DialogTitle>{t("common:menu.farmer.validateDelivery")}</DialogTitle>
           <DialogDescription>
             {order && (
               <>
-                Encomenda #{order.id.slice(0, 8).toUpperCase()} · vais receber{" "}
-                <span className="font-medium text-primary">{formatEuro(order.farmer_amount)}</span>.
+                <Trans
+                  t={t}
+                  i18nKey="validate.orderReceive"
+                  values={{ id: order.id.slice(0, 8).toUpperCase(), amount: formatEuro(order.farmer_amount) }}
+                  components={{ b: <span className="font-medium text-primary" /> }}
+                />
               </>
             )}
           </DialogDescription>
@@ -172,8 +178,8 @@ const ValidateDeliveryDialog = ({ order, onOpenChange, onValidated }: Props) => 
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as "scan" | "manual")}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="scan" className="gap-2"><ScanLine className="h-4 w-4" /> Ler QR</TabsTrigger>
-            <TabsTrigger value="manual" className="gap-2"><Keyboard className="h-4 w-4" /> Código</TabsTrigger>
+            <TabsTrigger value="scan" className="gap-2"><ScanLine className="h-4 w-4" /> {t("validate.readQr")}</TabsTrigger>
+            <TabsTrigger value="manual" className="gap-2"><Keyboard className="h-4 w-4" /> {t("validate.code")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="scan" className="mt-4">
@@ -181,14 +187,14 @@ const ValidateDeliveryDialog = ({ order, onOpenChange, onValidated }: Props) => 
               {order && <div id={scannerId} ref={setContainer} className="aspect-square w-full bg-black" />}
             </div>
             <p className="mt-3 text-center text-xs text-muted-foreground">
-              {loading ? "A validar…" : "Aponta a câmara ao QR code do cliente."}
+              {loading ? t("validate.validating") : t("validate.point")}
             </p>
           </TabsContent>
 
           <TabsContent value="manual" className="mt-4 space-y-4">
             <div>
               <label htmlFor={codeInputId} className="mb-1 block text-sm font-medium text-foreground">
-                Código de levantamento
+                {t("validate.pickupCode")}
               </label>
               <Input
                 id={codeInputId}
@@ -201,15 +207,15 @@ const ValidateDeliveryDialog = ({ order, onOpenChange, onValidated }: Props) => 
                 className="font-mono text-lg tracking-[0.3em]"
               />
               <p className="mt-2 text-xs text-muted-foreground">
-                Pede ao cliente o código de 8 caracteres que aparece por baixo do QR code.
+                {t("validate.askCode")}
               </p>
             </div>
             <DialogFooter>
               <Button variant="outline" disabled={loading} onClick={() => onOpenChange(false)}>
-                Cancelar
+                {t("common:actions.cancel")}
               </Button>
               <Button disabled={loading || !codeReady} onClick={submitCode}>
-                {loading ? "A validar…" : "Confirmar entrega"}
+                {loading ? t("validate.validating") : t("validate.confirm")}
               </Button>
             </DialogFooter>
           </TabsContent>

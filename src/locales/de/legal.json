@@ -1,0 +1,105 @@
+{
+  "eyebrow": "Rechtliches",
+  "lastUpdated": "Zuletzt aktualisiert: {{date}}",
+  "courtesy": "Unverbindliche Übersetzung. Im Zweifelsfall gilt die portugiesische Fassung.",
+  "showOriginal": "Portugiesische Fassung ansehen",
+  "showTranslation": "Übersetzung ansehen",
+  "toc": "Inhalt",
+  "consent": {
+    "aria": "Cookie-Einwilligung",
+    "title": "Ihre Privatsphäre",
+    "text": "Wir verwenden notwendige Cookies, damit die Website funktioniert. Mit Ihrer Zustimmung verwenden wir auch Cookies, um Ihren Warenkorb zwischen Besuchen zu speichern und Google-Karten anzuzeigen. Ihre Wahl gilt für diese Sitzung.",
+    "learnMore": "Mehr erfahren",
+    "customize": "Anpassen",
+    "reject": "Ablehnen",
+    "acceptAll": "Alle akzeptieren",
+    "preferencesTitle": "Cookie-Einstellungen",
+    "preferencesText": "Wählen Sie, welche Kategorien Sie erlauben. Sie können Ihre Entscheidung jederzeit über den Link \"Cookies verwalten\" in der Fußzeile ändern. Weitere Einzelheiten in der <link>Datenschutzerklärung</link>.",
+    "alwaysOn": "Immer aktiv",
+    "lastDecision": "Letzte Entscheidung in dieser Sitzung: {{date}}",
+    "rejectAll": "Alle ablehnen",
+    "save": "Auswahl speichern",
+    "categories": {
+      "necessary": {
+        "title": "Unbedingt erforderlich",
+        "description": "Unverzichtbar für die Funktion der Website: angemeldet bleiben, Kontosicherheit, Warenkorb während des Besuchs, die gewählte Sprache und das Speichern genau dieser Entscheidung. Sie können nicht deaktiviert werden."
+      },
+      "preferences": {
+        "title": "Präferenzen",
+        "description": "Speichern Warenkorb und gewählte Abholzeit auf diesem Gerät, damit Sie sie beim nächsten Besuch wiederfinden. Ohne sie werden diese Daten beim Schließen des Browsers gelöscht."
+      },
+      "maps": {
+        "title": "Karten (Google Maps)",
+        "description": "Laden interaktive Google-Karten, um Landwirte zu sehen und Liefer- und Abholpunkte zu markieren. Google kann eigene Cookies setzen und Ihre IP-Adresse erfassen."
+      }
+    }
+  },
+  "cookies": {
+    "p1": "Cookies sind kleine Dateien, die in Ihrem Browser gespeichert werden; ähnliche Technologien wie der lokale Speicher funktionieren vergleichbar. Wir verwenden sie gemäß Artikel 5 des Gesetzes Nr. 41/2004: Unbedingt erforderliche benötigen keine Einwilligung; alle anderen werden nur mit Ihrer Erlaubnis verwendet.",
+    "p2": "<b>Wir verwenden keine Werbe- oder Analyse-Cookies.</b> Ihre Wahl wird nur für die Browsersitzung gespeichert: Wenn Sie den Browser schließen, fragen wir erneut.",
+    "table": {
+      "name": "Name",
+      "type": "Art",
+      "category": "Kategorie",
+      "purpose": "Zweck",
+      "duration": "Dauer"
+    },
+    "items": {
+      "auth": {
+        "type": "Lokaler Speicher",
+        "category": "Erforderlich",
+        "purpose": "Hält Sie angemeldet und Ihr Konto sicher.",
+        "duration": "Bis zur Abmeldung"
+      },
+      "consent": {
+        "type": "Cookie",
+        "category": "Erforderlich",
+        "purpose": "Speichert Ihre Cookie-Entscheidungen.",
+        "duration": "Browsersitzung"
+      },
+      "sid": {
+        "type": "Cookie",
+        "category": "Erforderlich",
+        "purpose": "Erkennt die Browsersitzung, um den Warenkorb auf den aktuellen Besuch zu beschränken.",
+        "duration": "Browsersitzung"
+      },
+      "cart": {
+        "type": "Lokaler Speicher",
+        "category": "Erforderlich / Präferenzen",
+        "purpose": "Inhalt des Warenkorbs. Wird nur zwischen Besuchen gespeichert, wenn Sie Präferenzen erlauben.",
+        "duration": "Sitzung (oder dauerhaft, mit Präferenzen)"
+      },
+      "pickupSlot": {
+        "type": "Lokaler Speicher",
+        "category": "Erforderlich / Präferenzen",
+        "purpose": "Auf der Produktseite gewählte Abholzeit.",
+        "duration": "Sitzung (oder dauerhaft, mit Präferenzen)"
+      },
+      "pendingProfile": {
+        "type": "Sitzungsspeicher",
+        "category": "Erforderlich",
+        "purpose": "Merkt sich den bei der Registrierung mit Google gewählten Profiltyp.",
+        "duration": "Bis zum Abschluss der Registrierung"
+      },
+      "lang": {
+        "type": "Lokaler Speicher",
+        "category": "Erforderlich",
+        "purpose": "Von Ihnen im Auswahlmenü gewählte Sprache der Website (beim ersten Besuch die des Browsers).",
+        "duration": "Dauerhaft, bis Sie die Sprache ändern oder den Browser leeren"
+      },
+      "google": {
+        "type": "Drittanbieter-Cookie",
+        "category": "Karten",
+        "purpose": "Von Google beim Laden von Google Maps gesetzt.",
+        "duration": "Von Google festgelegt"
+      }
+    },
+    "google": "Google verarbeitet die von Google Maps erhobenen Daten gemäß seiner <link>Datenschutzerklärung</link>. Sie können Cookies auch in den Einstellungen Ihres Browsers löschen.",
+    "location": "Auf der Landwirte-Karte können Sie den Standort Ihres Geräts verwenden, um Landwirte in einem Umkreis zu sehen. Der Browser fragt vor der Freigabe um Erlaubnis; der Standort wird nur in Ihrem Browser für diesen Filter verwendet und weder gespeichert noch an die Plattform gesendet.",
+    "state": "Aktueller Status: Präferenzen {{preferences}}, Karten {{maps}}.",
+    "on": "aktiv",
+    "off": "deaktiviert",
+    "noChoice": "Sie haben in dieser Sitzung noch keine Wahl getroffen.",
+    "manage": "Cookies verwalten"
+  }
+}

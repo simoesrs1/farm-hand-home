@@ -1,5 +1,9 @@
 import { Link } from "react-router-dom";
-import LegalLayout, { LegalSection } from "@/components/LegalLayout";
+import LegalLayout, { type LegalDoc, type LegalSection } from "@/components/LegalLayout";
+import termsEn from "@/pages/legal/terms.en";
+import termsDe from "@/pages/legal/terms.de";
+import termsEs from "@/pages/legal/terms.es";
+import termsFr from "@/pages/legal/terms.fr";
 import { LEGAL } from "@/lib/legal";
 
 const sections: LegalSection[] = [
@@ -401,19 +405,22 @@ const sections: LegalSection[] = [
   },
 ];
 
+/** Versão original (português), que prevalece sobre as traduções. */
+const termsPt: LegalDoc = {
+  title: "Termos e Condições",
+  intro: (
+    <p>
+      Estas são as regras de utilização do {LEGAL.brand}, para Clientes e Agricultores. Pedimos
+      que as leia com atenção, em especial as secções sobre encomendas não levantadas e sobre
+      o direito de livre resolução.
+    </p>
+  ),
+  sections,
+};
+
+// Ao alterar os Termos, atualizar também as traduções em src/pages/legal/terms.*.tsx.
 const Terms = () => (
-  <LegalLayout
-    eyebrow="Legal"
-    title="Termos e Condições"
-    intro={
-      <p>
-        Estas são as regras de utilização do {LEGAL.brand}, para Clientes e Agricultores. Pedimos
-        que as leia com atenção, em especial as secções sobre encomendas não levantadas e sobre
-        o direito de livre resolução.
-      </p>
-    }
-    sections={sections}
-  />
+  <LegalLayout original={termsPt} translations={{ en: termsEn, de: termsDe, es: termsEs, fr: termsFr }} />
 );
 
 export default Terms;

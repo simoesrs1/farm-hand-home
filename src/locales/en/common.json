@@ -1,0 +1,279 @@
+{
+  "nav": {
+    "catalog": "Catalogue",
+    "experiences": "Experiences",
+    "stays": "Stays",
+    "about": "About Us",
+    "mission": "Mission"
+  },
+  "header": {
+    "homeAria": "ValorRural — home",
+    "logoAlt": "ValorRural — Your Direct Connection to the Farm",
+    "cart": "Cart",
+    "login": "Log in",
+    "signup": "Sign up"
+  },
+  "language": {
+    "label": "Language",
+    "choose": "Choose language"
+  },
+  "content": {
+    "showOriginal": "Show original",
+    "showTranslation": "Show translation"
+  },
+  "menu": {
+    "button": "Menu",
+    "mainAria": "Main menu",
+    "sections": {
+      "explore": "Explore",
+      "farmer": "Farmer",
+      "client": "Customer",
+      "account": "Account",
+      "activeProfile": "Active profile"
+    },
+    "farmer": {
+      "addProduct": "Add product",
+      "myProducts": "My products",
+      "myExperiences": "My experiences",
+      "myStays": "My accommodation",
+      "orders": "Orders",
+      "mySales": "My sales",
+      "availability": "Availability (open door)",
+      "validateDelivery": "Validate delivery"
+    },
+    "client": {
+      "myOrders": "My orders",
+      "cart": "Cart",
+      "favorites": "Favourites"
+    },
+    "account": {
+      "profile": "Profile",
+      "myPage": "View my page",
+      "farmInfo": "Farm information",
+      "settings": "Settings"
+    },
+    "modeFarmer": "Farmer",
+    "modeClient": "Customer",
+    "logout": "Log out"
+  },
+  "footer": {
+    "tagline": "We connect consumers with local farmers, with transparency and trust.",
+    "browse": "Browse",
+    "account": "Account",
+    "contact": "Contact",
+    "rights": "© 2026 ValorRural. All rights reserved.",
+    "legalAria": "Legal",
+    "terms": "Terms and Conditions",
+    "privacy": "Privacy Policy",
+    "cookies": "Manage cookies",
+    "resumeAnimations": "Resume animations",
+    "pauseAnimations": "Pause animations",
+    "complaints": "Complaints Book"
+  },
+  "days": {
+    "0": "Sunday",
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday"
+  },
+  "daysShort": {
+    "0": "Sun",
+    "1": "Mon",
+    "2": "Tue",
+    "3": "Wed",
+    "4": "Thu",
+    "5": "Fri",
+    "6": "Sat"
+  },
+  "pickup": {
+    "openNow": "Open now (until {{end}})",
+    "opensToday": "Opens today at {{time}}",
+    "opensTomorrow": "Opens tomorrow at {{time}}",
+    "opensOn": "Opens {{day}} at {{time}}",
+    "unavailable": "Hours unavailable"
+  },
+  "ical": {
+    "title": "Open door — {{farm}}",
+    "description": "{{day}} from {{start}} to {{end}}. Order collection at the farm."
+  },
+  "categories": {
+    "bebidas": "Drinks",
+    "carne": "Meat",
+    "cereais": "Cereals",
+    "charcutaria": "Charcuterie",
+    "cogumelos": "Mushrooms",
+    "conservas": "Preserves",
+    "ervas-aromaticas": "Herbs",
+    "flores": "Flowers",
+    "fruta": "Fruit",
+    "frutos-secos": "Nuts and dried fruit",
+    "gorduras": "Fats and oils",
+    "halofitas": "Halophytes",
+    "horticolas": "Vegetables",
+    "laticinios": "Dairy",
+    "leguminosas": "Pulses",
+    "mel": "Honey",
+    "oleos-essenciais": "Essential oils",
+    "outros-produtos": "Other products",
+    "ovos": "Eggs",
+    "pao-artesanal": "Artisan bread",
+    "salgados": "Savoury snacks",
+    "temperos-e-especiarias": "Seasonings and spices"
+  },
+  "fulfillment": {
+    "pickup": "Collect at the farm",
+    "delivery": "Home delivery"
+  },
+  "deliveryMode": {
+    "shipping": "Home delivery by the farmer",
+    "shippingUnavailable": "Home delivery not yet available",
+    "both": "Collection or home delivery",
+    "pickup": "Collection at the farm"
+  },
+  "deliverySettings": {
+    "fields": {
+      "delivery_mode": "Delivery method",
+      "delivery_tracking": "Delivery tracking",
+      "shipping_days": "Minimum preparation time",
+      "delivery_fee": "Delivery fee"
+    },
+    "modes": {
+      "pickup": {
+        "label": "Collection at the farm",
+        "hint": "The customer collects the order."
+      },
+      "shipping": {
+        "label": "Home delivery",
+        "hint": "Hand delivery made by you."
+      },
+      "both": {
+        "label": "Both",
+        "hint": "Collection or delivery, as the customer chooses."
+      }
+    }
+  },
+  "reviewContext": {
+    "cancelled": "Order cancelled",
+    "late": "Late delivery"
+  },
+  "duration": {
+    "hours_one": "{{count}} h",
+    "hours_other": "{{count}} h",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min"
+  },
+  "registration": {
+    "AL": "Local accommodation (AL)",
+    "TER": "Rural tourism (TER)"
+  },
+  "offerings": {
+    "products": {
+      "label": "Product sales",
+      "description": "Farm products for collection or delivery."
+    },
+    "experiences": {
+      "label": "Experiences",
+      "description": "Activities on the farm, with sessions, bookings and a gift."
+    },
+    "stays": {
+      "label": "Accommodation",
+      "description": "Rooms or units registered as Local Accommodation or Rural Tourism."
+    }
+  },
+  "notifications": {
+    "many_one": "{{count}} new notification",
+    "many_other": "{{count}} new notifications",
+    "andMore": "{{shown}} and {{count}} more",
+    "view": "View notifications",
+    "viewShort": "View",
+    "title": "Notifications",
+    "empty": "No notifications."
+  },
+  "activity": {
+    "levels": {
+      "semente": "Seed",
+      "rebento": "Sprout",
+      "colheita": "Harvest",
+      "pomar": "Orchard"
+    },
+    "actions": {
+      "pending_one": "Accept the pending order — response speed counts towards your score.",
+      "pending_other": "Accept the {{count}} pending orders — response speed counts towards your score.",
+      "firstProduct": "Add your first product to appear in the catalogue.",
+      "stale_one": "Your catalogue hasn't been updated for {{count}} day. Confirm your stock to rise in the catalogue.",
+      "stale_other": "Your catalogue hasn't been updated for {{count}} days. Confirm your stock to rise in the catalogue.",
+      "outOfStock_one": "{{count}} product is out of stock. Restock or deactivate it.",
+      "outOfStock_other": "{{count}} products are out of stock. Restock or deactivate them.",
+      "unanswered_one": "{{count}} customer message went unanswered for 24 h.",
+      "unanswered_other": "{{count}} customer messages went unanswered for 24 h."
+    }
+  },
+  "errors": {
+    "emailTaken": "This email is already registered.",
+    "invalidLogin": "Incorrect email or password.",
+    "emailNotConfirmed": "Please confirm your email before logging in.",
+    "weakPassword": "Password too weak or compromised. Please choose another.",
+    "rateLimit": "Too many attempts. Please try again in a few minutes.",
+    "forbidden": "You don't have permission for this action.",
+    "explorationTaken": "This farm registration number is already linked to another account.",
+    "nifTaken": "This tax number (NIF) is already linked to another account.",
+    "network": "Connection error. Check your internet and try again.",
+    "generic": "Something went wrong. Please try again."
+  },
+  "actions": {
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "close": "Close",
+    "back": "Back",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "retry": "Try again",
+    "add": "Add",
+    "remove": "Remove",
+    "search": "Search",
+    "seeAll": "See all",
+    "seeMore": "See more",
+    "loading": "Loading…",
+    "send": "Send",
+    "yes": "Yes",
+    "no": "No",
+    "clear": "Clear",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "units": {
+    "km": "{{value}} km",
+    "perUnit": "/ {{unit}}",
+    "vat": "VAT {{rate}}%"
+  },
+  "favorites": {
+    "add": "Add to favourites",
+    "remove": "Remove from favourites"
+  },
+  "maps": {
+    "disabled": "Map disabled",
+    "disabledText": "Maps are provided by Google, which may set cookies and collect your IP address. To see the map, allow map cookies.",
+    "enable": "Enable maps",
+    "preferences": "Preferences",
+    "pointTitle": "Mark the delivery point",
+    "pointText": "Tap the map at the exact spot where the farmer should deliver the order.",
+    "pointPicked": "Point marked: {{coords}}",
+    "pointNone": "No point marked yet.",
+    "pointConfirm": "Confirm point",
+    "noKey": "Map unavailable — the Google Maps key is not configured."
+  },
+  "orderUnits": {
+    "pessoa_one": "person",
+    "pessoa_other": "people",
+    "grupo_one": "group",
+    "grupo_other": "groups",
+    "noite_one": "night",
+    "noite_other": "nights"
+  }
+}

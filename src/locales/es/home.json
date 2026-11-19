@@ -1,0 +1,137 @@
+{
+  "hero": {
+    "title": "Del campo a su mesa, sin intermediarios",
+    "subtitle": "Descubra productos frescos directamente de quien los cultiva. ¡Apoye al productor local!",
+    "byLocation": "Por ubicación",
+    "byFarm": "Por nombre de granja",
+    "yourLocation": "Su ubicación",
+    "locationPlaceholder": "Ej.: Lisboa, Sintra, Évora...",
+    "radius": "Radio:",
+    "radiusAria": "Radio de búsqueda: {{km}} km",
+    "search": "Buscar",
+    "preferMap": "¿Prefiere verlo en el mapa?",
+    "farmName": "Nombre de la granja",
+    "farmPlaceholder": "Ej.: Quinta do Vale Verde, Monte Alentejano...",
+    "farmHint": "Busque directamente por el nombre de una granja o agricultor.",
+    "collageAria": "Productos del momento",
+    "imageAlt": "Campos agrícolas portugueses"
+  },
+  "how": {
+    "eyebrow": "Cómo funciona",
+    "title": "Del campo a su mesa en tres pasos",
+    "steps": {
+      "choose": {
+        "title": "Elija cerca de usted",
+        "text": "Busque por su ubicación y vea lo que los agricultores de la zona tienen a la venta esta semana."
+      },
+      "order": {
+        "title": "Pida a la granja",
+        "text": "Paga en la plataforma y el pedido va directamente al agricultor, sin intermediarios."
+      },
+      "collect": {
+        "title": "Recoja o reciba en casa",
+        "text": "Lleve el código de recogida a la granja en el horario indicado, o reciba el pedido en casa cuando el agricultor lo entregue."
+      }
+    }
+  },
+  "about": {
+    "eyebrow": "Sobre nosotros",
+    "title": "El puente entre el campo y la ciudad",
+    "p1": "ValorRural nació del deseo de acortar la distancia entre quien produce y quien consume. Creemos que la agricultura local es el futuro de una alimentación sostenible y que cada compra directa fortalece no solo la economía rural, sino también la confianza entre las personas.",
+    "p2": "Nuestra plataforma se ha diseñado para ser sencilla, transparente y justa. Cada valoración se verifica con prueba de compra. Cada agricultor es un socio con rostro e historia.",
+    "values": {
+      "sustainability": {
+        "title": "Sostenibilidad",
+        "desc": "Reducimos la huella ecológica al eliminar intermediarios y grandes cadenas logísticas."
+      },
+      "community": {
+        "title": "Comunidad",
+        "desc": "Conectamos a personas reales: consumidores conscientes y productores dedicados."
+      },
+      "trust": {
+        "title": "Confianza",
+        "desc": "Solo quien compra puede valorar, por eso las valoraciones son auténticas y fiables."
+      }
+    }
+  },
+  "mission": {
+    "eyebrow": "Misión y visión",
+    "title": "Nuestro compromiso con la agricultura local",
+    "sections": {
+      "mission": {
+        "title": "Misión",
+        "text": "Democratizar el acceso a productos agrícolas frescos, de calidad y a precios asequibles, creando un mercado digital que valora el trabajo de los pequeños y medianos agricultores portugueses y ofrece a los consumidores una experiencia de compra transparente y de confianza."
+      },
+      "vision": {
+        "title": "Visión",
+        "text": "Ser la principal plataforma de conexión entre productores y consumidores en Portugal, contribuyendo a un sistema alimentario más justo, sostenible y comunitario."
+      },
+      "impact": {
+        "title": "Impacto social",
+        "text": "Cada transacción en ValorRural fortalece la economía local, preserva prácticas agrícolas tradicionales y reduce el desperdicio alimentario al acortar la cadena de distribución."
+      },
+      "sustainability": {
+        "title": "Sostenibilidad",
+        "text": "Al reducir intermediarios y distancias de transporte, contribuimos a una huella de carbono significativamente menor en el sector alimentario."
+      }
+    }
+  },
+  "notFound": {
+    "eyebrow": "Error 404",
+    "title": "Esta página no existe",
+    "description": "Es posible que el enlace sea incorrecto o que la página se haya eliminado.",
+    "home": "Volver al inicio",
+    "catalog": "Ver catálogo"
+  },
+  "farmerCta": {
+    "eyebrow": "Para agricultores",
+    "title": "¿Es agricultor? Venda directamente a quien está cerca.",
+    "text": "Publique sus productos, defina el horario de recogida y reciba los pedidos sin intermediarios.",
+    "button": "Empezar a vender"
+  },
+  "categories": {
+    "eyebrow": "Catálogo",
+    "title": "Lo que hay en el puesto esta semana",
+    "description": "Las categorías con más productos frescos de nuestros agricultores.",
+    "seeAll": "Ver catálogo completo",
+    "products_one": "{{count}} producto",
+    "products_other": "{{count}} productos",
+    "soon": "Próximamente"
+  },
+  "featured": {
+    "eyebrow": "Quién cultiva",
+    "title": "Agricultores destacados",
+    "description": "Los productores más activos de esta semana: stock al día, respuestas rápidas y productos listos para pedir.",
+    "how": "¿Cómo los elegimos?",
+    "empty": "Todavía no hay agricultores destacados esta semana. Los destacados se actualizan todos los días.",
+    "seeCatalog": "Ver el catálogo",
+    "farmerFallback": "Agricultor",
+    "available_one": "{{count}} producto disponible",
+    "available_other": "{{count}} productos disponibles"
+  },
+  "impact": {
+    "aria": "ValorRural en cifras",
+    "farmers": "agricultores con productos a la venta",
+    "products": "productos disponibles ahora",
+    "reviews": "valoraciones de quien ya ha comprado"
+  },
+  "seasonal": {
+    "aria": "Productos de temporada en {{month}}",
+    "title": "De temporada"
+  },
+  "rail": {
+    "eyebrow": "Visite la granja",
+    "title": "Experiencias y alojamiento",
+    "description": "Recoja aceitunas, duerma en la granja, llévese un regalo de la casa.",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "stay": "Alojamiento",
+    "experience": "Experiencia",
+    "unit": {
+      "stayPerPerson": "/noche por persona",
+      "stay": "/noche",
+      "perPerson": "/persona",
+      "perGroup": "/grupo"
+    }
+  }
+}

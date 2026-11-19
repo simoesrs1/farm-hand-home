@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { DAY_LABELS } from "@/lib/pickup-hours";
+import { dayLabel } from "@/lib/pickup-hours";
 import { parseEuro } from "@/lib/delivery-defaults";
 import { WEEK_ORDER } from "@/lib/experience-sessions";
 import { uploadMedia } from "@/lib/media-upload";
@@ -19,6 +19,8 @@ import { REGISTRATION_LABELS, type BlockedRange, type StayPricingMode } from "@/
 import GiftListEditor, { type GiftDraft } from "@/components/GiftListEditor";
 import MediaListEditor from "@/components/MediaListEditor";
 import AiDescriptionAssistant from "@/components/AiDescriptionAssistant";
+import { useTranslation } from "react-i18next";
+import { formatDate } from "@/lib/format";
 
 export type StayRow = Tables<"farm_stays">;
 
@@ -35,6 +37,7 @@ const toDraftPrice = (n: number) => (n > 0 ? String(n).replace(".", ",") : "");
 
 /** Formulário único para criar e editar alojamento (área do agricultor). */
 const StayForm = ({ farmerId, stay, gifts: initialGifts = [], blocked: initialBlocked = [], onSaved }: StayFormProps) => {
+  const { t } = useTranslation("offerings");
   const { user } = useAuth();
   const [title, setTitle] = useState(stay?.title ?? "");
   const [description, setDescription] = useState(stay?.description ?? "");
@@ -64,7 +67,7 @@ const StayForm = ({ farmerId, stay, gifts: initialGifts = [], blocked: initialBl
 
   const addBlock = () => {
     if (!newBlock.start_date || !newBlock.end_date || newBlock.end_date < newBlock.start_date) {
-      toast({ title: "Indique um intervalo de datas válido", variant: "destructive" });
+      toast({ title: t("stayForm.errRange"), variant: "destructive" });
       return;
     }
     setBlocked((b) => [...b, newBlock].sort((x, y) => x.start_date.localeCompare(y.start_date)));
@@ -84,17 +87,17 @@ const StayForm = ({ farmerId, stay, gifts: initialGifts = [], blocked: initialBl
     const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
     const problem =
-      title.trim().length < 3 ? "Indique o título do alojamento." :
-      description.trim().length < 20 ? "Descreva o alojamento (mínimo 20 caracteres)." :
-      !base || base <= 0 ? "Indique um preço por noite válido." :
-      parsedDayPrices.some(([, v]) => !v || v <= 0) ? "Os preços por dia têm de ser valores válidos." :
-      !Number.isInteger(units) || units < 1 || units > 50 ? "O número de quartos tem de estar entre 1 e 50." :
-      !Number.isInteger(cap) || cap < 1 || cap > 20 ? "A lotação por quarto tem de estar entre 1 e 20 pessoas." :
-      !Number.isInteger(nights) || nights < 1 || nights > 30 ? "O mínimo de noites tem de estar entre 1 e 30." :
-      !TIME.test(checkInTime) || !TIME.test(checkOutTime) ? "Indique as horas de entrada e de saída." :
-      registrationNumber.trim().length < 2 ? "Indique o número de registo do alojamento." :
-      parsedGifts.some((g) => g.price === null) ? "Os preços dos brindes têm de ser valores válidos." :
-      !parsedGifts.some((g) => g.price === 0) ? "Adicione pelo menos um brinde grátis." :
+      title.trim().length < 3 ? t("stayForm.errTitle") :
+      description.trim().length < 20 ? t("stayForm.errDescription") :
+      !base || base <= 0 ? t("stayForm.errPrice") :
+      parsedDayPrices.some(([, v]) => !v || v <= 0) ? t("forms.errDayPrices") :
+      !Number.isInteger(units) || units < 1 || units > 50 ? t("stayForm.errUnits") :
+      !Number.isInteger(cap) || cap < 1 || cap > 20 ? t("stayForm.errCapacity") :
+      !Number.isInteger(nights) || nights < 1 || nights > 30 ? t("stayForm.errNights") :
+      !TIME.test(checkInTime) || !TIME.test(checkOutTime) ? t("stayForm.errTimes") :
+      registrationNumber.trim().length < 2 ? t("stayForm.errRegistration") :
+      parsedGifts.some((g) => g.price === null) ? t("forms.errGiftPrices") :
+      !parsedGifts.some((g) => g.price === 0) ? t("forms.errFreeGift") :
       null;
     if (problem) {
       toast({ title: problem, variant: "destructive" });
@@ -148,11 +151,11 @@ const StayForm = ({ farmerId, stay, gifts: initialGifts = [], blocked: initialBl
         if (blockErr) throw blockErr;
       }
 
-      toast({ title: stay ? "Alojamento atualizado" : "Alojamento criado" });
+      toast({ title: stay ? t("stayForm.updated") : t("stayForm.created") });
       onSaved();
     } catch (err) {
       toast({
-        title: "Erro a guardar o alojamento",
+        title: t("stayForm.saveError"),
         description: err instanceof Error ? err.message : String(err),
         variant: "destructive",
       });
@@ -164,19 +167,19 @@ const StayForm = ({ farmerId, stay, gifts: initialGifts = [], blocked: initialBl
   return (
     <div className="space-y-6">
       <Card className="space-y-4 p-5">
-        <h2 className="font-medium">O alojamento</h2>
+        <h2 className="font-medium">{t("stayForm.section")}</h2>
         <div className="space-y-2">
-          <Label htmlFor="stay-title">Título *</Label>
-          <Input id="stay-title" value={title} onChange={(e) => setTitle(e.target.value.slice(0, 120))} placeholder="Ex.: Quarto duplo com vista para a vinha" />
+          <Label htmlFor="stay-title">{t("forms.title")}</Label>
+          <Input id="stay-title" value={title} onChange={(e) => setTitle(e.target.value.slice(0, 120))} placeholder={t("stayForm.titlePlaceholder")} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="stay-description">Descrição *</Label>
+          <Label htmlFor="stay-description">{t("forms.description")}</Label>
           <Textarea
             id="stay-description"
             rows={6}
             value={description}
             onChange={(e) => setDescription(e.target.value.slice(0, 5000))}
-            placeholder="O quarto, as comodidades, o pequeno-almoço, o que há para fazer na quinta..."
+            placeholder={t("stayForm.descriptionPlaceholder")}
           />
           <AiDescriptionAssistant
             kind="stay"
@@ -198,18 +201,18 @@ const StayForm = ({ farmerId, stay, gifts: initialGifts = [], blocked: initialBl
         </div>
         <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
           <div>
-            <Label htmlFor="stay-active" className="text-sm font-medium">Alojamento ativo</Label>
-            <p className="text-xs text-muted-foreground">Desligado, deixa de aparecer aos clientes e não aceita reservas.</p>
+            <Label htmlFor="stay-active" className="text-sm font-medium">{t("stayForm.active")}</Label>
+            <p className="text-xs text-muted-foreground">{t("stayForm.activeHint")}</p>
           </div>
           <Switch id="stay-active" checked={active} onCheckedChange={setActive} />
         </div>
       </Card>
 
       <Card className="space-y-4 p-5">
-        <h2 className="font-medium">Registo</h2>
+        <h2 className="font-medium">{t("stayForm.registration")}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="stay-reg-type">Tipo de registo *</Label>
+            <Label htmlFor="stay-reg-type">{t("stayForm.registrationType")}</Label>
             <select
               id="stay-reg-type"
               value={registrationType}
@@ -222,82 +225,81 @@ const StayForm = ({ farmerId, stay, gifts: initialGifts = [], blocked: initialBl
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="stay-reg-number">Número de registo *</Label>
-            <Input id="stay-reg-number" value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value.slice(0, 40))} placeholder="Ex.: 123456/AL" />
+            <Label htmlFor="stay-reg-number">{t("stayForm.registrationNumber")}</Label>
+            <Input id="stay-reg-number" value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value.slice(0, 40))} placeholder={t("stayForm.registrationPlaceholder")} />
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          O número de registo (RNAL ou RNET) é mostrado aos clientes. A taxa turística, a comunicação de hóspedes e a
-          faturação são da responsabilidade do agricultor.
+          {t("stayForm.registrationHint")}
         </p>
       </Card>
 
       <Card className="space-y-4 p-5">
-        <h2 className="font-medium">Fotografias e vídeos</h2>
+        <h2 className="font-medium">{t("forms.media")}</h2>
         <MediaListEditor existing={existingMedia} onExistingChange={setExistingMedia} files={files} onFilesChange={setFiles} />
       </Card>
 
       <Card className="space-y-4 p-5">
-        <h2 className="font-medium">Quartos, lotação e estadia</h2>
+        <h2 className="font-medium">{t("stayForm.roomsSection")}</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="stay-units">Quartos iguais deste tipo *</Label>
+            <Label htmlFor="stay-units">{t("stayForm.units")}</Label>
             <Input id="stay-units" type="number" min={1} max={50} value={unitsCount} onChange={(e) => setUnitsCount(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="stay-capacity">Lotação por quarto *</Label>
+            <Label htmlFor="stay-capacity">{t("stayForm.capacity")}</Label>
             <Input id="stay-capacity" type="number" min={1} max={20} value={capacity} onChange={(e) => setCapacity(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="stay-min-nights">Mínimo de noites *</Label>
+            <Label htmlFor="stay-min-nights">{t("stayForm.minNights")}</Label>
             <Input id="stay-min-nights" type="number" min={1} max={30} value={minNights} onChange={(e) => setMinNights(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="stay-check-in">Entrada a partir das *</Label>
+            <Label htmlFor="stay-check-in">{t("stayForm.checkIn")}</Label>
             <Input id="stay-check-in" type="time" value={checkInTime} onChange={(e) => setCheckInTime(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="stay-check-out">Saída até às *</Label>
+            <Label htmlFor="stay-check-out">{t("stayForm.checkOut")}</Label>
             <Input id="stay-check-out" type="time" value={checkOutTime} onChange={(e) => setCheckOutTime(e.target.value)} />
           </div>
         </div>
       </Card>
 
       <Card className="space-y-4 p-5">
-        <h2 className="font-medium">Preço por noite</h2>
+        <h2 className="font-medium">{t("stayForm.priceSection")}</h2>
         <RadioGroup value={pricingMode} onValueChange={(v) => setPricingMode(v as StayPricingMode)} className="gap-2 sm:grid-cols-2">
           <label htmlFor="sp-room" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
             <RadioGroupItem value="per_room" id="sp-room" className="mt-0.5" />
             <div>
-              <div className="text-sm font-medium">Por quarto</div>
-              <p className="text-xs text-muted-foreground">O preço de cada noite multiplica pelo número de quartos.</p>
+              <div className="text-sm font-medium">{t("stayForm.perRoom")}</div>
+              <p className="text-xs text-muted-foreground">{t("stayForm.perRoomHint")}</p>
             </div>
           </label>
           <label htmlFor="sp-person" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
             <RadioGroupItem value="per_person" id="sp-person" className="mt-0.5" />
             <div>
-              <div className="text-sm font-medium">Por pessoa</div>
-              <p className="text-xs text-muted-foreground">O preço de cada noite multiplica pelo número de hóspedes.</p>
+              <div className="text-sm font-medium">{t("stayForm.perPerson")}</div>
+              <p className="text-xs text-muted-foreground">{t("stayForm.perPersonHint")}</p>
             </div>
           </label>
         </RadioGroup>
         <div className="space-y-2">
-          <Label htmlFor="stay-price">Preço base por noite (€) *</Label>
+          <Label htmlFor="stay-price">{t("stayForm.basePrice")}</Label>
           <Input id="stay-price" inputMode="decimal" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} placeholder="0,00" className="w-40" />
         </div>
         <div>
-          <p className="text-sm font-medium text-foreground">Preço por noite em cada dia (opcional)</p>
-          <p className="text-xs text-muted-foreground">Vale para a noite que começa nesse dia. Sem valor, vale o preço base.</p>
+          <p className="text-sm font-medium text-foreground">{t("stayForm.dayPrices")}</p>
+          <p className="text-xs text-muted-foreground">{t("stayForm.dayPricesHint")}</p>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {WEEK_ORDER.map((day) => (
               <div key={day} className="space-y-1">
-                <Label htmlFor={`stay-day-${day}`} className="text-xs">{DAY_LABELS[day]}</Label>
+                <Label htmlFor={`stay-day-${day}`} className="text-xs">{dayLabel(day)}</Label>
                 <Input
                   id={`stay-day-${day}`}
                   inputMode="decimal"
                   value={dayPrices[day] ?? ""}
                   onChange={(e) => setDayPrices((p) => ({ ...p, [day]: e.target.value }))}
-                  placeholder="Base"
+                  placeholder={t("stayForm.base")}
                   className="h-8"
                 />
               </div>
@@ -308,18 +310,18 @@ const StayForm = ({ farmerId, stay, gifts: initialGifts = [], blocked: initialBl
 
       <Card className="space-y-4 p-5">
         <div>
-          <h2 className="font-medium">Datas fechadas</h2>
+          <h2 className="font-medium">{t("stayForm.closedDates")}</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Noites em que o alojamento não aceita reservas (férias, obras, reservas noutros canais).
+            {t("stayForm.closedDatesHint")}
           </p>
         </div>
         {blocked.length > 0 && (
           <ul className="flex flex-wrap gap-2">
             {blocked.map((b, i) => (
               <li key={`${b.start_date}-${b.end_date}-${i}`} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs text-foreground">
-                {new Date(`${b.start_date}T12:00:00Z`).toLocaleDateString("pt-PT", { timeZone: "UTC" })} –{" "}
-                {new Date(`${b.end_date}T12:00:00Z`).toLocaleDateString("pt-PT", { timeZone: "UTC" })}
-                <button type="button" onClick={() => setBlocked((list) => list.filter((_, j) => j !== i))} aria-label="Remover datas fechadas">
+                {formatDate(`${b.start_date}T12:00:00Z`, { timeZone: "UTC" })} –{" "}
+                {formatDate(`${b.end_date}T12:00:00Z`, { timeZone: "UTC" })}
+                <button type="button" onClick={() => setBlocked((list) => list.filter((_, j) => j !== i))} aria-label={t("stayForm.removeClosed")}>
                   <X className="h-3 w-3" />
                 </button>
               </li>
@@ -328,35 +330,35 @@ const StayForm = ({ farmerId, stay, gifts: initialGifts = [], blocked: initialBl
         )}
         <div className="flex flex-wrap items-end gap-2">
           <div className="space-y-1">
-            <Label htmlFor="block-start" className="text-xs">De</Label>
+            <Label htmlFor="block-start" className="text-xs">{t("stayForm.from")}</Label>
             <Input id="block-start" type="date" value={newBlock.start_date} onChange={(e) => setNewBlock((b) => ({ ...b, start_date: e.target.value }))} className="h-9 w-40" />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="block-end" className="text-xs">Até (inclusive)</Label>
+            <Label htmlFor="block-end" className="text-xs">{t("stayForm.to")}</Label>
             <Input id="block-end" type="date" value={newBlock.end_date} onChange={(e) => setNewBlock((b) => ({ ...b, end_date: e.target.value }))} className="h-9 w-40" />
           </div>
           <Button type="button" variant="outline" size="sm" className="h-9 gap-1.5" onClick={addBlock}>
-            <Plus className="h-4 w-4" /> Fechar datas
+            <Plus className="h-4 w-4" /> {t("stayForm.close")}
           </Button>
         </div>
       </Card>
 
       <Card className="space-y-4 p-5">
-        <h2 className="font-medium">Brindes</h2>
+        <h2 className="font-medium">{t("forms.gifts")}</h2>
         <GiftListEditor
           farmerId={farmerId}
           gifts={gifts}
           onGiftsChange={setGifts}
           keepWithoutGift={keepWithoutGift}
           onKeepWithoutGiftChange={setKeepWithoutGift}
-          subject="O alojamento"
+          kind="stay"
         />
       </Card>
 
       <div className="flex justify-end">
         <Button onClick={save} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Guardar alojamento
+          {t("stayForm.save")}
         </Button>
       </div>
     </div>

@@ -6,10 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { farmers } from "@/data/farmers";
 import FarmerCard from "@/components/FarmerCard";
 import PageHeader from "@/components/PageHeader";
+import { useTranslation } from "react-i18next";
 
 const Favorites = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation("account");
   const [slugs, setSlugs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,17 +44,17 @@ const Favorites = () => {
   return (
     <main className="container py-10">
       <PageHeader
-        eyebrow="A minha conta"
-        title="Os meus favoritos"
-        description="Receba notificações sobre renovação de disponibilidade e novos produtos."
+        eyebrow={t("myAccount")}
+        title={t("favorites.title")}
+        description={t("favorites.description")}
       />
 
       {favoriteFarmers.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
           <Heart className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-          <p className="mb-4 text-muted-foreground">Ainda não tem agricultores favoritos.</p>
+          <p className="mb-4 text-muted-foreground">{t("favorites.empty")}</p>
           <Link to="/catalogo" className="text-primary underline">
-            Explorar catálogo
+            {t("favorites.explore")}
           </Link>
         </div>
       ) : (

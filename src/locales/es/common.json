@@ -1,0 +1,279 @@
+{
+  "nav": {
+    "catalog": "Catálogo",
+    "experiences": "Experiencias",
+    "stays": "Alojamiento",
+    "about": "Sobre nosotros",
+    "mission": "Misión"
+  },
+  "header": {
+    "homeAria": "ValorRural — inicio",
+    "logoAlt": "ValorRural — Tu conexión directa con la granja",
+    "cart": "Carrito",
+    "login": "Iniciar sesión",
+    "signup": "Registrarse"
+  },
+  "language": {
+    "label": "Idioma",
+    "choose": "Elegir idioma"
+  },
+  "content": {
+    "showOriginal": "Ver original",
+    "showTranslation": "Ver traducción"
+  },
+  "menu": {
+    "button": "Menú",
+    "mainAria": "Menú principal",
+    "sections": {
+      "explore": "Explorar",
+      "farmer": "Agricultor",
+      "client": "Cliente",
+      "account": "Cuenta",
+      "activeProfile": "Perfil activo"
+    },
+    "farmer": {
+      "addProduct": "Añadir producto",
+      "myProducts": "Mis productos",
+      "myExperiences": "Mis experiencias",
+      "myStays": "Mi alojamiento",
+      "orders": "Pedidos",
+      "mySales": "Mis ventas",
+      "availability": "Disponibilidad (puertas abiertas)",
+      "validateDelivery": "Validar entrega"
+    },
+    "client": {
+      "myOrders": "Mis pedidos",
+      "cart": "Carrito",
+      "favorites": "Favoritos"
+    },
+    "account": {
+      "profile": "Perfil",
+      "myPage": "Ver mi página",
+      "farmInfo": "Información de la explotación",
+      "settings": "Ajustes"
+    },
+    "modeFarmer": "Agricultor",
+    "modeClient": "Cliente",
+    "logout": "Cerrar sesión"
+  },
+  "footer": {
+    "tagline": "Conectamos a los consumidores con agricultores locales, con transparencia y confianza.",
+    "browse": "Navegar",
+    "account": "Cuenta",
+    "contact": "Contacto",
+    "rights": "© 2026 ValorRural. Todos los derechos reservados.",
+    "legalAria": "Legal",
+    "terms": "Términos y condiciones",
+    "privacy": "Política de privacidad",
+    "cookies": "Gestionar cookies",
+    "resumeAnimations": "Reanudar animaciones",
+    "pauseAnimations": "Pausar animaciones",
+    "complaints": "Libro de reclamaciones"
+  },
+  "days": {
+    "0": "Domingo",
+    "1": "Lunes",
+    "2": "Martes",
+    "3": "Miércoles",
+    "4": "Jueves",
+    "5": "Viernes",
+    "6": "Sábado"
+  },
+  "daysShort": {
+    "0": "Dom",
+    "1": "Lun",
+    "2": "Mar",
+    "3": "Mié",
+    "4": "Jue",
+    "5": "Vie",
+    "6": "Sáb"
+  },
+  "pickup": {
+    "openNow": "Abierto ahora (hasta las {{end}})",
+    "opensToday": "Abre hoy a las {{time}}",
+    "opensTomorrow": "Abre mañana a las {{time}}",
+    "opensOn": "Abre el {{day}} a las {{time}}",
+    "unavailable": "Horario no disponible"
+  },
+  "ical": {
+    "title": "Puertas abiertas — {{farm}}",
+    "description": "{{day}} de {{start}} a {{end}}. Recogida de pedidos en la granja."
+  },
+  "categories": {
+    "bebidas": "Bebidas",
+    "carne": "Carne",
+    "cereais": "Cereales",
+    "charcutaria": "Embutidos",
+    "cogumelos": "Setas",
+    "conservas": "Conservas",
+    "ervas-aromaticas": "Hierbas aromáticas",
+    "flores": "Flores",
+    "fruta": "Fruta",
+    "frutos-secos": "Frutos secos",
+    "gorduras": "Grasas y aceites",
+    "halofitas": "Halófitas",
+    "horticolas": "Hortalizas",
+    "laticinios": "Lácteos",
+    "leguminosas": "Legumbres",
+    "mel": "Miel",
+    "oleos-essenciais": "Aceites esenciales",
+    "outros-produtos": "Otros productos",
+    "ovos": "Huevos",
+    "pao-artesanal": "Pan artesano",
+    "salgados": "Salados",
+    "temperos-e-especiarias": "Condimentos y especias"
+  },
+  "fulfillment": {
+    "pickup": "Recoger en la granja",
+    "delivery": "Recibir en casa"
+  },
+  "deliveryMode": {
+    "shipping": "Entrega a domicilio por el agricultor",
+    "shippingUnavailable": "Entrega a domicilio aún no disponible",
+    "both": "Recogida o entrega a domicilio",
+    "pickup": "Recogida en la granja"
+  },
+  "deliverySettings": {
+    "fields": {
+      "delivery_mode": "Forma de entrega",
+      "delivery_tracking": "Seguimiento de la entrega",
+      "shipping_days": "Plazo mínimo de preparación",
+      "delivery_fee": "Precio de la entrega"
+    },
+    "modes": {
+      "pickup": {
+        "label": "Recogida en la granja",
+        "hint": "El cliente recoge el pedido."
+      },
+      "shipping": {
+        "label": "Entrega a domicilio",
+        "hint": "Entrega en mano hecha por usted."
+      },
+      "both": {
+        "label": "Ambos",
+        "hint": "Recogida o entrega, a elección del cliente."
+      }
+    }
+  },
+  "reviewContext": {
+    "cancelled": "Pedido cancelado",
+    "late": "Entrega con retraso"
+  },
+  "duration": {
+    "hours_one": "{{count}} h",
+    "hours_other": "{{count}} h",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min"
+  },
+  "registration": {
+    "AL": "Alojamiento local (AL)",
+    "TER": "Turismo rural (TER)"
+  },
+  "offerings": {
+    "products": {
+      "label": "Venta de productos",
+      "description": "Productos de la granja para recogida o entrega."
+    },
+    "experiences": {
+      "label": "Experiencias",
+      "description": "Actividades en la granja, con sesiones, reservas y regalo."
+    },
+    "stays": {
+      "label": "Alojamiento",
+      "description": "Habitaciones o unidades de Alojamiento Local o Turismo Rural."
+    }
+  },
+  "notifications": {
+    "many_one": "{{count}} notificación nueva",
+    "many_other": "{{count}} notificaciones nuevas",
+    "andMore": "{{shown}} y {{count}} más",
+    "view": "Ver notificaciones",
+    "viewShort": "Ver",
+    "title": "Notificaciones",
+    "empty": "Sin notificaciones."
+  },
+  "activity": {
+    "levels": {
+      "semente": "Semilla",
+      "rebento": "Brote",
+      "colheita": "Cosecha",
+      "pomar": "Huerto"
+    },
+    "actions": {
+      "pending_one": "Acepte el pedido pendiente — la rapidez de respuesta cuenta en la puntuación.",
+      "pending_other": "Acepte los {{count}} pedidos pendientes — la rapidez de respuesta cuenta en la puntuación.",
+      "firstProduct": "Añada su primer producto para aparecer en el catálogo.",
+      "stale_one": "El catálogo no se actualiza desde hace {{count}} día. Confirme el stock para subir en el catálogo.",
+      "stale_other": "El catálogo no se actualiza desde hace {{count}} días. Confirme el stock para subir en el catálogo.",
+      "outOfStock_one": "{{count}} producto está sin stock. Repóngalo o desactívelo.",
+      "outOfStock_other": "{{count}} productos están sin stock. Repóngalos o desactívelos.",
+      "unanswered_one": "{{count}} mensaje de cliente quedó sin respuesta en 24 h.",
+      "unanswered_other": "{{count}} mensajes de clientes quedaron sin respuesta en 24 h."
+    }
+  },
+  "errors": {
+    "emailTaken": "Este email ya está registrado.",
+    "invalidLogin": "Email o contraseña incorrectos.",
+    "emailNotConfirmed": "Confirma tu email antes de iniciar sesión.",
+    "weakPassword": "Contraseña demasiado débil o comprometida. Elige otra.",
+    "rateLimit": "Demasiados intentos. Vuelve a intentarlo dentro de unos minutos.",
+    "forbidden": "No tienes permiso para esta acción.",
+    "explorationTaken": "Este número de explotación ya está asociado a otra cuenta.",
+    "nifTaken": "Este NIF ya está asociado a otra cuenta.",
+    "network": "Error de conexión. Comprueba tu internet y vuelve a intentarlo.",
+    "generic": "Se ha producido un error. Vuelve a intentarlo."
+  },
+  "actions": {
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "back": "Volver",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "confirm": "Confirmar",
+    "continue": "Continuar",
+    "retry": "Intentar de nuevo",
+    "add": "Añadir",
+    "remove": "Quitar",
+    "search": "Buscar",
+    "seeAll": "Ver todo",
+    "seeMore": "Ver más",
+    "loading": "Cargando…",
+    "send": "Enviar",
+    "yes": "Sí",
+    "no": "No",
+    "clear": "Borrar",
+    "previous": "Anterior",
+    "next": "Siguiente"
+  },
+  "units": {
+    "km": "{{value}} km",
+    "perUnit": "/ {{unit}}",
+    "vat": "IVA {{rate}} %"
+  },
+  "favorites": {
+    "add": "Añadir a favoritos",
+    "remove": "Quitar de favoritos"
+  },
+  "maps": {
+    "disabled": "Mapa desactivado",
+    "disabledText": "Los mapas los proporciona Google, que puede instalar cookies y recoger su dirección IP. Para ver el mapa, autorice las cookies de mapas.",
+    "enable": "Activar mapas",
+    "preferences": "Preferencias",
+    "pointTitle": "Marcar el punto de entrega",
+    "pointText": "Toque en el mapa el lugar exacto donde el agricultor debe entregar el pedido.",
+    "pointPicked": "Punto marcado: {{coords}}",
+    "pointNone": "Todavía no hay ningún punto marcado.",
+    "pointConfirm": "Confirmar punto",
+    "noKey": "Mapa no disponible — falta configurar la clave de Google Maps."
+  },
+  "orderUnits": {
+    "pessoa_one": "persona",
+    "pessoa_other": "personas",
+    "grupo_one": "grupo",
+    "grupo_other": "grupos",
+    "noite_one": "noche",
+    "noite_other": "noches"
+  }
+}

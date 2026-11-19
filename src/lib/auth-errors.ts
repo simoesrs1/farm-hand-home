@@ -1,5 +1,6 @@
-// Maps backend error messages to safe, user-friendly Portuguese strings.
+// Maps backend error messages to safe, user-friendly strings (no idioma atual).
 // Avoids leaking schema/constraint details from raw database errors.
+import i18n from "@/i18n";
 
 /**
  * Deteta o erro de email duplicado no registo.
@@ -40,31 +41,31 @@ export function toUserMessage(error: unknown): string {
   const m = msg.toLowerCase();
 
   if (m.includes("user already registered") || m.includes("already exists")) {
-    return "Este email já está registado.";
+    return i18n.t("common:errors.emailTaken");
   }
   if (m.includes("invalid login credentials")) {
-    return "Email ou palavra-passe incorretos.";
+    return i18n.t("common:errors.invalidLogin");
   }
   if (m.includes("email not confirmed")) {
-    return "Confirma o teu email antes de entrar.";
+    return i18n.t("common:errors.emailNotConfirmed");
   }
   if (m.includes("password") && (m.includes("short") || m.includes("weak") || m.includes("pwned") || m.includes("hibp"))) {
-    return "Palavra-passe demasiado fraca ou comprometida. Escolhe outra.";
+    return i18n.t("common:errors.weakPassword");
   }
   if (m.includes("rate limit") || m.includes("too many")) {
-    return "Demasiadas tentativas. Tenta novamente daqui a alguns minutos.";
+    return i18n.t("common:errors.rateLimit");
   }
   if (m.includes("row-level security") || m.includes("permission denied")) {
-    return "Não tens permissão para esta ação.";
+    return i18n.t("common:errors.forbidden");
   }
   if (m.includes("farmer_details_exploration_number_unique")) {
-    return "Este número de exploração já está associado a outra conta.";
+    return i18n.t("common:errors.explorationTaken");
   }
   if (m.includes("farmer_details_company_nif_unique")) {
-    return "Este NIF já está associado a outra conta.";
+    return i18n.t("common:errors.nifTaken");
   }
   if (m.includes("network") || m.includes("fetch")) {
-    return "Erro de ligação. Verifica a tua internet e tenta novamente.";
+    return i18n.t("common:errors.network");
   }
-  return "Ocorreu um erro. Tenta novamente.";
+  return i18n.t("common:errors.generic");
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { MAX_MEDIA, isVideoPath, signMedia } from "@/lib/media-upload";
+import { useTranslation } from "react-i18next";
 
 interface MediaListEditorProps {
   /** Caminhos já guardados no bucket. */
@@ -13,6 +14,7 @@ interface MediaListEditorProps {
 
 /** Fotografias e vídeos de uma experiência ou alojamento (até MAX_MEDIA). */
 const MediaListEditor = ({ existing, onExistingChange, files, onFilesChange }: MediaListEditorProps) => {
+  const { t } = useTranslation(["farmer", "common"]);
   const [preview, setPreview] = useState<Record<string, string>>({});
   const filePreviews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
 
@@ -34,7 +36,7 @@ const MediaListEditor = ({ existing, onExistingChange, files, onFilesChange }: M
         type="button"
         onClick={onRemove}
         className="absolute right-1 top-1 rounded-full bg-background/90 p-1 text-foreground"
-        aria-label="Remover"
+        aria-label={t("common:actions.remove")}
       >
         <X className="h-3.5 w-3.5" />
       </button>
@@ -53,12 +55,12 @@ const MediaListEditor = ({ existing, onExistingChange, files, onFilesChange }: M
         {existing.length + files.length < MAX_MEDIA && (
           <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border text-xs text-muted-foreground hover:bg-secondary/50">
             <Plus className="h-5 w-5" />
-            Adicionar
+            {t("common:actions.add")}
             <input type="file" accept="image/*,video/*" multiple className="sr-only" onChange={(e) => addFiles(e.target.files)} />
           </label>
         )}
       </div>
-      <p className="text-xs text-muted-foreground">Até {MAX_MEDIA} fotografias ou vídeos.</p>
+      <p className="text-xs text-muted-foreground">{t("media.limit", { count: MAX_MEDIA })}</p>
     </div>
   );
 };

@@ -23,8 +23,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import DeliveryRouteMapDialog, { DeliveryRouteControls, RouteDaySummary } from "@/components/DeliveryRouteMapDialog";
 import { useDeliveryRoute, type RouteStop } from "@/hooks/useDeliveryRoute";
-import { formatEuro } from "@/lib/format";
+import { formatDate, formatDateTime, formatEuro, formatTime, unitLabel } from "@/lib/format";
 import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import TranslatedText from "@/components/TranslatedText";
 
 /** Escolhas do agricultor na rota das entregas, guardadas no browser. */
 interface RoutePrefs {
@@ -81,27 +84,29 @@ const deliveryWhen = (o: Order) => o.scheduled_pickup_at ?? o.expected_delivery_
 
 // Reservas de experiências: rótulos próprios.
 const bookingLabel = (o: Order) =>
-  o.status === "awaiting_pickup" ? "Reservada"
-  : o.status === "delivered" ? "Concluída"
-  : o.status === "expired" ? "Sem comparência"
-  : o.status === "refunded" ? (o.cancelled_by === "client" ? "Cancelada pelo cliente" : "Cancelada")
+  o.status === "awaiting_pickup" ? i18n.t("orders:status.booking.awaiting_pickup")
+  : o.status === "delivered" ? i18n.t("orders:status.booking.delivered")
+  : o.status === "expired" ? i18n.t("orders:status.booking.expired")
+  : o.status === "refunded"
+    ? i18n.t(o.cancelled_by === "client" ? "farmer:orders.cancelledByClient" : "orders:status.cancelled")
   : null;
 
 const bookingTitle = (o: Order) =>
   o.order_items?.find((it) => it.unit === "pessoa" || it.unit === "grupo" || it.unit === "noite")?.product_name ??
-  (o.kind === "stay" ? "Alojamento" : "Experiência");
+  i18n.t(o.kind === "stay" ? "orders:booking.stay" : "orders:booking.experience");
 
 const formatLisbon = (iso: string, opts: Intl.DateTimeFormatOptions) =>
-  new Date(iso).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon", ...opts });
+  formatDateTime(iso, { timeZone: "Europe/Lisbon", ...opts });
 
 type TrackingAction = "packed" | "in_transit" | "out_for_delivery";
 
 // Passos do acompanhamento que o agricultor marca, por ordem. "Entregue" fica
 // a cargo da validação do QR code.
-const TRACKING_STEPS: { action: TrackingAction; column: "packed_at" | "in_transit_at" | "out_for_delivery_at"; label: string; done: string }[] = [
-  { action: "packed", column: "packed_at", label: "Marcar como embalada", done: "Embalada" },
-  { action: "in_transit", column: "in_transit_at", label: "Marcar como expedida", done: "Expedida da quinta" },
-  { action: "out_for_delivery", column: "out_for_delivery_at", label: "Marcar em trânsito", done: "Em trânsito" },
+// Textos em farmer:orders.tracking.<ação> (botão) e orders:statusPage.tracking.<ação> (passo feito).
+const TRACKING_STEPS: { action: TrackingAction; column: "packed_at" | "in_transit_at" | "out_for_delivery_at" }[] = [
+  { action: "packed", column: "packed_at" },
+  { action: "in_transit", column: "in_transit_at" },
+  { action: "out_for_delivery", column: "out_for_delivery_at" },
 ];
 
 const nextTrackingStep = (o: Order) =>
@@ -112,17 +117,19 @@ const nextTrackingStep = (o: Order) =>
 const lastTrackingStep = (o: Order) =>
   [...TRACKING_STEPS].reverse().find((s) => o[s.column]) ?? null;
 
+// Nome de cada estado em farmer:orders.status.<estado>.
 const meta = {
-  awaiting_pickup: { label: "A aguardar", tone: "bg-info/15 text-info", Icon: Clock },
-  delivered: { label: "Entregue", tone: "bg-success/15 text-success", Icon: CheckCircle2 },
-  expired: { label: "Expirada", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
-  refunded: { label: "Devolvida", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
-  pending_payment: { label: "Pendente", tone: "bg-muted text-muted-foreground", Icon: Clock },
+  awaiting_pickup: { tone: "bg-info/15 text-info", Icon: Clock },
+  delivered: { tone: "bg-success/15 text-success", Icon: CheckCircle2 },
+  expired: { tone: "bg-destructive/15 text-destructive", Icon: XCircle },
+  refunded: { tone: "bg-destructive/15 text-destructive", Icon: XCircle },
+  pending_payment: { tone: "bg-muted text-muted-foreground", Icon: Clock },
 } as const;
 
 const FarmerOrders = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation(["farmer", "common", "orders"]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [acting, setActing] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -171,7 +178,7 @@ const FarmerOrders = () => {
       if (!cancelled) {
         setFarm(
           fd?.pickup_lat != null && fd?.pickup_lng != null
-            ? { lat: Number(fd.pickup_lat), lng: Number(fd.pickup_lng), name: fd.company_name ?? "A minha quinta" }
+            ? { lat: Number(fd.pickup_lat), lng: Number(fd.pickup_lng), name: fd.company_name ?? i18n.t("farmer:availability.myFarm") }
             : null,
         );
       }
@@ -217,8 +224,8 @@ const FarmerOrders = () => {
     const message = (data as { error?: string } | null)?.error;
     if (error || message) {
       toast({
-        title: "Não foi possível concluir",
-        description: message ?? "Tenta novamente dentro de momentos.",
+        title: t("orders.actionFailed"),
+        description: message ?? t("orders:my.tryAgain"),
         variant: "destructive",
       });
       return;
@@ -228,19 +235,19 @@ const FarmerOrders = () => {
       setOrders((prev) =>
         prev.map((o) => (o.id === order.id ? { ...o, status: "refunded", cancelled_by: "farmer", farmer_amount: 0 } : o)),
       );
-      toast({ title: "Reserva cancelada", description: "O cliente foi notificado e recebe o valor na totalidade." });
+      toast({ title: t("orders:cancelBooking.done"), description: t("orders.bookingCancelledText") });
     } else if (step) {
       const now = new Date().toISOString();
       setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, [step.column]: now } : o)));
-      toast({ title: `Encomenda: ${step.done.toLowerCase()}`, description: "O cliente foi notificado." });
+      toast({ title: t("orders.stepDone", { step: t(`orders:statusPage.tracking.${step.action}`) }), description: t("orders.clientNotified") });
     } else if (action === "accept") {
       setOrders((prev) =>
         prev.map((o) => (o.id === order.id ? { ...o, accepted_at: new Date().toISOString() } : o)),
       );
-      toast({ title: "Pedido aceite", description: "O cliente foi notificado." });
+      toast({ title: t("orders.accepted"), description: t("orders.clientNotified") });
     } else {
       setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: "refunded" } : o)));
-      toast({ title: "Encomenda devolvida", description: "O cliente foi notificado da falta de stock." });
+      toast({ title: t("orders.refunded"), description: t("orders.refundedText") });
     }
   };
 
@@ -261,7 +268,7 @@ const FarmerOrders = () => {
       )
       .map((o) => ({
         orderId: o.id,
-        label: `Encomenda #${o.id.slice(0, 8).toUpperCase()}`,
+        label: i18n.t("farmer:orders.orderNo", { id: o.id.slice(0, 8).toUpperCase() }),
         address: o.delivery_address,
         lat: Number(o.delivery_lat),
         lng: Number(o.delivery_lng),
@@ -312,7 +319,7 @@ const FarmerOrders = () => {
   if (!user || profile?.profile_type !== "vendedor") {
     return (
       <main className="container py-16 text-center">
-        <p className="text-muted-foreground">Esta área é exclusiva para agricultores.</p>
+        <p className="text-muted-foreground">{t("farmersOnly")}</p>
       </main>
     );
   }
@@ -331,23 +338,23 @@ const FarmerOrders = () => {
   return (
     <main className="container max-w-5xl py-8">
       <Link to="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Início
+        <ArrowLeft className="h-4 w-4" /> {t("orders:my.home")}
       </Link>
 
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <SectionHeading as="h1" eyebrow="Área do agricultor" title="Encomendas da tua quinta" />
+        <SectionHeading as="h1" eyebrow={t("area")} title={t("orders.title")} />
         <div className="flex flex-wrap items-center gap-2">
           <DeliveryRouteMapDialog days={routeDays} {...routeControls}>
             <div className="mt-6 border-t border-border pt-4">
               <h3 className="font-display text-lg font-semibold text-foreground">
-                Encomendas com entrega ao domicílio
+                {t("orders.homeDeliveryOrders")}
               </h3>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                {homeDeliveredCount} entregue(s) · {homeDeliveryOrders.length} por entregar
+                {t("orders.homeDeliveryCounts", { delivered: homeDeliveredCount, pending: homeDeliveryOrders.length })}
               </p>
               {allHomeDeliveryOrders.length === 0 ? (
                 <p className="mt-3 rounded-lg border border-border p-6 text-center text-sm text-muted-foreground">
-                  Ainda não há encomendas com entrega ao domicílio.
+                  {t("orders.noHomeDelivery")}
                 </p>
               ) : (
                 <ul className="mt-3 space-y-2">
@@ -358,22 +365,22 @@ const FarmerOrders = () => {
                       <li key={o.id} className="rounded-lg border border-border p-3 text-sm">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="text-xs text-muted-foreground">
-                            Encomenda #{o.id.slice(0, 8).toUpperCase()} ·{" "}
-                            {new Date(o.created_at).toLocaleDateString("pt-PT")} ·{" "}
+                            {t("orders.orderNo", { id: o.id.slice(0, 8).toUpperCase() })} ·{" "}
+                            {formatDate(o.created_at)} ·{" "}
                             <span className="font-medium text-foreground">{formatEuro(o.total)}</span>
                           </p>
                           <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${m.tone}`}>
-                            <Icon className="h-3 w-3" /> {m.label}
+                            <Icon className="h-3 w-3" /> {t(`orders.status.${o.status}`)}
                           </span>
                         </div>
                         <p className="mt-2 flex items-center gap-2 text-foreground">
                           <MapPin className="h-4 w-4 shrink-0 text-primary" />
-                          {o.delivery_address ?? "Morada por confirmar"}
+                          {o.delivery_address ?? t("route.addressPending")}
                         </p>
                         {o.scheduled_pickup_at && (
                           <p className="mt-1 flex items-center gap-2 text-foreground">
                             <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
-                            {new Date(o.scheduled_pickup_at).toLocaleString("pt-PT", {
+                            {formatDateTime(o.scheduled_pickup_at, {
                               weekday: "long",
                               day: "numeric",
                               month: "long",
@@ -383,7 +390,14 @@ const FarmerOrders = () => {
                           </p>
                         )}
                         <p className="mt-1 text-muted-foreground">
-                          {o.order_items.map((it) => `${it.product_name} (${it.quantity}${it.unit ? ` ${it.unit}` : ""})`).join(" · ")}
+                          {o.order_items.map((it, i) => (
+                            <span key={it.id}>
+                              {i > 0 && " · "}
+                              <TranslatedText type="order_item" id={it.id} field="product_name" text={it.product_name} /> (
+                              {it.quantity}
+                              {it.unit ? ` ${unitLabel(it.unit, it.quantity)}` : ""})
+                            </span>
+                          ))}
                         </p>
                       </li>
                     );
@@ -393,24 +407,24 @@ const FarmerOrders = () => {
             </div>
           </DeliveryRouteMapDialog>
           <Link to="/agricultor/scan">
-            <Button className="gap-2"><ScanLine className="h-4 w-4" /> Validar entrega</Button>
+            <Button className="gap-2"><ScanLine className="h-4 w-4" /> {t("common:menu.farmer.validateDelivery")}</Button>
           </Link>
         </div>
       </div>
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">A aguardar</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("orders.status.awaiting_pickup")}</p>
           <p className="mt-1 font-display text-2xl font-bold text-foreground">
             {orders.filter((o) => o.status === "awaiting_pickup").length}
           </p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Recebido (entregues)</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("orders.earnedDelivered")}</p>
           <p className="mt-1 font-mono tabular-nums text-2xl font-bold text-primary">{formatEuro(earnedDelivered)}</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Compensação (expiradas)</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("orders.earnedExpired")}</p>
           <p className="mt-1 font-mono tabular-nums text-2xl font-bold text-foreground">{formatEuro(earnedExpired)}</p>
         </div>
       </div>
@@ -420,11 +434,11 @@ const FarmerOrders = () => {
           <div className="flex items-center gap-2">
             <Truck className="h-5 w-5 text-primary" />
             <h2 className="font-display text-xl font-semibold text-foreground">
-              Planeamento de entregas ao domicílio
+              {t("orders.plan")}
             </h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Organiza o teu dia: entregas em mão por dia, com horário e produtos.
+            {t("orders.planText")}
           </p>
           {routeStops.length > 0 && (
             <div className="mt-3">
@@ -435,7 +449,7 @@ const FarmerOrders = () => {
             {deliveryPlan.map((day) => (
               <div key={day.key} className="rounded-xl border border-border bg-background p-4">
                 <p className="font-medium capitalize text-foreground">
-                  {day.date.toLocaleDateString("pt-PT", {
+                  {formatDate(day.date, {
                     weekday: "long",
                     day: "numeric",
                     month: "long",
@@ -454,20 +468,17 @@ const FarmerOrders = () => {
                           {day.stopNumber.has(o.id) ? (
                             <span
                               className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold"
-                              title="Ordem no percurso"
+                              title={t("orders.stopOrder")}
                             >
                               {day.stopNumber.get(o.id)}
                             </span>
                           ) : null}
                           <CalendarClock className="h-4 w-4 text-primary" />
                           {o.scheduled_pickup_at
-                            ? new Date(o.scheduled_pickup_at).toLocaleTimeString("pt-PT", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : "Hora por combinar"}
+                            ? formatTime(o.scheduled_pickup_at)
+                            : t("orders.timeTbd")}
                           <span className="text-xs text-muted-foreground">
-                            · Encomenda #{o.id.slice(0, 8).toUpperCase()}
+                            · {t("orders.orderNo", { id: o.id.slice(0, 8).toUpperCase() })}
                           </span>
                         </p>
                         <span className="text-sm font-medium text-foreground">{formatEuro(o.total)}</span>
@@ -480,7 +491,7 @@ const FarmerOrders = () => {
                       )}
                       {!day.stopNumber.has(o.id) && (
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Sem ponto de entrega marcado: fica fora do percurso.
+                          {t("orders.noPoint")}
                         </p>
                       )}
                       <ul className="mt-2 space-y-1">
@@ -489,8 +500,8 @@ const FarmerOrders = () => {
                             {it.product_image && (
                               <img src={it.product_image} alt={it.product_name} className="h-6 w-6 rounded object-cover" />
                             )}
-                            <span className="flex-1">{it.product_name}</span>
-                            <span>{it.quantity} {it.unit ?? ""}</span>
+                            <TranslatedText type="order_item" id={it.id} field="product_name" text={it.product_name} className="flex-1" />
+                            <span>{it.quantity} {unitLabel(it.unit, it.quantity)}</span>
                           </li>
                         ))}
                       </ul>
@@ -507,7 +518,7 @@ const FarmerOrders = () => {
         <Skeleton className="h-40 w-full" />
       ) : orders.length === 0 ? (
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted-foreground">
-          Ainda não recebeste encomendas.
+          {t("orders.none")}
         </div>
       ) : (
         <ul className="space-y-3">
@@ -533,20 +544,27 @@ const FarmerOrders = () => {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs text-muted-foreground">
-                      Encomenda #{o.id.slice(0, 8).toUpperCase()} · {new Date(o.created_at).toLocaleString("pt-PT")}
+                      {t("orders.orderNo", { id: o.id.slice(0, 8).toUpperCase() })} · {formatDateTime(o.created_at)}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Total: <span className="font-medium text-foreground">{formatEuro(o.total)}</span>
+                      {t("orders.total")} <span className="font-medium text-foreground">{formatEuro(o.total)}</span>
                       {" · "}
-                      Comissão (10%): <span className="font-medium text-foreground">{formatEuro(o.commission_amount)}</span>
+                      {t("orders.commission")} <span className="font-medium text-foreground">{formatEuro(o.commission_amount)}</span>
                     </p>
                     <p className="mt-1 font-mono tabular-nums text-lg font-semibold text-primary">
-                      {o.status === "delivered" ? "Recebes" : o.status === "expired" || o.status === "refunded" ? "Recebeste" : "Vais receber"}: {formatEuro(farmerGets)}
+                      {t(
+                        o.status === "delivered"
+                          ? "orders.youGet"
+                          : o.status === "expired" || o.status === "refunded"
+                            ? "orders.youGot"
+                            : "orders.youWillGet",
+                        { amount: formatEuro(farmerGets) },
+                      )}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${m.tone}`}>
-                      <Icon className="h-3.5 w-3.5" /> {(isBooking(o) && bookingLabel(o)) || m.label}
+                      <Icon className="h-3.5 w-3.5" /> {(isBooking(o) && bookingLabel(o)) || t(`orders.status.${o.status}`)}
                     </span>
                     {o.status === "awaiting_pickup" && !o.accepted_at && (
                       <>
@@ -556,7 +574,7 @@ const FarmerOrders = () => {
                           disabled={acting === o.id}
                           onClick={() => runAction(o, "accept")}
                         >
-                          <ThumbsUp className="h-4 w-4" /> Aceitar pedido
+                          <ThumbsUp className="h-4 w-4" /> {t("orders.accept")}
                         </Button>
                         <Button
                           size="sm"
@@ -565,14 +583,15 @@ const FarmerOrders = () => {
                           disabled={acting === o.id}
                           onClick={() => runAction(o, "refund_no_stock")}
                         >
-                          <Undo2 className="h-4 w-4" /> Devolver (sem stock)
+                          <Undo2 className="h-4 w-4" /> {t("orders.refundNoStock")}
                         </Button>
                       </>
                     )}
                     {o.delivery_tracking && o.status === "awaiting_pickup" && (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
                         <Truck className="h-3.5 w-3.5" />
-                        Com acompanhamento{lastStep ? ` · ${lastStep.done}` : ""}
+                        {t("orders.withTracking")}
+                        {lastStep ? ` · ${t(`orders:statusPage.tracking.${lastStep.action}`)}` : ""}
                       </span>
                     )}
                     {nextStep && (
@@ -583,7 +602,7 @@ const FarmerOrders = () => {
                         disabled={acting === o.id}
                         onClick={() => runAction(o, nextStep.action)}
                       >
-                        <Truck className="h-4 w-4" /> {nextStep.label}
+                        <Truck className="h-4 w-4" /> {t(`orders.tracking.${nextStep.action}`)}
                       </Button>
                     )}
                     {isBooking(o) && o.status === "awaiting_pickup" && (
@@ -594,17 +613,17 @@ const FarmerOrders = () => {
                         disabled={acting === o.id}
                         onClick={() => setCancelTarget(o)}
                       >
-                        <Undo2 className="h-4 w-4" /> Cancelar reserva
+                        <Undo2 className="h-4 w-4" /> {t("orders:cancelBooking.button")}
                       </Button>
                     )}
                     {o.status === "delivered" && pendingLotOrders.has(o.id) && (
                       <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setLotOrderId(o.id)}>
-                        <Boxes className="h-4 w-4" /> Indicar lotes
+                        <Boxes className="h-4 w-4" /> {t("orders.indicateLots")}
                       </Button>
                     )}
                     {o.status === "awaiting_pickup" && o.accepted_at && (
                       <Button size="sm" className="gap-1.5" onClick={() => setValidating(o)}>
-                        <ScanLine className="h-4 w-4" /> {o.kind === "stay" ? "Validar check-in" : isBooking(o) ? "Validar chegada" : "Validar entrega"}
+                        <ScanLine className="h-4 w-4" /> {o.kind === "stay" ? t("orders.validateCheckIn") : isBooking(o) ? t("orders.validateArrival") : t("common:menu.farmer.validateDelivery")}
                       </Button>
                     )}
                   </div>
@@ -615,8 +634,13 @@ const FarmerOrders = () => {
                     <Tent className="h-4 w-4 shrink-0 text-primary" />
                     {bookingTitle(o)} ·{" "}
                     {o.kind === "stay" && o.booking_end
-                      ? `${formatLisbon(o.booking_start, { day: "2-digit", month: "2-digit" })} a ${formatLisbon(o.booking_end, { day: "2-digit", month: "2-digit" })} · ${o.booking_people} hóspede(s) · ${o.booking_units} quarto(s)`
-                      : `${formatLisbon(o.booking_start, { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · ${o.booking_people} ${o.booking_people === 1 ? "pessoa" : "pessoas"}`}
+                      ? t("orders.stayLine", {
+                          from: formatLisbon(o.booking_start, { day: "2-digit", month: "2-digit" }),
+                          to: formatLisbon(o.booking_end, { day: "2-digit", month: "2-digit" }),
+                          guests: t("orders:booking.guests", { count: o.booking_people ?? 0 }),
+                          rooms: t("orders:booking.rooms", { count: o.booking_units ?? 0 }),
+                        })
+                      : `${formatLisbon(o.booking_start, { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · ${t("orders:booking.people", { count: o.booking_people ?? 0 })}`}
                   </p>
                 )}
 
@@ -628,9 +652,9 @@ const FarmerOrders = () => {
                           <img src={it.product_image} alt={it.product_name} className="h-10 w-10 rounded-md object-cover" />
                         )}
                         <div className="flex-1">
-                          <p className="font-medium text-foreground">{it.product_name}</p>
+                          <TranslatedText type="order_item" id={it.id} field="product_name" text={it.product_name} as="p" className="font-medium text-foreground" />
                           <p className="text-xs text-muted-foreground">
-                            {it.quantity} {it.unit ?? ""} × {formatEuro(it.unit_price)}
+                            {it.quantity} {unitLabel(it.unit, it.quantity)} × {formatEuro(it.unit_price)}
                           </p>
                         </div>
                         <p className="font-medium text-foreground">{formatEuro(it.subtotal)}</p>
@@ -638,7 +662,7 @@ const FarmerOrders = () => {
                     ))}
                     {o.delivery_fee > 0 && (
                       <li className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Entrega ao domicílio</span>
+                        <span className="text-muted-foreground">{t("orders:my.homeDeliveryFee")}</span>
                         <span className="font-medium text-foreground">{formatEuro(o.delivery_fee)}</span>
                       </li>
                     )}
@@ -650,21 +674,20 @@ const FarmerOrders = () => {
                     {complaintDeadlines[o.id] && (
                       <p className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-2.5 text-foreground">
                         <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" />
-                        O cliente indicou que não recebeu a encomenda. Tens até{" "}
-                        {new Date(complaintDeadlines[o.id]).toLocaleString("pt-PT")} para a entregar e validar o QR code.
+                        {t("orders.complaint", { date: formatDateTime(complaintDeadlines[o.id]) })}
                       </p>
                     )}
                     {homeDelivery && o.delivery_address && (
                       <p className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-2.5 text-foreground">
                         <Truck className="h-4 w-4 shrink-0 text-primary" />
-                        Entrega ao domicílio: {o.delivery_address}
+                        {t("orders:my.homeDelivery", { address: o.delivery_address })}
                       </p>
                     )}
                     {o.scheduled_pickup_at && (
                       <p className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-2.5 font-medium text-foreground">
                         <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
-                        {homeDelivery ? "Entrega combinada para" : "Levantamento agendado pelo cliente"}:{" "}
-                        {new Date(o.scheduled_pickup_at).toLocaleString("pt-PT", {
+                        {homeDelivery ? t("orders.deliveryAgreed") : t("orders.pickupScheduled")}:{" "}
+                        {formatDateTime(o.scheduled_pickup_at, {
                           weekday: "long",
                           day: "numeric",
                           month: "long",
@@ -674,7 +697,7 @@ const FarmerOrders = () => {
                       </p>
                     )}
                     <p>
-                      Prazo de levantamento: <span className="font-medium text-foreground">{new Date(o.pickup_deadline).toLocaleDateString("pt-PT")}</span>
+                      {t("orders.pickupDeadline")} <span className="font-medium text-foreground">{formatDate(o.pickup_deadline)}</span>
                     </p>
                   </div>
                 )}
@@ -692,20 +715,20 @@ const FarmerOrders = () => {
       <AlertDialog open={!!cancelTarget} onOpenChange={(open) => !open && setCancelTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancelar esta reserva?</AlertDialogTitle>
+            <AlertDialogTitle>{t("orders.cancelTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              O cliente recebe o valor pago na totalidade e os brindes voltam ao stock.
+              {t("orders.cancelText")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Manter</AlertDialogCancel>
+            <AlertDialogCancel>{t("orders.keep")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (cancelTarget) runAction(cancelTarget, "cancel_booking");
                 setCancelTarget(null);
               }}
             >
-              Cancelar reserva
+              {t("orders:cancelBooking.button")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

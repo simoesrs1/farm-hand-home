@@ -1,7 +1,9 @@
 import { Clock, MapPin, Tent, Users } from "lucide-react";
 import type { ExperienceRow } from "@/components/ExperienceForm";
+import TranslatedText from "@/components/TranslatedText";
 import { formatDuration } from "@/lib/experience-sessions";
 import { formatEuro } from "@/lib/format";
+import { useTranslation } from "react-i18next";
 
 interface ExperienceCardProps {
   experience: ExperienceRow;
@@ -14,7 +16,9 @@ interface ExperienceCardProps {
 }
 
 /** Cartão de uma experiência (perfil da quinta e página Experiências). */
-const ExperienceCard = ({ experience: e, thumb, farmName, distance, onClick }: ExperienceCardProps) => (
+const ExperienceCard = ({ experience: e, thumb, farmName, distance, onClick }: ExperienceCardProps) => {
+  const { t } = useTranslation("offerings");
+  return (
   <button
     type="button"
     onClick={onClick}
@@ -28,7 +32,9 @@ const ExperienceCard = ({ experience: e, thumb, farmName, distance, onClick }: E
       )}
     </div>
     <div className="p-4">
-      <h3 className="font-semibold text-foreground">{e.title}</h3>
+      <h3 className="font-semibold text-foreground">
+        <TranslatedText type="experience" id={e.id} field="title" text={e.title} />
+      </h3>
       {farmName && (
         <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="h-3.5 w-3.5 shrink-0" /> {farmName}
@@ -41,10 +47,11 @@ const ExperienceCard = ({ experience: e, thumb, farmName, distance, onClick }: E
       </p>
       <p className="mt-3">
         <span className="font-mono tabular-nums text-lg font-bold text-primary">{formatEuro(Number(e.base_price))}</span>
-        <span className="text-xs text-muted-foreground"> {e.pricing_mode === "per_person" ? "/pessoa" : "/grupo"}</span>
+        <span className="text-xs text-muted-foreground"> {e.pricing_mode === "per_person" ? t("units.perPerson") : t("units.perGroup")}</span>
       </p>
     </div>
   </button>
-);
+  );
+};
 
 export default ExperienceCard;

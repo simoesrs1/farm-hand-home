@@ -13,6 +13,7 @@
 //   Authorization: Bearer <CRON_SECRET>
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { emailEnabled, escapeHtml, sendEmail } from "../_shared/email.ts";
+import { nudgeEmail, toEmailLang, type NudgeEmail } from "../_shared/email-i18n.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -154,6 +155,8 @@ Deno.serve(async (req) => {
     }
 
     const notifications: Notification[] = [];
+    // Tipo de cada lembrete, para escrever o email no idioma do agricultor.
+    const nudgeKinds = new Map<string, NudgeEmail>();
     const nudgedFarmerIds: string[] = [];
     const tomorrow = todayLisbon(1);
 
@@ -241,6 +244,13 @@ Deno.serve(async (req) => {
       }
 
       if (nudge) {
+        nudgeKinds.set(
+          userId,
+          pending && pending.length > 0 ? { kind: "pending", count: pending.length }
+          : unansweredOrder ? { kind: "chat" }
+          : !catalog.active_products ? { kind: "firstProduct" }
+          : { kind: "stale", days: catalog.days_since_update ?? STALE_CATALOG_DAYS },
+        );
         notifications.push(nudge);
         nudgedFarmerIds.push(a.farmer_id);
       }
@@ -276,14 +286,24 @@ Deno.serve(async (req) => {
     let emailed = 0;
     if (emailEnabled()) {
       const appUrl = Deno.env.get("APP_URL") ?? "";
-      for (const n of toInsert.filter((x) => x.type === TYPES.nudge)) {
+      const nudges = toInsert.filter((x) => x.type === TYPES.nudge);
+      // Idioma escolhido por cada agricultor no site (sem escolha: português).
+      const { data: langs } = nudges.length
+        ? await admin.from("profiles").select("id, preferred_language").in("id", nudges.map((n) => n.user_id))
+        : { data: [] };
+      const langById = new Map((langs ?? []).map((p: any) => [p.id, toEmailLang(p.preferred_language)]));
+      for (const n of nudges) {
         const { data: u } = await admin.auth.admin.getUserById(n.user_id);
         const email = u?.user?.email;
         if (!email) continue;
+        const kind = nudgeKinds.get(n.user_id);
+        const text = kind
+          ? nudgeEmail(langById.get(n.user_id) ?? "pt", kind)
+          : { subject: n.title, body: n.message, open: "Abrir o ValorRural" };
         const ok = await sendEmail({
           to: email,
-          subject: n.title,
-          html: `<p>${escapeHtml(n.message)}</p><p><a href="${escapeHtml(appUrl + (n.link ?? ""))}">Abrir o ValorRural</a></p>`,
+          subject: text.subject,
+          html: `<p>${escapeHtml(text.body)}</p><p><a href="${escapeHtml(appUrl + (n.link ?? ""))}">${escapeHtml(text.open)}</a></p>`,
         });
         if (ok) emailed++;
       }

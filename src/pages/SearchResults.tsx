@@ -12,23 +12,20 @@ import PageHeader from "@/components/PageHeader";
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import { farmerRank } from "@/lib/farmer-activity";
 import { farmerDeliversFromProfile } from "@/lib/fulfillment";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&h=400&fit=crop";
 
 type SortOption = "relevancia" | "mais-avaliado" | "menos-avaliado" | "preco-maior" | "preco-menor";
 
-const sortLabels: Record<SortOption, string> = {
-  relevancia: "Relevância",
-  "mais-avaliado": "Mais avaliado",
-  "menos-avaliado": "Menos avaliado",
-  "preco-maior": "Preço maior",
-  "preco-menor": "Preço menor",
-};
+const SORT_OPTIONS: SortOption[] = ["relevancia", "mais-avaliado", "menos-avaliado", "preco-maior", "preco-menor"];
 
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { registerStock } = useStock();
+  const { t } = useTranslation("catalog");
   const location = searchParams.get("location") || "";
   const radius = searchParams.get("radius") || "25";
   const sort = (searchParams.get("sort") as SortOption) || "relevancia";
@@ -87,7 +84,7 @@ const SearchResults = () => {
             id: r.id,
             name: r.name,
             farmerId: r.farmer_id,
-            farmer: farmer?.company_name ?? "Agricultor",
+            farmer: farmer?.company_name ?? i18n.t("catalog:categoryPage.farmerFallback"),
             price: Math.round(r.client_price * (1 - (r.discount_percent ?? 0) / 100) * 100) / 100,
             unit: r.unit,
             category: r.category ?? "",
@@ -164,17 +161,22 @@ const SearchResults = () => {
       <div className="container">
         <Link to="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
-          Voltar ao início
+          {t("search.backHome")}
         </Link>
 
         {/* Header */}
         <PageHeader
-          title="Resultados da pesquisa"
+          title={t("search.title")}
           description={
             location ? (
-              <>Produtos disponíveis perto de <span className="font-semibold text-foreground">{location}</span> num raio de <span className="font-semibold text-foreground">{radius} km</span>.</>
+              <Trans
+                t={t}
+                i18nKey="search.near"
+                values={{ location, radius }}
+                components={{ b: <span className="font-semibold text-foreground" /> }}
+              />
             ) : (
-              "Todos os produtos disponíveis na plataforma."
+              t("search.all")
             )
           }
         />
@@ -185,7 +187,12 @@ const SearchResults = () => {
             <Skeleton className="h-5 w-40" />
           ) : (
             <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">{filtered.length}</span> produto{filtered.length !== 1 && "s"} encontrado{filtered.length !== 1 && "s"}
+              <Trans
+                t={t}
+                i18nKey="search.found"
+                count={filtered.length}
+                components={{ b: <span className="font-semibold text-foreground" /> }}
+              />
             </p>
           )}
           <div className="flex items-center gap-2">
@@ -195,8 +202,8 @@ const SearchResults = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(sortLabels).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                {SORT_OPTIONS.map((value) => (
+                  <SelectItem key={value} value={value}>{t(`search.sort.${value}`)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -204,7 +211,7 @@ const SearchResults = () => {
               to="/termos#ordenacao"
               className="text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
             >
-              Como ordenamos?
+              {t("categoryPage.howSort")}
             </Link>
           </div>
         </div>
@@ -225,7 +232,7 @@ const SearchResults = () => {
 
         {!loading && filtered.length === 0 && (
           <div className="py-16 text-center text-muted-foreground">
-            Nenhum produto encontrado para esta localização.
+            {t("search.empty")}
           </div>
         )}
       </div>

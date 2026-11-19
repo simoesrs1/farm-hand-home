@@ -1,0 +1,242 @@
+{
+  "status": {
+    "pending_payment": "Awaiting payment",
+    "awaiting_pickup": "Awaiting collection",
+    "delivered": "Collected",
+    "expired": "Expired",
+    "refunded": "Refunded",
+    "cancelled": "Cancelled",
+    "cancelledByFarmer": "Cancelled by the farmer",
+    "home": {
+      "awaiting_pickup": "Awaiting delivery",
+      "delivered": "Delivered"
+    },
+    "booking": {
+      "awaiting_pickup": "Booked",
+      "delivered": "Completed",
+      "expired": "No-show"
+    }
+  },
+  "booking": {
+    "stay": "Accommodation",
+    "experience": "Experience",
+    "stayDetails": "Check-in {{checkIn}} · Check-out {{checkOut}} · {{guests}} · {{rooms}}",
+    "guests_one": "{{count}} guest",
+    "guests_other": "{{count}} guests",
+    "rooms_one": "{{count}} room",
+    "rooms_other": "{{count}} rooms",
+    "people_one": "{{count}} person",
+    "people_other": "{{count}} people"
+  },
+  "my": {
+    "loginPrompt": "Log in to see your orders.",
+    "login": "Log in",
+    "tryAgain": "Please try again in a moment.",
+    "farmFallback": "Farm",
+    "accepted": "Order accepted by the farmer",
+    "awaitingAcceptance": "Awaiting the farmer's acceptance",
+    "viewStatus": "View status →",
+    "viewStatusPickup": "View status and collection →",
+    "homeDelivery": "Home delivery: {{address}}",
+    "track": "Track",
+    "openMaps": "Open in Google Maps →",
+    "details_one": "Details ({{count}} item)",
+    "details_other": "Details ({{count}} items)",
+    "homeDeliveryFee": "Home delivery",
+    "deadline": "Deadline:",
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} items",
+    "home": "Home",
+    "title": "My orders",
+    "empty": "You don't have any orders yet.",
+    "seeCatalog": "View catalogue",
+    "active": "Active",
+    "noActive": "You have no active orders.",
+    "past": "Completed",
+    "noPast": "No completed orders yet."
+  },
+  "complaint": {
+    "failed": "The complaint could not be filed",
+    "filed": "Complaint filed",
+    "filedText": "The farmer has 48 hours to deliver the order.",
+    "open": "Complaint filed. The farmer has until {{date}} to deliver.",
+    "overdue": "Complaint filed. The platform team will verify the situation.",
+    "rejected": "The complaint was reviewed and rejected by the platform team.",
+    "button": "I didn't receive the order",
+    "title": "Didn't receive your order?",
+    "text": "The farmer will be notified and has 48 hours to deliver it. If the delivery doesn't happen, the platform team verifies the situation and the amount is refunded.",
+    "confirm": "File complaint"
+  },
+  "cancelBooking": {
+    "failed": "The booking could not be cancelled",
+    "done": "Booking cancelled",
+    "refund": "{{amount}} will be refunded.",
+    "button": "Cancel booking",
+    "keep": "Keep booking",
+    "title": "Cancel the booking?",
+    "refunded": "{{amount}} refunded.",
+    "refundedWithFee": "{{amount}} refunded ({{fee}} cancellation fee).",
+    "free_one": "You are still within the free cancellation period (up to {{count}} day before). {{amount}} will be refunded.",
+    "free_other": "You are still within the free cancellation period (up to {{count}} days before). {{amount}} will be refunded.",
+    "feeStay_one": "Less than {{count}} day remains before the booking: 25% of the accommodation price ({{fee}}) is retained and {{amount}} refunded.",
+    "feeStay_other": "Less than {{count}} days remain before the booking: 25% of the accommodation price ({{fee}}) is retained and {{amount}} refunded.",
+    "feeExperience_one": "Less than {{count}} day remains before the booking: 25% of the experience price ({{fee}}) is retained and {{amount}} refunded.",
+    "feeExperience_other": "Less than {{count}} days remain before the booking: 25% of the experience price ({{fee}}) is retained and {{amount}} refunded."
+  },
+  "review": {
+    "hidePhotoFailed": "The photo could not be removed",
+    "photoHidden": "Photo removed",
+    "photoHiddenText": "Your review now shows only your name.",
+    "rate": "Rate the farmer",
+    "deleted": "Review deleted",
+    "done": "Already rated",
+    "removalPending": "Removal under review",
+    "requestRemoval": "Request removal",
+    "hidePhoto": "Remove my photo"
+  },
+  "qr": {
+    "showBooking": "Show booking QR",
+    "showDelivery": "Show delivery QR",
+    "showPickup": "Show collection QR",
+    "bookingTitle": "Booking at the farm",
+    "deliveryTitle": "Home delivery",
+    "pickupTitle": "Collection at the farm",
+    "bookingText": "Show this QR code (or the code below) to the farmer when you arrive at the farm.",
+    "deliveryText": "Show this QR code (or the code below) to the farmer when you receive the order.",
+    "pickupText": "Show this QR code (or the code below) to the farmer to collect the order.",
+    "code": "Code",
+    "validUntil": "Valid until {{date}}"
+  },
+  "statusPage": {
+    "at": "{{date}} at {{time}}",
+    "atBold": "{{date}} at <b>{{time}}</b>",
+    "loginPrompt": "Log in to see the status of your orders.",
+    "notFound": "Order not found.",
+    "tracking": {
+      "packed": "Packed",
+      "in_transit": "Dispatched from the farm",
+      "out_for_delivery": "In transit"
+    },
+    "done": {
+      "stay": "Checked in",
+      "experience": "Experience completed",
+      "delivery": "Delivered",
+      "pickup": "Collected"
+    },
+    "waiting": {
+      "stay": "Booked",
+      "experience": "Booked",
+      "delivery": "Preparing delivery",
+      "pickup": "Ready for collection"
+    },
+    "confirmed": {
+      "stay": "Check-in confirmed",
+      "experience": "Arrival confirmed",
+      "delivery": "Delivery completed",
+      "pickup": "Collection completed"
+    },
+    "scheduled": {
+      "stay": "Check-in",
+      "experience": "Session",
+      "delivery": "Delivery scheduled",
+      "pickup": "Collection scheduled"
+    },
+    "expectedDelivery": "Expected delivery",
+    "deadline": "Deadline",
+    "pending": "Order pending",
+    "paid": "Payment confirmed",
+    "awaitingPayment": "Awaiting payment confirmation",
+    "awaitingAcceptance": "Awaiting acceptance",
+    "acceptedShort": "Accepted",
+    "acceptSoon": "The farmer will confirm your order shortly",
+    "refundedText": "The amount was refunded — out of stock or order cancelled.",
+    "expired": "Expired (not collected)",
+    "expiredText": "The order was not collected within the deadline and expired.",
+    "expiredAt": "Expired",
+    "refreshAria": "Refresh status",
+    "refresh": "Refresh",
+    "orderFallback": "Order",
+    "orderedOn": "Ordered on {{when}}",
+    "deliveryDateTime": "Delivery date and time",
+    "pickupDateTime": "Collection date and time",
+    "noTimeDelivery": "No time set — delivery expected on {{date}}. Arrange the time with the farmer through the chat.",
+    "noTime": "No time scheduled — deadline: {{date}}",
+    "qrDelivery": "Show the QR to the farmer when you receive the order.",
+    "qrPickup": "Show the QR to the farmer at collection.",
+    "deliveryAt": "Home delivery to"
+  },
+  "chat": {
+    "fileTooBig": "File larger than 8MB",
+    "sendFailed": "The message could not be sent",
+    "archived": "This order's conversation has been archived (more than 5 days after delivery).",
+    "title": "Order conversation",
+    "empty": "No messages. Send the first one to start the conversation.",
+    "attach": "Attach file",
+    "toFarmer": "Message to the farmer...",
+    "toClient": "Message to the customer...",
+    "attachment": "Attachment"
+  },
+  "report": {
+    "reasonTooShort": "Describe the reason (at least 5 characters)",
+    "proofRequired": "Proof is required to file a report",
+    "proofTooBig": "Proof larger than 8MB",
+    "filed": "Report filed for review by the team.",
+    "failed": "The report could not be filed",
+    "button": "Report",
+    "title": "File a report",
+    "description": "Describe what happened and attach proof (photo, PDF). The report is recorded for review by the platform team.",
+    "placeholder": "Describe the problem...",
+    "proof": "Proof (required)",
+    "warning": "To report abuse by the farmer, you must provide concrete proof that the abuse took place. Without proof, the farmer may take legal action for defamation.",
+    "sending": "Sending...",
+    "send": "Send report"
+  },
+  "rate": {
+    "chooseRating": "Choose a rating",
+    "chooseRatingText": "Select from 1 to 5 stars.",
+    "sendFailed": "Could not send",
+    "sent": "Review sent",
+    "sentText": "Thank you for your feedback!",
+    "loginPrompt": "Log in to leave a review.",
+    "blocked": {
+      "notFound": "Order not found.",
+      "alreadyRated": "This order has already been reviewed.",
+      "notYet": "You can review after you receive the order, if the farmer cancels it, or if delivery is more than 24 hours late."
+    },
+    "yourRating": "Your rating",
+    "final": "Once sent, the review cannot be changed.",
+    "stars_one": "{{count}} star",
+    "stars_other": "{{count}} stars",
+    "comment": "Comment (optional)",
+    "commentPlaceholder": "Tell us about your experience with this farmer...",
+    "showPhoto": "I allow my photo to be shown on this review",
+    "showPhotoHint": "It is visible to everyone. You can withdraw permission in My orders.",
+    "send": "Send review"
+  },
+  "trackingDialog": {
+    "title": "Track your delivery",
+    "orderFrom": "Order from {{farm}}.",
+    "text": "The delivery is complete when the farmer scans your QR code.",
+    "loadFailed": "The delivery status could not be loaded.",
+    "current": "Current status",
+    "steps": {
+      "accepted_at": "Accepted",
+      "packed_at": "Packed",
+      "in_transit_at": "Dispatched from the farm",
+      "out_for_delivery_at": "In transit",
+      "delivered_at": "Delivered"
+    }
+  },
+  "removal": {
+    "tooShort_one": "Write at least {{count}} character",
+    "tooShort_other": "Write at least {{count}} characters",
+    "failed": "The request could not be sent",
+    "sent": "Request sent",
+    "sentText": "The platform team will review your request.",
+    "title": "Request review removal",
+    "description": "Explain why you want to delete the review. It stays visible until the platform team decides.",
+    "placeholder": "Justification...",
+    "confirm": "I confirm the justification is true. A false or unfounded justification may have legal consequences.",
+    "send": "Send request"
+  }
+}

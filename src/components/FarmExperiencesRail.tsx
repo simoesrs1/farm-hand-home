@@ -12,6 +12,8 @@ import {
 import SectionHeading from "@/components/SectionHeading";
 import { supabase } from "@/integrations/supabase/client";
 import { formatEuro } from "@/lib/format";
+import { useTranslation } from "react-i18next";
+import TranslatedText from "@/components/TranslatedText";
 
 interface RailItem {
   id: string;
@@ -20,7 +22,7 @@ interface RailItem {
   farmerId: string;
   farm: string;
   price: number;
-  priceUnit: string;
+  priceUnit: "stayPerPerson" | "stay" | "perPerson" | "perGroup";
   image: string | null;
 }
 
@@ -66,8 +68,8 @@ const fetchRail = async (): Promise<RailItem[]> => {
     const path = photo(r.media_urls);
     const priceUnit =
       r.kind === "stay"
-        ? r.pricing_mode === "per_person" ? "/noite por pessoa" : "/noite"
-        : r.pricing_mode === "per_person" ? "/pessoa" : "/grupo";
+        ? r.pricing_mode === "per_person" ? ("stayPerPerson" as const) : ("stay" as const)
+        : r.pricing_mode === "per_person" ? ("perPerson" as const) : ("perGroup" as const);
     return {
       id: r.id,
       kind: r.kind,
@@ -84,6 +86,7 @@ const fetchRail = async (): Promise<RailItem[]> => {
 /** "Visite a quinta": experiências e alojamento, num carrossel. Abre o perfil do agricultor, onde se reserva. */
 const FarmExperiencesRail = () => {
   const { data: items = [] } = useQuery({ queryKey: ["home-experiences"], queryFn: fetchRail, staleTime: 5 * 60 * 1000 });
+  const { t } = useTranslation("home");
 
   if (items.length === 0) return null;
 
@@ -93,13 +96,13 @@ const FarmExperiencesRail = () => {
         <Carousel opts={{ align: "start" }}>
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <SectionHeading
-              eyebrow="Visite a quinta"
-              title="Experiências e alojamento"
-              description="Apanhe a azeitona, durma na quinta, leve um brinde da casa."
+              eyebrow={t("rail.eyebrow")}
+              title={t("rail.title")}
+              description={t("rail.description")}
             />
             <div className="flex gap-2">
-              <CarouselPrevious className="static translate-y-0" aria-label="Anterior" />
-              <CarouselNext className="static translate-y-0" aria-label="Seguinte" />
+              <CarouselPrevious className="static translate-y-0" aria-label={t("rail.previous")} />
+              <CarouselNext className="static translate-y-0" aria-label={t("rail.next")} />
             </div>
           </div>
           <CarouselContent>
@@ -123,15 +126,17 @@ const FarmExperiencesRail = () => {
                       <Tent className="h-10 w-10 text-muted-foreground" aria-hidden />
                     )}
                     <Badge variant="highlight" className="absolute left-3 top-3">
-                      {it.kind === "stay" ? "Alojamento" : "Experiência"}
+                      {it.kind === "stay" ? t("rail.stay") : t("rail.experience")}
                     </Badge>
                   </div>
                   <div className="p-4">
-                    <h3 className="font-semibold text-foreground">{it.title}</h3>
+                    <h3 className="font-semibold text-foreground">
+                      <TranslatedText type={it.kind} id={it.id} field="title" text={it.title} />
+                    </h3>
                     <p className="text-xs text-muted-foreground">{it.farm}</p>
                     <p className="mt-3">
                       <span className="font-mono text-lg font-bold tabular-nums text-primary">{formatEuro(it.price)}</span>
-                      <span className="text-xs text-muted-foreground"> {it.priceUnit}</span>
+                      <span className="text-xs text-muted-foreground"> {t(`rail.unit.${it.priceUnit}`)}</span>
                     </p>
                   </div>
                 </Link>

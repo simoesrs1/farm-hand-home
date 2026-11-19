@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 /**
  * Consentimento de cookies e armazenamento local (RGPD + Lei 41/2004, art. 5.º).
  *
@@ -28,32 +29,24 @@ export const CONSENT_VERSION = 1;
 const CONSENT_COOKIE = "fc_consent";
 const SESSION_COOKIE = "fc_sid";
 
+// Nome e descrição de cada categoria em legal:consent.categories.<id> (cinco idiomas).
+const category = (id: ConsentCategory, required = false) => ({
+  id,
+  required,
+  get title() {
+    return i18n.t(`legal:consent.categories.${id}.title`);
+  },
+  get description() {
+    return i18n.t(`legal:consent.categories.${id}.description`);
+  },
+});
+
 export const CONSENT_CATEGORIES: {
   id: ConsentCategory;
   title: string;
   description: string;
   required?: boolean;
-}[] = [
-  {
-    id: "necessary",
-    title: "Estritamente necessários",
-    description:
-      "Indispensáveis ao funcionamento do site: manter a sessão iniciada, a segurança da conta, o carrinho durante a visita e a memória desta própria escolha. Não podem ser desativados.",
-    required: true,
-  },
-  {
-    id: "preferences",
-    title: "Preferências",
-    description:
-      "Guardam o carrinho e o horário de levantamento escolhido neste dispositivo para que os encontre na próxima visita. Sem eles, estes dados são apagados quando fechar o navegador.",
-  },
-  {
-    id: "maps",
-    title: "Mapas (Google Maps)",
-    description:
-      "Carregam mapas interativos da Google para ver agricultores, marcar pontos de entrega e de levantamento. A Google pode definir cookies próprios e recolher o seu endereço IP.",
-  },
-];
+}[] = [category("necessary", true), category("preferences"), category("maps")];
 
 export const DEFAULT_CHOICES: ConsentChoices = {
   necessary: true,

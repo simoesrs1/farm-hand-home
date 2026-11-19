@@ -9,9 +9,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import TranslatedText from "@/components/TranslatedText";
 import { supabase } from "@/integrations/supabase/client";
 import { REVIEW_CONTEXT_LABELS, type ReviewContext } from "@/lib/review-eligibility";
 import { avatarPublicUrl, isStoredAvatar } from "@/lib/avatar";
+import { useTranslation } from "react-i18next";
+import { formatDate, formatNumber } from "@/lib/format";
 
 interface Review {
   id: string;
@@ -28,26 +31,40 @@ const RECENT_LIMIT = 10;
 const MIN_CARDS_PER_LOOP = 8;
 const SECONDS_PER_CARD = 8;
 
-const Stars = ({ value }: { value: number }) => (
-  <div className="flex items-center gap-0.5" aria-label={`${value} em 5 estrelas`}>
+const Stars = ({ value }: { value: number }) => {
+  const { t } = useTranslation("catalog");
+  return (
+  <div className="flex items-center gap-0.5" aria-label={t("reviews.stars", { value: formatNumber(value, { maximumFractionDigits: 1 }) })}>
     {Array.from({ length: 5 }).map((_, i) => (
       <Star key={i} className={`h-4 w-4 ${i < Math.round(value) ? "fill-highlight text-coral" : "text-border"}`} />
     ))}
   </div>
-);
+  );
+};
 
 const ReviewCard = ({ review, clamp = false }: { review: Review; clamp?: boolean }) => {
+  useTranslation();
   const label = REVIEW_CONTEXT_LABELS[review.context as ReviewContext];
   return (
     <div className="h-full rounded-xl border border-border bg-secondary/40 p-3">
       <div className="flex items-center justify-between gap-2">
         <Stars value={review.rating} />
         <span className="text-xs text-muted-foreground">
-          {new Date(review.created_at).toLocaleDateString("pt-PT")}
+          {formatDate(review.created_at)}
         </span>
       </div>
       {review.comment && (
-        <p className={`mt-2 break-words text-sm text-foreground ${clamp ? "line-clamp-4" : ""}`}>{review.comment}</p>
+        <div className="mt-2">
+          <TranslatedText
+            type="review"
+            id={review.id}
+            field="comment"
+            text={review.comment}
+            as="p"
+            className={`break-words text-sm text-foreground ${clamp ? "line-clamp-4" : ""}`}
+            toggle={!clamp}
+          />
+        </div>
       )}
       <div className="mt-2 flex flex-wrap items-center gap-2">
         {isStoredAvatar(review.reviewer_photo_path) && (
@@ -72,6 +89,7 @@ const FarmerReviewsBar = ({ farmerId }: { farmerId: string }) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [allOpen, setAllOpen] = useState(false);
+  const { t } = useTranslation("catalog");
 
   useEffect(() => {
     let cancelled = false;
@@ -105,27 +123,27 @@ const FarmerReviewsBar = ({ farmerId }: { farmerId: string }) => {
   }, [recent]);
 
   return (
-    <section aria-label="Avaliações dos clientes" className="border-b border-border p-5 md:px-6">
+    <section aria-label={t("reviews.title")} className="border-b border-border p-5 md:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold text-foreground">Avaliações dos clientes</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t("reviews.title")}</h2>
           {reviews.length > 0 && (
             <>
               <Stars value={average} />
-              <span className="text-sm font-semibold text-foreground">{average.toFixed(1)}</span>
+              <span className="text-sm font-semibold text-foreground">{formatNumber(average, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
               <span className="text-sm text-muted-foreground">({reviews.length})</span>
             </>
           )}
         </div>
         <Button type="button" variant="ghost" size="sm" onClick={() => setAllOpen(true)}>
-          Ver todas
+          {t("reviews.seeAll")}
         </Button>
       </div>
 
       {loading ? (
         <Skeleton className="mt-3 h-24 w-full" />
       ) : reviews.length === 0 ? (
-        <p className="mt-2 text-sm text-muted-foreground">Ainda sem avaliações.</p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("reviews.none")}</p>
       ) : (
         // Com "reduzir movimento" ativo, a faixa fica parada e sem repetições.
         <div className="mt-3 overflow-hidden pb-2 motion-reduce:overflow-x-auto">
@@ -152,11 +170,11 @@ const FarmerReviewsBar = ({ farmerId }: { farmerId: string }) => {
       <Dialog open={allOpen} onOpenChange={setAllOpen}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Avaliações dos clientes</DialogTitle>
-            <DialogDescription>Avaliações de quem comprou a este agricultor na plataforma.</DialogDescription>
+            <DialogTitle>{t("reviews.title")}</DialogTitle>
+            <DialogDescription>{t("reviews.description")}</DialogDescription>
           </DialogHeader>
           {reviews.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">Ainda sem avaliações.</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">{t("reviews.none")}</p>
           ) : (
             <ul className="space-y-3">
               {reviews.map((r) => (

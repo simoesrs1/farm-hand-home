@@ -53,6 +53,8 @@ import type { LatLng } from "@/lib/geo";
 import { CalendarClock } from "lucide-react";
 import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
 import { formatEuro } from "@/lib/format";
+import { Trans, useTranslation } from "react-i18next";
+import TranslatedText from "@/components/TranslatedText";
 
 /** Campos de entrega de cada produto do carrinho, lidos da base de dados. */
 interface CartProduct {
@@ -69,6 +71,7 @@ const Cart = () => {
   const { user, profile, activeMode } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation(["cart", "common", "catalog"]);
   const [paying, setPaying] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
   const [pickupWindows, setPickupWindows] = useState<PickupWindow[]>([]);
@@ -250,32 +253,30 @@ const Cart = () => {
 
   const onCheckoutClick = () => {
     if (!user) {
-      toast({ title: "Inicie sessão", description: "Precisa de estar autenticado para finalizar a compra." });
+      toast({ title: t("toast.login"), description: t("toast.loginText") });
       navigate("/auth");
       return;
     }
     if (activeMode === "vendedor") {
       toast({
-        title: "Está no modo agricultor",
-        description: "Mude para o perfil de cliente no menu do seu nome para finalizar a compra.",
+        title: t("toast.farmerMode"),
+        description: t("toast.farmerModeText"),
         variant: "destructive",
       });
       return;
     }
     if (!fulfillment) {
       toast({
-        title: "Sem forma de entrega em comum",
-        description: "Estes produtos não podem ser levantados nem entregues juntos. Finalize-os em encomendas separadas.",
+        title: t("toast.noCommon"),
+        description: t("toast.noCommonText"),
         variant: "destructive",
       });
       return;
     }
     if (needsSchedule && !slot) {
       toast({
-        title: isDelivery ? "Escolha o horário de entrega" : "Escolha o horário de levantamento",
-        description: isDelivery
-          ? "Só é possível agendar dentro do horário de entregas do agricultor."
-          : "Só é possível agendar dentro do horário de porta aberta do agricultor.",
+        title: isDelivery ? t("toast.chooseDelivery") : t("toast.choosePickup"),
+        description: isDelivery ? t("toast.chooseDeliveryText") : t("toast.choosePickupText"),
         variant: "destructive",
       });
       return;
@@ -283,24 +284,24 @@ const Cart = () => {
     if (isDelivery) {
       if (deliveryAddress.trim().length < 5) {
         toast({
-          title: "Morada de entrega em falta",
-          description: "Indique a morada onde quer receber a encomenda.",
+          title: t("toast.noAddress"),
+          description: t("toast.noAddressText"),
           variant: "destructive",
         });
         return;
       }
       if (!deliveryPoint) {
         toast({
-          title: "Ponto de entrega em falta",
-          description: "Marque no mapa o ponto exato onde o agricultor deve entregar.",
+          title: t("toast.noPoint"),
+          description: t("toast.noPointText"),
           variant: "destructive",
         });
         return;
       }
       if (outOfRadius) {
         toast({
-          title: "Fora da zona de entrega",
-          description: `O agricultor só entrega até ${deliveryRadiusKm} km da quinta. Escolha outro ponto ou o levantamento.`,
+          title: t("toast.outOfRadius"),
+          description: t("toast.outOfRadiusText", { km: deliveryRadiusKm }),
           variant: "destructive",
         });
         return;
@@ -331,7 +332,7 @@ const Cart = () => {
         .eq("active", true)
         .in("id", ids);
       if (checkErr) {
-        toast({ title: "Não foi possível pagar", description: "Erro ao validar o carrinho. Tente novamente.", variant: "destructive" });
+        toast({ title: t("toast.payFailed"), description: t("toast.validateFailed"), variant: "destructive" });
         return;
       }
       const fresh = valid ?? [];
@@ -347,10 +348,8 @@ const Cart = () => {
         for (const i of overStock) updateQuantity(i.id, availableById.get(i.id)!);
         const names = [...unavailable, ...overStock].map((i) => i.name).join(", ");
         toast({
-          title: "Carrinho atualizado",
-          description: unavailable.length > 0
-            ? `Alguns produtos já não estão disponíveis e foram removidos (${names}). Confirme o carrinho e tente novamente.`
-            : `Ajustámos as quantidades ao stock disponível (${names}). Confirme o carrinho e tente novamente.`,
+          title: t("toast.updated"),
+          description: unavailable.length > 0 ? t("toast.removed", { names }) : t("toast.adjusted", { names }),
           variant: "destructive",
         });
         return;
@@ -359,8 +358,8 @@ const Cart = () => {
       const freshOptions = fulfillmentOptions(fresh.map((p) => p.delivery_mode), { delivers });
       if (!fulfillment || !freshOptions.includes(fulfillment)) {
         toast({
-          title: "Formas de entrega atualizadas",
-          description: "As opções de entrega destes produtos mudaram. Confirme a escolha e tente novamente.",
+          title: t("toast.optionsChanged"),
+          description: t("toast.optionsChangedText"),
           variant: "destructive",
         });
         return;
@@ -389,7 +388,7 @@ const Cart = () => {
         // The body is a one-shot stream: read it exactly once here and reuse
         // the result, otherwise a second .json()/.clone() throws and the real
         // message is lost.
-        let msg = (data as any)?.error ?? error?.message ?? "Erro ao processar pagamento";
+        let msg = (data as any)?.error ?? error?.message ?? t("toast.payError");
         if (error instanceof FunctionsHttpError) {
           try {
             const body = await error.context.json();
@@ -399,17 +398,15 @@ const Cart = () => {
             // body wasn't JSON — keep the generic message
           }
         }
-        toast({ title: "Não foi possível pagar", description: msg, variant: "destructive" });
+        toast({ title: t("toast.payFailed"), description: msg, variant: "destructive" });
         return;
       }
       // Decrement stock for each purchased line so it reflects everywhere
       consume(items.map((i) => ({ id: i.id, quantity: i.quantity })));
       clearCart();
       toast({
-        title: "Pagamento simulado com sucesso!",
-        description: isDelivery
-          ? "A sua encomenda foi criada. O agricultor vai entregá-la na morada indicada."
-          : "A sua encomenda está pronta para levantar.",
+        title: t("toast.paid"),
+        description: isDelivery ? t("toast.paidDelivery") : t("toast.paidPickup"),
       });
       navigate("/encomendas");
     } finally {
@@ -425,13 +422,13 @@ const Cart = () => {
             <ShoppingCart className="h-8 w-8 text-muted-foreground" />
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground">
-            O seu carrinho está vazio
+            {t("empty.title")}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Explore o catálogo e adicione produtos frescos dos nossos agricultores.
+            {t("empty.text")}
           </p>
           <Link to="/catalogo" className="mt-6 inline-block">
-            <Button>Ver catálogo</Button>
+            <Button>{t("empty.button")}</Button>
           </Link>
         </div>
       </main>
@@ -446,10 +443,10 @@ const Cart = () => {
           className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Continuar a comprar
+          {t("continue")}
         </Link>
 
-        <PageHeader title="O seu carrinho" />
+        <PageHeader title={t("title")} />
 
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           {/* Items grouped by farmer */}
@@ -461,7 +458,7 @@ const Cart = () => {
               >
                 <div className="border-b border-border bg-muted/30 px-5 py-3">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                    Produtor
+                    {t("producer")}
                   </p>
                   <Link
                     to={`/agricultor/${group.farmerId}`}
@@ -485,19 +482,19 @@ const Cart = () => {
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <h3 className="font-semibold text-foreground">
-                              {item.name}
+                              <TranslatedText type="product" id={item.id} field="name" text={item.name} />
                             </h3>
                             <p className="text-xs text-muted-foreground">
                               {formatEuro(item.price)} / {item.unit}
                             </p>
                             <p className="text-[11px] text-muted-foreground">
-                              {available} em stock
+                              {t("catalog:product.inStock", { count: available })}
                             </p>
                           </div>
                           <button
                             onClick={() => removeItem(item.id)}
                             className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                            aria-label="Remover"
+                            aria-label={t("common:actions.remove")}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -507,7 +504,7 @@ const Cart = () => {
                             <button
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
                               className="p-2 text-muted-foreground hover:text-foreground"
-                              aria-label="Diminuir"
+                              aria-label={t("decrease")}
                             >
                               <Minus className="h-3.5 w-3.5" />
                             </button>
@@ -518,7 +515,7 @@ const Cart = () => {
                               onClick={() => canIncrease && updateQuantity(item.id, item.quantity + 1)}
                               disabled={!canIncrease}
                               className="p-2 text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                              aria-label="Aumentar"
+                              aria-label={t("increase")}
                             >
                               <Plus className="h-3.5 w-3.5" />
                             </button>
@@ -539,41 +536,41 @@ const Cart = () => {
               onClick={clearCart}
               className="text-xs text-muted-foreground hover:text-destructive"
             >
-              Esvaziar carrinho
+              {t("clear")}
             </button>
           </div>
 
           {/* Summary */}
           <aside className="h-fit rounded-2xl border border-border bg-card p-6 lg:sticky lg:top-24">
             <h2 className="font-display text-lg font-semibold text-foreground">
-              Resumo
+              {t("summary")}
             </h2>
             <div className="mt-4 space-y-2 text-sm">
               <div className="flex justify-between text-muted-foreground">
-                <span>Subtotal</span>
+                <span>{t("subtotal")}</span>
                 <span>{formatEuro(totalPrice)}</span>
               </div>
               {deliveryFee ? (
                 <>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Entrega ao domicílio</span>
-                    <span>{deliveryFee.fee > 0 ? `${formatEuro(deliveryFee.fee)}` : "Grátis"}</span>
+                    <span>{t("homeDelivery")}</span>
+                    <span>{deliveryFee.fee > 0 ? `${formatEuro(deliveryFee.fee)}` : t("free")}</span>
                   </div>
                   {deliveryFee.remainingForFree != null && (
                     <p className="text-[11px] text-primary">
-                      Faltam {formatEuro(deliveryFee.remainingForFree)} para a entrega ser grátis.
+                      {t("remainingForFree", { amount: formatEuro(deliveryFee.remainingForFree) })}
                     </p>
                   )}
                 </>
               ) : fulfillment === "pickup" ? (
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Levantamento</span>
-                  <span>Na quinta com QR</span>
+                  <span>{t("pickup")}</span>
+                  <span>{t("pickupQr")}</span>
                 </div>
               ) : null}
             </div>
             <div className="mt-4 flex justify-between border-t border-border pt-4">
-              <span className="font-semibold text-foreground">Total</span>
+              <span className="font-semibold text-foreground">{t("total")}</span>
               <span className="font-mono tabular-nums text-xl font-bold text-primary">
                 {formatEuro(orderTotal)}
               </span>
@@ -581,21 +578,18 @@ const Cart = () => {
 
             {grouped.length > 1 ? (
               <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                O carrinho tem produtos de vários agricultores. Finalize um agricultor de cada vez
-                para poder agendar o levantamento ou a entrega.
+                {t("multiFarmer")}
               </p>
             ) : noCommonOption ? (
               <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-foreground">
-                Não há uma forma de entrega comum a todos estes produtos: uns só podem ser levantados
-                na quinta e outros só entregues em casa, ou o agricultor ainda não configurou as
-                entregas. Remova alguns produtos ou finalize-os em encomendas separadas.
+                {t("noCommonOption")}
               </p>
             ) : (
               <>
                 {/* Levantar ou receber em casa, quando os produtos permitem as duas. */}
                 {options.length > 1 && (
                   <div className="mt-4 space-y-2">
-                    <p className="text-sm font-medium text-foreground">Como quer receber a encomenda?</p>
+                    <p className="text-sm font-medium text-foreground">{t("howReceive")}</p>
                     <RadioGroup
                       value={fulfillment ?? undefined}
                       onValueChange={(v) => chooseFulfillment(v as Fulfillment)}
@@ -627,11 +621,11 @@ const Cart = () => {
                   <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
                     <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                       <CalendarClock className="h-4 w-4 text-primary" />
-                      {isDelivery ? "Agendar entrega" : "Agendar levantamento"}
+                      {isDelivery ? t("scheduleDelivery") : t("schedulePickup")}
                     </div>
                     <Select value={slot} onValueChange={setSlot}>
-                      <SelectTrigger aria-label={isDelivery ? "Horário de entrega" : "Horário de levantamento"}>
-                        <SelectValue placeholder="Escolher data e hora" />
+                      <SelectTrigger aria-label={isDelivery ? t("deliveryTime") : t("pickupTime")}>
+                        <SelectValue placeholder={t("chooseDateTime")} />
                       </SelectTrigger>
                       <SelectContent className="max-h-72">
                         {slots.map((d) => (
@@ -643,21 +637,30 @@ const Cart = () => {
                     </Select>
                     <p className="text-[11px] text-muted-foreground">
                       {isDelivery
-                        ? `Apenas datas e horas dentro do horário de entregas do agricultor${
-                            prepDays > 0 ? `, a partir de ${prepDays} dia(s) depois da compra` : ""
-                          }.${deliveryNote ? ` ${deliveryNote}` : ""}`
-                        : `Apenas datas e horas dentro da porta aberta do agricultor estão disponíveis.${
-                            pickupNote ? ` ${pickupNote}` : ""
-                          }`}
+                        ? prepDays > 0
+                          ? t("slotsDeliveryPrep", { count: prepDays })
+                          : t("slotsDelivery")
+                        : t("slotsPickup")}
+                      {(isDelivery ? deliveryNote : pickupNote) && farmerId && (
+                        <>
+                          {" "}
+                          <TranslatedText
+                            type="farm"
+                            id={farmerId}
+                            field={isDelivery ? "delivery_note" : "pickup_hours_note"}
+                            text={isDelivery ? deliveryNote : pickupNote}
+                          />
+                        </>
+                      )}
                     </p>
                   </div>
                 ) : (
                   <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
                     {isDelivery
-                      ? `Este agricultor ainda não publicou horários de entrega.${
-                          prepDays > 0 ? ` A entrega fica prevista para daqui a ${prepDays} dia(s).` : ""
-                        } Combine os detalhes pelo chat da encomenda.`
-                      : "Este agricultor ainda não publicou horários de porta aberta. Combine o levantamento pelo chat da encomenda."}
+                      ? prepDays > 0
+                        ? t("noDeliveryHoursPrep", { count: prepDays })
+                        : t("noDeliveryHours")
+                      : t("noPickupHours")}
                   </p>
                 ))}
 
@@ -666,19 +669,17 @@ const Cart = () => {
                   <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
                     <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                       <Truck className="h-4 w-4 text-primary" />
-                      Entrega ao domicílio
+                      {t("homeDelivery")}
                     </div>
                     <p className="text-[11px] text-muted-foreground">
-                      O agricultor entrega em mão
-                      {deliveryRadiusKm != null ? ` até ${deliveryRadiusKm} km da quinta` : ""}. Indique a
-                      morada e marque o ponto exato no mapa.
+                      {deliveryRadiusKm != null ? t("handDeliveryRadius", { km: deliveryRadiusKm }) : t("handDelivery")}
                     </p>
-                    <Label htmlFor="delivery-address" className="text-xs">Morada de entrega</Label>
+                    <Label htmlFor="delivery-address" className="text-xs">{t("address")}</Label>
                     <Input
                       id="delivery-address"
                       value={deliveryAddress}
                       onChange={(e) => setDeliveryAddress(e.target.value)}
-                      placeholder="Rua, n.º, código postal, localidade"
+                      placeholder={t("addressPlaceholder")}
                     />
                     <Button
                       type="button"
@@ -688,16 +689,16 @@ const Cart = () => {
                       onClick={() => setMapOpen(true)}
                     >
                       <MapPin className="h-4 w-4" />
-                      {deliveryPoint ? "Ponto marcado — alterar" : "Marcar ponto no mapa"}
+                      {deliveryPoint ? t("pointChange") : t("pointMark")}
                     </Button>
                     {deliveryPoint && (
                       <p className="text-[11px] text-muted-foreground">
-                        Ponto: {deliveryPoint.lat.toFixed(5)}, {deliveryPoint.lng.toFixed(5)}
+                        {t("point", { coords: `${deliveryPoint.lat.toFixed(5)}, ${deliveryPoint.lng.toFixed(5)}` })}
                       </p>
                     )}
                     {outOfRadius && (
                       <p className="text-[11px] font-medium text-destructive">
-                        Este ponto está fora da zona de entrega do agricultor (até {deliveryRadiusKm} km da quinta).
+                        {t("outOfRadius", { km: deliveryRadiusKm })}
                       </p>
                     )}
                     {trackingAvailable && (
@@ -709,15 +710,15 @@ const Cart = () => {
                         <label htmlFor="tracking-with" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
                           <RadioGroupItem value="with" id="tracking-with" className="mt-0.5" />
                           <div>
-                            <div className="text-sm font-medium">Com acompanhamento da entrega</div>
+                            <div className="text-sm font-medium">{t("withTracking")}</div>
                             <p className="text-[11px] text-muted-foreground">
-                              Siga a encomenda passo a passo: aceite, embalada, expedida da quinta, em trânsito e entregue. Sem custo adicional.
+                              {t("withTrackingText")}
                             </p>
                           </div>
                         </label>
                         <label htmlFor="tracking-without" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
                           <RadioGroupItem value="without" id="tracking-without" className="mt-0.5" />
-                          <div className="text-sm font-medium">Sem acompanhamento</div>
+                          <div className="text-sm font-medium">{t("withoutTracking")}</div>
                         </label>
                       </RadioGroup>
                     )}
@@ -730,7 +731,7 @@ const Cart = () => {
               <div className="mt-4 flex gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs text-foreground">
                 <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
                 <p>
-                  Se não levantar a encomenda no prazo indicado, <strong>perderá 100% do valor pago</strong>.
+                  <Trans t={t} i18nKey="pickupWarning" components={{ b: <strong /> }} />
                 </p>
               </div>
             )}
@@ -741,7 +742,7 @@ const Cart = () => {
               size="lg"
             >
               <CreditCard className="h-4 w-4" />
-              {paying ? "A processar…" : "Pagar (simulado)"}
+              {paying ? t("processing") : t("pay")}
             </Button>
           </aside>
         </div>
@@ -752,37 +753,30 @@ const Cart = () => {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <ShieldAlert className="h-5 w-5 text-warning" />
-              Aviso de segurança
+              {t("safety.title")}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
                 <p>
-                  Para a sua segurança, <strong>não entre de forma alguma</strong> em propriedades
-                  com falta de identificação, sinalética visível do produtor, ou que possam colocar
-                  a sua segurança em causa.
+                  <Trans t={t} i18nKey="safety.p1" components={{ b: <strong /> }} />
                 </p>
-                <p>
-                  Confirme sempre o local de levantamento indicado pelo agricultor antes de se
-                  deslocar e prefira deslocações em horário diurno.
-                </p>
+                <p>{t("safety.p2")}</p>
                 {slot && (
                   <p className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-2.5 font-medium text-foreground">
                     <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
-                    Levantamento agendado: {formatSlotDate(new Date(slot))} às {formatSlotTime(new Date(slot))}.
-                    O agricultor recebe a encomenda com este horário.
+                    {t("safety.scheduled", { date: formatSlotDate(new Date(slot)), time: formatSlotTime(new Date(slot)) })}
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  A ValorRural <strong>não se responsabiliza por atos de terceiros</strong> nem
-                  pela segurança física das pessoas durante o processo de levantamento.
+                  <Trans t={t} i18nKey="safety.p3" components={{ b: <strong /> }} />
                 </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleCheckout}>
-              Compreendo e quero continuar
+              {t("safety.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

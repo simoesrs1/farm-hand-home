@@ -1,0 +1,105 @@
+{
+  "eyebrow": "Legal",
+  "lastUpdated": "Última actualización: {{date}}",
+  "courtesy": "Traducción de cortesía. En caso de discrepancia, prevalece la versión portuguesa.",
+  "showOriginal": "Ver versión portuguesa",
+  "showTranslation": "Ver traducción",
+  "toc": "Índice",
+  "consent": {
+    "aria": "Consentimiento de cookies",
+    "title": "Su privacidad",
+    "text": "Usamos cookies esenciales para que el sitio funcione. Con su autorización, usamos también cookies para recordar su carrito entre visitas y para mostrar mapas de Google. La elección es válida para esta sesión.",
+    "learnMore": "Más información",
+    "customize": "Personalizar",
+    "reject": "Rechazar",
+    "acceptAll": "Aceptar todas",
+    "preferencesTitle": "Preferencias de cookies",
+    "preferencesText": "Elija qué categorías autoriza. Puede cambiar la decisión en cualquier momento mediante el enlace \"Gestionar cookies\" del pie de página. Más detalles en la <link>Política de privacidad</link>.",
+    "alwaysOn": "Siempre activas",
+    "lastDecision": "Última decisión en esta sesión: {{date}}",
+    "rejectAll": "Rechazar todas",
+    "save": "Guardar elecciones",
+    "categories": {
+      "necessary": {
+        "title": "Estrictamente necesarias",
+        "description": "Imprescindibles para el funcionamiento del sitio: mantener la sesión iniciada, la seguridad de la cuenta, el carrito durante la visita, el idioma elegido y el recuerdo de esta misma elección. No se pueden desactivar."
+      },
+      "preferences": {
+        "title": "Preferencias",
+        "description": "Guardan el carrito y el horario de recogida elegido en este dispositivo para que los encuentre en la próxima visita. Sin ellas, estos datos se borran al cerrar el navegador."
+      },
+      "maps": {
+        "title": "Mapas (Google Maps)",
+        "description": "Cargan mapas interactivos de Google para ver agricultores y marcar puntos de entrega y recogida. Google puede instalar cookies propias y recoger su dirección IP."
+      }
+    }
+  },
+  "cookies": {
+    "p1": "Las cookies son pequeños archivos guardados en su navegador; tecnologías similares, como el almacenamiento local, funcionan de forma parecida. Las usamos conforme al artículo 5 de la Ley n.º 41/2004: las estrictamente necesarias no requieren consentimiento; todas las demás solo se usan si las autoriza.",
+    "p2": "<b>No usamos cookies de publicidad ni de análisis estadístico.</b> Su elección se guarda solo durante la sesión del navegador: cuando lo cierre, volveremos a preguntar.",
+    "table": {
+      "name": "Nombre",
+      "type": "Tipo",
+      "category": "Categoría",
+      "purpose": "Finalidad",
+      "duration": "Duración"
+    },
+    "items": {
+      "auth": {
+        "type": "Almacenamiento local",
+        "category": "Necesaria",
+        "purpose": "Mantiene la sesión iniciada y la seguridad de la cuenta.",
+        "duration": "Hasta cerrar sesión"
+      },
+      "consent": {
+        "type": "Cookie",
+        "category": "Necesaria",
+        "purpose": "Guarda sus elecciones sobre cookies.",
+        "duration": "Sesión del navegador"
+      },
+      "sid": {
+        "type": "Cookie",
+        "category": "Necesaria",
+        "purpose": "Identifica la sesión del navegador para limitar el carrito a la visita actual.",
+        "duration": "Sesión del navegador"
+      },
+      "cart": {
+        "type": "Almacenamiento local",
+        "category": "Necesaria / Preferencias",
+        "purpose": "Contenido del carrito. Solo se guarda entre visitas si autoriza las preferencias.",
+        "duration": "Sesión (o persistente, con preferencias)"
+      },
+      "pickupSlot": {
+        "type": "Almacenamiento local",
+        "category": "Necesaria / Preferencias",
+        "purpose": "Horario de recogida elegido en la página del producto.",
+        "duration": "Sesión (o persistente, con preferencias)"
+      },
+      "pendingProfile": {
+        "type": "Almacenamiento de sesión",
+        "category": "Necesaria",
+        "purpose": "Recuerda el tipo de perfil elegido durante el registro con Google.",
+        "duration": "Hasta completar el registro"
+      },
+      "lang": {
+        "type": "Almacenamiento local",
+        "category": "Necesaria",
+        "purpose": "Idioma del sitio elegido por usted en el selector (o el del navegador, en la primera visita).",
+        "duration": "Persistente, hasta cambiar de idioma o limpiar el navegador"
+      },
+      "google": {
+        "type": "Cookie de terceros",
+        "category": "Mapas",
+        "purpose": "Instaladas por Google al cargar Google Maps.",
+        "duration": "Definida por Google"
+      }
+    },
+    "google": "Google trata los datos recogidos por Google Maps según su <link>política de privacidad</link>. También puede borrar las cookies en los ajustes de su navegador.",
+    "location": "En el mapa de agricultores, puede usar la ubicación de su dispositivo para ver los agricultores dentro de un radio. El navegador le pide autorización antes de compartirla; la ubicación solo se usa en su navegador, para ese filtro, y no se guarda ni se envía a la plataforma.",
+    "state": "Estado actual: preferencias {{preferences}}, mapas {{maps}}.",
+    "on": "activadas",
+    "off": "desactivadas",
+    "noChoice": "Todavía no ha hecho ninguna elección en esta sesión.",
+    "manage": "Gestionar cookies"
+  }
+}

@@ -29,20 +29,9 @@ import {
   validateExplorationNumber,
   validateFarmerForm,
 } from "@/lib/farmer-validation";
-
-const CERTIFICATE_TYPES = [
-  "Produção Biológica",
-  "Modo de Produção Integrada",
-  "Denominação de Origem Protegida (DOP)",
-  "Indicação Geográfica Protegida (IGP)",
-  "Especialidade Tradicional Garantida (ETG)",
-  "Certificação Sanitária / HACCP",
-  "Bem-estar Animal",
-  "Comércio Justo",
-  "Global G.A.P.",
-  "ISO 9001 / 22000",
-  "Outro",
-];
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { CERTIFICATE_TYPES } from "@/lib/certificates";
 
 interface CertificateUpload {
   file: File;
@@ -94,10 +83,12 @@ const FieldStatus = ({
   available: boolean;
   label: string;
 }) => {
+  const { t } = useTranslation("farmer");
   if (checking) {
     return (
       <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-        <Loader2 className="h-3 w-3 animate-spin" />A verificar disponibilidade…
+        <Loader2 className="h-3 w-3 animate-spin" />
+        {t("onboarding.checking")}
       </p>
     );
   }
@@ -115,6 +106,7 @@ const FieldStatus = ({
 const FarmerOnboarding = () => {
   const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation(["farmer", "common", "account"]);
   const { toast } = useToast();
 
   const [values, setValues] = useState<FarmerFormValues>(EMPTY_VALUES);
@@ -215,8 +207,7 @@ const FarmerOnboarding = () => {
       if (taken) {
         setTakenErrors((prev) => ({
           ...prev,
-          explorationNumber:
-            "Este número de exploração já está associado a outra conta.",
+          explorationNumber: i18n.t("common:errors.explorationTaken"),
         }));
       } else {
         setAvailability((prev) => ({ ...prev, explorationNumber: true }));
@@ -252,7 +243,7 @@ const FarmerOnboarding = () => {
       if (taken) {
         setTakenErrors((prev) => ({
           ...prev,
-          companyNif: "Este NIF já está associado a outra conta.",
+          companyNif: i18n.t("common:errors.nifTaken"),
         }));
       } else {
         setAvailability((prev) => ({ ...prev, companyNif: true }));
@@ -270,7 +261,7 @@ const FarmerOnboarding = () => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files).map((file) => ({
         file,
-        type: CERTIFICATE_TYPES[0],
+        type: CERTIFICATE_TYPES[0].value,
       }));
       setCertificates((prev) => [...prev, ...newFiles]);
     }
@@ -296,9 +287,8 @@ const FarmerOnboarding = () => {
     const blocking = { ...errors, ...takenErrors, offerings: noOffering ? "required" : undefined };
     if (Object.values(blocking).some(Boolean)) {
       toast({
-        title: "Formulário incompleto",
-        description:
-          "Corrija os campos assinalados a vermelho antes de concluir o registo.",
+        title: t("onboarding.incomplete"),
+        description: t("onboarding.incompleteText"),
         variant: "destructive",
       });
       // Espera pelo repaint para que os campos já estejam marcados como inválidos.
@@ -373,14 +363,14 @@ const FarmerOnboarding = () => {
       }
 
       toast({
-        title: "Perfil completo!",
-        description: "O seu perfil de agricultor foi criado com sucesso.",
+        title: t("onboarding.done"),
+        description: t("onboarding.doneText"),
       });
       navigate("/");
     } catch (error: unknown) {
       console.error("Farmer onboarding error", error);
       toast({
-        title: "Erro",
+        title: t("account:auth.error"),
         description: toUserMessage(error),
         variant: "destructive",
       });
@@ -414,12 +404,12 @@ const FarmerOnboarding = () => {
         <div className="w-full max-w-2xl rounded-2xl border border-border bg-card shadow-xl">
           {/* Header */}
           <div className="border-b border-border p-6 text-center">
-            <p className="text-sm font-semibold uppercase tracking-wider text-primary">Passo 2 de 2</p>
+            <p className="text-sm font-semibold uppercase tracking-wider text-primary">{t("onboarding.step")}</p>
             <h1 className="mt-2 font-display text-2xl text-foreground">
-              Complete o seu perfil de agricultor
+              {t("onboarding.title")}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Preencha os dados oficiais da sua exploração.
+              {t("onboarding.subtitle")}
             </p>
 
             <div className="mx-auto mt-5 flex max-w-xs items-center gap-2">
@@ -439,14 +429,14 @@ const FarmerOnboarding = () => {
             <section className="rounded-xl border border-border bg-background/50 p-5" data-invalid={submitAttempted && noOffering}>
               <div className="mb-1 flex items-center gap-2 text-foreground">
                 <Store className="h-5 w-5 text-primary" />
-                <h2 className="font-display text-base font-semibold">O que vai disponibilizar na plataforma *</h2>
+                <h2 className="font-display text-base font-semibold">{t("onboarding.offerings")}</h2>
               </div>
               <p className="mb-4 text-xs text-muted-foreground">
-                Escolha uma ou mais opções. Pode alterar mais tarde em Informações da exploração.
+                {t("onboarding.offeringsHint")}
               </p>
               <OfferingsPicker value={offerings} onChange={setOfferings} />
               {submitAttempted && noOffering && (
-                <p className="mt-2 text-xs text-destructive">Escolha pelo menos uma opção.</p>
+                <p className="mt-2 text-xs text-destructive">{t("offeringsSection.chooseOne")}.</p>
               )}
             </section>
 
@@ -455,13 +445,13 @@ const FarmerOnboarding = () => {
               <div className="mb-4 flex items-center gap-2 text-foreground">
                 <MapPin className="h-5 w-5 text-primary" />
                 <h2 className="font-display text-base font-semibold">
-                  Identificação da Exploração
+                  {t("info.sections.identification")}
                 </h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div data-invalid={!!explorationIdError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                    Identificação da exploração *
+                    {t("info.fields.exploration_id")} *
                   </label>
                   <input
                     type="text"
@@ -469,14 +459,14 @@ const FarmerOnboarding = () => {
                     onChange={(e) => setField("explorationId", e.target.value)}
                     onBlur={() => markTouched("explorationId")}
                     aria-invalid={!!explorationIdError}
-                    placeholder="Ex: Quinta do Vale"
+                    placeholder={t("onboarding.explorationIdPlaceholder")}
                     className={inputClass(explorationIdError)}
                   />
                   <FieldError message={explorationIdError} />
                 </div>
                 <div data-invalid={!!explorationNumberError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                    Nº de exploração *
+                    {t("info.fields.exploration_number")} *
                   </label>
                   <input
                     type="text"
@@ -487,7 +477,7 @@ const FarmerOnboarding = () => {
                     onBlur={() => markTouched("explorationNumber")}
                     aria-invalid={!!explorationNumberError}
                     maxLength={20}
-                    placeholder="Ex: PT123456789"
+                    placeholder={t("onboarding.explorationNumberPlaceholder")}
                     className={inputClass(explorationNumberError)}
                   />
                   <FieldError message={explorationNumberError} />
@@ -495,7 +485,7 @@ const FarmerOnboarding = () => {
                     <FieldStatus
                       checking={checking.explorationNumber}
                       available={availability.explorationNumber}
-                      label="Número disponível."
+                      label={t("onboarding.numberAvailable")}
                     />
                   )}
                 </div>
@@ -507,13 +497,13 @@ const FarmerOnboarding = () => {
               <div className="mb-4 flex items-center gap-2 text-foreground">
                 <Building2 className="h-5 w-5 text-primary" />
                 <h2 className="font-display text-base font-semibold">
-                  Dados da Empresa
+                  {t("info.sections.company")}
                 </h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div data-invalid={!!companyNameError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                    Nome da empresa *
+                    {t("info.fields.company_name")} *
                   </label>
                   <input
                     type="text"
@@ -521,14 +511,14 @@ const FarmerOnboarding = () => {
                     onChange={(e) => setField("companyName", e.target.value)}
                     onBlur={() => markTouched("companyName")}
                     aria-invalid={!!companyNameError}
-                    placeholder="Ex: Quinta do Vale Verde, Lda."
+                    placeholder={t("onboarding.companyPlaceholder")}
                     className={inputClass(companyNameError)}
                   />
                   <FieldError message={companyNameError} />
                 </div>
                 <div data-invalid={!!companyNifError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                    NIF da empresa *
+                    {t("info.fields.company_nif")} *
                   </label>
                   <input
                     type="text"
@@ -541,7 +531,7 @@ const FarmerOnboarding = () => {
                     }
                     onBlur={() => markTouched("companyNif")}
                     aria-invalid={!!companyNifError}
-                    placeholder="9 dígitos"
+                    placeholder={t("onboarding.nifPlaceholder")}
                     className={inputClass(companyNifError)}
                   />
                   <FieldError message={companyNifError} />
@@ -549,13 +539,13 @@ const FarmerOnboarding = () => {
                     <FieldStatus
                       checking={checking.companyNif}
                       available={availability.companyNif}
-                      label="NIF válido e disponível."
+                      label={t("onboarding.nifAvailable")}
                     />
                   )}
                 </div>
                 <div data-invalid={!!caeCodeError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                    CAE da empresa *
+                    {t("info.fields.cae_code")} *
                   </label>
                   <input
                     type="text"
@@ -567,14 +557,14 @@ const FarmerOnboarding = () => {
                     }
                     onBlur={() => markTouched("caeCode")}
                     aria-invalid={!!caeCodeError}
-                    placeholder="Ex: 01110"
+                    placeholder={t("onboarding.caePlaceholder")}
                     className={inputClass(caeCodeError)}
                   />
                   <FieldError message={caeCodeError} />
                 </div>
                 <div data-invalid={!!phoneError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                    Telefone *
+                    {t("info.fields.phone")} *
                   </label>
                   <input
                     type="tel"
@@ -589,7 +579,7 @@ const FarmerOnboarding = () => {
                 </div>
                 <div className="sm:col-span-2" data-invalid={!!addressError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                    Morada *
+                    {t("info.fields.address")} *
                   </label>
                   <input
                     type="text"
@@ -597,14 +587,14 @@ const FarmerOnboarding = () => {
                     onChange={(e) => setField("address", e.target.value)}
                     onBlur={() => markTouched("address")}
                     aria-invalid={!!addressError}
-                    placeholder="Morada da exploração"
+                    placeholder={t("onboarding.addressPlaceholder")}
                     className={inputClass(addressError)}
                   />
                   <FieldError message={addressError} />
                 </div>
                 <div className="sm:col-span-2" data-invalid={!!websiteError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                    Website
+                    {t("info.fields.website")}
                   </label>
                   <input
                     type="text"
@@ -619,13 +609,13 @@ const FarmerOnboarding = () => {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                    Descrição da exploração
+                    {t("info.farmDescription")}
                   </label>
                   <textarea
                     value={values.description}
                     onChange={(e) => setField("description", e.target.value)}
                     rows={3}
-                    placeholder="Fale sobre a sua exploração, métodos de produção, história..."
+                    placeholder={t("onboarding.descriptionPlaceholder")}
                     className={inputClass()}
                   />
                 </div>
@@ -637,18 +627,17 @@ const FarmerOnboarding = () => {
               <div className="mb-2 flex items-center gap-2 text-foreground">
                 <MapPin className="h-5 w-5 text-primary" />
                 <h2 className="font-display text-base font-semibold">
-                  Local de Levantamento da Encomenda
+                  {t("info.sections.pickup")}
                 </h2>
               </div>
               <p className="mb-4 text-xs text-muted-foreground">
-                Indique a morada onde os clientes irão levantar as encomendas e
-                marque o ponto exato no mapa (clique ou arraste o marcador).
+                {t("onboarding.pickupHint")}
               </p>
 
               <div className="space-y-3">
                 <div data-invalid={!!pickupAddressError}>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                    Morada de levantamento *
+                    {t("info.fields.pickup_address")} *
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -657,7 +646,7 @@ const FarmerOnboarding = () => {
                       onChange={(e) => setField("pickupAddress", e.target.value)}
                       onBlur={() => markTouched("pickupAddress")}
                       aria-invalid={!!pickupAddressError}
-                      placeholder="Rua, número, código postal, localidade"
+                      placeholder={t("onboarding.pickupPlaceholder")}
                       className={inputClass(pickupAddressError)}
                     />
                     {values.address && (
@@ -669,7 +658,7 @@ const FarmerOnboarding = () => {
                         }}
                         className="shrink-0 rounded-lg border border-border bg-background px-3 text-xs font-medium text-muted-foreground hover:bg-muted"
                       >
-                        Usar morada da exploração
+                        {t("onboarding.useFarmAddress")}
                       </button>
                     )}
                   </div>
@@ -693,14 +682,13 @@ const FarmerOnboarding = () => {
 
                   {values.pickupLat != null && values.pickupLng != null ? (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Coordenadas: {values.pickupLat.toFixed(5)},{" "}
-                      {values.pickupLng.toFixed(5)}
+                      {t("onboarding.coordinates", { coords: `${values.pickupLat.toFixed(5)}, ${values.pickupLng.toFixed(5)}` })}
                     </p>
                   ) : pickupLocationError ? (
                     <FieldError message={pickupLocationError} />
                   ) : (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Clique no mapa para marcar o local de levantamento.
+                      {t("onboarding.clickMap")}
                     </p>
                   )}
                 </div>
@@ -712,22 +700,20 @@ const FarmerOnboarding = () => {
               <div className="mb-2 flex items-center gap-2 text-foreground">
                 <Award className="h-5 w-5 text-primary" />
                 <h2 className="font-display text-base font-semibold">
-                  Certificados
+                  {t("info.certificates")}
                 </h2>
               </div>
               <p className="mb-4 text-xs text-muted-foreground">
-                Carregue todos os certificados que possui. Selecione o tipo de
-                cada documento. Quantos mais certificados, melhor a sua
-                pontuação inicial atribuída pela equipa.
+                {t("onboarding.certificatesHint")}
               </p>
 
               <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border p-6 transition-colors hover:border-primary/50 hover:bg-muted/50">
                 <Upload className="h-7 w-7 text-muted-foreground" />
                 <span className="text-sm font-medium text-muted-foreground">
-                  Clique para adicionar certificados
+                  {t("onboarding.addCertificates")}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  PDF, JPG, PNG (máx. 10MB cada)
+                  {t("onboarding.fileTypes")}
                 </span>
                 <input
                   type="file"
@@ -756,9 +742,9 @@ const FarmerOnboarding = () => {
                         onChange={(e) => updateCertType(index, e.target.value)}
                         className="rounded-md border border-input bg-background px-2 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       >
-                        {CERTIFICATE_TYPES.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
+                        {CERTIFICATE_TYPES.map((c) => (
+                          <option key={c.key} value={c.value}>
+                            {t(`certificates.${c.key}`)}
                           </option>
                         ))}
                       </select>
@@ -770,7 +756,7 @@ const FarmerOnboarding = () => {
                           type="button"
                           onClick={() => removeFile(index)}
                           className="rounded-md p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                          aria-label="Remover"
+                          aria-label={t("common:actions.remove")}
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -780,8 +766,7 @@ const FarmerOnboarding = () => {
                   <div className="flex items-center gap-2 rounded-lg bg-primary/5 p-3">
                     <Hash className="h-4 w-4 text-primary" />
                     <span className="text-xs font-medium text-primary">
-                      Pontuação inicial estimada: +
-                      {Math.min(certificates.length * 10, 50)} pontos
+                      {t("onboarding.initialScore", { count: Math.min(certificates.length * 10, 50) })}
                     </span>
                   </div>
                 </div>
@@ -795,7 +780,7 @@ const FarmerOnboarding = () => {
               disabled={loading}
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Completar registo
+              {t("onboarding.submit")}
             </Button>
           </form>
         </div>

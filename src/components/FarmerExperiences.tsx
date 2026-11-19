@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExperienceRow } from "@/components/ExperienceForm";
 import ExperienceDialog from "@/components/ExperienceDialog";
 import ExperienceCard from "@/components/ExperienceCard";
+import { useTranslation } from "react-i18next";
 
 interface FarmerExperiencesProps {
   farmerId: string;
@@ -13,6 +14,7 @@ interface FarmerExperiencesProps {
 /** Secção "Experiências na quinta" do perfil público do agricultor. */
 const FarmerExperiences = ({ farmerId, farmName, isOwner }: FarmerExperiencesProps) => {
   const [experiences, setExperiences] = useState<ExperienceRow[]>([]);
+  const { t } = useTranslation("offerings");
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState<ExperienceRow | null>(null);
 
@@ -49,8 +51,8 @@ const FarmerExperiences = ({ farmerId, farmName, isOwner }: FarmerExperiencesPro
 
   return (
     <section className="mt-10">
-      <h2 className="font-display text-2xl font-bold text-foreground">Experiências na quinta</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Atividades para viver a quinta por dentro, com um brinde para levar.</p>
+      <h2 className="font-display text-2xl font-bold text-foreground">{t("farmSections.experiences")}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{t("farmSections.experiencesText")}</p>
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {experiences.map((e) => (
           <ExperienceCard key={e.id} experience={e} thumb={thumbs[e.id]} onClick={() => setSelected(e)} />

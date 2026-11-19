@@ -25,7 +25,10 @@ import { canFileDeliveryComplaint, reviewContext } from "@/lib/review-eligibilit
 import { FREE_CANCEL_DAYS, cancellationQuote } from "@/lib/experience-pricing";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import DeliveryTrackingDialog from "@/components/DeliveryTrackingDialog";
-import { formatEuro } from "@/lib/format";
+import { formatDate, formatDateTime, formatEuro, unitLabel } from "@/lib/format";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import TranslatedText from "@/components/TranslatedText";
 
 interface OrderItem {
   id: string;
@@ -73,40 +76,40 @@ interface Order {
   order_items: OrderItem[];
 }
 
-const statusMeta: Record<Order["status"], { label: string; tone: string; Icon: typeof Clock }> = {
-  pending_payment: { label: "A aguardar pagamento", tone: "bg-muted text-muted-foreground", Icon: Clock },
-  awaiting_pickup: { label: "A aguardar levantamento", tone: "bg-info/15 text-info", Icon: Clock },
-  delivered: { label: "Levantada", tone: "bg-success/15 text-success", Icon: CheckCircle2 },
-  expired: { label: "Expirada", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
-  refunded: { label: "Devolvida", tone: "bg-destructive/15 text-destructive", Icon: XCircle },
+const statusMeta: Record<Order["status"], { tone: string; Icon: typeof Clock }> = {
+  pending_payment: { tone: "bg-muted text-muted-foreground", Icon: Clock },
+  awaiting_pickup: { tone: "bg-info/15 text-info", Icon: Clock },
+  delivered: { tone: "bg-success/15 text-success", Icon: CheckCircle2 },
+  expired: { tone: "bg-destructive/15 text-destructive", Icon: XCircle },
+  refunded: { tone: "bg-destructive/15 text-destructive", Icon: XCircle },
 };
 
 // Nas entregas ao domicílio fala-se de entrega, não de levantamento.
-const homeDeliveryLabels: Partial<Record<Order["status"], string>> = {
-  awaiting_pickup: "A aguardar entrega",
-  delivered: "Entregue",
-};
+const HOME_DELIVERY_STATUSES = ["awaiting_pickup", "delivered"] as const;
 
-// Reservas de experiências.
-const bookingLabels: Partial<Record<Order["status"], string>> = {
-  awaiting_pickup: "Reservada",
-  delivered: "Concluída",
-  expired: "Sem comparência",
-};
+// Reservas de experiências e alojamento.
+const BOOKING_STATUSES = ["awaiting_pickup", "delivered", "expired"] as const;
+
+const inList = <T extends string>(list: readonly T[], value: string): value is T =>
+  (list as readonly string[]).includes(value);
 
 const isHomeDelivery = (o: Order) => o.delivery_address != null;
 const isBooking = (o: Order) => o.kind === "experience" || o.kind === "stay";
 
 const statusLabel = (o: Order) => {
   if (isBooking(o)) {
-    if (o.status === "refunded") return o.cancelled_by === "farmer" ? "Cancelada pelo agricultor" : "Cancelada";
-    return bookingLabels[o.status] ?? statusMeta[o.status].label;
+    if (o.status === "refunded") {
+      return i18n.t(o.cancelled_by === "farmer" ? "orders:status.cancelledByFarmer" : "orders:status.cancelled");
+    }
+    if (inList(BOOKING_STATUSES, o.status)) return i18n.t(`orders:status.booking.${o.status}`);
+  } else if (isHomeDelivery(o) && inList(HOME_DELIVERY_STATUSES, o.status)) {
+    return i18n.t(`orders:status.home.${o.status}`);
   }
-  return (isHomeDelivery(o) && homeDeliveryLabels[o.status]) || statusMeta[o.status].label;
+  return i18n.t(`orders:status.${o.status}`);
 };
 
 const formatBookingStart = (iso: string) =>
-  new Date(iso).toLocaleString("pt-PT", {
+  formatDateTime(iso, {
     timeZone: "Europe/Lisbon",
     weekday: "long",
     day: "2-digit",
@@ -118,17 +121,32 @@ const formatBookingStart = (iso: string) =>
 /** Linha da experiência ou do alojamento (as outras linhas da reserva são brindes). */
 const bookingTitle = (o: Order) =>
   o.order_items?.find((it) => it.unit === "pessoa" || it.unit === "grupo" || it.unit === "noite")?.product_name ??
-  (o.kind === "stay" ? "Alojamento" : "Experiência");
+  i18n.t(o.kind === "stay" ? "orders:booking.stay" : "orders:booking.experience");
+
+/** O mesmo título, traduzido quando vem de uma linha da encomenda. */
+const bookingTitleNode = (o: Order) => {
+  const line = o.order_items?.find((it) => it.unit === "pessoa" || it.unit === "grupo" || it.unit === "noite");
+  return line ? (
+    <TranslatedText type="order_item" id={line.id} field="product_name" text={line.product_name} />
+  ) : (
+    bookingTitle(o)
+  );
+};
 
 const formatStayDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("pt-PT", { timeZone: "Europe/Lisbon", weekday: "short", day: "2-digit", month: "2-digit" });
+  formatDate(iso, { timeZone: "Europe/Lisbon", weekday: "short", day: "2-digit", month: "2-digit" });
 
 /** Quando e para quantos: sessão da experiência ou datas do alojamento. */
 const bookingDetails = (o: Order) =>
   o.kind === "stay" && o.booking_start && o.booking_end
-    ? `Entrada ${formatStayDate(o.booking_start)} · Saída ${formatStayDate(o.booking_end)} · ${o.booking_people} hóspede(s) · ${o.booking_units} quarto(s)`
+    ? i18n.t("orders:booking.stayDetails", {
+        checkIn: formatStayDate(o.booking_start),
+        checkOut: formatStayDate(o.booking_end),
+        guests: i18n.t("orders:booking.guests", { count: o.booking_people ?? 0 }),
+        rooms: i18n.t("orders:booking.rooms", { count: o.booking_units ?? 0 }),
+      })
     : o.booking_start
-      ? `${formatBookingStart(o.booking_start)} · ${o.booking_people} ${o.booking_people === 1 ? "pessoa" : "pessoas"}`
+      ? `${formatBookingStart(o.booking_start)} · ${i18n.t("orders:booking.people", { count: o.booking_people ?? 0 })}`
       : "";
 
 
@@ -158,6 +176,7 @@ interface Complaint {
 
 const MyOrders = () => {
   const { user } = useAuth();
+  const { t } = useTranslation(["orders", "common", "account"]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Order | null>(null);
@@ -211,8 +230,8 @@ const MyOrders = () => {
   if (!user) {
     return (
       <main className="container py-16 text-center">
-        <p className="text-muted-foreground">Inicia sessão para ver as tuas encomendas.</p>
-        <Link to="/auth"><Button className="mt-4">Entrar</Button></Link>
+        <p className="text-muted-foreground">{t("my.loginPrompt")}</p>
+        <Link to="/auth"><Button className="mt-4">{t("my.login")}</Button></Link>
       </main>
     );
   }
@@ -224,10 +243,10 @@ const MyOrders = () => {
     setFiling(false);
     setComplaintOrder(null);
     if (error) {
-      toast({ title: "Não foi possível registar a queixa", description: error.message, variant: "destructive" });
+      toast({ title: t("complaint.failed"), description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Queixa registada", description: "O agricultor tem 48 horas para entregar a encomenda." });
+    toast({ title: t("complaint.filed"), description: t("complaint.filedText") });
     loadReviewState();
   };
 
@@ -238,7 +257,7 @@ const MyOrders = () => {
     setCancelling(false);
     setCancelBooking(null);
     if (error || (data as { error?: string } | null)?.error) {
-      let msg = (data as { error?: string } | null)?.error ?? "Tenta novamente dentro de momentos.";
+      let msg = (data as { error?: string } | null)?.error ?? t("my.tryAgain");
       if (error instanceof FunctionsHttpError) {
         try {
           const body = await error.context.json();
@@ -247,30 +266,30 @@ const MyOrders = () => {
           // resposta sem JSON: fica a mensagem genérica
         }
       }
-      toast({ title: "Não foi possível cancelar", description: msg, variant: "destructive" });
+      toast({ title: t("cancelBooking.failed"), description: msg, variant: "destructive" });
       return;
     }
-    toast({ title: "Reserva cancelada", description: `Vão ser devolvidos ${formatEuro(Number(data.refund_amount))}.` });
+    toast({ title: t("cancelBooking.done"), description: t("cancelBooking.refund", { amount: formatEuro(Number(data.refund_amount)) }) });
     loadOrders();
   };
 
   const complaintMessage = (c: Complaint) => {
     if (c.status === "open") {
       return new Date(c.deadline_at).getTime() > Date.now()
-        ? `Queixa registada. O agricultor tem até ${new Date(c.deadline_at).toLocaleString("pt-PT")} para entregar.`
-        : "Queixa registada. A equipa da plataforma vai confirmar a situação.";
+        ? t("complaint.open", { date: formatDateTime(c.deadline_at) })
+        : t("complaint.overdue");
     }
-    if (c.status === "rejected") return "A queixa foi analisada e recusada pela equipa da plataforma.";
+    if (c.status === "rejected") return t("complaint.rejected");
     return null;
   };
 
   const hidePhoto = async (reviewId: string) => {
     const { error } = await supabase.rpc("hide_review_photo", { p_review_id: reviewId });
     if (error) {
-      toast({ title: "Não foi possível retirar a fotografia", description: error.message, variant: "destructive" });
+      toast({ title: t("review.hidePhotoFailed"), description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Fotografia retirada", description: "A tua avaliação mostra agora apenas o nome." });
+    toast({ title: t("review.photoHidden"), description: t("review.photoHiddenText") });
     loadReviewState();
   };
 
@@ -282,27 +301,27 @@ const MyOrders = () => {
       return (
         <Link to={`/avaliar/${o.id}`}>
           <Button variant="default" className="gap-2">
-            <Star className="h-4 w-4" /> Avaliar agricultor
+            <Star className="h-4 w-4" /> {t("review.rate")}
           </Button>
         </Link>
       );
     }
-    if (review.removed) return <span className="text-xs text-muted-foreground">Avaliação eliminada</span>;
+    if (review.removed) return <span className="text-xs text-muted-foreground">{t("review.deleted")}</span>;
     return (
       <>
         <Button variant="default" disabled className="gap-2">
-          <Star className="h-4 w-4" /> Já avaliada
+          <Star className="h-4 w-4" /> {t("review.done")}
         </Button>
         {review.removal_status === "pending" ? (
-          <span className="text-xs text-muted-foreground">Eliminação em análise</span>
+          <span className="text-xs text-muted-foreground">{t("review.removalPending")}</span>
         ) : (
           <Button variant="outline" onClick={() => setRemovalReviewId(review.review_id)}>
-            Pedir eliminação
+            {t("review.requestRemoval")}
           </Button>
         )}
         {review.photo_shown && (
           <Button variant="outline" onClick={() => hidePhoto(review.review_id)}>
-            Retirar a minha fotografia
+            {t("review.hidePhoto")}
           </Button>
         )}
       </>
@@ -320,11 +339,11 @@ const MyOrders = () => {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs text-muted-foreground">
-              {new Date(o.created_at).toLocaleString("pt-PT")}
+              {formatDateTime(o.created_at)}
             </p>
             <p className="mt-1 font-display text-lg font-semibold text-foreground">
               <Link to={`/encomendas/${o.id}`} className="hover:underline">
-                {o.farmer?.company_name ?? "Quinta"}
+                {o.farmer?.company_name ?? t("my.farmFallback")}
               </Link>
             </p>
             <p className="mt-1 text-sm text-muted-foreground">{formatEuro(o.total)}</p>
@@ -335,14 +354,14 @@ const MyOrders = () => {
             </span>
             {o.status === "awaiting_pickup" && (
               <span className="text-[11px] text-muted-foreground">
-                {o.accepted_at ? "Pedido aceite pelo agricultor" : "A aguardar aceitação do agricultor"}
+                {o.accepted_at ? t("my.accepted") : t("my.awaitingAcceptance")}
               </span>
             )}
             <Link
               to={`/encomendas/${o.id}`}
               className="text-[11px] font-medium text-primary hover:underline"
             >
-              {home ? "Ver estado →" : "Ver estado e levantamento →"}
+              {home ? t("my.viewStatus") : t("my.viewStatusPickup")}
             </Link>
           </div>
         </div>
@@ -355,7 +374,7 @@ const MyOrders = () => {
               <Tent className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             )}
             <div className="text-sm">
-              <p className="font-medium text-foreground">{bookingTitle(o)}</p>
+              <p className="font-medium text-foreground">{bookingTitleNode(o)}</p>
               <p className="text-muted-foreground">{bookingDetails(o)}</p>
             </div>
           </div>
@@ -365,11 +384,11 @@ const MyOrders = () => {
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/50 p-3">
             <div className="flex min-w-0 flex-1 items-start gap-2">
               <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <p className="text-sm text-foreground">Entrega ao domicílio: {o.delivery_address}</p>
+              <p className="text-sm text-foreground">{t("my.homeDelivery", { address: o.delivery_address })}</p>
             </div>
             {o.delivery_tracking && (
               <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setTracking(o)}>
-                <Truck className="h-4 w-4" /> Acompanhar
+                <Truck className="h-4 w-4" /> {t("my.track")}
               </Button>
             )}
           </div>
@@ -385,7 +404,7 @@ const MyOrders = () => {
                   rel="noreferrer"
                   className="mt-1 inline-flex text-xs font-medium text-primary hover:underline"
                 >
-                  Abrir no Google Maps →
+                  {t("my.openMaps")}
                 </a>
               )}
             </div>
@@ -399,7 +418,7 @@ const MyOrders = () => {
               onClick={() => setExpanded((s) => ({ ...s, [o.id]: !isOpen }))}
               className="flex w-full items-center justify-between text-sm font-medium text-foreground"
             >
-              Detalhes ({o.order_items.length} {o.order_items.length === 1 ? "artigo" : "artigos"})
+              {t("my.details", { count: o.order_items.length })}
               {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>
             {isOpen && (
@@ -410,9 +429,9 @@ const MyOrders = () => {
                       <img src={it.product_image} alt={it.product_name} className="h-10 w-10 rounded-md object-cover" />
                     )}
                     <div className="flex-1">
-                      <p className="font-medium text-foreground">{it.product_name}</p>
+                      <TranslatedText type="order_item" id={it.id} field="product_name" text={it.product_name} as="p" className="font-medium text-foreground" />
                       <p className="text-xs text-muted-foreground">
-                        {it.quantity} {it.unit ?? ""} × {formatEuro(it.unit_price)}
+                        {it.quantity} {unitLabel(it.unit, it.quantity)} × {formatEuro(it.unit_price)}
                       </p>
                     </div>
                     <p className="font-medium text-foreground">{formatEuro(it.subtotal)}</p>
@@ -420,7 +439,7 @@ const MyOrders = () => {
                 ))}
                 {o.delivery_fee > 0 && (
                   <li className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Entrega ao domicílio</span>
+                    <span className="text-muted-foreground">{t("my.homeDeliveryFee")}</span>
                     <span className="font-medium text-foreground">{formatEuro(o.delivery_fee)}</span>
                   </li>
                 )}
@@ -432,14 +451,14 @@ const MyOrders = () => {
         {o.status === "awaiting_pickup" && (
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
             {isBooking(o) ? (
-              <Button variant="outline" onClick={() => setCancelBooking(o)}>Cancelar reserva</Button>
+              <Button variant="outline" onClick={() => setCancelBooking(o)}>{t("cancelBooking.button")}</Button>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Prazo: <span className="font-medium text-foreground">{new Date(o.pickup_deadline).toLocaleDateString("pt-PT")}</span>
+                {t("my.deadline")} <span className="font-medium text-foreground">{formatDate(o.pickup_deadline)}</span>
               </p>
             )}
             <Button onClick={() => setSelected(o)}>
-              {isBooking(o) ? "Mostrar QR da reserva" : home ? "Mostrar QR de entrega" : "Mostrar QR de levantamento"}
+              {isBooking(o) ? t("qr.showBooking") : home ? t("qr.showDelivery") : t("qr.showPickup")}
             </Button>
           </div>
         )}
@@ -449,7 +468,7 @@ const MyOrders = () => {
               <p className="mr-auto text-sm text-muted-foreground">{complaintMessage(complaints[o.id])}</p>
             ) : (
               <Button variant="outline" className="gap-2" onClick={() => setComplaintOrder(o)}>
-                <PackageX className="h-4 w-4" /> Não recebi a encomenda
+                <PackageX className="h-4 w-4" /> {t("complaint.button")}
               </Button>
             )}
             {renderReviewAction(o)}
@@ -473,15 +492,15 @@ const MyOrders = () => {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs text-muted-foreground">
-              {new Date(o.created_at).toLocaleString("pt-PT")}
+              {formatDateTime(o.created_at)}
             </p>
             <p className="mt-1 font-display text-lg font-semibold text-foreground/80">
               <Link to={`/encomendas/${o.id}`} className="hover:underline">
-                {o.farmer?.company_name ?? "Quinta"}
+                {o.farmer?.company_name ?? t("my.farmFallback")}
               </Link>
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {formatEuro(o.total)} · {o.order_items?.length ?? 0} {(o.order_items?.length ?? 0) === 1 ? "artigo" : "artigos"}
+              {formatEuro(o.total)} · {t("my.items", { count: o.order_items?.length ?? 0 })}
             </p>
           </div>
           <div className="flex flex-col items-end gap-1.5">
@@ -492,15 +511,20 @@ const MyOrders = () => {
               to={`/encomendas/${o.id}`}
               className="text-[11px] font-medium text-primary hover:underline"
             >
-              Ver estado →
+              {t("my.viewStatus")}
             </Link>
           </div>
         </div>
 
         {isBooking(o) && o.status === "refunded" && o.refund_amount != null && (
           <p className="mt-3 text-sm text-muted-foreground">
-            {bookingTitle(o)}: devolvidos {formatEuro(Number(o.refund_amount))}
-            {Number(o.cancellation_fee ?? 0) > 0 && ` (taxa de cancelamento de ${formatEuro(Number(o.cancellation_fee))})`}.
+            {bookingTitleNode(o)}:{" "}
+            {Number(o.cancellation_fee ?? 0) > 0
+              ? t("cancelBooking.refundedWithFee", {
+                  amount: formatEuro(Number(o.refund_amount)),
+                  fee: formatEuro(Number(o.cancellation_fee)),
+                })
+              : t("cancelBooking.refunded", { amount: formatEuro(Number(o.refund_amount)) })}
           </p>
         )}
 
@@ -508,7 +532,7 @@ const MyOrders = () => {
           <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
             {showTracking && (
               <Button variant="outline" className="gap-2" onClick={() => setTracking(o)}>
-                <Truck className="h-4 w-4" /> Acompanhar
+                <Truck className="h-4 w-4" /> {t("my.track")}
               </Button>
             )}
             <ReportDialog
@@ -527,10 +551,10 @@ const MyOrders = () => {
   return (
     <main className="container max-w-4xl py-8">
       <Link to="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Início
+        <ArrowLeft className="h-4 w-4" /> {t("my.home")}
       </Link>
 
-      <PageHeader eyebrow="A minha conta" title="As minhas encomendas" />
+      <PageHeader eyebrow={t("account:myAccount")} title={t("my.title")} />
 
       {loading ? (
         <div className="space-y-3">
@@ -539,18 +563,18 @@ const MyOrders = () => {
         </div>
       ) : orders.length === 0 ? (
         <div className="rounded-2xl border border-border bg-card p-10 text-center">
-          <p className="text-muted-foreground">Ainda não tens encomendas.</p>
-          <Link to="/catalogo"><Button className="mt-4">Ver catálogo</Button></Link>
+          <p className="text-muted-foreground">{t("my.empty")}</p>
+          <Link to="/catalogo"><Button className="mt-4">{t("my.seeCatalog")}</Button></Link>
         </div>
       ) : (
         <div className="space-y-10">
           <section>
             <h2 className="mb-3 font-display text-xl font-semibold text-foreground">
-              Ativas <span className="text-sm font-normal text-muted-foreground">({activeOrders.length})</span>
+              {t("my.active")} <span className="text-sm font-normal text-muted-foreground">({activeOrders.length})</span>
             </h2>
             {activeOrders.length === 0 ? (
               <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                Não tens encomendas ativas.
+                {t("my.noActive")}
               </p>
             ) : (
               <ul className="space-y-3">{activeOrders.map(renderActiveCard)}</ul>
@@ -559,11 +583,11 @@ const MyOrders = () => {
 
           <section>
             <h2 className="mb-3 font-display text-xl font-semibold text-foreground">
-              Realizadas <span className="text-sm font-normal text-muted-foreground">({pastOrders.length})</span>
+              {t("my.past")} <span className="text-sm font-normal text-muted-foreground">({pastOrders.length})</span>
             </h2>
             {pastOrders.length === 0 ? (
               <p className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                Ainda sem encomendas concluídas.
+                {t("my.noPast")}
               </p>
             ) : (
               <ul className="space-y-3">{pastOrders.map(renderPastCard)}</ul>
@@ -576,14 +600,18 @@ const MyOrders = () => {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              {selected && isBooking(selected) ? "Reserva na quinta" : selected && isHomeDelivery(selected) ? "Entrega ao domicílio" : "Levantamento na quinta"}
+              {selected && isBooking(selected)
+                ? t("qr.bookingTitle")
+                : selected && isHomeDelivery(selected)
+                  ? t("qr.deliveryTitle")
+                  : t("qr.pickupTitle")}
             </DialogTitle>
             <DialogDescription>
               {selected && isBooking(selected)
-                ? "Mostra este QR code (ou o código abaixo) ao agricultor quando chegares à quinta."
+                ? t("qr.bookingText")
                 : selected && isHomeDelivery(selected)
-                ? "Mostra este QR code (ou o código abaixo) ao agricultor quando receberes a encomenda."
-                : "Mostra este QR code (ou o código abaixo) ao agricultor para levantar a encomenda."}
+                  ? t("qr.deliveryText")
+                  : t("qr.pickupText")}
             </DialogDescription>
           </DialogHeader>
           {selected && (
@@ -592,13 +620,13 @@ const MyOrders = () => {
                 <QRCodeSVG value={`FC:${selected.pickup_code}`} size={220} level="H" />
               </div>
               <div className="text-center">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Código</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("qr.code")}</p>
                 <p className="mt-1 font-mono text-2xl font-bold tracking-[0.3em] text-foreground">
                   {selected.pickup_code}
                 </p>
               </div>
               <p className="text-center text-xs text-muted-foreground">
-                Válido até {new Date(selected.pickup_deadline).toLocaleString("pt-PT")}
+                {t("qr.validUntil", { date: formatDateTime(selected.pickup_deadline) })}
               </p>
             </div>
           )}
@@ -608,7 +636,7 @@ const MyOrders = () => {
       <AlertDialog open={!!cancelBooking} onOpenChange={(o) => !o && setCancelBooking(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancelar a reserva?</AlertDialogTitle>
+            <AlertDialogTitle>{t("cancelBooking.title")}</AlertDialogTitle>
             <AlertDialogDescription>
               {cancelBooking?.booking_start &&
                 (() => {
@@ -618,14 +646,18 @@ const MyOrders = () => {
                     new Date(cancelBooking.booking_start),
                   );
                   return q.free
-                    ? `Ainda estás dentro do prazo de cancelamento grátis (até ${FREE_CANCEL_DAYS} dias antes). Vão ser devolvidos ${formatEuro(q.refund)}.`
-                    : `Faltam menos de ${FREE_CANCEL_DAYS} dias para a reserva: são retidos 25% do valor ${cancelBooking.kind === "stay" ? "do alojamento" : "da experiência"} (${formatEuro(q.fee)}) e devolvidos ${formatEuro(q.refund)}.`;
+                    ? t("cancelBooking.free", { count: FREE_CANCEL_DAYS, amount: formatEuro(q.refund) })
+                    : t(cancelBooking.kind === "stay" ? "cancelBooking.feeStay" : "cancelBooking.feeExperience", {
+                        count: FREE_CANCEL_DAYS,
+                        fee: formatEuro(q.fee),
+                        amount: formatEuro(q.refund),
+                      });
                 })()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Manter reserva</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmCancelBooking} disabled={cancelling}>Cancelar reserva</AlertDialogAction>
+            <AlertDialogCancel>{t("cancelBooking.keep")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancelBooking} disabled={cancelling}>{t("cancelBooking.button")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -639,15 +671,14 @@ const MyOrders = () => {
       <AlertDialog open={!!complaintOrder} onOpenChange={(o) => !o && setComplaintOrder(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Não recebeste a encomenda?</AlertDialogTitle>
+            <AlertDialogTitle>{t("complaint.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              O agricultor será avisado e tem 48 horas para a entregar. Se a entrega não acontecer, a
-              equipa da plataforma confirma a situação e o valor é devolvido.
+              {t("complaint.text")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Voltar</AlertDialogCancel>
-            <AlertDialogAction onClick={fileComplaint} disabled={filing}>Registar queixa</AlertDialogAction>
+            <AlertDialogCancel>{t("common:actions.back")}</AlertDialogCancel>
+            <AlertDialogAction onClick={fileComplaint} disabled={filing}>{t("complaint.confirm")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

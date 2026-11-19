@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      content_translations: {
+        Row: {
+          created_at: string
+          field: string
+          lang: string
+          source_hash: string
+          source_id: string
+          source_type: string
+          translated: string
+        }
+        Insert: {
+          created_at?: string
+          field: string
+          lang: string
+          source_hash: string
+          source_id: string
+          source_type: string
+          translated: string
+        }
+        Update: {
+          created_at?: string
+          field?: string
+          lang?: string
+          source_hash?: string
+          source_id?: string
+          source_type?: string
+          translated?: string
+        }
+        Relationships: []
+      }
       farmer_activity: {
         Row: {
           components: Json
@@ -1282,6 +1312,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          preferred_language: string | null
           profile_type: string
           profile_type_claimed: boolean
           updated_at: string
@@ -1292,6 +1323,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          preferred_language?: string | null
           profile_type?: string
           profile_type_claimed?: boolean
           updated_at?: string
@@ -1302,6 +1334,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          preferred_language?: string | null
           profile_type?: string
           profile_type_claimed?: boolean
           updated_at?: string

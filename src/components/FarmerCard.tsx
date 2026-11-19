@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useFavorite } from "@/hooks/useFavorite";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
+import { categoryLabel } from "@/data/categories";
 
 interface FarmerCardProps {
   id: string;
@@ -20,6 +22,7 @@ interface FarmerCardProps {
 /** Cartão de agricultor: o mesmo estilo do ProductCard (imagem 4:3, sombra ao passar o rato). */
 const FarmerCard = ({ id, name, farm, image, rating = 0, reviews = 0, location, products }: FarmerCardProps) => {
   const { isFavorite, toggle, loading } = useFavorite(id, farm);
+  const { t } = useTranslation();
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -43,7 +46,7 @@ const FarmerCard = ({ id, name, farm, image, rating = 0, reviews = 0, location, 
           type="button"
           onClick={handleFavoriteClick}
           disabled={loading}
-          aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+          aria-label={isFavorite ? t("favorites.remove") : t("favorites.add")}
           aria-pressed={isFavorite}
           className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur-sm transition-transform motion-safe:hover:scale-110 disabled:opacity-50"
         >
@@ -82,7 +85,7 @@ const FarmerCard = ({ id, name, farm, image, rating = 0, reviews = 0, location, 
           <div className="mt-3 flex flex-wrap gap-1.5">
             {products.slice(0, 3).map((p) => (
               <Badge key={p} variant="outline" className="font-medium">
-                {p}
+                {categoryLabel(p)}
               </Badge>
             ))}
             {products.length > 3 && (

@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { useConsent } from "@/contexts/ConsentContext";
 import { CONSENT_CATEGORIES, ConsentChoices } from "@/lib/consent";
+import { Trans, useTranslation } from "react-i18next";
+import { formatDateTime } from "@/lib/format";
 
 /**
  * Banner de consentimento (não bloqueante) + painel de preferências.
@@ -32,6 +34,7 @@ const CookieConsent = () => {
     closePreferences,
   } = useConsent();
   const [draft, setDraft] = useState<ConsentChoices>(choices);
+  const { t } = useTranslation("legal");
 
   useEffect(() => {
     if (preferencesOpen) setDraft(choices);
@@ -42,7 +45,7 @@ const CookieConsent = () => {
       {!decided && !preferencesOpen && (
         <div
           role="region"
-          aria-label="Consentimento de cookies"
+          aria-label={t("consent.aria")}
           className="fixed inset-x-0 bottom-0 z-50 p-3 sm:p-4"
         >
           <div className="mx-auto max-w-4xl rounded-2xl border border-border bg-card p-5 shadow-xl">
@@ -53,24 +56,22 @@ const CookieConsent = () => {
                 </div>
                 <div>
                   <h2 className="font-display text-sm font-semibold text-foreground">
-                    A sua privacidade
+                    {t("consent.title")}
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Usamos cookies essenciais para o site funcionar. Com a sua autorização, usamos
-                    também cookies para lembrar o seu carrinho entre visitas e para mostrar mapas
-                    da Google. A escolha vale para esta sessão.{" "}
+                    {t("consent.text")}{" "}
                     <Link to="/privacidade#cookies" className="font-medium text-primary underline-offset-4 hover:underline">
-                      Saber mais
+                      {t("consent.learnMore")}
                     </Link>
                   </p>
                 </div>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row md:shrink-0">
                 <Button variant="ghost" onClick={openPreferences}>
-                  Personalizar
+                  {t("consent.customize")}
                 </Button>
-                <Button onClick={rejectAll}>Rejeitar</Button>
-                <Button onClick={acceptAll}>Aceitar todos</Button>
+                <Button onClick={rejectAll}>{t("consent.reject")}</Button>
+                <Button onClick={acceptAll}>{t("consent.acceptAll")}</Button>
               </div>
             </div>
           </div>
@@ -82,19 +83,22 @@ const CookieConsent = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-primary" />
-              Preferências de cookies
+              {t("consent.preferencesTitle")}
             </DialogTitle>
             <DialogDescription>
-              Escolha que categorias autoriza. Pode alterar a decisão a qualquer momento através
-              da ligação "Gerir cookies" no rodapé. Mais detalhes na{" "}
-              <Link
-                to="/privacidade#cookies"
-                onClick={closePreferences}
-                className="font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Política de Privacidade
-              </Link>
-              .
+              <Trans
+                t={t}
+                i18nKey="consent.preferencesText"
+                components={{
+                  link: (
+                    <Link
+                      to="/privacidade#cookies"
+                      onClick={closePreferences}
+                      className="font-medium text-primary underline-offset-4 hover:underline"
+                    />
+                  ),
+                }}
+              />
             </DialogDescription>
           </DialogHeader>
 
@@ -108,7 +112,7 @@ const CookieConsent = () => {
                       {cat.title}
                     </label>
                     {cat.required ? (
-                      <span className="text-xs font-medium text-muted-foreground">Sempre ativos</span>
+                      <span className="text-xs font-medium text-muted-foreground">{t("consent.alwaysOn")}</span>
                     ) : (
                       <Switch
                         id={id}
@@ -127,22 +131,18 @@ const CookieConsent = () => {
 
           {record && (
             <p className="text-xs text-muted-foreground">
-              Última decisão nesta sessão:{" "}
-              {new Date(record.decidedAt).toLocaleString("pt-PT", {
-                dateStyle: "short",
-                timeStyle: "short",
-              })}
+              {t("consent.lastDecision", { date: formatDateTime(record.decidedAt, { dateStyle: "short", timeStyle: "short" }) })}
             </p>
           )}
 
           <DialogFooter className="gap-2 sm:gap-2">
             <Button variant="outline" onClick={rejectAll}>
-              Rejeitar todos
+              {t("consent.rejectAll")}
             </Button>
             <Button variant="outline" onClick={() => save(draft)}>
-              Guardar escolhas
+              {t("consent.save")}
             </Button>
-            <Button onClick={acceptAll}>Aceitar todos</Button>
+            <Button onClick={acceptAll}>{t("consent.acceptAll")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

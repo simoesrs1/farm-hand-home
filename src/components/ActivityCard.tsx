@@ -12,6 +12,8 @@ import {
   nextLevel,
   suggestedActions,
 } from "@/lib/farmer-activity";
+import { useTranslation } from "react-i18next";
+import { formatDate } from "@/lib/format";
 
 interface ActivityRow {
   score: number;
@@ -23,15 +25,16 @@ interface ActivityRow {
   computed_at: string;
 }
 
-const COMPONENT_LABELS: { key: keyof ActivityComponents; label: string; weight: number }[] = [
-  { key: "catalog", label: "Catálogo e stock", weight: 40 },
-  { key: "orders", label: "Resposta a encomendas", weight: 40 },
-  { key: "chat", label: "Resposta no chat", weight: 20 },
+const COMPONENT_WEIGHTS: { key: "catalog" | "orders" | "chat"; weight: number }[] = [
+  { key: "catalog", weight: 40 },
+  { key: "orders", weight: 40 },
+  { key: "chat", weight: 20 },
 ];
 
 /** Pontuação de atividade do agricultor, com nível, sequência e próximas ações. */
 const ActivityCard = ({ userId }: { userId: string }) => {
   const [row, setRow] = useState<ActivityRow | null | undefined>(undefined);
+  const { t } = useTranslation("farmer");
   const [pausedUntil, setPausedUntil] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -71,9 +74,9 @@ const ActivityCard = ({ userId }: { userId: string }) => {
   if (row === null) {
     return (
       <section className="mb-6 rounded-2xl border border-border bg-card p-5">
-        <h2 className="font-display text-lg font-semibold text-foreground">A minha atividade</h2>
+        <h2 className="font-display text-lg font-semibold text-foreground">{t("activity.title")}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          A sua pontuação de atividade é calculada todas as manhãs. Volte amanhã para a ver.
+          {t("activity.notYet")}
         </p>
       </section>
     );
@@ -87,10 +90,9 @@ const ActivityCard = ({ userId }: { userId: string }) => {
     <section className="mb-6 rounded-2xl border border-border bg-card p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-display text-lg font-semibold text-foreground">A minha atividade</h2>
+          <h2 className="font-display text-lg font-semibold text-foreground">{t("activity.title")}</h2>
           <p className="text-xs text-muted-foreground">
-            Últimos 30 dias · atualizada a{" "}
-            {new Date(row.computed_at).toLocaleDateString("pt-PT", { day: "numeric", month: "long" })}
+            {t("activity.updated", { date: formatDate(row.computed_at, { day: "numeric", month: "long" }) })}
           </p>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
@@ -102,13 +104,12 @@ const ActivityCard = ({ userId }: { userId: string }) => {
       {paused && pausedUntil ? (
         <p className="mt-4 flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm text-foreground">
           <PauseCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-          Em pausa até {formatReturnDate(pausedUntil)} — a pontuação está congelada e não perde posição.
+          {t("activity.paused", { date: formatReturnDate(pausedUntil) })}
         </p>
       ) : row.exempt_reason === "off_season" ? (
         <p className="mt-4 flex items-start gap-2 rounded-lg bg-secondary p-3 text-sm text-foreground">
           <Snowflake className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          Nenhum produto seu está na época neste momento — a pontuação está congelada até voltar a
-          ter produtos disponíveis.
+          {t("activity.offSeason")}
         </p>
       ) : null}
 
@@ -118,23 +119,19 @@ const ActivityCard = ({ userId }: { userId: string }) => {
             {row.score}
             <span className="text-lg font-medium text-muted-foreground">/100</span>
           </p>
-          <Progress value={row.score} className="mt-3 h-2" aria-label="Pontuação de atividade" />
+          <Progress value={row.score} className="mt-3 h-2" aria-label={t("activity.scoreAria")} />
           <p className="mt-2 text-xs text-muted-foreground">
-            {next
-              ? `Faltam ${next.missing} pontos para ${next.label}.`
-              : "Está no nível máximo. Excelente trabalho!"}
+            {next ? t("activity.missing", { count: next.missing, level: next.label }) : t("activity.max")}
           </p>
           <div className="mt-4 space-y-2 text-sm">
             <p className="flex items-center gap-2 text-foreground">
               <Flame className="h-4 w-4 text-coral" />
-              {row.streak_weeks > 0
-                ? `${row.streak_weeks} ${row.streak_weeks === 1 ? "semana ativa" : "semanas ativas seguidas"}`
-                : "Ainda sem semanas ativas seguidas"}
+              {row.streak_weeks > 0 ? t("activity.streak", { count: row.streak_weeks }) : t("activity.noStreak")}
             </p>
             {row.featured_rank && (
               <p className="flex items-center gap-2 text-foreground">
                 <Star className="h-4 w-4 fill-highlight text-coral" />
-                Em destaque na página inicial
+                {t("activity.featured")}
               </p>
             )}
           </div>
@@ -142,16 +139,16 @@ const ActivityCard = ({ userId }: { userId: string }) => {
 
         <div className="space-y-4">
           <div className="space-y-2.5">
-            {COMPONENT_LABELS.map(({ key, label, weight }) => {
+            {COMPONENT_WEIGHTS.map(({ key, weight }) => {
               const value = row.components[key]?.score;
               return (
                 <div key={key}>
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-medium text-foreground">
-                      {label} <span className="font-normal text-muted-foreground">({weight}%)</span>
+                      {t(`activity.components.${key}`)} <span className="font-normal text-muted-foreground">({weight}%)</span>
                     </span>
                     <span className="text-muted-foreground">
-                      {value == null ? "Sem dados — não conta" : `${value}/100`}
+                      {value == null ? t("activity.noData") : `${value}/100`}
                     </span>
                   </div>
                   <Progress value={value ?? 0} className="mt-1 h-1.5" />
@@ -163,7 +160,7 @@ const ActivityCard = ({ userId }: { userId: string }) => {
           {actions.length > 0 && (
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Para subir no catálogo
+                {t("activity.toRise")}
               </p>
               <ul className="space-y-1.5">
                 {actions.map((a) => (
@@ -184,9 +181,9 @@ const ActivityCard = ({ userId }: { userId: string }) => {
       </div>
 
       <p className="mt-4 text-xs text-muted-foreground">
-        Os agricultores mais ativos aparecem primeiro no catálogo e em destaque na página inicial.{" "}
+        {t("activity.footer")}{" "}
         <Link to="/termos#ordenacao" className="text-primary underline-offset-4 hover:underline">
-          Como funciona
+          {t("activity.how")}
         </Link>
       </p>
     </section>

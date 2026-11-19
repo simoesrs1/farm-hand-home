@@ -13,6 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import { toUserMessage } from "@/lib/auth-errors";
 import FarmerOfferingsSection from "@/components/FarmerOfferingsSection";
 import PageHeader from "@/components/PageHeader";
+import { Trans, useTranslation } from "react-i18next";
+import { formatDate } from "@/lib/format";
+import { certificateLabel } from "@/lib/certificates";
 
 type FarmerDetails = {
   id: string;
@@ -37,35 +40,32 @@ type Certificate = {
   certificate_type: string;
 };
 
-type FieldDef = { key: keyof FarmerDetails; label: string; type?: string; full?: boolean };
+type FieldKey = "exploration_id" | "exploration_number" | "company_name" | "company_nif" | "cae_code" | "phone" | "address" | "website" | "pickup_address";
+// Nomes das secções e dos campos em farmer:info.sections.<id> e farmer:info.fields.<campo>.
+type FieldDef = { key: FieldKey; type?: string; full?: boolean };
 
-const SECTIONS: { title: string; icon: typeof MapPin; fields: FieldDef[] }[] = [
+const SECTIONS: { id: "identification" | "company" | "pickup"; icon: typeof MapPin; fields: FieldDef[] }[] = [
   {
-    title: "Identificação da Exploração",
+    id: "identification",
     icon: MapPin,
-    fields: [
-      { key: "exploration_id", label: "Identificação da exploração" },
-      { key: "exploration_number", label: "Nº de exploração" },
-    ],
+    fields: [{ key: "exploration_id" }, { key: "exploration_number" }],
   },
   {
-    title: "Dados da Empresa",
+    id: "company",
     icon: Building2,
     fields: [
-      { key: "company_name", label: "Nome da empresa" },
-      { key: "company_nif", label: "NIF da empresa" },
-      { key: "cae_code", label: "CAE da empresa" },
-      { key: "phone", label: "Telefone", type: "tel" },
-      { key: "address", label: "Morada", full: true },
-      { key: "website", label: "Website", type: "url", full: true },
+      { key: "company_name" },
+      { key: "company_nif" },
+      { key: "cae_code" },
+      { key: "phone", type: "tel" },
+      { key: "address", full: true },
+      { key: "website", type: "url", full: true },
     ],
   },
   {
-    title: "Local de Levantamento da Encomenda",
+    id: "pickup",
     icon: MapPin,
-    fields: [
-      { key: "pickup_address", label: "Morada de levantamento", full: true },
-    ],
+    fields: [{ key: "pickup_address", full: true }],
   },
 ];
 
@@ -75,6 +75,7 @@ const FarmerInfo = () => {
   const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation(["farmer", "common", "account", "cart"]);
 
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<FarmerDetails | null>(null);
@@ -136,11 +137,11 @@ const FarmerInfo = () => {
     e.preventDefault();
     if (!user || !details) return;
     if (!justification.trim() || justification.trim().length < 20) {
-      toast({ title: "Justificação insuficiente", description: "Descreva o motivo das alterações (mínimo 20 caracteres).", variant: "destructive" });
+      toast({ title: t("info.errJustification"), description: t("info.errJustificationText"), variant: "destructive" });
       return;
     }
     if (files.length === 0) {
-      toast({ title: "Documentação obrigatória", description: "Anexe pelo menos um documento comprovativo.", variant: "destructive" });
+      toast({ title: t("info.errDocs"), description: t("info.errDocsText"), variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -158,7 +159,7 @@ const FarmerInfo = () => {
         changes.description = { from: details.description, to: description };
       }
       if (Object.keys(changes).length === 0) {
-        toast({ title: "Sem alterações", description: "Não detetámos alterações face aos dados atuais.", variant: "destructive" });
+        toast({ title: t("info.noChanges"), description: t("info.noChangesText"), variant: "destructive" });
         setSubmitting(false);
         return;
       }
@@ -182,8 +183,8 @@ const FarmerInfo = () => {
       if (error) throw error;
 
       toast({
-        title: "Pedido submetido",
-        description: "A equipa ValorRural tem até 7 dias para validar. O perfil ficará bloqueado até decisão.",
+        title: t("info.submitted"),
+        description: t("info.submittedText"),
       });
       setEditing(false);
       setAcknowledged(false);
@@ -206,7 +207,7 @@ const FarmerInfo = () => {
         .maybeSingle();
       setPending(req);
     } catch (err) {
-      toast({ title: "Erro", description: toUserMessage(err), variant: "destructive" });
+      toast({ title: t("account:auth.error"), description: toUserMessage(err), variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -223,7 +224,7 @@ const FarmerInfo = () => {
   if (!details) {
     return (
       <main className="container max-w-2xl py-10">
-        <p className="text-muted-foreground">Sem dados de agricultor.</p>
+        <p className="text-muted-foreground">{t("info.noData")}</p>
       </main>
     );
   }
@@ -232,23 +233,21 @@ const FarmerInfo = () => {
     <main className="container max-w-3xl py-10">
       <PageHeader
         className="mb-6"
-        eyebrow="Área do agricultor"
-        title="Informações da exploração"
-        description="Dados submetidos no registo inicial."
+        eyebrow={t("area")}
+        title={t("common:menu.account.farmInfo")}
+        description={t("info.description")}
       />
 
       {/* Status banner */}
       {isLocked ? (
         <Alert variant="destructive" className="mb-6">
           <Lock className="h-4 w-4" />
-          <AlertTitle>Perfil bloqueado — em verificação</AlertTitle>
+          <AlertTitle>{t("info.locked")}</AlertTitle>
           <AlertDescription>
-            Existe um pedido de alteração pendente. Enquanto a equipa ValorRural não validar a informação,
-            o perfil e os produtos <strong>não aparecem publicamente</strong> e <strong>não pode realizar vendas</strong>.
-            A nossa equipa tem até <strong>7 dias</strong> para concluir a análise.
+            <Trans t={t} i18nKey="info.lockedText" components={{ b: <strong /> }} />
             {pending?.review_deadline && (
               <span className="mt-1 block text-xs">
-                Prazo máximo: {new Date(pending.review_deadline).toLocaleDateString("pt-PT")}
+                {t("info.deadline", { date: formatDate(pending.review_deadline) })}
               </span>
             )}
           </AlertDescription>
@@ -256,9 +255,9 @@ const FarmerInfo = () => {
       ) : (
         <Alert className="mb-6 border-primary/30 bg-primary/5">
           <ShieldCheck className="h-4 w-4 text-primary" />
-          <AlertTitle>Perfil verificado</AlertTitle>
+          <AlertTitle>{t("info.verified")}</AlertTitle>
           <AlertDescription>
-            O seu perfil está ativo. Qualquer alteração de dados terá de ser revista pela equipa ValorRural.
+            {t("info.verifiedText")}
           </AlertDescription>
         </Alert>
       )}
@@ -271,27 +270,27 @@ const FarmerInfo = () => {
           {SECTIONS.map((section) => {
             const Icon = section.icon;
             return (
-              <section key={section.title} className="rounded-2xl border border-border bg-card p-6">
+              <section key={section.id} className="rounded-2xl border border-border bg-card p-6">
                 <div className="mb-4 flex items-center gap-2 text-foreground">
                   <Icon className="h-5 w-5 text-primary" />
-                  <h2 className="font-display text-base font-semibold">{section.title}</h2>
+                  <h2 className="font-display text-base font-semibold">{t(`info.sections.${section.id}`)}</h2>
                 </div>
                 <dl className="grid gap-3 sm:grid-cols-2">
                   {section.fields.map((f) => (
                     <div key={f.key as string} className={f.full ? "sm:col-span-2" : ""}>
-                      <dt className="text-xs font-medium text-muted-foreground">{f.label}</dt>
+                      <dt className="text-xs font-medium text-muted-foreground">{t(`info.fields.${f.key}`)}</dt>
                       <dd className="text-sm text-foreground break-words">{(details as any)[f.key] || "—"}</dd>
                     </div>
                   ))}
-                  {section.title === "Dados da Empresa" && (
+                  {section.id === "company" && (
                     <div className="sm:col-span-2">
-                      <dt className="text-xs font-medium text-muted-foreground">Descrição da exploração</dt>
+                      <dt className="text-xs font-medium text-muted-foreground">{t("info.farmDescription")}</dt>
                       <dd className="whitespace-pre-wrap text-sm text-foreground">{details.description || "—"}</dd>
                     </div>
                   )}
-                  {section.title === "Local de Levantamento da Encomenda" && (
+                  {section.id === "pickup" && (
                     <div className="sm:col-span-2">
-                      <dt className="text-xs font-medium text-muted-foreground">Coordenadas no mapa</dt>
+                      <dt className="text-xs font-medium text-muted-foreground">{t("info.coordinates")}</dt>
                       <dd className="text-sm text-foreground">
                         {details.pickup_lat != null && details.pickup_lng != null
                           ? `${details.pickup_lat.toFixed(5)}, ${details.pickup_lng.toFixed(5)}`
@@ -308,16 +307,16 @@ const FarmerInfo = () => {
           <section className="rounded-2xl border border-border bg-card p-6">
             <div className="mb-4 flex items-center gap-2 text-foreground">
               <Award className="h-5 w-5 text-primary" />
-              <h2 className="font-display text-base font-semibold">Certificados</h2>
+              <h2 className="font-display text-base font-semibold">{t("info.certificates")}</h2>
             </div>
             {certificates.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum certificado submetido.</p>
+              <p className="text-sm text-muted-foreground">{t("info.noCertificates")}</p>
             ) : (
               <ul className="space-y-2">
                 {certificates.map((c) => (
                   <li key={c.id} className="flex items-start justify-between gap-3 rounded-lg border border-border bg-background/50 p-3">
                     <div>
-                      <p className="text-sm font-medium text-foreground">{c.certificate_type}</p>
+                      <p className="text-sm font-medium text-foreground">{certificateLabel(c.certificate_type)}</p>
                       <p className="text-xs text-muted-foreground">{c.file_name}</p>
                     </div>
                   </li>
@@ -329,11 +328,11 @@ const FarmerInfo = () => {
           <div className="pt-1">
             <Button onClick={() => setEditing(true)} disabled={isLocked} className="gap-2">
               <FileUp className="h-4 w-4" />
-              Pedir alteração de dados
+              {t("info.requestChange")}
             </Button>
             {isLocked && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Já existe um pedido em análise. Aguarde a decisão da equipa para submeter novo pedido.
+                {t("info.pendingRequest")}
               </p>
             )}
           </div>
@@ -347,36 +346,36 @@ const FarmerInfo = () => {
           {!acknowledged ? (
             <Alert className="border-warning/40 bg-warning/10 [&>svg]:text-warning">
               <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Antes de continuar</AlertTitle>
+              <AlertTitle>{t("info.beforeContinue")}</AlertTitle>
               <AlertDescription className="space-y-2">
                 <p>
-                  Ao submeter um pedido de alteração, o seu perfil será <strong>imediatamente bloqueado</strong> até a
-                  equipa ValorRural validar a nova informação.
+                  <Trans t={t} i18nKey="info.warnIntro" components={{ b: <strong /> }} />
                 </p>
                 <ul className="list-disc pl-5 text-sm">
-                  <li>Enquanto não for validado, o perfil e os produtos <strong>não aparecem</strong> na plataforma.</li>
-                  <li>Durante esse período <strong>não poderá realizar vendas</strong>.</li>
-                  <li>A equipa tem um prazo máximo de <strong>7 dias</strong> para analisar o pedido.</li>
-                  <li>É obrigatório anexar <strong>documentação comprovativa</strong> e uma justificação clara.</li>
+                  {(["warn1", "warn2", "warn3", "warn4"] as const).map((k) => (
+                    <li key={k}>
+                      <Trans t={t} i18nKey={`info.${k}`} components={{ b: <strong /> }} />
+                    </li>
+                  ))}
                 </ul>
                 <div className="flex gap-2 pt-2">
                   <Button size="sm" onClick={() => setAcknowledged(true)} className="gap-2">
-                    <ShieldAlert className="h-4 w-4" /> Compreendo e quero continuar
+                    <ShieldAlert className="h-4 w-4" /> {t("cart:safety.confirm")}
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
-                    Cancelar
+                    {t("common:actions.cancel")}
                   </Button>
                 </div>
               </AlertDescription>
             </Alert>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-border bg-card p-6">
-              <h2 className="font-display text-lg font-semibold text-foreground">Pedido de alteração</h2>
+              <h2 className="font-display text-lg font-semibold text-foreground">{t("info.changeRequest")}</h2>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 {EDITABLE_FIELDS.map((f) => (
                   <div key={f.key as string}>
-                    <Label className="text-xs">{f.label}</Label>
+                    <Label className="text-xs">{t(`info.fields.${f.key}`)}</Label>
                     <Input
                       type={f.type ?? "text"}
                       value={(draft as any)[f.key] ?? ""}
@@ -387,7 +386,7 @@ const FarmerInfo = () => {
               </div>
 
               <div>
-                <Label className="text-xs">Descrição</Label>
+                <Label className="text-xs">{t("productForm.description")}</Label>
                 <Textarea
                   rows={4}
                   value={description}
@@ -396,19 +395,19 @@ const FarmerInfo = () => {
               </div>
 
               <div>
-                <Label className="text-xs">Justificação das alterações *</Label>
+                <Label className="text-xs">{t("info.justification")}</Label>
                 <Textarea
                   rows={4}
                   required
                   minLength={20}
-                  placeholder="Explique o motivo das alterações (mínimo 20 caracteres)…"
+                  placeholder={t("info.justificationPlaceholder")}
                   value={justification}
                   onChange={(e) => setJustification(e.target.value)}
                 />
               </div>
 
               <div>
-                <Label className="text-xs">Documentação comprovativa *</Label>
+                <Label className="text-xs">{t("info.documents")}</Label>
                 <Input
                   type="file"
                   multiple
@@ -416,7 +415,7 @@ const FarmerInfo = () => {
                   onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Anexe certidões, comprovativos ou outros documentos que sustentem o pedido.
+                  {t("info.documentsHint")}
                 </p>
                 {files.length > 0 && (
                   <ul className="mt-2 list-disc pl-5 text-xs text-muted-foreground">
@@ -428,10 +427,10 @@ const FarmerInfo = () => {
               <div className="flex gap-2">
                 <Button type="submit" disabled={submitting} className="gap-2">
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  Submeter pedido
+                  {t("info.submit")}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => { setEditing(false); setAcknowledged(false); }}>
-                  Cancelar
+                  {t("common:actions.cancel")}
                 </Button>
               </div>
             </form>

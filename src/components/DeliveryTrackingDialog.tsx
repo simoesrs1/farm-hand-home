@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
+import { formatDateTime } from "@/lib/format";
 
 type TrackingRow = {
   status: string;
@@ -21,16 +23,16 @@ type TrackingRow = {
 
 type StepKey = "accepted_at" | "packed_at" | "in_transit_at" | "out_for_delivery_at" | "delivered_at";
 
-const STEPS: { key: StepKey; label: string; Icon: typeof Package }[] = [
-  { key: "accepted_at", label: "Aceite", Icon: CheckCircle2 },
-  { key: "packed_at", label: "Embalado", Icon: Package },
-  { key: "in_transit_at", label: "Expedido da quinta", Icon: Truck },
-  { key: "out_for_delivery_at", label: "Em trânsito", Icon: MapPin },
-  { key: "delivered_at", label: "Entregue", Icon: PackageCheck },
+const STEPS: { key: StepKey; Icon: typeof Package }[] = [
+  { key: "accepted_at", Icon: CheckCircle2 },
+  { key: "packed_at", Icon: Package },
+  { key: "in_transit_at", Icon: Truck },
+  { key: "out_for_delivery_at", Icon: MapPin },
+  { key: "delivered_at", Icon: PackageCheck },
 ];
 
 const formatStamp = (iso: string) =>
-  new Date(iso).toLocaleString("pt-PT", {
+  formatDateTime(iso, {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
@@ -46,6 +48,7 @@ interface DeliveryTrackingDialogProps {
 
 const DeliveryTrackingDialog = ({ orderId, farmName, open, onOpenChange }: DeliveryTrackingDialogProps) => {
   const [row, setRow] = useState<TrackingRow | null>(null);
+  const { t } = useTranslation(["orders", "common"]);
   const [loading, setLoading] = useState(false);
 
   // Lê sempre o estado mais recente ao abrir: o agricultor pode ter avançado
@@ -76,10 +79,10 @@ const DeliveryTrackingDialog = ({ orderId, farmName, open, onOpenChange }: Deliv
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Acompanha a tua entrega</DialogTitle>
+          <DialogTitle>{t("trackingDialog.title")}</DialogTitle>
           <DialogDescription>
-            {farmName ? `Encomenda de ${farmName}. ` : ""}A entrega fica concluída quando o agricultor
-            lê o teu QR code.
+            {farmName ? `${t("trackingDialog.orderFrom", { farm: farmName })} ` : ""}
+            {t("trackingDialog.text")}
           </DialogDescription>
         </DialogHeader>
 
@@ -89,7 +92,7 @@ const DeliveryTrackingDialog = ({ orderId, farmName, open, onOpenChange }: Deliv
           </div>
         ) : !row ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Não foi possível carregar o estado da entrega.
+            {t("trackingDialog.loadFailed")}
           </p>
         ) : (
           <ol className="py-2">
@@ -119,14 +122,14 @@ const DeliveryTrackingDialog = ({ orderId, farmName, open, onOpenChange }: Deliv
                   </span>
                   <div className="min-w-0 pt-1">
                     <p className={`text-sm font-medium ${done ? "text-foreground" : "text-muted-foreground"}`}>
-                      {s.label}
+                      {t(`trackingDialog.steps.${s.key}`)}
                       {current && !delivered && (
-                        <span className="ml-2 text-xs font-normal text-success">Estado atual</span>
+                        <span className="ml-2 text-xs font-normal text-success">{t("trackingDialog.current")}</span>
                       )}
                     </p>
                     {stamp && <p className="mt-0.5 text-xs text-muted-foreground">{formatStamp(stamp)}</p>}
                     {!done && s.key === "accepted_at" && (
-                      <p className="mt-0.5 text-xs text-muted-foreground">A aguardar aceitação do agricultor</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{t("my.awaitingAcceptance")}</p>
                     )}
                   </div>
                 </li>
@@ -136,7 +139,7 @@ const DeliveryTrackingDialog = ({ orderId, farmName, open, onOpenChange }: Deliv
         )}
 
         <Button variant="outline" size="sm" className="gap-1.5" onClick={load} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Atualizar
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> {t("statusPage.refresh")}
         </Button>
       </DialogContent>
     </Dialog>

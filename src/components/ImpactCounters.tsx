@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { gsap, useGSAP } from "@/lib/animation";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useHomeProducts } from "@/hooks/useHomeProducts";
+import { useTranslation } from "react-i18next";
+import { formatNumber } from "@/lib/format";
 
 /**
  * Contadores reais. Cada um só aparece acima de um mínimo (não mostrar "1 agricultor"),
@@ -19,22 +21,21 @@ const fetchReviewCount = async () => {
   return count ?? 0;
 };
 
-const numberFormat = new Intl.NumberFormat("pt-PT");
-
 const ImpactCounters = () => {
   const { data: products = [] } = useHomeProducts();
   const { data: reviews = 0 } = useQuery({ queryKey: ["home-review-count"], queryFn: fetchReviewCount, staleTime: 5 * 60 * 1000 });
   const reducedMotion = useReducedMotion();
   const scopeRef = useRef<HTMLElement>(null);
+  const { t } = useTranslation("home");
 
   const counters = useMemo(() => {
     const farmers = new Set(products.map((p) => p.farmerId)).size;
     return [
-      { key: "farmers", value: farmers, label: "agricultores com produtos à venda", min: MINIMUMS.farmers },
-      { key: "products", value: products.length, label: "produtos disponíveis agora", min: MINIMUMS.products },
-      { key: "reviews", value: reviews, label: "avaliações de quem já comprou", min: MINIMUMS.reviews },
+      { key: "farmers", value: farmers, label: t("impact.farmers"), min: MINIMUMS.farmers },
+      { key: "products", value: products.length, label: t("impact.products"), min: MINIMUMS.products },
+      { key: "reviews", value: reviews, label: t("impact.reviews"), min: MINIMUMS.reviews },
     ].filter((c) => c.value >= c.min);
-  }, [products, reviews]);
+  }, [products, reviews, t]);
   const countersKey = counters.map((c) => `${c.key}:${c.value}`).join(",");
 
   // Conta de 0 até ao valor quando a secção entra no ecrã (uma vez).
@@ -51,7 +52,7 @@ const ImpactCounters = () => {
           snap: { val: 1 },
           scrollTrigger: { trigger: el, start: "top 90%", once: true },
           onUpdate: () => {
-            el.textContent = numberFormat.format(state.val);
+            el.textContent = formatNumber(state.val);
           },
         });
       });
@@ -62,7 +63,7 @@ const ImpactCounters = () => {
   if (counters.length < 2) return null;
 
   return (
-    <section ref={scopeRef} aria-label="A ValorRural em números" className="py-14">
+    <section ref={scopeRef} aria-label={t("impact.aria")} className="py-14">
       <dl className="container grid gap-8 sm:grid-cols-3">
         {counters.map((c) => (
           <div key={c.key} className="flex flex-col-reverse border-t-2 border-primary pt-4">
@@ -71,7 +72,7 @@ const ImpactCounters = () => {
               className="counter-value font-mono text-5xl font-bold tabular-nums text-foreground"
               data-value={c.value}
             >
-              {numberFormat.format(c.value)}
+              {formatNumber(c.value)}
             </dd>
           </div>
         ))}

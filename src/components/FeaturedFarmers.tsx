@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { getCategoryByName } from "@/data/categories";
 import { isPaused } from "@/lib/farmer-activity";
+import { useTranslation } from "react-i18next";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&h=400&fit=crop";
@@ -14,7 +15,8 @@ const FALLBACK_IMAGE =
 interface FeaturedFarmer {
   id: string;
   farm: string;
-  name: string;
+  /** Produtos disponíveis (o texto é montado no idioma atual). */
+  count: number;
   image: string;
   location: string;
   products: string[];
@@ -27,6 +29,7 @@ interface FeaturedFarmer {
 const FeaturedFarmers = () => {
   const [farmers, setFarmers] = useState<FeaturedFarmer[] | null>(null);
   const scopeRef = useRef<HTMLElement>(null);
+  const { t } = useTranslation("home");
   useReveal(scopeRef, ".farmer-card", [farmers?.length ?? -1]);
 
   useEffect(() => {
@@ -73,8 +76,8 @@ const FeaturedFarmers = () => {
           FALLBACK_IMAGE;
         return {
           id: f.id as string,
-          farm: f.company_name ?? "Agricultor",
-          name: `${own.length} ${own.length === 1 ? "produto disponível" : "produtos disponíveis"}`,
+          farm: f.company_name ?? "",
+          count: own.length,
           image,
           location: f.address ?? "",
           products: categories,
@@ -92,14 +95,13 @@ const FeaturedFarmers = () => {
       <div className="container">
         <SectionHeading
           className="mb-10"
-          eyebrow="Quem cultiva"
-          title="Agricultores em destaque"
+          eyebrow={t("featured.eyebrow")}
+          title={t("featured.title")}
           description={
             <>
-              Os produtores mais ativos desta semana: stock em dia, respostas rápidas e produtos
-              prontos a encomendar.{" "}
+              {t("featured.description")}{" "}
               <Link to="/termos#ordenacao" className="underline-offset-4 hover:text-primary hover:underline">
-                Como escolhemos?
+                {t("featured.how")}
               </Link>
             </>
           }
@@ -107,10 +109,10 @@ const FeaturedFarmers = () => {
         {farmers !== null && farmers.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border p-10 text-center">
             <p className="text-muted-foreground">
-              Ainda não há agricultores em destaque esta semana. Os destaques são atualizados todos os dias.
+              {t("featured.empty")}
             </p>
             <Link to="/catalogo" className="mt-3 inline-block text-sm font-medium text-primary underline-offset-4 hover:underline">
-              Ver o catálogo
+              {t("featured.seeCatalog")}
             </Link>
           </div>
         ) : (
@@ -119,7 +121,11 @@ const FeaturedFarmers = () => {
               ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-80 rounded-xl" />)
               : farmers.map((farmer) => (
                   <div key={farmer.id} className="farmer-card">
-                    <FarmerCard {...farmer} />
+                    <FarmerCard
+                      {...farmer}
+                      farm={farmer.farm || t("featured.farmerFallback")}
+                      name={t("featured.available", { count: farmer.count })}
+                    />
                   </div>
                 ))}
           </div>

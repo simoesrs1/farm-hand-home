@@ -5,13 +5,14 @@ import { downloadPickupIcs } from "@/lib/pickup-ical";
 
 import { Button } from "@/components/ui/button";
 import { farmers } from "@/data/farmers";
-import { getCategoryByName } from "@/data/categories";
+import { categoryLabel, getCategoryByName } from "@/data/categories";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStock } from "@/contexts/StockContext";
 import { supabase } from "@/integrations/supabase/client";
 import PickupAvailabilityBadge from "@/components/PickupAvailabilityBadge";
 import ProductCard, { type ProductCardProduct } from "@/components/ProductCard";
 import SectionHeading from "@/components/SectionHeading";
+import TranslatedText from "@/components/TranslatedText";
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import FarmerReviewsBar from "@/components/FarmerReviewsBar";
 import FarmerExperiences from "@/components/FarmerExperiences";
@@ -19,6 +20,7 @@ import FarmerStays from "@/components/FarmerStays";
 import { formatPickupHours, parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
 import { formatReturnDate, isPaused } from "@/lib/farmer-activity";
 import { farmerDeliversFromProfile } from "@/lib/fulfillment";
+import { useTranslation } from "react-i18next";
 
 const FALLBACK_FARM_IMAGE =
   "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1200&h=500&fit=crop";
@@ -43,6 +45,7 @@ const FarmerProfile = () => {
   const [pause, setPause] = useState<{ until: string; note: string } | null>(null);
   const mockFarmer = farmers.find((f) => f.id === id);
   const { registerStock } = useStock();
+  const { t } = useTranslation(["catalog", "common"]);
 
   const [dbFarmer, setDbFarmer] = useState<FarmerDisplay | null>(null);
   const [dbProducts, setDbProducts] = useState<ProductCardProduct[]>([]);
@@ -155,7 +158,7 @@ const FarmerProfile = () => {
           region: "",
           rating: 0,
           reviews: 0,
-          description: farmer.description ?? "Sem descrição disponível.",
+          description: farmer.description ?? "",
           tags: [...new Set(mapped.map((p) => p.category).filter(Boolean))],
           showRating: false,
         });
@@ -195,8 +198,8 @@ const FarmerProfile = () => {
   if (!display) {
     return (
       <main className="py-16 text-center">
-        <p className="text-muted-foreground">Agricultor não encontrado.</p>
-        <Link to="/" className="mt-4 inline-block text-primary underline">Voltar ao início</Link>
+        <p className="text-muted-foreground">{t("farmerPage.notFound")}</p>
+        <Link to="/" className="mt-4 inline-block text-primary underline">{t("search.backHome")}</Link>
       </main>
     );
   }
@@ -206,7 +209,7 @@ const FarmerProfile = () => {
       <div className="container">
         <Link to="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
-          Voltar
+          {t("common:actions.back")}
         </Link>
 
         {isOwner && (
@@ -214,16 +217,16 @@ const FarmerProfile = () => {
             <div className="flex items-start gap-3">
               <Eye className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
               <div className="text-sm">
-                <p className="font-medium text-foreground">Pré-visualização: é assim que os clientes veem a sua página.</p>
+                <p className="font-medium text-foreground">{t("farmerPage.preview")}</p>
                 {pause && (
                   <p className="mt-0.5 text-muted-foreground">
-                    A sua quinta está em pausa: os clientes não veem os produtos.
+                    {t("farmerPage.previewPaused")}
                   </p>
                 )}
               </div>
             </div>
             <Button asChild size="sm" variant="outline">
-              <Link to="/agricultor/informacoes">Editar informações da exploração</Link>
+              <Link to="/agricultor/informacoes">{t("farmerPage.editInfo")}</Link>
             </Button>
           </div>
         )}
@@ -260,7 +263,7 @@ const FarmerProfile = () => {
                     ))}
                   </div>
                   <span className="text-sm font-semibold text-foreground">{display.rating.toFixed(1)}</span>
-                  <span className="text-sm text-muted-foreground">({display.reviews} avaliações)</span>
+                  <span className="text-sm text-muted-foreground">({t("product.reviews", { count: display.reviews })})</span>
                 </div>
               )}
             </div>
@@ -270,21 +273,40 @@ const FarmerProfile = () => {
                 <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
                 <div className="text-sm">
                   <p className="font-medium text-foreground">
-                    Em pausa até {formatReturnDate(pause.until)}
+                    {t("farmerPage.pausedUntil", { date: formatReturnDate(pause.until) })}
                   </p>
-                  <p className="mt-0.5 text-muted-foreground">
-                    {pause.note || "Este agricultor não está a aceitar encomendas de momento."}
-                  </p>
+                  {pause.note ? (
+                    <TranslatedText
+                      type="farm"
+                      id={mockFarmer ? null : id}
+                      field="pause_note"
+                      text={pause.note}
+                      as="p"
+                      className="mt-0.5 text-muted-foreground"
+                    />
+                  ) : (
+                    <p className="mt-0.5 text-muted-foreground">{t("farmerPage.pausedText")}</p>
+                  )}
                 </div>
               </div>
             )}
 
-            <p className="mt-4 text-muted-foreground leading-relaxed">{display.description}</p>
+            <div className="mt-4">
+              <TranslatedText
+                type="farm"
+                id={mockFarmer ? null : id}
+                field="description"
+                text={display.description || t("farmerPage.noDescription")}
+                as="p"
+                className="text-muted-foreground leading-relaxed"
+                toggle
+              />
+            </div>
 
             {pickupWindows.length > 0 && (
               <div className="mt-4 rounded-lg border border-border bg-secondary/40 p-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium text-foreground">Porta aberta para levantamentos</span>
+                  <span className="text-sm font-medium text-foreground">{t("farmerPage.openDoor")}</span>
                   <PickupAvailabilityBadge windows={pickupWindows} className="mt-0" />
                 </div>
                 <ul className="mt-2 space-y-0.5 text-sm text-muted-foreground">
@@ -292,7 +314,16 @@ const FarmerProfile = () => {
                     <li key={line}>{line}</li>
                   ))}
                 </ul>
-                {pickupNote && <p className="mt-2 text-xs text-muted-foreground">{pickupNote}</p>}
+                {pickupNote && (
+                  <TranslatedText
+                    type="farm"
+                    id={mockFarmer ? null : id}
+                    field="pickup_hours_note"
+                    text={pickupNote}
+                    as="p"
+                    className="mt-2 text-xs text-muted-foreground"
+                  />
+                )}
                 <Button
                   type="button"
                   variant="outline"
@@ -301,7 +332,7 @@ const FarmerProfile = () => {
                   onClick={() => downloadPickupIcs(pickupWindows, display.farm, pickupNote)}
                 >
                   <CalendarArrowDown className="h-4 w-4" />
-                  Adicionar ao meu calendário (iCal)
+                  {t("farmerPage.addCalendar")}
                 </Button>
               </div>
 
@@ -311,7 +342,7 @@ const FarmerProfile = () => {
               <div className="mt-4 flex flex-wrap gap-2">
                 {display.tags.map((p) => (
                   <span key={p} className="rounded-full bg-leaf-light px-3 py-1 text-xs font-medium text-kale">
-                    {p}
+                    {categoryLabel(p)}
                   </span>
                 ))}
               </div>
@@ -324,10 +355,10 @@ const FarmerProfile = () => {
 
         {/* Products */}
         <section className="mt-10">
-          <SectionHeading title="Produtos disponíveis" description="Produtos frescos diretamente desta exploração." />
+          <SectionHeading title={t("farmerPage.products")} description={t("farmerPage.productsText")} />
 
           {farmerProducts.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">Nenhum produto disponível de momento.</p>
+            <p className="mt-8 text-center text-muted-foreground">{t("farmerPage.noProducts")}</p>
           ) : (
             <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
               {farmerProducts.map((p) => (

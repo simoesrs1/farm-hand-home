@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { toUserMessage } from "@/lib/auth-errors";
+import { useTranslation } from "react-i18next";
 
 /**
  * Regras do perfil de cliente: o email tem de estar verificado através de um
@@ -14,6 +15,7 @@ import { toUserMessage } from "@/lib/auth-errors";
 const ClientEmailVerificationGate = () => {
   const { user, activeMode, canSwitchProfile, switchMode, loading } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation(["account", "common"]);
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [sent, setSent] = useState(false);
@@ -29,9 +31,9 @@ const ClientEmailVerificationGate = () => {
       const { error } = await supabase.auth.resend({ type: "signup", email: user.email });
       if (error) throw error;
       setSent(true);
-      toast({ title: "Código enviado", description: "Verifique o seu email." });
+      toast({ title: t("verify.sent"), description: t("verify.sentText") });
     } catch (err) {
-      toast({ title: "Erro", description: toUserMessage(err), variant: "destructive" });
+      toast({ title: t("auth.error"), description: toUserMessage(err), variant: "destructive" });
     } finally {
       setSending(false);
     }
@@ -48,9 +50,9 @@ const ClientEmailVerificationGate = () => {
         type: "email",
       });
       if (error) throw error;
-      toast({ title: "Email verificado", description: "Já pode comprar como cliente." });
+      toast({ title: t("verify.verified"), description: t("verify.verifiedText") });
     } catch (err) {
-      toast({ title: "Código inválido", description: toUserMessage(err), variant: "destructive" });
+      toast({ title: t("verify.invalid"), description: toUserMessage(err), variant: "destructive" });
     } finally {
       setVerifying(false);
     }
@@ -60,12 +62,12 @@ const ClientEmailVerificationGate = () => {
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
         <div className="mb-4">
-          <h2 className="font-display text-xl text-foreground">Verifique o seu perfil de cliente</h2>
+          <h2 className="font-display text-xl text-foreground">{t("verify.title")}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">{user.email}</p>
         </div>
 
         <p className="mb-4 text-sm text-muted-foreground">
-          Para comprar como cliente precisa de confirmar o seu email com o código de 6 dígitos que lhe enviamos.
+          {t("verify.text")}
         </p>
 
         <form onSubmit={verifyCode} className="space-y-3">
@@ -79,13 +81,13 @@ const ClientEmailVerificationGate = () => {
           />
           <Button type="submit" className="w-full" disabled={verifying || code.trim().length < 6}>
             {verifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Confirmar código
+            {t("verify.confirm")}
           </Button>
         </form>
 
         <Button variant="outline" className="mt-3 w-full" onClick={sendCode} disabled={sending}>
           {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {sent ? "Reenviar código" : "Enviar código por email"}
+          {sent ? t("verify.resend") : t("verify.send")}
         </Button>
 
         {canSwitchProfile && (
@@ -94,7 +96,7 @@ const ClientEmailVerificationGate = () => {
             onClick={() => switchMode("vendedor")}
             className="mt-4 w-full text-center text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
-            Voltar ao perfil de agricultor
+            {t("verify.backToFarmer")}
           </button>
         )}
       </div>

@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { distanceKm, formatKm, type LatLng } from "@/lib/geo";
 import { isVideoPath, signMedia } from "@/lib/media-upload";
+import { useTranslation } from "react-i18next";
 
 /** Campos comuns a experiências e alojamento. */
 export interface FarmListing {
@@ -22,19 +23,14 @@ export type Farm = { id: string; name: string; position: LatLng | null };
 
 type SortOption = "recentes" | "preco_asc" | "preco_desc" | "perto";
 
-const sortLabels: Record<SortOption, string> = {
-  recentes: "Mais recentes",
-  preco_asc: "Preço mais baixo",
-  preco_desc: "Preço mais alto",
-  perto: "Mais perto de mim",
-};
+const SORT_OPTIONS: SortOption[] = ["recentes", "preco_asc", "preco_desc", "perto"];
 
 interface FarmListingsProps<T extends FarmListing> {
   table: "farm_experiences" | "farm_stays";
   title: string;
   description: string;
-  /** "experiência(s)" ou "alojamento(s)", para o contador. */
-  noun: [string, string];
+  /** Texto do contador ("3 experiências"), no idioma atual. */
+  countLabel: (count: number) => string;
   emptyText: string;
   renderCard: (item: T, extra: { thumb?: string; farmName: string; distance?: string; onClick: () => void }) => ReactNode;
   renderDialog: (selected: T | null, farm: Farm | null, isOwner: boolean, close: () => void) => ReactNode;
@@ -45,8 +41,9 @@ interface FarmListingsProps<T extends FarmListing> {
  * quintas (só os ativos de quintas publicadas, pela RLS): pesquisa, ordenação e
  * o balão de detalhes e reserva do perfil da quinta.
  */
-function FarmListings<T extends FarmListing>({ table, title, description, noun, emptyText, renderCard, renderDialog }: FarmListingsProps<T>) {
+function FarmListings<T extends FarmListing>({ table, title, description, countLabel, emptyText, renderCard, renderDialog }: FarmListingsProps<T>) {
   const { user } = useAuth();
+  const { t } = useTranslation("offerings");
   const [items, setItems] = useState<T[]>([]);
   const [farms, setFarms] = useState<Record<string, Farm>>({});
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
@@ -74,7 +71,7 @@ function FarmListings<T extends FarmListing>({ table, title, description, noun, 
       for (const f of farmRows ?? []) {
         farmMap[f.id as string] = {
           id: f.id as string,
-          name: f.company_name ?? "Quinta",
+          name: f.company_name ?? "",
           position: f.pickup_lat != null && f.pickup_lng != null ? { lat: Number(f.pickup_lat), lng: Number(f.pickup_lng) } : null,
         };
       }
@@ -133,7 +130,7 @@ function FarmListings<T extends FarmListing>({ table, title, description, noun, 
       return;
     }
     if (!("geolocation" in navigator)) {
-      toast({ title: "Localização indisponível", description: "Este navegador não permite obter a localização.", variant: "destructive" });
+      toast({ title: t("listings.locationUnavailable"), description: t("listings.locationUnavailableText"), variant: "destructive" });
       return;
     }
     // A localização fica só no navegador, para ordenar; não é guardada nem enviada.
@@ -142,7 +139,7 @@ function FarmListings<T extends FarmListing>({ table, title, description, noun, 
         setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setSort("perto");
       },
-      () => toast({ title: "Não foi possível obter a localização", description: "Autorize a localização para ordenar por distância.", variant: "destructive" }),
+      () => toast({ title: t("listings.locationFailed"), description: t("listings.locationFailedText"), variant: "destructive" }),
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
     );
   };
@@ -163,22 +160,22 @@ function FarmListings<T extends FarmListing>({ table, title, description, noun, 
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Pesquisar pelo nome ou pela quinta"
+              placeholder={t("listings.searchPlaceholder")}
               className="pl-9"
-              aria-label="Pesquisar"
+              aria-label={t("listings.search")}
             />
           </div>
           <div className="flex items-center gap-3">
             <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">{shown.length}</span> {shown.length === 1 ? noun[0] : noun[1]}
+              {countLabel(shown.length)}
             </p>
             <Select value={sort} onValueChange={(v) => changeSort(v as SortOption)}>
               <SelectTrigger className="w-[190px]">
-                <SelectValue placeholder="Ordenar por" />
+                <SelectValue placeholder={t("listings.sortBy")} />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(sortLabels).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                {SORT_OPTIONS.map((value) => (
+                  <SelectItem key={value} value={value}>{t(`listings.sort.${value}`)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -191,7 +188,7 @@ function FarmListings<T extends FarmListing>({ table, title, description, noun, 
           </div>
         ) : shown.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-            {items.length === 0 ? emptyText : "Nenhum resultado para esta pesquisa."}
+            {items.length === 0 ? emptyText : t("listings.noResults")}
           </p>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -201,7 +198,7 @@ function FarmListings<T extends FarmListing>({ table, title, description, noun, 
                 <div key={i.id} className="contents">
                   {renderCard(i, {
                     thumb: thumbs[i.id] || undefined,
-                    farmName: farms[i.farmer_id]?.name ?? "Quinta",
+                    farmName: farms[i.farmer_id]?.name || t("listings.farmFallback"),
                     distance: d != null ? formatKm(d) : undefined,
                     onClick: () => setSelected(i),
                   })}

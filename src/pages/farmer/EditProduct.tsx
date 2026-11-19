@@ -36,22 +36,24 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { categories } from "@/data/categories";
+import { categories, categoryLabel } from "@/data/categories";
 import { formatEuro } from "@/lib/format";
+import { Trans, useTranslation } from "react-i18next";
 
 const COMMISSION = 0.1;
 const VAT_OPTIONS = [
-  { value: 0, label: "Isento / não aplicável (0%)" },
-  { value: 6, label: "Reduzida — 6%" },
-  { value: 13, label: "Intermédia — 13%" },
-  { value: 23, label: "Normal — 23%" },
-];
+  { value: 0 },
+  { value: 6 },
+  { value: 13 },
+  { value: 23 },
+] as const;
 const DISCOUNT_PRESETS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
 
 const EditProduct = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user, profile, loading: authLoading } = useAuth();
+  const { t } = useTranslation(["farmer", "common", "account"]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -171,17 +173,17 @@ const EditProduct = () => {
   const handleSave = async (scope?: DeliveryScope) => {
     if (!id || !farmerId) return;
     if (!name.trim()) {
-      toast({ title: "Indique o nome do produto", variant: "destructive" });
+      toast({ title: t("productForm.errName"), variant: "destructive" });
       return;
     }
     if (farmerPriceNumber <= 0) {
-      toast({ title: "Defina um preço válido", variant: "destructive" });
+      toast({ title: t("productForm.errPrice"), variant: "destructive" });
       return;
     }
     const feeNum = deliveryFee.trim() ? parseEuro(deliveryFee) : 0;
     const thresholdNum = freeThreshold.trim() ? parseEuro(freeThreshold) : null;
     if (feeNum === null || (freeThreshold.trim() && thresholdNum === null)) {
-      toast({ title: "Indique valores de entrega válidos", variant: "destructive" });
+      toast({ title: t("productForm.errDelivery"), variant: "destructive" });
       return;
     }
     const settings = normalizeDeliverySettings({
@@ -222,7 +224,7 @@ const EditProduct = () => {
       .eq("id", id);
     if (error) {
       setSaving(false);
-      toast({ title: "Erro a guardar", description: error.message, variant: "destructive" });
+      toast({ title: t("availability.saveError"), description: error.message, variant: "destructive" });
       return;
     }
 
@@ -238,7 +240,7 @@ const EditProduct = () => {
       if (defaultsErr) {
         setSaving(false);
         toast({
-          title: "Produto atualizado, mas a entrega não foi aplicada aos outros produtos",
+          title: t("productForm.updatedNoDefault"),
           description: defaultsErr.message,
           variant: "destructive",
         });
@@ -247,11 +249,8 @@ const EditProduct = () => {
     }
     setSaving(false);
     toast({
-      title: "Produto atualizado",
-      description:
-        scope === "all"
-          ? "A entrega foi aplicada a todos os seus produtos."
-          : "As alterações já estão visíveis no catálogo.",
+      title: t("productForm.updated"),
+      description: scope === "all" ? t("productForm.updatedAll") : t("productForm.updatedText"),
     });
     navigate("/agricultor/produtos");
   };
@@ -265,10 +264,10 @@ const EditProduct = () => {
       .eq("id", id);
     setDeleting(false);
     if (error) {
-      toast({ title: "Erro a eliminar produto", description: error.message, variant: "destructive" });
+      toast({ title: t("productForm.deleteError"), description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Produto eliminado", description: `${name} foi removido do catálogo.` });
+    toast({ title: t("productForm.deleted"), description: t("productForm.deletedText", { name }) });
     navigate("/agricultor/produtos");
   };
 
@@ -283,9 +282,9 @@ const EditProduct = () => {
   if (notFound) {
     return (
       <div className="container py-16 text-center">
-        <p className="text-muted-foreground">Produto não encontrado.</p>
+        <p className="text-muted-foreground">{t("productForm.notFound")}</p>
         <Button className="mt-4" onClick={() => navigate("/agricultor/produtos")}>
-          Voltar aos meus produtos
+          {t("productForm.backToProducts")}
         </Button>
       </div>
     );
@@ -297,17 +296,17 @@ const EditProduct = () => {
         onClick={() => navigate(-1)}
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Voltar
+        <ArrowLeft className="h-4 w-4" /> {t("common:actions.back")}
       </button>
 
       <PageHeader
         className="mb-0"
-        eyebrow="Área do agricultor"
-        title="Editar produto"
-        description="Atualize as informações do artigo e aplique descontos."
+        eyebrow={t("area")}
+        title={t("productForm.editTitle")}
+        description={t("productForm.editDescription")}
         actions={
           <Button variant="outline" className="gap-2" onClick={() => setHistoryOpen(true)}>
-            <History className="h-4 w-4" /> Histórico
+            <History className="h-4 w-4" /> {t("products.history")}
           </Button>
         }
       />
@@ -328,31 +327,31 @@ const EditProduct = () => {
       <div className="mt-8 space-y-6">
         <Card className="p-5 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome do produto *</Label>
+            <Label htmlFor="name">{t("productForm.name")}</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="unit">Unidade de venda</Label>
-            <Input id="unit" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="Ex: 1 Kg" />
+            <Label htmlFor="unit">{t("productForm.unitLabel")}</Label>
+            <Input id="unit" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder={t("productForm.unitPlaceholder")} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="category">Categoria</Label>
+            <Label htmlFor="category">{t("productForm.categoryLabel")}</Label>
             <select
               id="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
-              <option value="">Selecione uma categoria</option>
+              <option value="">{t("productForm.chooseCategory")}</option>
               {categories.map((c) => (
                 <option key={c.slug} value={c.name}>
-                  {c.name}
+                  {categoryLabel(c.slug)}
                 </option>
               ))}
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+            <Label htmlFor="description">{t("productForm.description")}</Label>
             <Textarea
               id="description"
               rows={4}
@@ -376,10 +375,10 @@ const EditProduct = () => {
         </Card>
 
         <Card className="p-5 space-y-4">
-          <h2 className="font-medium">Preço e stock</h2>
+          <h2 className="font-medium">{t("productForm.priceStock")}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="price">Preço que recebe (€) *</Label>
+              <Label htmlFor="price">{t("productForm.priceReceive")}</Label>
               <Input
                 id="price"
                 inputMode="decimal"
@@ -388,7 +387,7 @@ const EditProduct = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="vat">Taxa de IVA a cobrar</Label>
+              <Label htmlFor="vat">{t("productForm.vatLabel")}</Label>
               <select
                 id="vat"
                 value={vatRate}
@@ -397,37 +396,36 @@ const EditProduct = () => {
               >
                 {VAT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
-                    {o.label}
+                    {t(`productForm.vatOptions.${o.value}`)}
                   </option>
                 ))}
               </select>
               <p className="text-xs text-muted-foreground">
-                Informe-se previamente sobre a taxa correta — a responsabilidade fiscal é do agricultor.
+                {t("productForm.vatHintShort")}
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="stock">Quantidade disponível (nº de produtos)</Label>
+              <Label htmlFor="stock">{t("productForm.stockLabel")}</Label>
               <Input id="stock" value={stockQuantity} readOnly disabled />
               <p className="text-xs text-muted-foreground">
-                Para adicionar ou retirar stock, com a respetiva validade, use{" "}
-                <Link to="/agricultor/produtos" className="text-primary underline-offset-4 hover:underline">
-                  Os meus produtos
-                </Link>
-                .
+                <Trans
+                  t={t}
+                  i18nKey="productForm.stockElsewhere"
+                  components={{ link: <Link to="/agricultor/produtos" className="text-primary underline-offset-4 hover:underline" /> }}
+                />
               </p>
             </div>
             <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
               <div>
-                <Label htmlFor="choose-lot" className="text-sm font-medium">Escolher o lote em cada venda</Label>
+                <Label htmlFor="choose-lot" className="text-sm font-medium">{t("productForm.chooseLot")}</Label>
                 <p className="text-xs text-muted-foreground">
-                  Desligado, cada venda sai do lote com a validade mais próxima. Ligado, a venda só desce o stock
-                  à venda e, depois de validar o QR code, indica de que lote saíram as unidades.
+                  {t("productForm.chooseLotHint")}
                 </p>
               </div>
               <Switch id="choose-lot" checked={chooseLotOnSale} onCheckedChange={setChooseLotOnSale} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="low-stock">Avisar quando o stock chegar a</Label>
+              <Label htmlFor="low-stock">{t("productForm.lowStock")}</Label>
               <Input
                 id="low-stock"
                 type="number"
@@ -437,12 +435,17 @@ const EditProduct = () => {
                 onChange={(e) => setLowStockThreshold(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Recebe uma notificação quando as unidades disponíveis descerem até este valor.
+                {t("productForm.lowStockHintShort")}
               </p>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Preço ao cliente (com comissão de 10% e IVA de {vatRate}%): <strong>{formatEuro(clientPrice)}</strong>
+            <Trans
+              t={t}
+              i18nKey="productForm.clientPriceLine"
+              values={{ vat: vatRate, price: formatEuro(clientPrice) }}
+              components={{ b: <strong /> }}
+            />
           </p>
         </Card>
 
@@ -450,10 +453,10 @@ const EditProduct = () => {
         <Card className="p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-primary" />
-            <h2 className="font-medium">Descontos</h2>
+            <h2 className="font-medium">{t("productForm.discounts")}</h2>
           </div>
           <p className="text-xs text-muted-foreground">
-            Aplique uma promoção ao produto. O desconto incide sobre o preço final ao cliente.
+            {t("productForm.discountsHint")}
           </p>
           <div className="flex flex-wrap gap-2">
             {DISCOUNT_PRESETS.map((d) => (
@@ -467,13 +470,13 @@ const EditProduct = () => {
                     : "border-border bg-background hover:bg-secondary"
                 }`}
               >
-                {d === 0 ? "Sem desconto" : `-${d}%`}
+                {d === 0 ? t("productForm.noDiscount") : `-${d}%`}
               </button>
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Label htmlFor="discount" className="text-sm">
-              Valor personalizado (%)
+              {t("productForm.customDiscount")}
             </Label>
             <Input
               id="discount"
@@ -488,10 +491,10 @@ const EditProduct = () => {
               }}
               className="w-24"
             />
-            <span className="text-sm text-muted-foreground">Máximo 90%</span>
+            <span className="text-sm text-muted-foreground">{t("productForm.maxDiscount")}</span>
           </div>
           <div className="rounded-lg border border-border bg-secondary/40 p-3 text-sm">
-            Preço com desconto:{" "}
+            {t("productForm.discountedPrice")}{" "}
             {discount > 0 && (
               <span className="mr-2 text-muted-foreground line-through">{formatEuro(clientPrice)}</span>
             )}
@@ -500,7 +503,7 @@ const EditProduct = () => {
         </Card>
 
         <Card className="p-5 space-y-4">
-          <h2 className="font-medium">Entrega e disponibilidade</h2>
+          <h2 className="font-medium">{t("productForm.deliveryAvailability")}</h2>
           <DeliveryModeFields
             farmerId={farmerId}
             mode={deliveryMode}
@@ -516,7 +519,7 @@ const EditProduct = () => {
           />
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="start">Início da disponibilidade</Label>
+              <Label htmlFor="start">{t("history.fields.availability_start")}</Label>
               <Input
                 id="start"
                 type="date"
@@ -525,7 +528,7 @@ const EditProduct = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="end">Fim da disponibilidade</Label>
+              <Label htmlFor="end">{t("history.fields.availability_end")}</Label>
               <Input
                 id="end"
                 type="date"
@@ -537,16 +540,16 @@ const EditProduct = () => {
         </Card>
 
         <Card className="p-5 space-y-4">
-          <h2 className="font-medium">Características</h2>
+          <h2 className="font-medium">{t("productForm.properties")}</h2>
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <Label htmlFor="organic" className="cursor-pointer">
-              Biológico
+              {t("productForm.organic")}
             </Label>
             <Switch id="organic" checked={isOrganic} onCheckedChange={setIsOrganic} />
           </div>
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <Label htmlFor="lactose" className="cursor-pointer">
-              Sem lactose
+              {t("productForm.lactoseFree")}
             </Label>
             <Switch id="lactose" checked={isLactoseFree} onCheckedChange={setIsLactoseFree} />
           </div>
@@ -555,11 +558,10 @@ const EditProduct = () => {
         <Card className="border-destructive/40 p-5 space-y-3">
           <div className="flex items-center gap-2">
             <Trash2 className="h-4 w-4 text-destructive" />
-            <h2 className="font-medium text-destructive">Eliminar produto</h2>
+            <h2 className="font-medium text-destructive">{t("productForm.delete")}</h2>
           </div>
           <p className="text-xs text-muted-foreground">
-            O produto deixa de aparecer no catálogo e na sua lista de produtos publicados. Esta ação
-            não pode ser anulada.
+            {t("productForm.deleteText")}
           </p>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -569,19 +571,18 @@ const EditProduct = () => {
                 ) : (
                   <Trash2 className="h-4 w-4" />
                 )}
-                Eliminar produto
+                {t("productForm.delete")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Eliminar “{name}”?</AlertDialogTitle>
+                <AlertDialogTitle>{t("productForm.deleteConfirm", { name })}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  O produto deixa de aparecer no catálogo e na sua lista de produtos publicados.
-                  Esta ação não pode ser anulada.
+                  {t("productForm.deleteText")}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogCancel disabled={deleting}>{t("common:actions.cancel")}</AlertDialogCancel>
                 <AlertDialogAction
                   disabled={deleting}
                   onClick={(e) => {
@@ -591,10 +592,10 @@ const EditProduct = () => {
                 >
                   {deleting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> A eliminar…
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("productForm.deleting")}
                     </>
                   ) : (
-                    "Eliminar produto"
+                    t("productForm.delete")
                   )}
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -604,11 +605,11 @@ const EditProduct = () => {
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => navigate("/agricultor/produtos")}>
-            Cancelar
+            {t("common:actions.cancel")}
           </Button>
           <Button onClick={() => handleSave()} disabled={saving || deleting} className="gap-2">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Guardar alterações
+            {t("account:profile.save")}
           </Button>
         </div>
       </div>

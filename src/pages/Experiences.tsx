@@ -1,27 +1,31 @@
+import { useTranslation } from "react-i18next";
 import FarmListings from "@/components/FarmListings";
 import ExperienceCard from "@/components/ExperienceCard";
 import ExperienceDialog from "@/components/ExperienceDialog";
 import type { ExperienceRow } from "@/components/ExperienceForm";
 
 /** Experiências de todas as quintas (/experiencias). */
-const Experiences = () => (
+const Experiences = () => {
+  const { t } = useTranslation("offerings");
+  return (
   <FarmListings<ExperienceRow>
     table="farm_experiences"
-    title="Experiências"
-    description="Atividades para viver a quinta por dentro, cada uma com um brinde da casa."
-    noun={["experiência", "experiências"]}
-    emptyText="Ainda não há experiências disponíveis."
+    title={t("experiencesPage.title")}
+    description={t("experiencesPage.description")}
+    countLabel={(count) => t("experiencesPage.count", { count })}
+    emptyText={t("experiencesPage.empty")}
     renderCard={(e, extra) => <ExperienceCard experience={e} {...extra} />}
     renderDialog={(selected, farm, isOwner, close) => (
       <ExperienceDialog
         experience={selected}
-        farmName={farm?.name ?? "Quinta"}
+        farmName={farm?.name || t("listings.farmFallback")}
         farmId={farm?.id}
         isOwner={isOwner}
         onOpenChange={(o) => !o && close()}
       />
     )}
   />
-);
+  );
+};
 
 export default Experiences;

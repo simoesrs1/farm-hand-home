@@ -12,6 +12,8 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { isInSeason, pickVaried, useHomeProducts } from "@/hooks/useHomeProducts";
 import { formatEuro } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
+import TranslatedText from "@/components/TranslatedText";
 
 // Posição e inclinação de cada cartão da colagem (3 produtos).
 const COLLAGE_LAYOUT = [
@@ -28,6 +30,7 @@ const HeroSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const reducedMotion = useReducedMotion();
   const { data: products = [] } = useHomeProducts();
+  const { t } = useTranslation("home");
 
   // Três produtos do momento, de categorias diferentes (da época primeiro).
   const collage = useMemo(() => {
@@ -75,10 +78,10 @@ const HeroSection = () => {
       <div className="container grid items-center gap-12 py-14 md:py-20 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <div className="min-w-0">
           <h1 className="hero-title max-w-2xl text-balance font-display text-4xl leading-[1.05] text-foreground md:text-6xl">
-            Do campo para a sua mesa, sem intermediários
+            {t("hero.title")}
           </h1>
           <p className="hero-subtitle mt-5 max-w-xl text-lg text-muted-foreground">
-            Descubra produtos frescos diretamente de quem cultiva. Apoie o produtor local!
+            {t("hero.subtitle")}
           </p>
 
           <div className="hero-search mt-8 w-full max-w-xl rounded-2xl border border-border bg-card p-5 shadow-sm md:p-6">
@@ -86,11 +89,11 @@ const HeroSection = () => {
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="location" className="gap-1.5">
                   <MapPin className="h-3.5 w-3.5" />
-                  Por localização
+                  {t("hero.byLocation")}
                 </TabsTrigger>
                 <TabsTrigger value="farm" className="gap-1.5">
                   <Sprout className="h-3.5 w-3.5" />
-                  Por nome de quinta
+                  {t("hero.byFarm")}
                 </TabsTrigger>
               </TabsList>
 
@@ -101,7 +104,7 @@ const HeroSection = () => {
                       htmlFor="hero-location"
                       className="mb-1.5 block text-left text-xs font-medium text-muted-foreground"
                     >
-                      A sua localização
+                      {t("hero.yourLocation")}
                     </label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -111,17 +114,17 @@ const HeroSection = () => {
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleLocationSearch()}
-                        placeholder="Ex: Lisboa, Sintra, Évora..."
+                        placeholder={t("hero.locationPlaceholder")}
                         className="pl-9"
                       />
                     </div>
                   </div>
                   <div className="flex-1">
                     <p className="mb-1.5 block text-left text-xs font-medium text-muted-foreground">
-                      Raio: <span className="font-semibold text-primary">{radius[0]} km</span>
+                      {t("hero.radius")} <span className="font-semibold text-primary">{radius[0]} km</span>
                     </p>
                     <Slider
-                      aria-label={`Raio de pesquisa: ${radius[0]} km`}
+                      aria-label={t("hero.radiusAria", { km: radius[0] })}
                       value={radius}
                       onValueChange={setRadius}
                       min={5}
@@ -132,11 +135,11 @@ const HeroSection = () => {
                   </div>
                   <Button className="gap-2 md:px-6" onClick={handleLocationSearch}>
                     <Search className="h-4 w-4" />
-                    Procurar
+                    {t("hero.search")}
                   </Button>
                 </div>
                 <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
-                  <p className="text-xs text-muted-foreground">Prefere visualizar no mapa?</p>
+                  <p className="text-xs text-muted-foreground">{t("hero.preferMap")}</p>
                   <PortugalMapDialog />
                 </div>
               </TabsContent>
@@ -148,7 +151,7 @@ const HeroSection = () => {
                       htmlFor="hero-farm-name"
                       className="mb-1.5 block text-left text-xs font-medium text-muted-foreground"
                     >
-                      Nome da quinta
+                      {t("hero.farmName")}
                     </label>
                     <div className="relative">
                       <Sprout className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -158,18 +161,18 @@ const HeroSection = () => {
                         value={farmName}
                         onChange={(e) => setFarmName(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleFarmSearch()}
-                        placeholder="Ex: Quinta do Vale Verde, Monte Alentejano..."
+                        placeholder={t("hero.farmPlaceholder")}
                         className="pl-9"
                       />
                     </div>
                   </div>
                   <Button className="gap-2 md:px-6" onClick={handleFarmSearch}>
                     <Search className="h-4 w-4" />
-                    Procurar
+                    {t("hero.search")}
                   </Button>
                 </div>
                 <p className="mt-4 border-t border-border pt-3 text-left text-xs text-muted-foreground">
-                  Procure diretamente pelo nome de uma quinta ou agricultor.
+                  {t("hero.farmHint")}
                 </p>
               </TabsContent>
             </Tabs>
@@ -177,7 +180,7 @@ const HeroSection = () => {
         </div>
 
         {/* Colagem de produtos reais (só em ecrãs largos; no telemóvel a faixa "Da época" vem logo a seguir) */}
-        <div className="relative hidden h-[460px] lg:block" aria-label="Produtos do momento">
+        <div className="relative hidden h-[460px] lg:block" aria-label={t("hero.collageAria")}>
           <div className="absolute inset-10 rounded-full bg-highlight/50" aria-hidden />
           {collage.length > 0 ? (
             collage.map((p, i) => (
@@ -194,7 +197,7 @@ const HeroSection = () => {
                   {formatEuro(p.price)}
                 </span>
                 <span className="block p-3">
-                  <span className="block truncate font-semibold text-foreground">{p.name}</span>
+                  <TranslatedText type="product" id={p.id} field="name" text={p.name} className="block truncate font-semibold text-foreground" />
                   <span className="block truncate text-xs text-muted-foreground">
                     {p.farmer} · /{p.unit}
                   </span>
@@ -204,7 +207,7 @@ const HeroSection = () => {
           ) : (
             <img
               src={heroImage}
-              alt="Campos agrícolas portugueses"
+              alt={t("hero.imageAlt")}
               className="absolute inset-0 h-full w-full rounded-3xl object-cover"
             />
           )}

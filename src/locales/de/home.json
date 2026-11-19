@@ -1,0 +1,137 @@
+{
+  "hero": {
+    "title": "Vom Feld auf Ihren Tisch, ohne Zwischenhändler",
+    "subtitle": "Entdecken Sie frische Produkte direkt von denen, die sie anbauen. Unterstützen Sie lokale Erzeuger!",
+    "byLocation": "Nach Standort",
+    "byFarm": "Nach Hofname",
+    "yourLocation": "Ihr Standort",
+    "locationPlaceholder": "Z. B. Lissabon, Sintra, Évora...",
+    "radius": "Umkreis:",
+    "radiusAria": "Suchumkreis: {{km}} km",
+    "search": "Suchen",
+    "preferMap": "Lieber auf der Karte suchen?",
+    "farmName": "Name des Hofes",
+    "farmPlaceholder": "Z. B. Quinta do Vale Verde, Monte Alentejano...",
+    "farmHint": "Suchen Sie direkt nach dem Namen eines Hofes oder Landwirts.",
+    "collageAria": "Produkte der Saison",
+    "imageAlt": "Portugiesische Felder"
+  },
+  "how": {
+    "eyebrow": "So funktioniert's",
+    "title": "Vom Feld auf Ihren Tisch in drei Schritten",
+    "steps": {
+      "choose": {
+        "title": "In Ihrer Nähe wählen",
+        "text": "Suchen Sie nach Ihrem Standort und sehen Sie, was Landwirte aus der Region diese Woche anbieten."
+      },
+      "order": {
+        "title": "Beim Hof bestellen",
+        "text": "Sie zahlen auf der Plattform und die Bestellung geht direkt an den Landwirt, ohne Zwischenhändler."
+      },
+      "collect": {
+        "title": "Abholen oder liefern lassen",
+        "text": "Bringen Sie den Abholcode zur angegebenen Zeit zum Hof oder erhalten Sie die Lieferung nach Hause, wenn der Landwirt liefert."
+      }
+    }
+  },
+  "about": {
+    "eyebrow": "Über uns",
+    "title": "Die Brücke zwischen Land und Stadt",
+    "p1": "ValorRural entstand aus dem Wunsch, die Distanz zwischen Erzeugern und Verbrauchern zu verkürzen. Wir glauben, dass die lokale Landwirtschaft die Zukunft einer nachhaltigen Ernährung ist und dass jeder Direktkauf nicht nur die ländliche Wirtschaft stärkt, sondern auch das Vertrauen zwischen Menschen.",
+    "p2": "Unsere Plattform ist einfach, transparent und fair gestaltet. Jede Bewertung wird durch einen Kaufnachweis geprüft. Jeder Landwirt ist ein Partner mit Gesicht und Geschichte.",
+    "values": {
+      "sustainability": {
+        "title": "Nachhaltigkeit",
+        "desc": "Wir verringern den ökologischen Fußabdruck, indem wir Zwischenhändler und große Logistikketten vermeiden."
+      },
+      "community": {
+        "title": "Gemeinschaft",
+        "desc": "Wir verbinden echte Menschen: bewusste Verbraucher und engagierte Erzeuger."
+      },
+      "trust": {
+        "title": "Vertrauen",
+        "desc": "Nur wer kauft, kann bewerten – deshalb sind die Bewertungen echt und verlässlich."
+      }
+    }
+  },
+  "mission": {
+    "eyebrow": "Mission & Vision",
+    "title": "Unser Engagement für die lokale Landwirtschaft",
+    "sections": {
+      "mission": {
+        "title": "Mission",
+        "text": "Den Zugang zu frischen, hochwertigen und erschwinglichen Agrarprodukten zu demokratisieren, indem wir einen digitalen Markt schaffen, der die Arbeit kleiner und mittlerer portugiesischer Landwirte würdigt und Verbrauchern ein transparentes und vertrauenswürdiges Einkaufserlebnis bietet."
+      },
+      "vision": {
+        "title": "Vision",
+        "text": "Die führende Plattform für die Verbindung von Erzeugern und Verbrauchern in Portugal zu sein und zu einem gerechteren, nachhaltigeren und gemeinschaftlicheren Lebensmittelsystem beizutragen."
+      },
+      "impact": {
+        "title": "Soziale Wirkung",
+        "text": "Jede Transaktion auf ValorRural stärkt die lokale Wirtschaft, bewahrt traditionelle landwirtschaftliche Praktiken und verringert Lebensmittelverschwendung durch kürzere Lieferketten."
+      },
+      "sustainability": {
+        "title": "Nachhaltigkeit",
+        "text": "Durch weniger Zwischenhändler und kürzere Transportwege tragen wir zu einem deutlich geringeren CO₂-Fußabdruck im Lebensmittelsektor bei."
+      }
+    }
+  },
+  "notFound": {
+    "eyebrow": "Fehler 404",
+    "title": "Diese Seite existiert nicht",
+    "description": "Der Link ist möglicherweise falsch oder die Seite wurde entfernt.",
+    "home": "Zur Startseite",
+    "catalog": "Katalog ansehen"
+  },
+  "farmerCta": {
+    "eyebrow": "Für Landwirte",
+    "title": "Sind Sie Landwirt? Verkaufen Sie direkt an Menschen in Ihrer Nähe.",
+    "text": "Veröffentlichen Sie Ihre Produkte, legen Sie Abholzeiten fest und erhalten Sie Bestellungen ohne Zwischenhändler.",
+    "button": "Jetzt verkaufen"
+  },
+  "categories": {
+    "eyebrow": "Katalog",
+    "title": "Was diese Woche am Stand liegt",
+    "description": "Die Kategorien mit den meisten frischen Produkten unserer Landwirte.",
+    "seeAll": "Gesamten Katalog ansehen",
+    "products_one": "{{count}} Produkt",
+    "products_other": "{{count}} Produkte",
+    "soon": "Demnächst"
+  },
+  "featured": {
+    "eyebrow": "Wer anbaut",
+    "title": "Ausgewählte Landwirte",
+    "description": "Die aktivsten Erzeuger dieser Woche: aktueller Bestand, schnelle Antworten und bestellbereite Produkte.",
+    "how": "Wie wählen wir aus?",
+    "empty": "Diese Woche gibt es noch keine ausgewählten Landwirte. Die Auswahl wird täglich aktualisiert.",
+    "seeCatalog": "Katalog ansehen",
+    "farmerFallback": "Landwirt",
+    "available_one": "{{count}} Produkt verfügbar",
+    "available_other": "{{count}} Produkte verfügbar"
+  },
+  "impact": {
+    "aria": "ValorRural in Zahlen",
+    "farmers": "Landwirte mit Produkten im Verkauf",
+    "products": "jetzt verfügbare Produkte",
+    "reviews": "Bewertungen von Käufern"
+  },
+  "seasonal": {
+    "aria": "Saisonprodukte im {{month}}",
+    "title": "Saison"
+  },
+  "rail": {
+    "eyebrow": "Besuchen Sie den Hof",
+    "title": "Erlebnisse und Unterkünfte",
+    "description": "Oliven pflücken, auf dem Hof übernachten, ein Geschenk des Hauses mitnehmen.",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "stay": "Unterkunft",
+    "experience": "Erlebnis",
+    "unit": {
+      "stayPerPerson": "/Nacht pro Person",
+      "stay": "/Nacht",
+      "perPerson": "/Person",
+      "perGroup": "/Gruppe"
+    }
+  }
+}

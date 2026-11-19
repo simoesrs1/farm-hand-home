@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { DAY_LABELS } from "@/lib/pickup-hours";
+import { dayLabel } from "@/lib/pickup-hours";
 import { parseEuro } from "@/lib/delivery-defaults";
 import { WEEK_ORDER, normalizeSessions } from "@/lib/experience-sessions";
 import type { PricingMode } from "@/lib/experience-pricing";
@@ -19,6 +19,7 @@ import { uploadMedia } from "@/lib/media-upload";
 import GiftListEditor, { type GiftDraft } from "@/components/GiftListEditor";
 import MediaListEditor from "@/components/MediaListEditor";
 import AiDescriptionAssistant from "@/components/AiDescriptionAssistant";
+import { useTranslation } from "react-i18next";
 
 export type ExperienceRow = Tables<"farm_experiences">;
 
@@ -32,6 +33,7 @@ interface ExperienceFormProps {
 
 /** Formulário único para criar e editar experiências (área do agricultor). */
 const ExperienceForm = ({ farmerId, experience, gifts: initialGifts = [], onSaved }: ExperienceFormProps) => {
+  const { t } = useTranslation("offerings");
   const { user } = useAuth();
   const [title, setTitle] = useState(experience?.title ?? "");
   const [description, setDescription] = useState(experience?.description ?? "");
@@ -58,9 +60,9 @@ const ExperienceForm = ({ farmerId, experience, gifts: initialGifts = [], onSave
   const [saving, setSaving] = useState(false);
 
   const addTime = (day: number) => {
-    const t = newTime[day];
-    if (!t) return;
-    setSessions((s) => ({ ...s, [day]: [...new Set([...(s[day] ?? []), t])].sort() }));
+    const time = newTime[day];
+    if (!time) return;
+    setSessions((s) => ({ ...s, [day]: [...new Set([...(s[day] ?? []), time])].sort() }));
     setNewTime((n) => ({ ...n, [day]: "" }));
   };
 
@@ -76,15 +78,15 @@ const ExperienceForm = ({ farmerId, experience, gifts: initialGifts = [], onSave
     const parsedGifts = gifts.map((g) => ({ ...g, price: g.extra_price.trim() ? parseEuro(g.extra_price) : 0 }));
 
     const problem =
-      title.trim().length < 3 ? "Indique o título da experiência." :
-      description.trim().length < 20 ? "Descreva a experiência (mínimo 20 caracteres)." :
-      !Number.isFinite(minutes) || minutes < 15 || minutes > 1440 ? "Indique a duração (entre 15 minutos e 24 horas)." :
-      !base || base <= 0 ? "Indique um preço válido." :
-      parsedDayPrices.some(([, v]) => !v || v <= 0) ? "Os preços por dia têm de ser valores válidos." :
-      !Number.isInteger(min) || min < 1 || !Number.isInteger(max) || max < min || max > 200 ? "O número de pessoas não é válido (mínimo ≥ 1, máximo ≥ mínimo, até 200)." :
-      sessionList.length === 0 ? "Adicione pelo menos uma sessão (dia e hora de início)." :
-      parsedGifts.some((g) => g.price === null) ? "Os preços dos brindes têm de ser valores válidos." :
-      !parsedGifts.some((g) => g.price === 0) ? "Adicione pelo menos um brinde grátis." :
+      title.trim().length < 3 ? t("experienceForm.errTitle") :
+      description.trim().length < 20 ? t("experienceForm.errDescription") :
+      !Number.isFinite(minutes) || minutes < 15 || minutes > 1440 ? t("experienceForm.errDuration") :
+      !base || base <= 0 ? t("forms.errPrice") :
+      parsedDayPrices.some(([, v]) => !v || v <= 0) ? t("forms.errDayPrices") :
+      !Number.isInteger(min) || min < 1 || !Number.isInteger(max) || max < min || max > 200 ? t("experienceForm.errPeople") :
+      sessionList.length === 0 ? t("experienceForm.errSessions") :
+      parsedGifts.some((g) => g.price === null) ? t("forms.errGiftPrices") :
+      !parsedGifts.some((g) => g.price === 0) ? t("forms.errFreeGift") :
       null;
     if (problem) {
       toast({ title: problem, variant: "destructive" });
@@ -128,11 +130,11 @@ const ExperienceForm = ({ farmerId, experience, gifts: initialGifts = [], onSave
       );
       if (giftErr) throw giftErr;
 
-      toast({ title: experience ? "Experiência atualizada" : "Experiência criada" });
+      toast({ title: experience ? t("experienceForm.updated") : t("experienceForm.created") });
       onSaved();
     } catch (err) {
       toast({
-        title: "Erro a guardar a experiência",
+        title: t("experienceForm.saveError"),
         description: err instanceof Error ? err.message : String(err),
         variant: "destructive",
       });
@@ -144,19 +146,19 @@ const ExperienceForm = ({ farmerId, experience, gifts: initialGifts = [], onSave
   return (
     <div className="space-y-6">
       <Card className="space-y-4 p-5">
-        <h2 className="font-medium">A experiência</h2>
+        <h2 className="font-medium">{t("experienceForm.section")}</h2>
         <div className="space-y-2">
-          <Label htmlFor="exp-title">Título *</Label>
-          <Input id="exp-title" value={title} onChange={(e) => setTitle(e.target.value.slice(0, 120))} placeholder="Ex.: Apanha da uva e almoço na quinta" />
+          <Label htmlFor="exp-title">{t("forms.title")}</Label>
+          <Input id="exp-title" value={title} onChange={(e) => setTitle(e.target.value.slice(0, 120))} placeholder={t("experienceForm.titlePlaceholder")} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="exp-description">Descrição *</Label>
+          <Label htmlFor="exp-description">{t("forms.description")}</Label>
           <Textarea
             id="exp-description"
             rows={6}
             value={description}
             onChange={(e) => setDescription(e.target.value.slice(0, 5000))}
-            placeholder="O que vão fazer, de que vão falar, o que devem trazer..."
+            placeholder={t("experienceForm.descriptionPlaceholder")}
           />
           <AiDescriptionAssistant
             kind="experience"
@@ -174,52 +176,52 @@ const ExperienceForm = ({ farmerId, experience, gifts: initialGifts = [], onSave
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="exp-duration">Duração (minutos) *</Label>
+          <Label htmlFor="exp-duration">{t("experienceForm.duration")}</Label>
           <Input id="exp-duration" type="number" min={15} max={1440} step={15} value={duration} onChange={(e) => setDuration(e.target.value)} className="w-40" />
         </div>
         <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
           <div>
-            <Label htmlFor="exp-active" className="text-sm font-medium">Experiência ativa</Label>
-            <p className="text-xs text-muted-foreground">Desligada, deixa de aparecer aos clientes e não aceita reservas.</p>
+            <Label htmlFor="exp-active" className="text-sm font-medium">{t("experienceForm.active")}</Label>
+            <p className="text-xs text-muted-foreground">{t("experienceForm.activeHint")}</p>
           </div>
           <Switch id="exp-active" checked={active} onCheckedChange={setActive} />
         </div>
       </Card>
 
       <Card className="space-y-4 p-5">
-        <h2 className="font-medium">Fotografias e vídeos</h2>
+        <h2 className="font-medium">{t("forms.media")}</h2>
         <MediaListEditor existing={existingMedia} onExistingChange={setExistingMedia} files={files} onFilesChange={setFiles} />
       </Card>
 
       <Card className="space-y-4 p-5">
-        <h2 className="font-medium">Preço e participantes</h2>
+        <h2 className="font-medium">{t("experienceForm.pricePeople")}</h2>
         <RadioGroup value={pricingMode} onValueChange={(v) => setPricingMode(v as PricingMode)} className="gap-2 sm:grid-cols-2">
           <label htmlFor="pm-person" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
             <RadioGroupItem value="per_person" id="pm-person" className="mt-0.5" />
             <div>
-              <div className="text-sm font-medium">Preço por pessoa</div>
-              <p className="text-xs text-muted-foreground">Várias reservas podem partilhar a sessão até ao máximo de pessoas.</p>
+              <div className="text-sm font-medium">{t("experienceForm.perPerson")}</div>
+              <p className="text-xs text-muted-foreground">{t("experienceForm.perPersonHint")}</p>
             </div>
           </label>
           <label htmlFor="pm-group" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
             <RadioGroupItem value="per_group" id="pm-group" className="mt-0.5" />
             <div>
-              <div className="text-sm font-medium">Preço por grupo</div>
-              <p className="text-xs text-muted-foreground">Cada sessão é reservada por um só grupo.</p>
+              <div className="text-sm font-medium">{t("experienceForm.perGroup")}</div>
+              <p className="text-xs text-muted-foreground">{t("experienceForm.perGroupHint")}</p>
             </div>
           </label>
         </RadioGroup>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="exp-price">Preço base (€) *</Label>
+            <Label htmlFor="exp-price">{t("forms.basePrice")}</Label>
             <Input id="exp-price" inputMode="decimal" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} placeholder="0,00" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="exp-min">Mínimo de pessoas *</Label>
+            <Label htmlFor="exp-min">{t("experienceForm.minPeople")}</Label>
             <Input id="exp-min" type="number" min={1} value={minPeople} onChange={(e) => setMinPeople(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="exp-max">Máximo de pessoas *</Label>
+            <Label htmlFor="exp-max">{t("experienceForm.maxPeople")}</Label>
             <Input id="exp-max" type="number" min={1} max={200} value={maxPeople} onChange={(e) => setMaxPeople(e.target.value)} />
           </div>
         </div>
@@ -227,23 +229,23 @@ const ExperienceForm = ({ farmerId, experience, gifts: initialGifts = [], onSave
 
       <Card className="space-y-4 p-5">
         <div>
-          <h2 className="font-medium">Sessões e preço por dia</h2>
+          <h2 className="font-medium">{t("experienceForm.sessions")}</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Para cada dia, indique as horas a que a experiência começa. O preço do dia é opcional: sem ele, vale o preço base.
+            {t("experienceForm.sessionsHint")}
           </p>
         </div>
         <ul className="divide-y divide-border">
           {WEEK_ORDER.map((day) => (
             <li key={day} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start">
-              <span className="w-24 shrink-0 pt-2 text-sm font-medium text-foreground">{DAY_LABELS[day]}</span>
+              <span className="w-24 shrink-0 pt-2 text-sm font-medium text-foreground">{dayLabel(day)}</span>
               <div className="flex flex-1 flex-wrap items-center gap-2">
-                {(sessions[day] ?? []).map((t) => (
-                  <span key={t} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                    {t}
+                {(sessions[day] ?? []).map((time) => (
+                  <span key={time} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                    {time}
                     <button
                       type="button"
-                      onClick={() => setSessions((s) => ({ ...s, [day]: (s[day] ?? []).filter((x) => x !== t) }))}
-                      aria-label={`Remover sessão das ${t}`}
+                      onClick={() => setSessions((s) => ({ ...s, [day]: (s[day] ?? []).filter((x) => x !== time) }))}
+                      aria-label={t("experienceForm.removeSession", { time })}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -254,7 +256,7 @@ const ExperienceForm = ({ farmerId, experience, gifts: initialGifts = [], onSave
                   value={newTime[day] ?? ""}
                   onChange={(e) => setNewTime((n) => ({ ...n, [day]: e.target.value }))}
                   className="h-8 w-28"
-                  aria-label={`Hora de início (${DAY_LABELS[day]})`}
+                  aria-label={t("experienceForm.startTime", { day: dayLabel(day) })}
                 />
                 <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => addTime(day)}>
                   <Plus className="h-4 w-4" />
@@ -264,9 +266,9 @@ const ExperienceForm = ({ farmerId, experience, gifts: initialGifts = [], onSave
                 inputMode="decimal"
                 value={dayPrices[day] ?? ""}
                 onChange={(e) => setDayPrices((p) => ({ ...p, [day]: e.target.value }))}
-                placeholder="Preço do dia (€)"
+                placeholder={t("forms.dayPrice")}
                 className="h-8 sm:w-36"
-                aria-label={`Preço de ${DAY_LABELS[day]}`}
+                aria-label={t("forms.dayPriceAria", { day: dayLabel(day) })}
               />
             </li>
           ))}
@@ -274,21 +276,21 @@ const ExperienceForm = ({ farmerId, experience, gifts: initialGifts = [], onSave
       </Card>
 
       <Card className="space-y-4 p-5">
-        <h2 className="font-medium">Brindes</h2>
+        <h2 className="font-medium">{t("forms.gifts")}</h2>
         <GiftListEditor
           farmerId={farmerId}
           gifts={gifts}
           onGiftsChange={setGifts}
           keepWithoutGift={keepWithoutGift}
           onKeepWithoutGiftChange={setKeepWithoutGift}
-          subject="A experiência"
+          kind="experience"
         />
       </Card>
 
       <div className="flex justify-end">
         <Button onClick={save} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Guardar experiência
+          {t("experienceForm.save")}
         </Button>
       </div>
     </div>

@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { reviewContext, type ReviewableOrder } from "@/lib/review-eligibility";
 import { avatarPublicUrl, isStoredAvatar } from "@/lib/avatar";
+import { useTranslation } from "react-i18next";
 
 interface FarmerInfo {
   id: string;
@@ -22,6 +23,7 @@ const RateFarmer = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation(["orders", "common", "account"]);
   const [farmer, setFarmer] = useState<FarmerInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(0);
@@ -29,7 +31,7 @@ const RateFarmer = () => {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   // Motivo para não mostrar o formulário (null = pode avaliar).
-  const [blocked, setBlocked] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState<"notFound" | "alreadyRated" | "notYet" | null>(null);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [showPhoto, setShowPhoto] = useState(false);
 
@@ -48,18 +50,16 @@ const RateFarmer = () => {
       setPhotoPath(isStoredAvatar(myProfile?.avatar_url) ? myProfile.avatar_url : null);
       const order = data as unknown as (ReviewableOrder & { farmer: FarmerInfo | null }) | null;
       setFarmer(order?.farmer ?? null);
-      if (!order) setBlocked("Encomenda não encontrada.");
-      else if ((reviews ?? []).some((r) => r.order_id === orderId)) setBlocked("Esta encomenda já foi avaliada.");
-      else if (!reviewContext(order)) {
-        setBlocked("Podes avaliar depois de receberes a encomenda, se o agricultor a cancelar ou se a entrega se atrasar mais de 24 horas.");
-      }
+      if (!order) setBlocked("notFound");
+      else if ((reviews ?? []).some((r) => r.order_id === orderId)) setBlocked("alreadyRated");
+      else if (!reviewContext(order)) setBlocked("notYet");
       setLoading(false);
     })();
   }, [user, orderId]);
 
   const submit = async () => {
     if (rating === 0) {
-      toast({ title: "Escolhe uma avaliação", description: "Seleciona de 1 a 5 estrelas.", variant: "destructive" });
+      toast({ title: t("rate.chooseRating"), description: t("rate.chooseRatingText"), variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -71,17 +71,17 @@ const RateFarmer = () => {
     });
     setSubmitting(false);
     if (error) {
-      toast({ title: "Não foi possível enviar", description: error.message, variant: "destructive" });
+      toast({ title: t("rate.sendFailed"), description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Avaliação enviada", description: "Obrigado pelo teu feedback!" });
+    toast({ title: t("rate.sent"), description: t("rate.sentText") });
     navigate("/encomendas");
   };
 
   if (!user) {
     return (
       <main className="container py-16 text-center">
-        <p className="text-muted-foreground">Inicia sessão para avaliar.</p>
+        <p className="text-muted-foreground">{t("rate.loginPrompt")}</p>
       </main>
     );
   }
@@ -89,24 +89,24 @@ const RateFarmer = () => {
   return (
     <main className="container max-w-xl py-8">
       <Link to="/encomendas" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> As minhas encomendas
+        <ArrowLeft className="h-4 w-4" /> {t("my.title")}
       </Link>
 
-      <PageHeader className="mb-2" eyebrow="A minha conta" title="Avaliar agricultor" />
+      <PageHeader className="mb-2" eyebrow={t("account:myAccount")} title={t("review.rate")} />
       {loading ? (
         <Skeleton className="h-6 w-48" />
       ) : (
         <p className="mb-8 text-muted-foreground">
-          {farmer?.company_name ?? "Quinta"}{farmer?.pickup_address ? ` · ${farmer.pickup_address}` : ""}
+          {farmer?.company_name ?? t("my.farmFallback")}{farmer?.pickup_address ? ` · ${farmer.pickup_address}` : ""}
         </p>
       )}
 
       {blocked ? (
-        <p className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">{blocked}</p>
+        <p className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">{t(`rate.blocked.${blocked}`)}</p>
       ) : !loading && (
       <div className="rounded-2xl border border-border bg-card p-6">
-        <p className="mb-3 text-sm font-medium text-foreground">A tua avaliação</p>
-        <p className="mb-3 text-xs text-muted-foreground">Depois de enviada, a avaliação não pode ser alterada.</p>
+        <p className="mb-3 text-sm font-medium text-foreground">{t("rate.yourRating")}</p>
+        <p className="mb-3 text-xs text-muted-foreground">{t("rate.final")}</p>
         <div className="mb-6 flex gap-2">
           {[1, 2, 3, 4, 5].map((n) => {
             const active = (hover || rating) >= n;
@@ -118,7 +118,7 @@ const RateFarmer = () => {
                 onMouseLeave={() => setHover(0)}
                 onClick={() => setRating(n)}
                 className="transition-transform hover:scale-110"
-                aria-label={`${n} estrelas`}
+                aria-label={t("rate.stars", { count: n })}
               >
                 <Star className={`h-9 w-9 ${active ? "fill-highlight text-coral" : "text-muted-foreground"}`} />
               </button>
@@ -126,11 +126,11 @@ const RateFarmer = () => {
           })}
         </div>
 
-        <label className="mb-2 block text-sm font-medium text-foreground">Comentário (opcional)</label>
+        <label className="mb-2 block text-sm font-medium text-foreground">{t("rate.comment")}</label>
         <Textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Conta como foi a tua experiência com este agricultor..."
+          placeholder={t("rate.commentPlaceholder")}
           rows={5}
         />
 
@@ -139,18 +139,18 @@ const RateFarmer = () => {
             <Checkbox id="show-photo" checked={showPhoto} onCheckedChange={(v) => setShowPhoto(v === true)} />
             <img src={avatarPublicUrl(photoPath)} alt="" className="h-9 w-9 rounded-full object-cover" />
             <span className="text-sm text-foreground">
-              Autorizo mostrar a minha fotografia nesta avaliação
+              {t("rate.showPhoto")}
               <span className="block text-xs text-muted-foreground">
-                Fica visível para todos. Podes retirar a autorização em As minhas encomendas.
+                {t("rate.showPhotoHint")}
               </span>
             </span>
           </label>
         )}
 
         <div className="mt-6 flex justify-end gap-2">
-          <Button variant="outline" onClick={() => navigate("/encomendas")}>Cancelar</Button>
+          <Button variant="outline" onClick={() => navigate("/encomendas")}>{t("common:actions.cancel")}</Button>
           <Button onClick={submit} disabled={submitting}>
-            {submitting ? "A enviar..." : "Enviar avaliação"}
+            {submitting ? t("report.sending") : t("rate.send")}
           </Button>
         </div>
       </div>

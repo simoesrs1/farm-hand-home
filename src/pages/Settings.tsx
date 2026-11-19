@@ -7,11 +7,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { toUserMessage } from "@/lib/auth-errors";
+import { useTranslation } from "react-i18next";
 
 const Settings = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation(["account", "common"]);
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -22,7 +24,7 @@ const Settings = () => {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword.length < 6) {
-      toast({ title: "Senha demasiado curta", description: "Mínimo 6 caracteres.", variant: "destructive" });
+      toast({ title: t("settings.tooShort"), description: t("settings.minChars"), variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -30,9 +32,9 @@ const Settings = () => {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       setNewPassword("");
-      toast({ title: "Senha alterada", description: "A sua nova senha está ativa." });
+      toast({ title: t("settings.changed"), description: t("settings.changedText") });
     } catch (err) {
-      toast({ title: "Erro", description: toUserMessage(err), variant: "destructive" });
+      toast({ title: t("auth.error"), description: toUserMessage(err), variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -48,43 +50,42 @@ const Settings = () => {
 
   return (
     <main className="container max-w-2xl py-10">
-      <PageHeader eyebrow="A minha conta" title="Definições" description="Gerir a conta e a segurança." />
+      <PageHeader eyebrow={t("myAccount")} title={t("settings.title")} description={t("settings.description")} />
 
       <form onSubmit={handlePasswordChange} className="space-y-5 rounded-2xl border border-border bg-card p-6">
         <div className="flex items-center gap-2 text-foreground">
           <KeyRound className="h-5 w-5 text-primary" />
-          <h2 className="font-display text-base font-semibold">Alterar senha</h2>
+          <h2 className="font-display text-base font-semibold">{t("settings.changePassword")}</h2>
         </div>
         <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-          A sua conta de agricultor e a sua conta de cliente partilham o mesmo email e a mesma
-          palavra-passe. Alterar aqui a palavra-passe altera o acesso aos dois perfis.
+          {t("settings.sharedPassword")}
         </p>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">Nova senha</label>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("settings.newPassword")}</label>
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             minLength={6}
-            placeholder="Mínimo 6 caracteres"
+            placeholder={t("settings.minChars")}
             className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
         <Button type="submit" disabled={saving || !newPassword}>
           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Atualizar senha
+          {t("settings.update")}
         </Button>
       </form>
 
       <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/5 p-6">
         <div className="mb-3 flex items-center gap-2 text-destructive">
           <Trash2 className="h-5 w-5" />
-          <h2 className="font-display text-base font-semibold">Terminar sessão</h2>
+          <h2 className="font-display text-base font-semibold">{t("settings.logout")}</h2>
         </div>
-        <p className="mb-4 text-sm text-muted-foreground">Sai da conta neste dispositivo.</p>
+        <p className="mb-4 text-sm text-muted-foreground">{t("settings.logoutText")}</p>
         <Button variant="destructive" onClick={async () => { await signOut(); navigate("/"); }}>
-          Terminar sessão
+          {t("settings.logout")}
         </Button>
       </div>
     </main>

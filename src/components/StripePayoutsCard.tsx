@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 interface PaymentAccount {
   charges_enabled: boolean;
@@ -20,6 +22,7 @@ type Action = "onboard" | "dashboard" | "refresh";
  */
 const StripePayoutsCard = ({ userId }: { userId: string }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { t } = useTranslation("farmer");
   // undefined: a carregar; null: ainda sem conta.
   const [account, setAccount] = useState<PaymentAccount | null | undefined>(undefined);
   const [failed, setFailed] = useState(false);
@@ -29,7 +32,7 @@ const StripePayoutsCard = ({ userId }: { userId: string }) => {
   const callStripe = useCallback(async (action: Action) => {
     const { data, error } = await supabase.functions.invoke("stripe-connect", { body: { action } });
     const message = (data as { error?: string } | null)?.error;
-    if (error || message) throw new Error(message ?? "Tente novamente dentro de momentos.");
+    if (error || message) throw new Error(message ?? i18n.t("farmer:stripe.tryAgain"));
     return data as { url?: string; account?: PaymentAccount | null };
   }, []);
 
@@ -39,12 +42,12 @@ const StripePayoutsCard = ({ userId }: { userId: string }) => {
       setBusy(action);
       try {
         const { url } = await callStripe(action);
-        if (!url) throw new Error("Tente novamente dentro de momentos.");
+        if (!url) throw new Error(i18n.t("farmer:stripe.tryAgain"));
         window.location.assign(url);
       } catch (e) {
         setBusy(null);
         toast({
-          title: "Não foi possível abrir o Stripe",
+          title: i18n.t("farmer:stripe.openFailed"),
           description: (e as Error).message,
           variant: "destructive",
         });
@@ -124,32 +127,28 @@ const StripePayoutsCard = ({ userId }: { userId: string }) => {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <Wallet className="h-5 w-5 text-primary" />
-          <h2 className="font-display text-lg font-semibold text-foreground">Receber pagamentos</h2>
+          <h2 className="font-display text-lg font-semibold text-foreground">{t("stripe.title")}</h2>
         </div>
         {active ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-sm font-semibold text-success">
-            <CheckCircle2 className="h-4 w-4" /> Ativo
+            <CheckCircle2 className="h-4 w-4" /> {t("lists.activeM")}
           </span>
         ) : account ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-sm font-semibold text-warning">
-            <AlertCircle className="h-4 w-4" /> Por concluir
+            <AlertCircle className="h-4 w-4" /> {t("stripe.incomplete")}
           </span>
         ) : null}
       </div>
 
       <p className="mt-2 text-sm text-muted-foreground">
-        {active
-          ? "A sua conta está pronta. Recebe o valor de cada encomenda na sua conta bancária depois de o cliente a levantar."
-          : account
-            ? "O Stripe ainda precisa de alguns dados para poder enviar-lhe os pagamentos. Continue a configuração para começar a vender."
-            : "Os pagamentos dos clientes são processados pelo Stripe, um serviço de pagamentos seguro. Configure a sua conta (identificação, NIF e IBAN) para receber o valor das suas vendas."}
+        {active ? t("stripe.activeText") : account ? t("stripe.incompleteText") : t("stripe.setupText")}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
         {active ? (
           <Button variant="outline" onClick={() => openStripe("dashboard")} disabled={busy !== null}>
             {busy === "dashboard" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
-            Ver painel de pagamentos
+            {t("stripe.dashboard")}
           </Button>
         ) : (
           <Button onClick={() => openStripe("onboard")} disabled={busy !== null}>
@@ -158,7 +157,7 @@ const StripePayoutsCard = ({ userId }: { userId: string }) => {
             ) : (
               <ExternalLink className="h-4 w-4" />
             )}
-            {account ? "Continuar configuração" : "Configurar pagamentos"}
+            {account ? t("stripe.continue") : t("stripe.setup")}
           </Button>
         )}
       </div>

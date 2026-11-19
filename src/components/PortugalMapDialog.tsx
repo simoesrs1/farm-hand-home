@@ -11,6 +11,8 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PT_REGIONS, formatKm, withinRadius, type LatLng } from "@/lib/geo";
 import { isPaused } from "@/lib/farmer-activity";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 
 
@@ -35,6 +37,7 @@ const MAP_PRIMARY = "#BA2E1C";
  */
 const PortugalMapDialog = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation("catalog");
   const [open, setOpen] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -109,7 +112,7 @@ const PortugalMapDialog = () => {
       });
       instance.addListener("click", (e: google.maps.MapMouseEvent) => {
         if (!e.latLng) return;
-        setCenter({ lat: e.latLng.lat(), lng: e.latLng.lng(), label: "Ponto escolhido no mapa" });
+        setCenter({ lat: e.latLng.lat(), lng: e.latLng.lng(), label: i18n.t("catalog:mapDialog.pickedPoint") });
       });
       setMap(instance);
     };
@@ -122,7 +125,7 @@ const PortugalMapDialog = () => {
     const script = document.createElement("script");
     script.id = "gmaps-sdk";
     script.async = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initValorRuralMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&language=${i18n.resolvedLanguage ?? "pt"}&loading=async&callback=__initValorRuralMap`;
     document.head.appendChild(script);
   }, [open, mapsAllowed]);
 
@@ -161,7 +164,7 @@ const PortugalMapDialog = () => {
         }
         const link = document.createElement("a");
         link.href = `/agricultor/${f.id}`;
-        link.textContent = "Ver perfil →";
+        link.textContent = i18n.t("catalog:mapDialog.viewProfile");
         link.style.cssText = `color:${MAP_PRIMARY};font-size:12px;display:inline-block;margin-top:4px;`;
         link.addEventListener("click", (ev) => {
           ev.preventDefault();
@@ -220,7 +223,7 @@ const PortugalMapDialog = () => {
 
   const locateMe = () => {
     if (!("geolocation" in navigator)) {
-      toast({ title: "Localização indisponível", description: "Este navegador não permite obter a localização.", variant: "destructive" });
+      toast({ title: t("mapDialog.locationUnavailable"), description: t("mapDialog.locationUnavailableText"), variant: "destructive" });
       return;
     }
     setLocating(true);
@@ -228,16 +231,16 @@ const PortugalMapDialog = () => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false);
-        setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: "A sua localização" });
+        setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: t("mapDialog.yourLocation") });
       },
       (err) => {
         setLocating(false);
         toast({
-          title: "Não foi possível obter a localização",
+          title: t("mapDialog.locationFailed"),
           description:
             err.code === err.PERMISSION_DENIED
-              ? "A autorização foi recusada. Pode escolher um distrito ou clicar no mapa."
-              : "Tente de novo, escolha um distrito ou clique no mapa.",
+              ? t("mapDialog.locationDenied")
+              : t("mapDialog.locationRetry"),
           variant: "destructive",
         });
       },
@@ -250,13 +253,13 @@ const PortugalMapDialog = () => {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <Map className="h-4 w-4" />
-          Ver mapa
+          {t("mapDialog.open")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Agricultores perto de si</DialogTitle>
-          <DialogDescription>Escolha onde procurar e o raio, à direita. Também pode clicar no mapa.</DialogDescription>
+          <DialogTitle>{t("mapDialog.title")}</DialogTitle>
+          <DialogDescription>{t("mapDialog.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 md:grid-cols-[1fr_300px]">
@@ -266,13 +269,13 @@ const PortugalMapDialog = () => {
 
           <aside className="space-y-4">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">Onde procurar</p>
+              <p className="text-sm font-medium text-foreground">{t("mapDialog.where")}</p>
               <Button type="button" variant="outline" className="w-full gap-2" onClick={locateMe} disabled={locating}>
                 {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />}
-                Usar a minha localização
+                {t("mapDialog.useLocation")}
               </Button>
               <div className="space-y-1">
-                <Label htmlFor="map-region" className="text-xs text-muted-foreground">Ou escolha um distrito</Label>
+                <Label htmlFor="map-region" className="text-xs text-muted-foreground">{t("mapDialog.orDistrict")}</Label>
                 <select
                   id="map-region"
                   value=""
@@ -282,17 +285,17 @@ const PortugalMapDialog = () => {
                   }}
                   className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
                 >
-                  <option value="">Escolher distrito...</option>
+                  <option value="">{t("mapDialog.chooseDistrict")}</option>
                   {PT_REGIONS.map((r) => (
                     <option key={r.name} value={r.name}>{r.name}</option>
                   ))}
                 </select>
               </div>
-              <p className="text-xs text-muted-foreground">Ou clique no mapa para escolher o centro.</p>
+              <p className="text-xs text-muted-foreground">{t("mapDialog.orClick")}</p>
               {center && (
                 <div className="flex items-center justify-between gap-2 rounded-lg bg-primary/5 px-3 py-2 text-xs">
-                  <span className="text-foreground">Centro: {center.label}</span>
-                  <button type="button" onClick={() => setCenter(null)} className="text-muted-foreground hover:text-foreground" aria-label="Limpar o centro">
+                  <span className="text-foreground">{t("mapDialog.center", { label: center.label })}</span>
+                  <button type="button" onClick={() => setCenter(null)} className="text-muted-foreground hover:text-foreground" aria-label={t("mapDialog.clearCenter")}>
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -301,7 +304,7 @@ const PortugalMapDialog = () => {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium text-foreground">Raio</Label>
+                <Label className="text-sm font-medium text-foreground">{t("mapDialog.radius")}</Label>
                 <span className="text-sm font-semibold text-primary">{radius} km</span>
               </div>
               <Slider
@@ -310,22 +313,22 @@ const PortugalMapDialog = () => {
                 min={RADIUS_MIN}
                 max={RADIUS_MAX}
                 step={5}
-                aria-label="Raio em quilómetros"
+                aria-label={t("mapDialog.radiusAria")}
               />
-              {!center && <p className="text-xs text-muted-foreground">O raio aplica-se depois de escolher onde procurar.</p>}
+              {!center && <p className="text-xs text-muted-foreground">{t("mapDialog.radiusHint")}</p>}
             </div>
 
             <div className="border-t border-border pt-3">
               <p className="mb-2 text-sm font-medium text-foreground">
                 {loadingFarms
-                  ? "A carregar agricultores…"
+                  ? t("mapDialog.loading")
                   : center
-                    ? `${listed.length} agricultor${listed.length === 1 ? "" : "es"} até ${radius} km`
-                    : `${listed.length} agricultor${listed.length === 1 ? "" : "es"}`}
+                    ? t("mapDialog.countWithin", { count: listed.length, km: radius })
+                    : t("mapDialog.count", { count: listed.length })}
               </p>
               {!loadingFarms && listed.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  {center ? "Nenhum agricultor neste raio. Aumente o raio ou escolha outro local." : "Ainda não há agricultores no mapa."}
+                  {center ? t("mapDialog.noneInRadius") : t("mapDialog.none")}
                 </p>
               ) : (
                 <ul className="max-h-60 space-y-1.5 overflow-y-auto md:max-h-[220px]">

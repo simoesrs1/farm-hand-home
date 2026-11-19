@@ -16,7 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ActivityCard from "@/components/ActivityCard";
 import StripePayoutsCard from "@/components/StripePayoutsCard";
 import PageHeader from "@/components/PageHeader";
-import { formatEuro } from "@/lib/format";
+import { formatDate, formatEuro } from "@/lib/format";
+import { useTranslation } from "react-i18next";
 
 interface Row {
   id: string;
@@ -33,6 +34,7 @@ const RANGE_DAYS = 30;
 
 const Sales = () => {
   const { user, profile } = useAuth();
+  const { t } = useTranslation(["farmer", "common", "orders"]);
   const [orders, setOrders] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -74,7 +76,7 @@ const Sales = () => {
       const d = new Date(Date.now() - i * 86400000);
       const key = d.toISOString().slice(0, 10);
       map.set(key, {
-        day: d.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" }),
+        day: formatDate(d, { day: "2-digit", month: "2-digit" }),
         encomendas: 0,
         receita: 0,
       });
@@ -109,7 +111,7 @@ const Sales = () => {
   if (!user || profile?.profile_type !== "vendedor") {
     return (
       <main className="container py-16 text-center">
-        <p className="text-muted-foreground">Esta área é exclusiva para agricultores.</p>
+        <p className="text-muted-foreground">{t("farmersOnly")}</p>
       </main>
     );
   }
@@ -117,10 +119,10 @@ const Sales = () => {
   return (
     <main className="container max-w-5xl py-8">
       <Link to="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Início
+        <ArrowLeft className="h-4 w-4" /> {t("orders:my.home")}
       </Link>
 
-      <PageHeader eyebrow="Área do agricultor" title="As minhas vendas" />
+      <PageHeader eyebrow={t("area")} title={t("common:menu.farmer.mySales")} />
 
       <StripePayoutsCard userId={user.id} />
       <ActivityCard userId={user.id} />
@@ -132,26 +134,26 @@ const Sales = () => {
           <div className="mb-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-border bg-card p-4">
               <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
-                <Euro className="h-3.5 w-3.5" /> Receita total (30 dias)
+                <Euro className="h-3.5 w-3.5" /> {t("sales.revenue")}
               </p>
               <p className="mt-1 font-mono tabular-nums text-2xl font-bold text-primary">{formatEuro(revenue)}</p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4">
               <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
-                <Package className="h-3.5 w-3.5" /> Encomendas
+                <Package className="h-3.5 w-3.5" /> {t("sales.orders")}
               </p>
               <p className="mt-1 font-display text-2xl font-bold text-foreground">{paid.length}</p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4">
               <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-muted-foreground">
-                <Trophy className="h-3.5 w-3.5" /> Entregues
+                <Trophy className="h-3.5 w-3.5" /> {t("sales.delivered")}
               </p>
               <p className="mt-1 font-display text-2xl font-bold text-foreground">{delivered}</p>
             </div>
           </div>
 
           <section className="mb-6 rounded-2xl border border-border bg-card p-5">
-            <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Encomendas por dia</h2>
+            <h2 className="mb-4 font-display text-lg font-semibold text-foreground">{t("sales.perDay")}</h2>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ left: -20, right: 8 }}>
@@ -166,7 +168,7 @@ const Sales = () => {
                       color: "hsl(var(--foreground))",
                     }}
                     formatter={(value: number, name) =>
-                      name === "receita" ? [`${formatEuro(Number(value))}`, "Receita"] : [value, "Encomendas"]
+                      name === "receita" ? [`${formatEuro(Number(value))}`, t("sales.revenueShort")] : [value, t("sales.orders")]
                     }
                   />
                   <Bar dataKey="encomendas" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
@@ -176,9 +178,9 @@ const Sales = () => {
           </section>
 
           <section className="rounded-2xl border border-border bg-card p-5">
-            <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Produtos mais vendidos</h2>
+            <h2 className="mb-4 font-display text-lg font-semibold text-foreground">{t("sales.top")}</h2>
             {topProducts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Ainda não há vendas registadas nos últimos 30 dias.</p>
+              <p className="text-sm text-muted-foreground">{t("sales.none")}</p>
             ) : (
               <ul className="space-y-2">
                 {topProducts.map((p, i) => (
@@ -187,7 +189,7 @@ const Sales = () => {
                       {i + 1}
                     </span>
                     <p className="flex-1 truncate font-medium text-foreground">{p.name}</p>
-                    <span className="text-sm text-muted-foreground">{p.qty} un.</span>
+                    <span className="text-sm text-muted-foreground">{t("sales.units", { count: p.qty })}</span>
                     <span className="w-20 text-right font-medium text-foreground">{formatEuro(p.total)}</span>
                   </li>
                 ))}

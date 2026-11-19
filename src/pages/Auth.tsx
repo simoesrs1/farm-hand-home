@@ -23,12 +23,14 @@ import {eye} from 'react-icons-kit/feather/eye'
  * a Google e é reclamado no regresso, via claim_initial_profile_type.
  */
 const PENDING_PROFILE_TYPE_KEY = "farmconnect:pending_profile_type";
+import { Trans, useTranslation } from "react-i18next";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, refreshProfile } = useAuth();
+  const { t, i18n } = useTranslation(["account", "common"]);
   const [isSignup, setIsSignup] = useState(searchParams.get("tab") === "signup");
   const [profileType, setProfileType] = useState<"cliente" | "vendedor">("cliente");
   const [loading, setLoading] = useState(false);
@@ -129,7 +131,8 @@ const Auth = () => {
           email,
           password,
           options: {
-            data: { full_name: fullName, profile_type: profileType },
+            // preferred_language: os emails do Supabase Auth podem usar {{ .Data.preferred_language }}.
+            data: { full_name: fullName, profile_type: profileType, preferred_language: i18n.resolvedLanguage ?? "pt" },
             emailRedirectTo: window.location.origin + redirectAfterAuth,
           },
         });
@@ -141,17 +144,16 @@ const Auth = () => {
         if (isExistingUserResponse(data.user)) {
           setEmailTaken(true);
           toast({
-            title: "Email já registado",
-            description:
-              "Já existe uma conta com este email. Inicie sessão ou, se ainda não confirmou o registo, verifique a sua caixa de correio.",
+            title: t("auth.emailTaken"),
+            description: t("auth.emailTakenText"),
             variant: "destructive",
           });
           return;
         }
 
         toast({
-          title: "Conta criada!",
-          description: "Verifica o teu email para confirmar o registo.",
+          title: t("auth.created"),
+          description: t("auth.createdText"),
         });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -167,7 +169,7 @@ const Auth = () => {
         setEmailTaken(true);
       }
       toast({
-        title: "Erro",
+        title: t("auth.error"),
         description: toUserMessage(error),
         variant: "destructive",
       });
@@ -198,7 +200,7 @@ const Auth = () => {
       console.error("Google auth error", error);
       sessionStorage.removeItem(PENDING_PROFILE_TYPE_KEY);
       toast({
-        title: "Erro",
+        title: t("auth.error"),
         description: toUserMessage(error),
         variant: "destructive",
       });
@@ -215,7 +217,7 @@ const Auth = () => {
           <div className="mb-6 flex items-center justify-center">
             <img
               src={logoValorRuralFull}
-              alt="ValorRural — A Tua Conexão Direta com a Quinta"
+              alt={t("common:header.logoAlt")}
               width={785}
               height={594}
               className="h-28 w-auto"
@@ -232,7 +234,7 @@ const Auth = () => {
                 setEmailTaken(false);
               }}
             >
-              Entrar
+              {t("auth.login")}
             </button>
             <button
               className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
@@ -243,14 +245,14 @@ const Auth = () => {
                 setEmailTaken(false);
               }}
             >
-              Registar
+              {t("auth.signup")}
             </button>
           </div>
 
           {isSignup && (
             <div className="mb-6">
               <label className="mb-2 block text-xs font-medium text-muted-foreground">
-                Tipo de perfil
+                {t("auth.profileType")}
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -262,7 +264,7 @@ const Auth = () => {
                   onClick={() => setProfileType("cliente")}
                 >
                   <User className="h-5 w-5" />
-                  Cliente
+                  {t("auth.client")}
                 </button>
                 <button
                   className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-4 text-sm font-medium transition-all ${
@@ -273,7 +275,7 @@ const Auth = () => {
                   onClick={() => setProfileType("vendedor")}
                 >
                   <Tractor className="h-5 w-5" />
-                  Agricultor
+                  {t("auth.farmer")}
                 </button>
               </div>
             </div>
@@ -282,10 +284,10 @@ const Auth = () => {
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             {isSignup && (
               <div>
-                <label className="mb-1 block text-xs font-medium text-muted-foreground">Nome completo</label>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("auth.fullName")}</label>
                 <input
                   type="text"
-                  placeholder="O seu nome"
+                  placeholder={t("auth.fullNamePlaceholder")}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
@@ -294,10 +296,10 @@ const Auth = () => {
               </div>
             )}
             <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">Email</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("auth.email")}</label>
               <input
                 type="email"
-                placeholder="email@exemplo.com"
+                placeholder={t("auth.emailPlaceholder")}
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -315,20 +317,20 @@ const Auth = () => {
                 <div className="mt-1 flex items-start gap-1 text-xs text-destructive">
                   <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
                   <span>
-                    Este email já está registado.{" "}
+                    {t("common:errors.emailTaken")}{" "}
                     <button
                       type="button"
                       onClick={switchToLogin}
                       className="font-medium underline underline-offset-2"
                     >
-                      Entrar com este email
+                      {t("auth.loginWithEmail")}
                     </button>
                   </span>
                 </div>
               )}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">Palavra-passe</label>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("auth.password")}</label>
               <div className="relative">
                 <input
                   type={type}
@@ -345,7 +347,7 @@ const Auth = () => {
                   type="button"
                   onClick={handlePasswordToggle}
                   className="absolute inset-y-0 right-3 flex items-center justify-center text-muted-foreground hover:text-foreground"
-                  aria-label="Mostrar ou ocultar palavra-passe"
+                  aria-label={t("auth.togglePassword")}
                 >
                   <Icon icon={icon} size={20} />
                 </button>
@@ -354,33 +356,32 @@ const Auth = () => {
 
             {isSignup && profileType === "vendedor" && (
               <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-                Após confirmar o email, será redirecionado para completar o perfil da sua exploração com dados da empresa e certificados.
+                {t("auth.farmerNext")}
               </p>
             )}
 
             <Button type="submit" className="mt-2 w-full" disabled={busy}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSignup ? "Criar conta" : "Entrar"}
+              {isSignup ? t("auth.createAccount") : t("auth.login")}
             </Button>
 
             {isSignup && (
               <p className="text-center text-xs text-muted-foreground">
-                Ao criar conta, aceita os{" "}
-                <Link to="/termos" className="font-medium text-primary hover:underline">
-                  Termos e Condições
-                </Link>{" "}
-                e confirma que leu a{" "}
-                <Link to="/privacidade" className="font-medium text-primary hover:underline">
-                  Política de Privacidade
-                </Link>
-                .
+                <Trans
+                  t={t}
+                  i18nKey="auth.acceptTerms"
+                  components={{
+                    terms: <Link to="/termos" className="font-medium text-primary hover:underline" />,
+                    privacy: <Link to="/privacidade" className="font-medium text-primary hover:underline" />,
+                  }}
+                />
               </p>
             )}
           </form>
 
           <div className="my-5 flex items-center gap-3">
             <span className="h-px flex-1 bg-border" />
-            <span className="text-xs uppercase tracking-wide text-muted-foreground">ou</span>
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">{t("auth.or")}</span>
             <span className="h-px flex-1 bg-border" />
           </div>
 
@@ -396,16 +397,16 @@ const Auth = () => {
             ) : (
               <GoogleIcon className="mr-2 h-4 w-4" />
             )}
-            {isSignup ? "Registar com a Google" : "Entrar com a Google"}
+            {isSignup ? t("auth.signupGoogle") : t("auth.loginGoogle")}
           </Button>
 
           {isSignup && (
             <p className="mt-3 text-center text-xs text-muted-foreground">
-              A conta Google fica associada ao perfil de{" "}
-              <span className="font-medium text-foreground">
-                {profileType === "vendedor" ? "agricultor" : "cliente"}
-              </span>{" "}
-              selecionado acima.
+              <Trans
+                t={t}
+                i18nKey={profileType === "vendedor" ? "auth.googleFarmer" : "auth.googleClient"}
+                components={{ b: <span className="font-medium text-foreground" /> }}
+              />
             </p>
           )}
         </div>

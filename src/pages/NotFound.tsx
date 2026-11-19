@@ -2,9 +2,11 @@ import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/PageHeader";
+import { useTranslation } from "react-i18next";
 
 const NotFound = () => {
   const location = useLocation();
+  const { t } = useTranslation("home");
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
@@ -15,16 +17,16 @@ const NotFound = () => {
       <div className="container flex max-w-2xl flex-col items-center text-center">
         <PageHeader
           className="justify-center"
-          eyebrow="Erro 404"
-          title="Esta página não existe"
-          description="A ligação pode estar errada ou a página foi removida."
+          eyebrow={t("notFound.eyebrow")}
+          title={t("notFound.title")}
+          description={t("notFound.description")}
         />
         <div className="flex flex-wrap justify-center gap-3">
           <Button asChild>
-            <Link to="/">Voltar ao início</Link>
+            <Link to="/">{t("notFound.home")}</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link to="/catalogo">Ver catálogo</Link>
+            <Link to="/catalogo">{t("notFound.catalog")}</Link>
           </Button>
         </div>
       </div>

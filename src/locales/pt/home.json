@@ -1,0 +1,137 @@
+{
+  "hero": {
+    "title": "Do campo para a sua mesa, sem intermediários",
+    "subtitle": "Descubra produtos frescos diretamente de quem cultiva. Apoie o produtor local!",
+    "byLocation": "Por localização",
+    "byFarm": "Por nome de quinta",
+    "yourLocation": "A sua localização",
+    "locationPlaceholder": "Ex: Lisboa, Sintra, Évora...",
+    "radius": "Raio:",
+    "radiusAria": "Raio de pesquisa: {{km}} km",
+    "search": "Procurar",
+    "preferMap": "Prefere visualizar no mapa?",
+    "farmName": "Nome da quinta",
+    "farmPlaceholder": "Ex: Quinta do Vale Verde, Monte Alentejano...",
+    "farmHint": "Procure diretamente pelo nome de uma quinta ou agricultor.",
+    "collageAria": "Produtos do momento",
+    "imageAlt": "Campos agrícolas portugueses"
+  },
+  "how": {
+    "eyebrow": "Como funciona",
+    "title": "Do campo à sua mesa em três passos",
+    "steps": {
+      "choose": {
+        "title": "Escolha perto de si",
+        "text": "Pesquise pela sua localização e veja o que os agricultores da zona têm à venda esta semana."
+      },
+      "order": {
+        "title": "Encomende à quinta",
+        "text": "Paga na plataforma e a encomenda vai diretamente para o agricultor, sem intermediários."
+      },
+      "collect": {
+        "title": "Levante ou receba em casa",
+        "text": "Leve o código de levantamento à quinta no horário indicado, ou receba em casa quando o agricultor entrega."
+      }
+    }
+  },
+  "about": {
+    "eyebrow": "Sobre nós",
+    "title": "A ponte entre o campo e a cidade",
+    "p1": "O ValorRural nasceu da vontade de encurtar a distância entre quem produz e quem consome. Acreditamos que a agricultura local é o futuro da alimentação sustentável e que cada compra direta fortalece não só a economia rural, mas também a confiança entre pessoas.",
+    "p2": "A nossa plataforma foi desenhada para ser simples, transparente e justa. Cada avaliação é verificada por prova de compra. Cada agricultor é um parceiro com rosto e história.",
+    "values": {
+      "sustainability": {
+        "title": "Sustentabilidade",
+        "desc": "Reduzimos a pegada ecológica ao eliminar intermediários e grandes cadeias logísticas."
+      },
+      "community": {
+        "title": "Comunidade",
+        "desc": "Ligamos pessoas reais: consumidores conscientes e produtores dedicados."
+      },
+      "trust": {
+        "title": "Confiança",
+        "desc": "Só quem compra pode avaliar, por isso as avaliações são autênticas e fiáveis."
+      }
+    }
+  },
+  "mission": {
+    "eyebrow": "Missão & Visão",
+    "title": "O nosso compromisso com a agricultura local",
+    "sections": {
+      "mission": {
+        "title": "Missão",
+        "text": "Democratizar o acesso a produtos agrícolas frescos, de qualidade e a preços acessíveis, criando um mercado digital que valoriza o trabalho dos pequenos e médios agricultores portugueses, enquanto oferece aos consumidores uma experiência de compra transparente e de confiança."
+      },
+      "vision": {
+        "title": "Visão",
+        "text": "Ser a principal plataforma de ligação entre produtores e consumidores em Portugal, contribuindo para um sistema alimentar mais justo, sustentável e comunitário."
+      },
+      "impact": {
+        "title": "Impacto social",
+        "text": "Cada transação no ValorRural fortalece a economia local, preserva práticas agrícolas tradicionais e reduz o desperdício alimentar ao encurtar a cadeia de distribuição."
+      },
+      "sustainability": {
+        "title": "Sustentabilidade",
+        "text": "Ao reduzir intermediários e distâncias de transporte, contribuímos para uma pegada de carbono significativamente menor no setor alimentar."
+      }
+    }
+  },
+  "notFound": {
+    "eyebrow": "Erro 404",
+    "title": "Esta página não existe",
+    "description": "A ligação pode estar errada ou a página foi removida.",
+    "home": "Voltar ao início",
+    "catalog": "Ver catálogo"
+  },
+  "farmerCta": {
+    "eyebrow": "Para agricultores",
+    "title": "É agricultor? Venda diretamente a quem está perto.",
+    "text": "Publique os seus produtos, defina o horário de levantamento e receba as encomendas sem intermediários.",
+    "button": "Começar a vender"
+  },
+  "categories": {
+    "eyebrow": "Catálogo",
+    "title": "O que há na banca esta semana",
+    "description": "As categorias com mais produtos frescos dos nossos agricultores.",
+    "seeAll": "Ver catálogo completo",
+    "products_one": "{{count}} produto",
+    "products_other": "{{count}} produtos",
+    "soon": "Brevemente"
+  },
+  "featured": {
+    "eyebrow": "Quem cultiva",
+    "title": "Agricultores em destaque",
+    "description": "Os produtores mais ativos desta semana: stock em dia, respostas rápidas e produtos prontos a encomendar.",
+    "how": "Como escolhemos?",
+    "empty": "Ainda não há agricultores em destaque esta semana. Os destaques são atualizados todos os dias.",
+    "seeCatalog": "Ver o catálogo",
+    "farmerFallback": "Agricultor",
+    "available_one": "{{count}} produto disponível",
+    "available_other": "{{count}} produtos disponíveis"
+  },
+  "impact": {
+    "aria": "A ValorRural em números",
+    "farmers": "agricultores com produtos à venda",
+    "products": "produtos disponíveis agora",
+    "reviews": "avaliações de quem já comprou"
+  },
+  "seasonal": {
+    "aria": "Produtos da época em {{month}}",
+    "title": "Da época"
+  },
+  "rail": {
+    "eyebrow": "Visite a quinta",
+    "title": "Experiências e alojamento",
+    "description": "Apanhe a azeitona, durma na quinta, leve um brinde da casa.",
+    "previous": "Anterior",
+    "next": "Seguinte",
+    "stay": "Alojamento",
+    "experience": "Experiência",
+    "unit": {
+      "stayPerPerson": "/noite por pessoa",
+      "stay": "/noite",
+      "perPerson": "/pessoa",
+      "perGroup": "/grupo"
+    }
+  }
+}

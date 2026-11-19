@@ -6,10 +6,12 @@ import PageHeader from "@/components/PageHeader";
 import ExperienceForm, { type ExperienceRow } from "@/components/ExperienceForm";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 /** Criar (/agricultor/experiencias/nova) ou editar (/agricultor/experiencias/:id/editar). */
 const ExperienceEditor = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(["farmer", "common"]);
   const { id } = useParams<{ id: string }>();
   const { user, loading: authLoading } = useAuth();
   const [farmerId, setFarmerId] = useState<string | null>(null);
@@ -53,9 +55,9 @@ const ExperienceEditor = () => {
   if (!farmerId || notFound) {
     return (
       <div className="container py-16 text-center">
-        <p className="text-muted-foreground">{notFound ? "Experiência não encontrada." : "Complete o registo de agricultor para criar experiências."}</p>
+        <p className="text-muted-foreground">{notFound ? t("editors.experienceNotFound") : t("editors.completeForExperiences")}</p>
         <Button className="mt-4" onClick={() => navigate(notFound ? "/agricultor/experiencias" : "/onboarding/agricultor")}>
-          {notFound ? "As minhas experiências" : "Completar perfil"}
+          {notFound ? t("common:menu.farmer.myExperiences") : t("editors.completeProfile")}
         </Button>
       </div>
     );
@@ -64,9 +66,9 @@ const ExperienceEditor = () => {
   return (
     <div className="container max-w-3xl py-8">
       <button onClick={() => navigate("/agricultor/experiencias")} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> As minhas experiências
+        <ArrowLeft className="h-4 w-4" /> {t("common:menu.farmer.myExperiences")}
       </button>
-      <PageHeader className="mb-6" eyebrow="Área do agricultor" title={experience ? "Editar experiência" : "Nova experiência"} />
+      <PageHeader className="mb-6" eyebrow={t("area")} title={experience ? t("editors.editExperience") : t("editors.newExperience")} />
       <ExperienceForm
         farmerId={farmerId}
         experience={experience}

@@ -5,6 +5,7 @@
  */
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import i18n from "@/i18n";
 import { isVideoPath } from "@/lib/media-upload";
 
 export type CopyKind = "product" | "experience" | "stay";
@@ -84,6 +85,6 @@ export const generateDescription = async ({ kind, draft, facts, files = [], stor
     throw new Error(msg);
   }
   if (data?.error) throw new Error(data.error);
-  if (!data?.description) throw new Error("Não foi possível gerar a descrição.");
+  if (!data?.description) throw new Error(i18n.t("offerings:ai.failed"));
   return data.description;
 };

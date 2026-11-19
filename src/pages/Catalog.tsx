@@ -4,12 +4,13 @@ import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { categories } from "@/data/categories";
+import { categories, categoryLabel } from "@/data/categories";
 import PageHeader from "@/components/PageHeader";
 import { isInSeason, useHomeProducts } from "@/hooks/useHomeProducts";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Flip, gsap, useGSAP } from "@/lib/animation";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 /** Compara sem acentos nem maiúsculas ("halofitas" encontra "Halófitas"). */
 const normalize = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
@@ -19,6 +20,7 @@ type Chip = "com-produtos" | "da-epoca";
 const Catalog = () => {
   const { data: products = [], isLoading } = useHomeProducts();
   const reducedMotion = useReducedMotion();
+  const { t } = useTranslation(["catalog", "common"]);
   const [query, setQuery] = useState("");
   const [chips, setChips] = useState<Set<Chip>>(new Set());
 
@@ -39,11 +41,12 @@ const Catalog = () => {
     const q = normalize(query.trim());
     return tiles.filter(
       (c) =>
-        (!q || normalize(c.name).includes(q)) &&
+        (!q || normalize(t(`common:categories.${c.slug}`, { defaultValue: c.name })).includes(q) || normalize(c.name).includes(q)) &&
         (!chips.has("com-produtos") || c.count > 0) &&
         (!chips.has("da-epoca") || c.seasonal > 0),
     );
-  }, [tiles, query, chips]);
+    // A pesquisa encontra a categoria pelo nome no idioma atual ou em português.
+  }, [tiles, query, chips, t]);
   const visibleKey = visible.map((c) => c.slug).join(",");
   const topSlug = tiles[0]?.count ? tiles[0].slug : null;
 
@@ -88,21 +91,21 @@ const Catalog = () => {
   );
 
   const chipList: { key: Chip; label: string }[] = [
-    { key: "com-produtos", label: "Com produtos" },
-    { key: "da-epoca", label: "Da época" },
+    { key: "com-produtos", label: t("catalogPage.withProducts") },
+    { key: "da-epoca", label: t("catalogPage.inSeason") },
   ];
 
   return (
     <main className="py-12">
       <div className="container">
         <PageHeader
-          title="Catálogo"
-          description="Explore por categoria os produtos frescos dos nossos agricultores."
+          title={t("catalogPage.title")}
+          description={t("catalogPage.description")}
           actions={
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <label htmlFor="catalog-search" className="sr-only">
-                Procurar categoria
+                {t("catalogPage.searchLabel")}
               </label>
               <Input
                 id="catalog-search"
@@ -112,14 +115,14 @@ const Catalog = () => {
                   captureFlip();
                   setQuery(e.target.value);
                 }}
-                placeholder="Procurar categoria…"
+                placeholder={t("catalogPage.searchPlaceholder")}
                 className="pl-9"
               />
             </div>
           }
         />
 
-        <div className="mb-6 flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar categorias">
+        <div className="mb-6 flex flex-wrap items-center gap-2" role="group" aria-label={t("catalogPage.filterAria")}>
           {chipList.map((c) => {
             const on = chips.has(c.key);
             return (
@@ -141,16 +144,16 @@ const Catalog = () => {
           })}
           {(chips.size > 0 || query) && (
             <Button variant="ghost" size="sm" className="gap-1" onClick={clearAll}>
-              <X className="h-3.5 w-3.5" /> Limpar
+              <X className="h-3.5 w-3.5" /> {t("common:actions.clear")}
             </Button>
           )}
         </div>
 
         {visible.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border py-12 text-center">
-            <p className="text-muted-foreground">Nenhuma categoria corresponde à pesquisa.</p>
+            <p className="text-muted-foreground">{t("catalogPage.noMatch")}</p>
             <Button variant="link" onClick={clearAll}>
-              Limpar pesquisa
+              {t("catalogPage.clearSearch")}
             </Button>
           </div>
         ) : (
@@ -189,21 +192,21 @@ const Catalog = () => {
                           featured ? "text-2xl md:text-4xl" : "text-lg md:text-xl",
                         )}
                       >
-                        {c.name}
+                        {categoryLabel(c.slug)}
                       </span>
                       {c.seasonal > 0 && (
                         <span className="block text-xs text-background/80">
-                          {c.seasonal} da época
+                          {t("catalogPage.seasonalCount", { count: c.seasonal })}
                         </span>
                       )}
                     </span>
                     {isLoading ? null : c.count > 0 ? (
                       <Badge variant="highlight" className="shrink-0 font-mono tabular-nums">
-                        {c.count} {c.count === 1 ? "produto" : "produtos"}
+                        {t("catalogPage.products", { count: c.count })}
                       </Badge>
                     ) : (
                       <Badge variant="muted" className="shrink-0">
-                        Brevemente
+                        {t("catalogPage.soon")}
                       </Badge>
                     )}
                   </div>

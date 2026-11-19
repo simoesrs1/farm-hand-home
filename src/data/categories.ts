@@ -6,6 +6,7 @@ import ervasImg from "../assets/category-ervas.jpg";
 import leguminosasImg from "../assets/category-leguminosas.jpg";
 
 import { categoryList, type CategoryBase } from "./category-list";
+import i18n from "@/i18n";
 
 export interface Category extends CategoryBase {
   image: string;
@@ -50,3 +51,13 @@ export const getCategoryBySlug = (slug: string) => categories.find((c) => c.slug
 
 export const getCategoryByName = (name: string) =>
   categories.find((c) => c.name.toLowerCase() === name.toLowerCase());
+
+/**
+ * Nome da categoria no idioma atual. Na base de dados a categoria fica com o nome
+ * português (products.category); aceita esse nome ou o slug.
+ */
+export const categoryLabel = (nameOrSlug: string | null | undefined) => {
+  if (!nameOrSlug) return "";
+  const slug = getCategoryByName(nameOrSlug)?.slug ?? getCategoryBySlug(nameOrSlug)?.slug;
+  return slug ? i18n.t(`common:categories.${slug}`, { defaultValue: nameOrSlug }) : nameOrSlug;
+};

@@ -17,8 +17,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExperienceRow } from "@/components/ExperienceForm";
-import { DAY_LABELS } from "@/lib/pickup-hours";
-import { formatEuro } from "@/lib/format";
+import TranslatedText from "@/components/TranslatedText";
+import { dayLabel } from "@/lib/pickup-hours";
+import { formatDate, formatDateTime, formatEuro } from "@/lib/format";
 import {
   FREE_CANCEL_DAYS,
   experienceAmount,
@@ -35,9 +36,10 @@ import {
   upcomingSessions,
   weekdayOf,
 } from "@/lib/experience-sessions";
+import { useTranslation } from "react-i18next";
 
 const formatDay = (iso: string) =>
-  new Date(`${iso}T12:00:00Z`).toLocaleDateString("pt-PT", { weekday: "long", day: "2-digit", month: "2-digit", timeZone: "UTC" });
+  formatDate(`${iso}T12:00:00Z`, { weekday: "long", day: "2-digit", month: "2-digit", timeZone: "UTC" });
 
 const BOOKING_DAYS = 60;
 
@@ -61,6 +63,7 @@ interface ExperienceDialogProps {
 const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange }: ExperienceDialogProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation("offerings");
   const [media, setMedia] = useState<{ path: string; url: string }[]>([]);
   const [gifts, setGifts] = useState<GiftOption[]>([]);
   const [booked, setBooked] = useState<Record<string, { people: number; bookings: number }>>({});
@@ -148,11 +151,11 @@ const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange 
   const book = async () => {
     if (!exp) return;
     if (!date || !time) {
-      toast({ title: "Escolha o dia e a hora", variant: "destructive" });
+      toast({ title: t("booking.chooseDayTime"), variant: "destructive" });
       return;
     }
     if (!Number.isInteger(peopleNum) || peopleNum < exp.min_people || peopleNum > maxForBooking) {
-      toast({ title: `Indique entre ${exp.min_people} e ${maxForBooking} pessoas`, variant: "destructive" });
+      toast({ title: t("booking.peopleRange", { min: exp.min_people, max: maxForBooking }), variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -161,7 +164,7 @@ const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange 
     });
     setSubmitting(false);
     if (error || (data as { error?: string } | null)?.error) {
-      let msg = (data as { error?: string } | null)?.error ?? "Não foi possível concluir a reserva.";
+      let msg = (data as { error?: string } | null)?.error ?? t("booking.failed");
       if (error instanceof FunctionsHttpError) {
         try {
           const body = await error.context.json();
@@ -170,10 +173,10 @@ const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange 
           // resposta sem JSON: fica a mensagem genérica
         }
       }
-      toast({ title: "Reserva não concluída", description: msg, variant: "destructive" });
+      toast({ title: t("booking.notCompleted"), description: msg, variant: "destructive" });
       return;
     }
-    toast({ title: "Reserva confirmada", description: "Pagamento simulado. O QR code está nas suas encomendas." });
+    toast({ title: t("booking.confirmed"), description: t("booking.confirmedText") });
     onOpenChange(false);
     navigate("/encomendas");
   };
@@ -184,9 +187,11 @@ const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange 
         {exp && (
           <>
             <DialogHeader>
-              <DialogTitle>{exp.title}</DialogTitle>
+              <DialogTitle>
+                <TranslatedText type="experience" id={exp.id} field="title" text={exp.title} />
+              </DialogTitle>
               <DialogDescription>
-                Experiência em{" "}
+                {t("experienceDialog.at")}{" "}
                 {farmId ? (
                   <Link to={`/agricultor/${farmId}`} onClick={() => onOpenChange(false)} className="font-medium text-primary hover:underline">
                     {farmName}
@@ -211,22 +216,32 @@ const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange 
 
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" /> {formatDuration(exp.duration_minutes)}</span>
-              <span className="inline-flex items-center gap-1"><Users className="h-4 w-4" /> {exp.min_people}–{exp.max_people} pessoas</span>
+              <span className="inline-flex items-center gap-1"><Users className="h-4 w-4" /> {t("experienceDialog.people", { min: exp.min_people, max: exp.max_people })}</span>
               <span className="font-medium text-foreground">
-                {formatEuro(Number(exp.base_price))} {mode === "per_person" ? "por pessoa" : "por grupo"}
+                {formatEuro(Number(exp.base_price))} {mode === "per_person" ? t("units.perPersonLong") : t("units.perGroupLong")}
               </span>
             </div>
 
-            <p className="whitespace-pre-line text-sm text-foreground">{exp.description}</p>
+            <div>
+              <TranslatedText
+                type="experience"
+                id={exp.id}
+                field="description"
+                text={exp.description}
+                as="p"
+                className="whitespace-pre-line text-sm text-foreground"
+                toggle
+              />
+            </div>
 
             <div className="rounded-lg border border-border p-3 text-sm">
-              <p className="mb-1 flex items-center gap-1.5 font-medium text-foreground"><CalendarDays className="h-4 w-4 text-primary" /> Sessões</p>
+              <p className="mb-1 flex items-center gap-1.5 font-medium text-foreground"><CalendarDays className="h-4 w-4 text-primary" /> {t("experienceDialog.sessions")}</p>
               <ul className="space-y-0.5 text-muted-foreground">
                 {sessions.map((s) => {
                   const dayPrice = unitPriceFor(Number(exp.base_price), exp.day_prices, s.day);
                   return (
                     <li key={s.day}>
-                      {DAY_LABELS[s.day]}: {s.times.join(", ")}
+                      {dayLabel(s.day)}: {s.times.join(", ")}
                       {dayPrice !== Number(exp.base_price) && ` · ${formatEuro(dayPrice)}`}
                     </li>
                   );
@@ -236,27 +251,30 @@ const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange 
 
             {freeGift && (
               <p className="flex items-center gap-2 rounded-lg bg-primary/10 p-3 text-sm text-foreground">
-                <Gift className="h-4 w-4 shrink-0 text-primary" /> Inclui um brinde: {freeGift.product?.name}
+                <Gift className="h-4 w-4 shrink-0 text-primary" /> {t("experienceDialog.includesGift")}{" "}
+                {freeGift.product && (
+                  <TranslatedText type="product" id={freeGift.product.id} field="name" text={freeGift.product.name} />
+                )}
               </p>
             )}
 
             <div className="border-t border-border pt-4">
               {isOwner ? (
-                <p className="text-sm text-muted-foreground">É a sua experiência: os clientes reservam a partir daqui.</p>
+                <p className="text-sm text-muted-foreground">{t("experienceDialog.isOwner")}</p>
               ) : unavailable ? (
-                <p className="text-sm text-muted-foreground">Indisponível de momento.</p>
+                <p className="text-sm text-muted-foreground">{t("booking.unavailable")}</p>
               ) : !user ? (
                 <Button asChild className="w-full">
-                  <Link to="/auth">Iniciar sessão para reservar</Link>
+                  <Link to="/auth">{t("booking.loginToBook")}</Link>
                 </Button>
               ) : dates.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sem sessões disponíveis nos próximos {BOOKING_DAYS} dias.</p>
+                <p className="text-sm text-muted-foreground">{t("experienceDialog.noSessions", { count: BOOKING_DAYS })}</p>
               ) : (
                 <div className="space-y-3">
-                  <h3 className="font-medium text-foreground">Reservar</h3>
+                  <h3 className="font-medium text-foreground">{t("booking.book")}</h3>
                   <div className="grid gap-3 sm:grid-cols-3">
                     <div className="space-y-1">
-                      <Label htmlFor="bk-date" className="text-xs">Dia</Label>
+                      <Label htmlFor="bk-date" className="text-xs">{t("booking.day")}</Label>
                       <select
                         id="bk-date"
                         value={date}
@@ -266,14 +284,14 @@ const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange 
                         }}
                         className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
                       >
-                        <option value="">Escolher...</option>
+                        <option value="">{t("booking.choose")}</option>
                         {dates.map((d) => (
                           <option key={d} value={d}>{formatDay(d)}</option>
                         ))}
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="bk-time" className="text-xs">Hora</Label>
+                      <Label htmlFor="bk-time" className="text-xs">{t("booking.time")}</Label>
                       <select
                         id="bk-time"
                         value={time}
@@ -281,16 +299,17 @@ const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange 
                         disabled={!date}
                         className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
                       >
-                        <option value="">Escolher...</option>
-                        {times.map((t) => (
-                          <option key={t} value={t}>
-                            {t}{mode === "per_person" ? ` (${remainingFor(date, t)} lugares)` : ""}
+                        <option value="">{t("booking.choose")}</option>
+                        {times.map((tm) => (
+                          <option key={tm} value={tm}>
+                            {tm}
+                            {mode === "per_person" ? ` (${t("experienceDialog.seats", { count: remainingFor(date, tm) })})` : ""}
                           </option>
                         ))}
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="bk-people" className="text-xs">Pessoas</Label>
+                      <Label htmlFor="bk-people" className="text-xs">{t("booking.people")}</Label>
                       <Input
                         id="bk-people"
                         type="number"
@@ -305,7 +324,7 @@ const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange 
 
                   {paidGifts.length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-xs font-medium text-foreground">Brindes extra (opcional)</p>
+                      <p className="text-xs font-medium text-foreground">{t("booking.extraGifts")}</p>
                       {paidGifts.map((g) => (
                         <label key={g.id} htmlFor={`gift-${g.id}`} className="flex cursor-pointer items-center gap-3 text-sm">
                           <Checkbox
@@ -315,7 +334,9 @@ const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange 
                               setPaidGiftIds((ids) => (v === true ? [...ids, g.id] : ids.filter((x) => x !== g.id)))
                             }
                           />
-                          <span className="flex-1 text-foreground">{g.product?.name}</span>
+                          <span className="flex-1 text-foreground">
+                            {g.product && <TranslatedText type="product" id={g.product.id} field="name" text={g.product.name} />}
+                          </span>
                           <span className="text-muted-foreground">+{formatEuro(Number(g.extra_price))}</span>
                         </label>
                       ))}
@@ -323,23 +344,26 @@ const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange 
                   )}
 
                   <div className="flex justify-between border-t border-border pt-3 text-sm">
-                    <span className="font-medium text-foreground">Total</span>
+                    <span className="font-medium text-foreground">{t("booking.total")}</span>
                     <span className="font-mono tabular-nums text-lg font-bold text-primary">{formatEuro(total)}</span>
                   </div>
 
                   <label htmlFor="bk-accept" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/40 p-3 text-xs text-foreground">
                     <Checkbox id="bk-accept" checked={accepted} onCheckedChange={(v) => setAccepted(v === true)} className="mt-0.5" />
                     <span>
-                      Cancelamento grátis até {FREE_CANCEL_DAYS} dias antes da sessão
-                      {freeUntil ? ` (até ${freeUntil.toLocaleString("pt-PT", { timeZone: "UTC", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })})` : ""}.
-                      Depois disso, são retidos 25% do valor da experiência, e os brindes extra são devolvidos.
-                      Sem comparência, o valor não é devolvido.
+                      {t("experienceDialog.cancelPolicy", { count: FREE_CANCEL_DAYS })}
+                      {freeUntil
+                        ? ` (${t("booking.until", {
+                            date: formatDateTime(freeUntil, { timeZone: "UTC", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
+                          })})`
+                        : ""}
+                      . {t("experienceDialog.cancelPolicyRest")}
                     </span>
                   </label>
 
                   <Button onClick={book} disabled={submitting || !accepted || !date || !time} className="w-full gap-2">
                     {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Reservar e pagar {formatEuro(total)} (simulado)
+                    {t("booking.payButton", { price: formatEuro(total) })}
                   </Button>
                 </div>
               )}

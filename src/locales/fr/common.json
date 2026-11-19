@@ -1,0 +1,279 @@
+{
+  "nav": {
+    "catalog": "Catalogue",
+    "experiences": "Expériences",
+    "stays": "Hébergement",
+    "about": "À propos",
+    "mission": "Mission"
+  },
+  "header": {
+    "homeAria": "ValorRural — accueil",
+    "logoAlt": "ValorRural — Votre lien direct avec la ferme",
+    "cart": "Panier",
+    "login": "Se connecter",
+    "signup": "S'inscrire"
+  },
+  "language": {
+    "label": "Langue",
+    "choose": "Choisir la langue"
+  },
+  "content": {
+    "showOriginal": "Voir l'original",
+    "showTranslation": "Voir la traduction"
+  },
+  "menu": {
+    "button": "Menu",
+    "mainAria": "Menu principal",
+    "sections": {
+      "explore": "Explorer",
+      "farmer": "Agriculteur",
+      "client": "Client",
+      "account": "Compte",
+      "activeProfile": "Profil actif"
+    },
+    "farmer": {
+      "addProduct": "Ajouter un produit",
+      "myProducts": "Mes produits",
+      "myExperiences": "Mes expériences",
+      "myStays": "Mon hébergement",
+      "orders": "Commandes",
+      "mySales": "Mes ventes",
+      "availability": "Disponibilités (portes ouvertes)",
+      "validateDelivery": "Valider la livraison"
+    },
+    "client": {
+      "myOrders": "Mes commandes",
+      "cart": "Panier",
+      "favorites": "Favoris"
+    },
+    "account": {
+      "profile": "Profil",
+      "myPage": "Voir ma page",
+      "farmInfo": "Informations de l'exploitation",
+      "settings": "Paramètres"
+    },
+    "modeFarmer": "Agriculteur",
+    "modeClient": "Client",
+    "logout": "Se déconnecter"
+  },
+  "footer": {
+    "tagline": "Nous mettons en relation les consommateurs et les agriculteurs locaux, en toute transparence et confiance.",
+    "browse": "Navigation",
+    "account": "Compte",
+    "contact": "Contact",
+    "rights": "© 2026 ValorRural. Tous droits réservés.",
+    "legalAria": "Mentions légales",
+    "terms": "Conditions générales",
+    "privacy": "Politique de confidentialité",
+    "cookies": "Gérer les cookies",
+    "resumeAnimations": "Reprendre les animations",
+    "pauseAnimations": "Mettre en pause les animations",
+    "complaints": "Livre de réclamations"
+  },
+  "days": {
+    "0": "Dimanche",
+    "1": "Lundi",
+    "2": "Mardi",
+    "3": "Mercredi",
+    "4": "Jeudi",
+    "5": "Vendredi",
+    "6": "Samedi"
+  },
+  "daysShort": {
+    "0": "Dim",
+    "1": "Lun",
+    "2": "Mar",
+    "3": "Mer",
+    "4": "Jeu",
+    "5": "Ven",
+    "6": "Sam"
+  },
+  "pickup": {
+    "openNow": "Ouvert maintenant (jusqu'à {{end}})",
+    "opensToday": "Ouvre aujourd'hui à {{time}}",
+    "opensTomorrow": "Ouvre demain à {{time}}",
+    "opensOn": "Ouvre {{day}} à {{time}}",
+    "unavailable": "Horaires indisponibles"
+  },
+  "ical": {
+    "title": "Portes ouvertes — {{farm}}",
+    "description": "{{day}} de {{start}} à {{end}}. Retrait des commandes à la ferme."
+  },
+  "categories": {
+    "bebidas": "Boissons",
+    "carne": "Viande",
+    "cereais": "Céréales",
+    "charcutaria": "Charcuterie",
+    "cogumelos": "Champignons",
+    "conservas": "Conserves",
+    "ervas-aromaticas": "Herbes aromatiques",
+    "flores": "Fleurs",
+    "fruta": "Fruits",
+    "frutos-secos": "Fruits secs",
+    "gorduras": "Matières grasses",
+    "halofitas": "Halophytes",
+    "horticolas": "Légumes",
+    "laticinios": "Produits laitiers",
+    "leguminosas": "Légumineuses",
+    "mel": "Miel",
+    "oleos-essenciais": "Huiles essentielles",
+    "outros-produtos": "Autres produits",
+    "ovos": "Œufs",
+    "pao-artesanal": "Pain artisanal",
+    "salgados": "Salés",
+    "temperos-e-especiarias": "Assaisonnements et épices"
+  },
+  "fulfillment": {
+    "pickup": "Retirer à la ferme",
+    "delivery": "Livraison à domicile"
+  },
+  "deliveryMode": {
+    "shipping": "Livraison à domicile par l'agriculteur",
+    "shippingUnavailable": "Livraison à domicile pas encore disponible",
+    "both": "Retrait ou livraison à domicile",
+    "pickup": "Retrait à la ferme"
+  },
+  "deliverySettings": {
+    "fields": {
+      "delivery_mode": "Mode de livraison",
+      "delivery_tracking": "Suivi de la livraison",
+      "shipping_days": "Délai minimum de préparation",
+      "delivery_fee": "Frais de livraison"
+    },
+    "modes": {
+      "pickup": {
+        "label": "Retrait à la ferme",
+        "hint": "Le client vient chercher la commande."
+      },
+      "shipping": {
+        "label": "Livraison à domicile",
+        "hint": "Livraison en main propre faite par vous."
+      },
+      "both": {
+        "label": "Les deux",
+        "hint": "Retrait ou livraison, au choix du client."
+      }
+    }
+  },
+  "reviewContext": {
+    "cancelled": "Commande annulée",
+    "late": "Livraison en retard"
+  },
+  "duration": {
+    "hours_one": "{{count}} h",
+    "hours_other": "{{count}} h",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min"
+  },
+  "registration": {
+    "AL": "Hébergement local (AL)",
+    "TER": "Tourisme rural (TER)"
+  },
+  "offerings": {
+    "products": {
+      "label": "Vente de produits",
+      "description": "Produits de la ferme à retirer ou à livrer."
+    },
+    "experiences": {
+      "label": "Expériences",
+      "description": "Activités à la ferme, avec séances, réservations et cadeau."
+    },
+    "stays": {
+      "label": "Hébergement",
+      "description": "Chambres ou logements en Hébergement Local ou Tourisme Rural."
+    }
+  },
+  "notifications": {
+    "many_one": "{{count}} nouvelle notification",
+    "many_other": "{{count}} nouvelles notifications",
+    "andMore": "{{shown}} et {{count}} de plus",
+    "view": "Voir les notifications",
+    "viewShort": "Voir",
+    "title": "Notifications",
+    "empty": "Aucune notification."
+  },
+  "activity": {
+    "levels": {
+      "semente": "Graine",
+      "rebento": "Pousse",
+      "colheita": "Récolte",
+      "pomar": "Verger"
+    },
+    "actions": {
+      "pending_one": "Acceptez la commande en attente — la rapidité de réponse compte dans le score.",
+      "pending_other": "Acceptez les {{count}} commandes en attente — la rapidité de réponse compte dans le score.",
+      "firstProduct": "Ajoutez votre premier produit pour apparaître dans le catalogue.",
+      "stale_one": "Le catalogue n'a pas été mis à jour depuis {{count}} jour. Confirmez le stock pour remonter dans le catalogue.",
+      "stale_other": "Le catalogue n'a pas été mis à jour depuis {{count}} jours. Confirmez le stock pour remonter dans le catalogue.",
+      "outOfStock_one": "{{count}} produit est en rupture de stock. Réapprovisionnez-le ou désactivez-le.",
+      "outOfStock_other": "{{count}} produits sont en rupture de stock. Réapprovisionnez-les ou désactivez-les.",
+      "unanswered_one": "{{count}} message de client est resté sans réponse pendant 24 h.",
+      "unanswered_other": "{{count}} messages de clients sont restés sans réponse pendant 24 h."
+    }
+  },
+  "errors": {
+    "emailTaken": "Cet email est déjà enregistré.",
+    "invalidLogin": "Email ou mot de passe incorrect.",
+    "emailNotConfirmed": "Confirme ton email avant de te connecter.",
+    "weakPassword": "Mot de passe trop faible ou compromis. Choisis-en un autre.",
+    "rateLimit": "Trop de tentatives. Réessaie dans quelques minutes.",
+    "forbidden": "Tu n'as pas l'autorisation pour cette action.",
+    "explorationTaken": "Ce numéro d'exploitation est déjà associé à un autre compte.",
+    "nifTaken": "Ce NIF est déjà associé à un autre compte.",
+    "network": "Erreur de connexion. Vérifie ta connexion internet et réessaie.",
+    "generic": "Une erreur s'est produite. Réessaie."
+  },
+  "actions": {
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "back": "Retour",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "confirm": "Confirmer",
+    "continue": "Continuer",
+    "retry": "Réessayer",
+    "add": "Ajouter",
+    "remove": "Retirer",
+    "search": "Rechercher",
+    "seeAll": "Tout voir",
+    "seeMore": "Voir plus",
+    "loading": "Chargement…",
+    "send": "Envoyer",
+    "yes": "Oui",
+    "no": "Non",
+    "clear": "Effacer",
+    "previous": "Précédent",
+    "next": "Suivant"
+  },
+  "units": {
+    "km": "{{value}} km",
+    "perUnit": "/ {{unit}}",
+    "vat": "TVA {{rate}} %"
+  },
+  "favorites": {
+    "add": "Ajouter aux favoris",
+    "remove": "Retirer des favoris"
+  },
+  "maps": {
+    "disabled": "Carte désactivée",
+    "disabledText": "Les cartes sont fournies par Google, qui peut déposer des cookies et collecter votre adresse IP. Pour voir la carte, autorisez les cookies de cartes.",
+    "enable": "Activer les cartes",
+    "preferences": "Préférences",
+    "pointTitle": "Indiquer le point de livraison",
+    "pointText": "Touchez la carte à l'endroit exact où l'agriculteur doit livrer la commande.",
+    "pointPicked": "Point indiqué : {{coords}}",
+    "pointNone": "Aucun point indiqué pour l'instant.",
+    "pointConfirm": "Confirmer le point",
+    "noKey": "Carte indisponible — la clé Google Maps n'est pas configurée."
+  },
+  "orderUnits": {
+    "pessoa_one": "personne",
+    "pessoa_other": "personnes",
+    "grupo_one": "groupe",
+    "grupo_other": "groupes",
+    "noite_one": "nuit",
+    "noite_other": "nuits"
+  }
+}

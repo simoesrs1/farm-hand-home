@@ -1,0 +1,242 @@
+{
+  "status": {
+    "pending_payment": "A aguardar pagamento",
+    "awaiting_pickup": "A aguardar levantamento",
+    "delivered": "Levantada",
+    "expired": "Expirada",
+    "refunded": "Devolvida",
+    "cancelled": "Cancelada",
+    "cancelledByFarmer": "Cancelada pelo agricultor",
+    "home": {
+      "awaiting_pickup": "A aguardar entrega",
+      "delivered": "Entregue"
+    },
+    "booking": {
+      "awaiting_pickup": "Reservada",
+      "delivered": "Concluída",
+      "expired": "Sem comparência"
+    }
+  },
+  "booking": {
+    "stay": "Alojamento",
+    "experience": "Experiência",
+    "stayDetails": "Entrada {{checkIn}} · Saída {{checkOut}} · {{guests}} · {{rooms}}",
+    "guests_one": "{{count}} hóspede",
+    "guests_other": "{{count}} hóspedes",
+    "rooms_one": "{{count}} quarto",
+    "rooms_other": "{{count}} quartos",
+    "people_one": "{{count}} pessoa",
+    "people_other": "{{count}} pessoas"
+  },
+  "my": {
+    "loginPrompt": "Inicia sessão para ver as tuas encomendas.",
+    "login": "Entrar",
+    "tryAgain": "Tenta novamente dentro de momentos.",
+    "farmFallback": "Quinta",
+    "accepted": "Pedido aceite pelo agricultor",
+    "awaitingAcceptance": "A aguardar aceitação do agricultor",
+    "viewStatus": "Ver estado →",
+    "viewStatusPickup": "Ver estado e levantamento →",
+    "homeDelivery": "Entrega ao domicílio: {{address}}",
+    "track": "Acompanhar",
+    "openMaps": "Abrir no Google Maps →",
+    "details_one": "Detalhes ({{count}} artigo)",
+    "details_other": "Detalhes ({{count}} artigos)",
+    "homeDeliveryFee": "Entrega ao domicílio",
+    "deadline": "Prazo:",
+    "items_one": "{{count}} artigo",
+    "items_other": "{{count}} artigos",
+    "home": "Início",
+    "title": "As minhas encomendas",
+    "empty": "Ainda não tens encomendas.",
+    "seeCatalog": "Ver catálogo",
+    "active": "Ativas",
+    "noActive": "Não tens encomendas ativas.",
+    "past": "Realizadas",
+    "noPast": "Ainda sem encomendas concluídas."
+  },
+  "complaint": {
+    "failed": "Não foi possível registar a queixa",
+    "filed": "Queixa registada",
+    "filedText": "O agricultor tem 48 horas para entregar a encomenda.",
+    "open": "Queixa registada. O agricultor tem até {{date}} para entregar.",
+    "overdue": "Queixa registada. A equipa da plataforma vai confirmar a situação.",
+    "rejected": "A queixa foi analisada e recusada pela equipa da plataforma.",
+    "button": "Não recebi a encomenda",
+    "title": "Não recebeste a encomenda?",
+    "text": "O agricultor será avisado e tem 48 horas para a entregar. Se a entrega não acontecer, a equipa da plataforma confirma a situação e o valor é devolvido.",
+    "confirm": "Registar queixa"
+  },
+  "cancelBooking": {
+    "failed": "Não foi possível cancelar",
+    "done": "Reserva cancelada",
+    "refund": "Vão ser devolvidos {{amount}}.",
+    "button": "Cancelar reserva",
+    "keep": "Manter reserva",
+    "title": "Cancelar a reserva?",
+    "refunded": "devolvidos {{amount}}.",
+    "refundedWithFee": "devolvidos {{amount}} (taxa de cancelamento de {{fee}}).",
+    "free_one": "Ainda estás dentro do prazo de cancelamento grátis (até {{count}} dia antes). Vão ser devolvidos {{amount}}.",
+    "free_other": "Ainda estás dentro do prazo de cancelamento grátis (até {{count}} dias antes). Vão ser devolvidos {{amount}}.",
+    "feeStay_one": "Falta menos de {{count}} dia para a reserva: são retidos 25% do valor do alojamento ({{fee}}) e devolvidos {{amount}}.",
+    "feeStay_other": "Faltam menos de {{count}} dias para a reserva: são retidos 25% do valor do alojamento ({{fee}}) e devolvidos {{amount}}.",
+    "feeExperience_one": "Falta menos de {{count}} dia para a reserva: são retidos 25% do valor da experiência ({{fee}}) e devolvidos {{amount}}.",
+    "feeExperience_other": "Faltam menos de {{count}} dias para a reserva: são retidos 25% do valor da experiência ({{fee}}) e devolvidos {{amount}}."
+  },
+  "review": {
+    "hidePhotoFailed": "Não foi possível retirar a fotografia",
+    "photoHidden": "Fotografia retirada",
+    "photoHiddenText": "A tua avaliação mostra agora apenas o nome.",
+    "rate": "Avaliar agricultor",
+    "deleted": "Avaliação eliminada",
+    "done": "Já avaliada",
+    "removalPending": "Eliminação em análise",
+    "requestRemoval": "Pedir eliminação",
+    "hidePhoto": "Retirar a minha fotografia"
+  },
+  "qr": {
+    "showBooking": "Mostrar QR da reserva",
+    "showDelivery": "Mostrar QR de entrega",
+    "showPickup": "Mostrar QR de levantamento",
+    "bookingTitle": "Reserva na quinta",
+    "deliveryTitle": "Entrega ao domicílio",
+    "pickupTitle": "Levantamento na quinta",
+    "bookingText": "Mostra este QR code (ou o código abaixo) ao agricultor quando chegares à quinta.",
+    "deliveryText": "Mostra este QR code (ou o código abaixo) ao agricultor quando receberes a encomenda.",
+    "pickupText": "Mostra este QR code (ou o código abaixo) ao agricultor para levantar a encomenda.",
+    "code": "Código",
+    "validUntil": "Válido até {{date}}"
+  },
+  "statusPage": {
+    "at": "{{date}} às {{time}}",
+    "atBold": "{{date}} às <b>{{time}}</b>",
+    "loginPrompt": "Inicia sessão para ver o estado das tuas encomendas.",
+    "notFound": "Encomenda não encontrada.",
+    "tracking": {
+      "packed": "Embalada",
+      "in_transit": "Expedida da quinta",
+      "out_for_delivery": "Em trânsito"
+    },
+    "done": {
+      "stay": "Check-in feito",
+      "experience": "Experiência concluída",
+      "delivery": "Entregue",
+      "pickup": "Levantada"
+    },
+    "waiting": {
+      "stay": "Reservada",
+      "experience": "Reservada",
+      "delivery": "A preparar a entrega",
+      "pickup": "Pronta para levantamento"
+    },
+    "confirmed": {
+      "stay": "Check-in confirmado",
+      "experience": "Chegada confirmada",
+      "delivery": "Entrega concluída",
+      "pickup": "Levantamento concluído"
+    },
+    "scheduled": {
+      "stay": "Entrada",
+      "experience": "Sessão",
+      "delivery": "Entrega marcada",
+      "pickup": "Levantamento agendado"
+    },
+    "expectedDelivery": "Entrega prevista",
+    "deadline": "Prazo limite",
+    "pending": "Encomenda pendente",
+    "paid": "Pagamento confirmado",
+    "awaitingPayment": "A aguardar confirmação do pagamento",
+    "awaitingAcceptance": "À espera de aceitação",
+    "acceptedShort": "Aceite",
+    "acceptSoon": "O agricultor vai confirmar a tua encomenda em breve",
+    "refundedText": "O valor foi devolvido — sem stock ou encomenda cancelada.",
+    "expired": "Expirada (não levantada)",
+    "expiredText": "A encomenda não foi levantada dentro do prazo e expirou.",
+    "expiredAt": "Expirou",
+    "refreshAria": "Atualizar estado",
+    "refresh": "Atualizar",
+    "orderFallback": "Encomenda",
+    "orderedOn": "Encomendada em {{when}}",
+    "deliveryDateTime": "Data e hora da entrega",
+    "pickupDateTime": "Data e hora do levantamento",
+    "noTimeDelivery": "Sem hora marcada — entrega prevista para {{date}}. Combina a hora com o agricultor pelo chat.",
+    "noTime": "Sem horário agendado — prazo limite: {{date}}",
+    "qrDelivery": "Mostra o QR ao agricultor quando receberes a encomenda.",
+    "qrPickup": "Mostra o QR ao agricultor no levantamento.",
+    "deliveryAt": "Entrega ao domicílio em"
+  },
+  "chat": {
+    "fileTooBig": "Ficheiro acima de 8MB",
+    "sendFailed": "Não foi possível enviar a mensagem",
+    "archived": "A conversa desta encomenda foi arquivada (mais de 5 dias após a entrega).",
+    "title": "Conversa da encomenda",
+    "empty": "Sem mensagens. Envia a primeira para começares a conversa.",
+    "attach": "Anexar ficheiro",
+    "toFarmer": "Mensagem para o agricultor...",
+    "toClient": "Mensagem para o cliente...",
+    "attachment": "Anexo"
+  },
+  "report": {
+    "reasonTooShort": "Descreve o motivo (mínimo 5 caracteres)",
+    "proofRequired": "A prova é obrigatória para abrir uma denúncia",
+    "proofTooBig": "Prova acima de 8MB",
+    "filed": "Denúncia registada para análise da equipa.",
+    "failed": "Não foi possível abrir a denúncia",
+    "button": "Denunciar",
+    "title": "Abrir denúncia",
+    "description": "Descreve o que se passou e anexa uma prova (foto, PDF). A denúncia fica registada para análise da equipa da plataforma.",
+    "placeholder": "Descreve o problema...",
+    "proof": "Prova (obrigatória)",
+    "warning": "Para denunciar um abuso por parte do agricultor, tens de apresentar provas concretas de que esse abuso aconteceu. Se não existirem provas, o agricultor pode avançar com um processo judicial por difamação.",
+    "sending": "A enviar...",
+    "send": "Enviar denúncia"
+  },
+  "rate": {
+    "chooseRating": "Escolhe uma avaliação",
+    "chooseRatingText": "Seleciona de 1 a 5 estrelas.",
+    "sendFailed": "Não foi possível enviar",
+    "sent": "Avaliação enviada",
+    "sentText": "Obrigado pelo teu feedback!",
+    "loginPrompt": "Inicia sessão para avaliar.",
+    "blocked": {
+      "notFound": "Encomenda não encontrada.",
+      "alreadyRated": "Esta encomenda já foi avaliada.",
+      "notYet": "Podes avaliar depois de receberes a encomenda, se o agricultor a cancelar ou se a entrega se atrasar mais de 24 horas."
+    },
+    "yourRating": "A tua avaliação",
+    "final": "Depois de enviada, a avaliação não pode ser alterada.",
+    "stars_one": "{{count}} estrela",
+    "stars_other": "{{count}} estrelas",
+    "comment": "Comentário (opcional)",
+    "commentPlaceholder": "Conta como foi a tua experiência com este agricultor...",
+    "showPhoto": "Autorizo mostrar a minha fotografia nesta avaliação",
+    "showPhotoHint": "Fica visível para todos. Podes retirar a autorização em As minhas encomendas.",
+    "send": "Enviar avaliação"
+  },
+  "trackingDialog": {
+    "title": "Acompanha a tua entrega",
+    "orderFrom": "Encomenda de {{farm}}.",
+    "text": "A entrega fica concluída quando o agricultor lê o teu QR code.",
+    "loadFailed": "Não foi possível carregar o estado da entrega.",
+    "current": "Estado atual",
+    "steps": {
+      "accepted_at": "Aceite",
+      "packed_at": "Embalado",
+      "in_transit_at": "Expedido da quinta",
+      "out_for_delivery_at": "Em trânsito",
+      "delivered_at": "Entregue"
+    }
+  },
+  "removal": {
+    "tooShort_one": "Escreve pelo menos {{count}} caráter",
+    "tooShort_other": "Escreve pelo menos {{count}} caracteres",
+    "failed": "Não foi possível enviar o pedido",
+    "sent": "Pedido enviado",
+    "sentText": "A equipa da plataforma vai analisar o teu pedido.",
+    "title": "Pedir eliminação da avaliação",
+    "description": "Explica porque queres eliminar a avaliação. Ela continua visível até a equipa da plataforma decidir.",
+    "placeholder": "Justificação...",
+    "confirm": "Confirmo que a justificação é verdadeira. Uma justificação falsa ou sem fundamento pode ter consequências legais.",
+    "send": "Enviar pedido"
+  }
+}

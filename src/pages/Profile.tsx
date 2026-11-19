@@ -8,11 +8,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { toUserMessage } from "@/lib/auth-errors";
 import { AVATAR_EXTENSIONS, AVATAR_MAX_BYTES, avatarPublicUrl, isStoredAvatar } from "@/lib/avatar";
+import { useTranslation } from "react-i18next";
 
 const Profile = () => {
   const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation(["account", "common"]);
   const [fullName, setFullName] = useState("");
   // Caminho no bucket `avatars`; null se não houver fotografia carregada.
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
@@ -45,9 +47,9 @@ const Profile = () => {
         .update({ full_name: fullName })
         .eq("id", user.id);
       if (error) throw error;
-      toast({ title: "Perfil atualizado", description: "As suas alterações foram guardadas." });
+      toast({ title: t("profile.updated"), description: t("profile.updatedText") });
     } catch (err) {
-      toast({ title: "Erro", description: toUserMessage(err), variant: "destructive" });
+      toast({ title: t("auth.error"), description: toUserMessage(err), variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -58,7 +60,7 @@ const Profile = () => {
     if (!user) return false;
     const { error } = await supabase.from("profiles").update({ avatar_url: nextPath }).eq("id", user.id);
     if (error) {
-      toast({ title: "Erro", description: toUserMessage(error), variant: "destructive" });
+      toast({ title: t("auth.error"), description: toUserMessage(error), variant: "destructive" });
       return false;
     }
     if (avatarPath) await supabase.storage.from("avatars").remove([avatarPath]);
@@ -72,20 +74,20 @@ const Profile = () => {
     if (!file || !user) return;
     const ext = AVATAR_EXTENSIONS[file.type];
     if (!ext) {
-      toast({ title: "Formato não suportado", description: "Use JPG, PNG ou WebP.", variant: "destructive" });
+      toast({ title: t("profile.badFormat"), description: t("profile.badFormatText"), variant: "destructive" });
       return;
     }
     if (file.size > AVATAR_MAX_BYTES) {
-      toast({ title: "Fotografia demasiado grande", description: "O limite é de 2 MB.", variant: "destructive" });
+      toast({ title: t("profile.tooBig"), description: t("profile.tooBigText"), variant: "destructive" });
       return;
     }
     setUploading(true);
     const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from("avatars").upload(path, file, { contentType: file.type });
     if (error) {
-      toast({ title: "Erro", description: toUserMessage(error), variant: "destructive" });
+      toast({ title: t("auth.error"), description: toUserMessage(error), variant: "destructive" });
     } else if (await saveAvatar(path)) {
-      toast({ title: "Fotografia atualizada" });
+      toast({ title: t("profile.photoUpdated") });
     } else {
       await supabase.storage.from("avatars").remove([path]);
     }
@@ -94,7 +96,7 @@ const Profile = () => {
 
   const handleRemovePhoto = async () => {
     setUploading(true);
-    if (await saveAvatar(null)) toast({ title: "Fotografia removida" });
+    if (await saveAvatar(null)) toast({ title: t("profile.photoRemoved") });
     setUploading(false);
   };
 
@@ -108,11 +110,11 @@ const Profile = () => {
 
   return (
     <main className="container max-w-2xl py-10">
-      <PageHeader eyebrow="A minha conta" title="O meu perfil" description="Edite os seus dados pessoais." />
+      <PageHeader eyebrow={t("myAccount")} title={t("profile.title")} description={t("profile.description")} />
 
       <form onSubmit={handleSave} className="space-y-5 rounded-2xl border border-border bg-card p-6">
         <div>
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">Email</label>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("auth.email")}</label>
           <input
             type="email"
             value={user.email ?? ""}
@@ -121,7 +123,7 @@ const Profile = () => {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">Nome completo</label>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("auth.fullName")}</label>
           <input
             type="text"
             value={fullName}
@@ -130,11 +132,11 @@ const Profile = () => {
           />
         </div>
         <div>
-          <span className="mb-1 block text-xs font-medium text-muted-foreground">Fotografia de perfil</span>
+          <span className="mb-1 block text-xs font-medium text-muted-foreground">{t("profile.photo")}</span>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-muted-foreground">
               {avatarPath ? (
-                <img src={avatarPublicUrl(avatarPath)} alt="A sua fotografia de perfil" className="h-full w-full object-cover" />
+                <img src={avatarPublicUrl(avatarPath)} alt={t("profile.photoAlt")} className="h-full w-full object-cover" />
               ) : (
                 <UserIcon className="h-6 w-6" />
               )}
@@ -142,7 +144,7 @@ const Profile = () => {
             <Button type="button" variant="outline" size="sm" className="gap-2" asChild disabled={uploading}>
               <label className="cursor-pointer">
                 {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {avatarPath ? "Trocar fotografia" : "Carregar fotografia"}
+                {avatarPath ? t("profile.changePhoto") : t("profile.uploadPhoto")}
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -154,17 +156,17 @@ const Profile = () => {
             </Button>
             {avatarPath && (
               <Button type="button" variant="ghost" size="sm" className="gap-2" disabled={uploading} onClick={handleRemovePhoto}>
-                <Trash2 className="h-4 w-4" /> Remover
+                <Trash2 className="h-4 w-4" /> {t("common:actions.remove")}
               </Button>
             )}
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            JPG, PNG ou WebP, até 2 MB. Só aparece nas suas avaliações se o autorizar em cada uma.
+            {t("profile.photoHint")}
           </p>
         </div>
         <Button type="submit" disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Guardar alterações
+          {t("profile.save")}
         </Button>
       </form>
     </main>

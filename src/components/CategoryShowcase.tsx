@@ -4,10 +4,11 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import SectionHeading from "@/components/SectionHeading";
-import { categories } from "@/data/categories";
+import { categories, categoryLabel } from "@/data/categories";
 import { useHomeProducts } from "@/hooks/useHomeProducts";
 import { useReveal } from "@/hooks/useReveal";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 // 1 grande (2x2) + 4 pequenas: enche duas linhas certas em 4 colunas (desktop) e em 2 colunas (telemóvel).
 const MAX_TILES = 5;
@@ -16,6 +17,7 @@ const MAX_TILES = 5;
 const CategoryShowcase = () => {
   const { data: products = [], isLoading } = useHomeProducts();
   const scopeRef = useRef<HTMLElement>(null);
+  const { t } = useTranslation("home");
 
   const tiles = useMemo(() => {
     const counts = new Map<string, number>();
@@ -33,13 +35,13 @@ const CategoryShowcase = () => {
       <div className="container">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <SectionHeading
-            eyebrow="Catálogo"
-            title="O que há na banca esta semana"
-            description="As categorias com mais produtos frescos dos nossos agricultores."
+            eyebrow={t("categories.eyebrow")}
+            title={t("categories.title")}
+            description={t("categories.description")}
           />
           <Button asChild variant="outline" className="gap-2">
             <Link to="/catalogo">
-              Ver catálogo completo <ArrowRight className="h-4 w-4" />
+              {t("categories.seeAll")} <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         </div>
@@ -68,15 +70,15 @@ const CategoryShowcase = () => {
                     i === 0 ? "text-2xl md:text-4xl" : "text-lg md:text-xl",
                   )}
                 >
-                  {c.name}
+                  {categoryLabel(c.slug)}
                 </span>
                 {c.count > 0 ? (
                   <Badge variant="highlight" className="shrink-0 font-mono tabular-nums">
-                    {c.count} {c.count === 1 ? "produto" : "produtos"}
+                    {t("categories.products", { count: c.count })}
                   </Badge>
                 ) : (
                   <Badge variant="muted" className="shrink-0">
-                    Brevemente
+                    {t("categories.soon")}
                   </Badge>
                 )}
               </div>

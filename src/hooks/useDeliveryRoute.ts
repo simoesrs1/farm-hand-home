@@ -10,6 +10,7 @@ import {
   routeCost,
   type CostMatrix,
 } from "@/lib/route-optimizer";
+import i18n from "@/i18n";
 
 export interface RouteStop {
   orderId: string;
@@ -69,7 +70,7 @@ interface DirectionsResponse {
 const callDeliveryRoute = async <T>(body: Record<string, unknown>): Promise<T> => {
   const { data, error } = await supabase.functions.invoke("delivery-route", { body });
   if (error) {
-    let msg = "Não foi possível calcular o percurso por estrada.";
+    let msg = i18n.t("farmer:route.roadFailed");
     if (error instanceof FunctionsHttpError) {
       try {
         const payload = await error.context.json();

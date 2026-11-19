@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import MapConsentGate from "@/components/MapConsentGate";
 import { useConsent } from "@/contexts/ConsentContext";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 
 interface Props {
@@ -15,6 +17,7 @@ const PORTUGAL_CENTER = { lat: 39.5, lng: -8.0 };
 
 const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
   const mapInstance = useRef<google.maps.Map | null>(null);
   const markerInstance = useRef<google.maps.Marker | null>(null);
   const [unavailable, setUnavailable] = useState(false);
@@ -103,7 +106,7 @@ const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
     const script = document.createElement("script");
     script.id = "gmaps-sdk";
     script.async = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initPickupMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&language=${i18n.resolvedLanguage ?? "pt"}&loading=async&callback=__initPickupMap`;
     document.head.appendChild(script);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapsAllowed]);
@@ -131,7 +134,7 @@ const PickupLocationMap = ({ lat, lng, onChange, invalid }: Props) => {
     return (
       <div className="flex h-72 w-full items-center justify-center rounded-lg border border-dashed border-border bg-muted p-6 text-center">
         <p className="text-sm text-muted-foreground">
-          Mapa indisponível — falta configurar a chave do Google Maps.
+          {t("maps.noKey")}
         </p>
       </div>
     );

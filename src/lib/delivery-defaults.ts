@@ -8,6 +8,7 @@
  * agricultor, porque se aplica ao carrinho inteiro.
  */
 import { supabase } from "@/integrations/supabase/client";
+import i18n from "@/i18n";
 import type { Database, Json } from "@/integrations/supabase/types";
 
 export type DeliveryModeValue = Database["public"]["Enums"]["delivery_mode"];
@@ -30,18 +31,37 @@ export interface FarmerDeliveryDefaults {
   freeDeliveryThreshold: number | null;
 }
 
+/** Nomes dos campos de entrega, no idioma atual. */
 export const DELIVERY_FIELD_LABELS: Record<keyof DeliverySettings, string> = {
-  delivery_mode: "Forma de entrega",
-  delivery_tracking: "Acompanhamento da entrega",
-  shipping_days: "Prazo mínimo de preparação",
-  delivery_fee: "Preço da entrega",
+  get delivery_mode() {
+    return i18n.t("common:deliverySettings.fields.delivery_mode");
+  },
+  get delivery_tracking() {
+    return i18n.t("common:deliverySettings.fields.delivery_tracking");
+  },
+  get shipping_days() {
+    return i18n.t("common:deliverySettings.fields.shipping_days");
+  },
+  get delivery_fee() {
+    return i18n.t("common:deliverySettings.fields.delivery_fee");
+  },
 };
+
+const modeOption = (value: DeliveryModeValue) => ({
+  value,
+  get label() {
+    return i18n.t(`common:deliverySettings.modes.${value}.label`);
+  },
+  get hint() {
+    return i18n.t(`common:deliverySettings.modes.${value}.hint`);
+  },
+});
 
 /** Opções do formulário de produto (um só controlo para a entrega). */
 export const DELIVERY_MODE_OPTIONS: { value: DeliveryModeValue; label: string; hint: string }[] = [
-  { value: "pickup", label: "Levantamento na quinta", hint: "O cliente vai buscar a encomenda." },
-  { value: "shipping", label: "Entrega ao domicílio", hint: "Entrega em mão feita por si." },
-  { value: "both", label: "Ambos", hint: "Levantamento ou entrega, à escolha do cliente." },
+  modeOption("pickup"),
+  modeOption("shipping"),
+  modeOption("both"),
 ];
 
 /** Tracking, preço e prazo de preparação só existem com entrega ao domicílio. */

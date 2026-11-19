@@ -3,6 +3,7 @@
  * Uma notificação: o seu título e mensagem. Várias: o número e os títulos
  * (já são resumos curtos) como palavras-chave.
  */
+import i18n from "@/i18n";
 export interface NotificationLike {
   title: string;
   message: string;
@@ -20,7 +21,7 @@ export const summarizeNotifications = (
   const shown = keywords.slice(0, MAX_KEYWORDS).join(" · ");
   const extra = keywords.length - MAX_KEYWORDS;
   return {
-    title: `${list.length} novas notificações`,
-    description: extra > 0 ? `${shown} e mais ${extra}` : shown,
+    title: i18n.t("common:notifications.many", { count: list.length }),
+    description: extra > 0 ? i18n.t("common:notifications.andMore", { shown, count: extra }) : shown,
   };
 };

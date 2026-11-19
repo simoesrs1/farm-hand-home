@@ -9,8 +9,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ToastAction } from "@/components/ui/toast";
+import TranslatedText from "@/components/TranslatedText";
 import { toast } from "@/hooks/use-toast";
 import { summarizeNotifications } from "@/lib/notification-summary";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { formatDateTime } from "@/lib/format";
 
 // Espera antes de mostrar o balão, para juntar notificações que chegam seguidas.
 const BATCH_MS = 1500;
@@ -29,6 +33,7 @@ interface Notification {
 const NotificationBell = () => {
   const { user, activeMode } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [items, setItems] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   // Notificações recebidas em tempo real à espera do balão.
@@ -56,10 +61,10 @@ const NotificationBell = () => {
       description: summary.description,
       action: (
         <ToastAction
-          altText="Ver notificações"
+          altText={i18n.t("common:notifications.view")}
           onClick={() => (batch.length === 1 ? handleClickRef.current(batch[0]) : setOpen(true))}
         >
-          Ver
+          {i18n.t("common:notifications.viewShort")}
         </ToastAction>
       ),
     });
@@ -120,7 +125,7 @@ const NotificationBell = () => {
     <DropdownMenu open={open} onOpenChange={(o) => { setOpen(o); if (o && unread > 0) markAllRead(); }}>
       <DropdownMenuTrigger
         className="relative flex h-9 w-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-secondary"
-        aria-label="Notificações"
+        aria-label={t("notifications.title")}
       >
         <Bell className="h-5 w-5" />
         {unread > 0 && (
@@ -131,10 +136,10 @@ const NotificationBell = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto p-0">
         <div className="border-b border-border px-4 py-3">
-          <p className="font-semibold text-foreground">Notificações</p>
+          <p className="font-semibold text-foreground">{t("notifications.title")}</p>
         </div>
         {items.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-muted-foreground">Sem notificações.</p>
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">{t("notifications.empty")}</p>
         ) : (
           <ul className="divide-y divide-border">
             {items.map((n) => (
@@ -144,10 +149,24 @@ const NotificationBell = () => {
                   onClick={() => handleClick(n)}
                   className="block w-full px-4 py-3 text-left transition-colors hover:bg-secondary"
                 >
-                  <p className="text-sm font-medium text-foreground">{n.title}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{n.message}</p>
+                  <TranslatedText
+                    type="notification"
+                    id={n.id}
+                    field="title"
+                    text={n.title}
+                    as="p"
+                    className="text-sm font-medium text-foreground"
+                  />
+                  <TranslatedText
+                    type="notification"
+                    id={n.id}
+                    field="message"
+                    text={n.message}
+                    as="p"
+                    className="mt-0.5 text-xs text-muted-foreground"
+                  />
                   <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    {new Date(n.created_at).toLocaleString("pt-PT")}
+                    {formatDateTime(n.created_at)}
                   </p>
                 </button>
               </li>

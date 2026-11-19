@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { DELIVERY_FIELD_LABELS, type DeliverySettings } from "@/lib/delivery-defaults";
+import { useTranslation } from "react-i18next";
 
 export type DeliveryScope = "product" | "all";
 
@@ -21,35 +22,37 @@ interface DeliveryScopeDialogProps {
 }
 
 /** Pergunta se a alteração da entrega vale só para este produto ou para todos. */
-const DeliveryScopeDialog = ({ open, fields, onChoose, onCancel }: DeliveryScopeDialogProps) => (
+const DeliveryScopeDialog = ({ open, fields, onChoose, onCancel }: DeliveryScopeDialogProps) => {
+  const { t } = useTranslation(["farmer", "common"]);
+  return (
   <AlertDialog open={open} onOpenChange={(o) => !o && onCancel()}>
     <AlertDialogContent>
       <AlertDialogHeader>
-        <AlertDialogTitle>Alterou a entrega deste produto</AlertDialogTitle>
+        <AlertDialogTitle>{t("deliveryScope.title")}</AlertDialogTitle>
         <AlertDialogDescription asChild>
           <div className="space-y-2">
-            <p>Quer aplicar a alteração só a este produto ou a todos os produtos?</p>
+            <p>{t("deliveryScope.question")}</p>
             <ul className="list-disc pl-5">
               {fields.map((f) => (
                 <li key={f}>{DELIVERY_FIELD_LABELS[f]}</li>
               ))}
             </ul>
             <p className="text-xs">
-              Só este produto: o padrão mantém-se para os restantes e para os produtos novos. Todos
-              os produtos: o padrão é atualizado e aplicado a todos os seus produtos.
+              {t("deliveryScope.explain")}
             </p>
           </div>
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+        <AlertDialogCancel>{t("common:actions.cancel")}</AlertDialogCancel>
         <Button variant="outline" onClick={() => onChoose("product")}>
-          Só este produto
+          {t("deliveryScope.thisOne")}
         </Button>
-        <AlertDialogAction onClick={() => onChoose("all")}>Todos os produtos</AlertDialogAction>
+        <AlertDialogAction onClick={() => onChoose("all")}>{t("deliveryScope.all")}</AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>
-);
+  );
+};
 
 export default DeliveryScopeDialog;

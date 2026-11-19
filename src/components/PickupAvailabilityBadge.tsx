@@ -1,5 +1,6 @@
 import { Clock } from "lucide-react";
 import { pickupStatus, type PickupWindow } from "@/lib/pickup-hours";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   windows: PickupWindow[];
@@ -8,6 +9,8 @@ interface Props {
 
 /** Shows the client whether the farmer's door is open right now for pickup. */
 const PickupAvailabilityBadge = ({ windows, className = "" }: Props) => {
+  // Volta a desenhar quando muda o idioma (o texto vem de pickupStatus).
+  useTranslation();
   const status = pickupStatus(windows);
   if (!status) return null;
 

@@ -3,6 +3,7 @@ import { Check, Loader2, RefreshCw, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { generateDescription, hasCopyInput, type CopyFacts, type CopyKind } from "@/lib/ai-description";
+import { useTranslation } from "react-i18next";
 
 interface AiDescriptionAssistantProps {
   kind: CopyKind;
@@ -22,12 +23,13 @@ interface AiDescriptionAssistantProps {
  * agricultor aceita, pede outra ou descarta. Nunca substitui o texto sem aceitação.
  */
 const AiDescriptionAssistant = ({ kind, draft, facts, files = [], storedPaths = [], onAccept }: AiDescriptionAssistantProps) => {
+  const { t } = useTranslation("offerings");
   const [proposal, setProposal] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const generate = async () => {
     if (!hasCopyInput(draft, facts, files, storedPaths)) {
-      toast({ title: "Escreva um pequeno texto ou adicione uma fotografia primeiro", variant: "destructive" });
+      toast({ title: t("ai.needInput"), variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -35,7 +37,7 @@ const AiDescriptionAssistant = ({ kind, draft, facts, files = [], storedPaths = 
       setProposal(await generateDescription({ kind, draft, facts, files, storedPaths }));
     } catch (err) {
       toast({
-        title: "Não foi possível escrever com IA",
+        title: t("ai.writeFailed"),
         description: err instanceof Error ? err.message : String(err),
         variant: "destructive",
       });
@@ -50,11 +52,10 @@ const AiDescriptionAssistant = ({ kind, draft, facts, files = [], storedPaths = 
         <>
           <Button type="button" variant="outline" size="sm" onClick={generate} disabled={loading} className="gap-1.5">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {loading ? "A escrever..." : "Escrever com IA"}
+            {loading ? t("ai.writing") : t("ai.write")}
           </Button>
           <p className="text-xs text-muted-foreground">
-            A IA usa o seu texto, os dados do formulário e até 3 fotografias para propor uma descrição mais
-            apelativa. Só substitui o seu texto se aceitar.
+            {t("ai.hint")}
           </p>
         </>
       )}
@@ -62,11 +63,11 @@ const AiDescriptionAssistant = ({ kind, draft, facts, files = [], storedPaths = 
       {proposal && (
         <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
           <p className="flex items-center gap-1.5 text-xs font-medium text-primary">
-            <Sparkles className="h-3.5 w-3.5" /> Proposta da IA
+            <Sparkles className="h-3.5 w-3.5" /> {t("ai.proposal")}
           </p>
           <p className="whitespace-pre-line text-sm text-foreground">{proposal}</p>
           <p className="text-xs text-muted-foreground">
-            Confirme que o texto está correto antes de publicar: a descrição é da sua responsabilidade.
+            {t("ai.confirm")}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -78,10 +79,10 @@ const AiDescriptionAssistant = ({ kind, draft, facts, files = [], storedPaths = 
                 setProposal(null);
               }}
             >
-              <Check className="h-4 w-4" /> Aceitar
+              <Check className="h-4 w-4" /> {t("ai.accept")}
             </Button>
             <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={generate} disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Gerar outra
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} {t("ai.another")}
             </Button>
             <Button
               type="button"
@@ -91,7 +92,7 @@ const AiDescriptionAssistant = ({ kind, draft, facts, files = [], storedPaths = 
               onClick={() => setProposal(null)}
               disabled={loading}
             >
-              <X className="h-4 w-4" /> Descartar
+              <X className="h-4 w-4" /> {t("ai.discard")}
             </Button>
           </div>
         </div>

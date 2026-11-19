@@ -1,4 +1,5 @@
-import { DAY_LABELS, type PickupWindow } from "./pickup-hours";
+import i18n from "@/i18n";
+import { dayLabel, type PickupWindow } from "./pickup-hours";
 
 const ICAL_DAYS = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
 
@@ -43,7 +44,7 @@ export const buildPickupIcs = (
     "PRODID:-//ValorRural//Disponibilidade//PT",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    `X-WR-CALNAME:${escape(`Porta aberta — ${farmName}`)}`,
+    `X-WR-CALNAME:${escape(i18n.t("common:ical.title", { farm: farmName }))}`,
   ];
 
   windows.forEach((w, i) => {
@@ -56,11 +57,9 @@ export const buildPickupIcs = (
       `DTSTART:${toLocalStamp(start)}`,
       `DTEND:${toLocalStamp(end)}`,
       `RRULE:FREQ=WEEKLY;BYDAY=${ICAL_DAYS[w.day]}`,
-      `SUMMARY:${escape(`Porta aberta — ${farmName}`)}`,
+      `SUMMARY:${escape(i18n.t("common:ical.title", { farm: farmName }))}`,
       `DESCRIPTION:${escape(
-        `${DAY_LABELS[w.day]} das ${w.start} às ${w.end}. Levantamento de encomendas na quinta.${
-          note ? ` ${note}` : ""
-        }`,
+        `${i18n.t("common:ical.description", { day: dayLabel(w.day), start: w.start, end: w.end })}${note ? ` ${note}` : ""}`,
       )}`,
       "END:VEVENT",
     );

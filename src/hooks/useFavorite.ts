@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import i18n from "@/i18n";
 
 export const useFavorite = (farmerSlug: string, farmName?: string) => {
   const { user } = useAuth();
@@ -32,8 +33,8 @@ export const useFavorite = (farmerSlug: string, farmName?: string) => {
   const toggle = useCallback(async () => {
     if (!user) {
       toast({
-        title: "Inicie sessão",
-        description: "Precisa de iniciar sessão para guardar favoritos.",
+        title: i18n.t("cart:toast.login"),
+        description: i18n.t("account:favorites.loginText"),
         variant: "destructive",
       });
       return;
@@ -47,7 +48,7 @@ export const useFavorite = (farmerSlug: string, farmName?: string) => {
         .eq("farmer_slug", farmerSlug);
       if (!error) {
         setIsFavorite(false);
-        toast({ title: "Removido dos favoritos" });
+        toast({ title: i18n.t("account:favorites.removed") });
       }
     } else {
       const { error } = await supabase
@@ -56,8 +57,8 @@ export const useFavorite = (farmerSlug: string, farmName?: string) => {
       if (!error) {
         setIsFavorite(true);
         toast({
-          title: `${farmName ?? "Quinta"} adicionada aos favoritos`,
-          description: "Será notificado sobre renovação de disponibilidade e novos produtos.",
+          title: i18n.t("account:favorites.added", { farm: farmName ?? i18n.t("offerings:listings.farmFallback") }),
+          description: i18n.t("account:favorites.addedText"),
         });
       }
     }

@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getCategoryBySlug } from "@/data/categories";
+import { categoryLabel, getCategoryBySlug } from "@/data/categories";
 import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +17,8 @@ import { farmerRank } from "@/lib/farmer-activity";
 import { farmerDeliversFromProfile, modeAllowsDelivery } from "@/lib/fulfillment";
 import { Flip, gsap, useGSAP } from "@/lib/animation";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 type SortOption =
   | "relevancia"
@@ -28,16 +30,16 @@ type SortOption =
   | "melhor-avaliacao"
   | "mais-vendidos";
 
-const sortLabels: Record<SortOption, string> = {
-  relevancia: "Relevância",
-  novidades: "Novidades",
-  "preco-menor": "Preço mais baixo",
-  "preco-maior": "Preço mais alto",
-  "mais-perto": "Mais perto",
-  "mais-longe": "Mais longe",
-  "melhor-avaliacao": "Melhor avaliação",
-  "mais-vendidos": "Mais vendidos",
-};
+const SORT_OPTIONS: SortOption[] = [
+  "relevancia",
+  "novidades",
+  "preco-menor",
+  "preco-maior",
+  "mais-perto",
+  "mais-longe",
+  "melhor-avaliacao",
+  "mais-vendidos",
+];
 
 type FilterKey = "biologico" | "sem-lactose" | "promocao" | "levantamento" | "entrega";
 
@@ -60,14 +62,13 @@ type SortableProduct = ProductCardProduct & {
   deliveryAvailable: boolean;
 };
 
-const filters: { key: FilterKey; label: string; test: (p: SortableProduct) => boolean }[] = [
-  { key: "biologico", label: "Biológico", test: (p) => p.isOrganic },
-  { key: "sem-lactose", label: "Sem lactose", test: (p) => p.isLactoseFree },
-  { key: "promocao", label: "Em promoção", test: (p) => p.originalPrice > p.price },
-  { key: "levantamento", label: "Levantar na quinta", test: (p) => p.deliveryMode !== "shipping" },
+const filters: { key: FilterKey; test: (p: SortableProduct) => boolean }[] = [
+  { key: "biologico", test: (p) => p.isOrganic },
+  { key: "sem-lactose", test: (p) => p.isLactoseFree },
+  { key: "promocao", test: (p) => p.originalPrice > p.price },
+  { key: "levantamento", test: (p) => p.deliveryMode !== "shipping" },
   {
     key: "entrega",
-    label: "Entrega ao domicílio",
     test: (p) => !!p.deliveryMode && modeAllowsDelivery(p.deliveryMode) && p.deliveryAvailable,
   },
 ];
@@ -94,6 +95,7 @@ const CategoryPage = () => {
   const category = slug ? getCategoryBySlug(slug) : undefined;
   const { registerStock } = useStock();
   const { toast } = useToast();
+  const { t } = useTranslation(["catalog", "common"]);
   const [items, setItems] = useState<SortableProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const marketPrices = useMarketPrices();
@@ -117,8 +119,8 @@ const CategoryPage = () => {
     if ((option === "mais-perto" || option === "mais-longe") && !userPos) {
       if (!navigator.geolocation) {
         toast({
-          title: "Localização indisponível",
-          description: "O seu navegador não permite obter a localização.",
+          title: t("categoryPage.locationUnavailable"),
+          description: t("categoryPage.locationUnavailableText"),
         });
         return;
       }
@@ -129,8 +131,8 @@ const CategoryPage = () => {
         },
         () =>
           toast({
-            title: "Localização não autorizada",
-            description: "Ative a localização para ordenar por distância.",
+            title: t("categoryPage.locationDenied"),
+            description: t("categoryPage.locationDeniedText"),
           })
       );
     }
@@ -173,8 +175,8 @@ const CategoryPage = () => {
         console.error("Erro ao carregar produtos da categoria", error);
         if (!cancelled) {
           toast({
-            title: "Não foi possível carregar os produtos",
-            description: "Tente novamente dentro de momentos.",
+            title: i18n.t("catalog:categoryPage.loadError"),
+            description: i18n.t("catalog:categoryPage.loadErrorText"),
             variant: "destructive",
           });
         }
@@ -231,7 +233,7 @@ const CategoryPage = () => {
           id: r.id,
           name: r.name,
           farmerId: r.farmer_id,
-          farmer: farmer?.company_name ?? "Agricultor",
+          farmer: farmer?.company_name ?? i18n.t("catalog:categoryPage.farmerFallback"),
           price: Math.round(r.client_price * (1 - (r.discount_percent ?? 0) / 100) * 100) / 100,
           originalPrice: r.client_price,
           unit: r.unit,
@@ -358,7 +360,7 @@ const CategoryPage = () => {
           to="/catalogo"
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" /> Voltar ao catálogo
+          <ArrowLeft className="h-4 w-4" /> {t("categoryPage.back")}
         </Link>
 
         <div className="mb-6 overflow-hidden rounded-2xl border border-border">
@@ -366,10 +368,10 @@ const CategoryPage = () => {
             <img src={category.image} alt="" className="h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-foreground/75 via-foreground/20 to-transparent" />
             <div className="absolute inset-x-5 bottom-4 flex items-end justify-between gap-3">
-              <h1 className="font-display text-3xl text-background md:text-5xl">{category.name}</h1>
+              <h1 className="font-display text-3xl text-background md:text-5xl">{categoryLabel(category.slug)}</h1>
               {!loading && (
                 <Badge variant="highlight" className="font-mono tabular-nums">
-                  {items.length} {items.length === 1 ? "produto" : "produtos"}
+                  {t("catalogPage.products", { count: items.length })}
                 </Badge>
               )}
             </div>
@@ -381,7 +383,7 @@ const CategoryPage = () => {
           {loading ? (
             <Skeleton className="h-9 w-72" />
           ) : (
-            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar produtos">
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t("categoryPage.filterAria")}>
               {filters.map((f) => {
                 const on = active.has(f.key);
                 const count = filterCounts[f.key];
@@ -399,7 +401,7 @@ const CategoryPage = () => {
                         : "border-border bg-card text-foreground hover:border-foreground/40",
                     )}
                   >
-                    {f.label}
+                    {t(`categoryPage.filters.${f.key}`)}
                     <span className={cn("font-mono text-xs tabular-nums", on ? "text-background/70" : "text-muted-foreground")}>
                       {count}
                     </span>
@@ -408,7 +410,7 @@ const CategoryPage = () => {
               })}
               {active.size > 0 && (
                 <Button variant="ghost" size="sm" className="gap-1" onClick={clearFilters}>
-                  <X className="h-3.5 w-3.5" /> Limpar
+                  <X className="h-3.5 w-3.5" /> {t("common:actions.clear")}
                 </Button>
               )}
             </div>
@@ -416,13 +418,13 @@ const CategoryPage = () => {
           <div className="flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
             <Select value={sort} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-[200px]" aria-label="Ordenar por">
-                <SelectValue placeholder="Ordenar por" />
+              <SelectTrigger className="w-[200px]" aria-label={t("categoryPage.sortBy")}>
+                <SelectValue placeholder={t("categoryPage.sortBy")} />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(sortLabels).map(([value, label]) => (
+                {SORT_OPTIONS.map((value) => (
                   <SelectItem key={value} value={value}>
-                    {label}
+                    {t(`categoryPage.sort.${value}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -431,26 +433,26 @@ const CategoryPage = () => {
               to="/termos#ordenacao"
               className="text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
             >
-              Como ordenamos?
+              {t("categoryPage.howSort")}
             </Link>
           </div>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4" aria-busy="true" aria-label="A carregar produtos">
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4" aria-busy="true" aria-label={t("categoryPage.loading")}>
             {Array.from({ length: 8 }).map((_, i) => (
               <ProductCardSkeleton key={i} />
             ))}
           </div>
         ) : items.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">
-            Ainda não há produtos nesta categoria.
+            {t("categoryPage.empty")}
           </div>
         ) : visible.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border py-12 text-center">
-            <p className="text-muted-foreground">Nenhum produto corresponde a estes filtros.</p>
+            <p className="text-muted-foreground">{t("categoryPage.noMatch")}</p>
             <Button variant="link" onClick={clearFilters}>
-              Limpar filtros
+              {t("categoryPage.clearFilters")}
             </Button>
           </div>
         ) : (

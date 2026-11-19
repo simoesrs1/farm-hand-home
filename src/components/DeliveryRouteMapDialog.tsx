@@ -9,6 +9,9 @@ import MapConsentGate from "@/components/MapConsentGate";
 import { useConsent } from "@/contexts/ConsentContext";
 import { formatKm } from "@/lib/geo";
 import type { RouteDay, RouteFarm } from "@/hooks/useDeliveryRoute";
+import { Trans, useTranslation } from "react-i18next";
+import i18n from "@/i18n";
+import { formatDate, formatTime } from "@/lib/format";
 
 
 export interface RouteControlsProps {
@@ -42,7 +45,7 @@ const MAP_INK = "#1C1A17"; // --foreground
 const MAP_PAPER = "#FFF4E2"; // --background
 const MAP_MUTED = "#696159"; // --muted-foreground
 
-const formatTime = (d: Date) => d.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
+const formatHour = (d: Date) => formatTime(d);
 
 const formatMinutes = (min: number) => {
   const total = Math.max(1, Math.round(min));
@@ -60,14 +63,17 @@ export const DeliveryRouteControls = ({
   onReturnToOriginChange,
 }: RouteControlsProps) => {
   const switchId = useId();
+  const { t } = useTranslation("farmer");
   if (!farm) {
     return (
       <p className="text-xs text-muted-foreground">
-        Para organizar a rota, marca a localização da quinta em{" "}
-        <Link to="/agricultor/disponibilidade" className="font-medium text-primary underline-offset-2 hover:underline">
-          Disponibilidade
-        </Link>
-        .
+        <Trans
+          t={t}
+          i18nKey="route.needFarm"
+          components={{
+            link: <Link to="/agricultor/disponibilidade" className="font-medium text-primary underline-offset-2 hover:underline" />,
+          }}
+        />
       </p>
     );
   }
@@ -80,12 +86,12 @@ export const DeliveryRouteControls = ({
         onClick={() => onOptimizedChange(!optimized)}
       >
         {optimized ? <Undo2 className="h-4 w-4" /> : <RouteIcon className="h-4 w-4" />}
-        {optimized ? "Ordenar por hora" : "Organizar rota"}
+        {optimized ? t("route.byTime") : t("route.optimize")}
       </Button>
       <div className="flex items-center gap-2">
         <Switch id={switchId} checked={returnToOrigin} onCheckedChange={onReturnToOriginChange} />
         <Label htmlFor={switchId} className="text-sm font-normal text-foreground">
-          Voltar à quinta no fim
+          {t("route.returnToFarm")}
         </Label>
       </div>
     </div>
@@ -93,22 +99,24 @@ export const DeliveryRouteControls = ({
 };
 
 /** Km do dia e links para seguir o percurso no Google Maps. */
-export const RouteDaySummary = ({ day }: { day: RouteDay }) => (
+export const RouteDaySummary = ({ day }: { day: RouteDay }) => {
+  const { t } = useTranslation("farmer");
+  return (
   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
     {day.road ? (
       <span className="font-medium text-foreground">
-        {formatKm(day.road.distanceKm)} · {formatMinutes(day.road.durationMin)} por estrada
+        {t("route.byRoad", { km: formatKm(day.road.distanceKm), time: formatMinutes(day.road.durationMin) })}
       </span>
     ) : day.roadLoading ? (
       <span className="inline-flex items-center gap-1 text-muted-foreground">
-        <Loader2 className="h-3 w-3 animate-spin" /> A calcular o percurso por estrada…
+        <Loader2 className="h-3 w-3 animate-spin" /> {t("route.calculating")}
       </span>
     ) : (
-      day.totalKm != null && <span className="text-muted-foreground">≈ {formatKm(day.totalKm)} em linha reta</span>
+      day.totalKm != null && <span className="text-muted-foreground">{t("route.straight", { km: formatKm(day.totalKm) })}</span>
     )}
     {day.roadError && !day.road && (
       <span className="text-muted-foreground" title={day.roadError}>
-        (percurso por estrada indisponível)
+        ({t("route.roadUnavailable")})
       </span>
     )}
     {day.mapsUrls.map((url, i) => (
@@ -120,17 +128,20 @@ export const RouteDaySummary = ({ day }: { day: RouteDay }) => (
         className="inline-flex items-center gap-1 font-medium text-primary underline-offset-2 hover:underline"
       >
         <ExternalLink className="h-3.5 w-3.5" />
-        Abrir no Google Maps{day.mapsUrls.length > 1 ? ` (parte ${i + 1})` : ""}
+        {t("route.openMaps")}
+        {day.mapsUrls.length > 1 ? ` (${t("route.part", { n: i + 1 })})` : ""}
       </a>
     ))}
   </div>
-);
+  );
+};
 
 // Mapa do percurso: a quinta como origem, um marcador numerado por entrega,
 // agrupado por dia, pela ordem recebida (por hora ou organizada).
 const DeliveryRouteMapDialog = ({ days, children, ...controls }: Props) => {
   const { farm, optimized, returnToOrigin } = controls;
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation("farmer");
   const mapRef = useRef<HTMLDivElement>(null);
   const mapsAllowed = useConsent().hasConsent("maps");
   const hasStops = days.some((d) => d.stops.length > 0);
@@ -178,10 +189,10 @@ const DeliveryRouteMapDialog = ({ days, children, ...controls }: Props) => {
         title.textContent = s.label;
         const address = document.createElement("div");
         address.style.cssText = `color:${MAP_MUTED};font-size:12px;margin-top:2px;`;
-        address.textContent = s.address ?? "Morada por confirmar";
+        address.textContent = s.address ?? i18n.t("farmer:route.addressPending");
         const extra = document.createElement("div");
         extra.style.cssText = "font-size:12px;margin-top:2px;";
-        extra.textContent = `${formatTime(s.when)}${s.km != null ? ` · ${formatKm(s.km)}` : ""}`;
+        extra.textContent = `${formatHour(s.when)}${s.km != null ? ` · ${formatKm(s.km)}` : ""}`;
         box.append(title, address, extra);
         return box;
       };
@@ -246,7 +257,7 @@ const DeliveryRouteMapDialog = ({ days, children, ...controls }: Props) => {
     const script = document.createElement("script");
     script.id = "gmaps-sdk";
     script.async = true;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&loading=async&callback=__initDeliveryRouteMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${browserKey}&language=${i18n.resolvedLanguage ?? "pt"}&loading=async&callback=__initDeliveryRouteMap`;
     document.head.appendChild(script);
   }, [open, farm, days, returnToOrigin, mapsAllowed, hasStops]);
 
@@ -255,20 +266,20 @@ const DeliveryRouteMapDialog = ({ days, children, ...controls }: Props) => {
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           <MapIcon className="h-4 w-4" />
-          Entregas ao domicílio
+          {t("route.title")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Navigation className="h-5 w-5 text-primary" />
-            Entregas ao domicílio
+            {t("route.title")}
           </DialogTitle>
         </DialogHeader>
 
         {!hasStops ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Ainda não há entregas ativas com ponto de entrega marcado pelo cliente.
+            {t("route.none")}
           </p>
         ) : (
           <>
@@ -284,7 +295,7 @@ const DeliveryRouteMapDialog = ({ days, children, ...controls }: Props) => {
                       className="inline-block h-3 w-3 rounded-full"
                       style={{ backgroundColor: DAY_COLORS[dayIndex % DAY_COLORS.length] }}
                     />
-                    {day.date.toLocaleDateString("pt-PT", {
+                    {formatDate(day.date, {
                       weekday: "long",
                       day: "numeric",
                       month: "long",
@@ -306,7 +317,7 @@ const DeliveryRouteMapDialog = ({ days, children, ...controls }: Props) => {
                         <span className="flex-1 truncate text-foreground">
                           {s.address ?? s.label}
                         </span>
-                        <span className="text-xs text-muted-foreground">{formatTime(s.when)}</span>
+                        <span className="text-xs text-muted-foreground">{formatHour(s.when)}</span>
                         {s.km != null && (
                           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                             {formatKm(s.km)}
@@ -319,9 +330,7 @@ const DeliveryRouteMapDialog = ({ days, children, ...controls }: Props) => {
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              {optimized
-                ? "Ordem organizada pelo percurso mais rápido por estrada a partir da tua quinta. Se o cálculo por estrada falhar, usa-se a distância em linha reta."
-                : "Ordem pela hora marcada, com distâncias em linha reta. Usa \"Organizar rota\" para obter o percurso mais rápido por estrada a partir da tua quinta."}
+              {optimized ? t("route.optimizedHint") : t("route.byTimeHint")}
             </p>
             {days.some((d) => d.road) && (
               <p className="text-[11px] text-muted-foreground">

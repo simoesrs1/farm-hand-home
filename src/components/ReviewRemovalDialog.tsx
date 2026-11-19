@@ -12,6 +12,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 const MIN_LENGTH = 20;
 
@@ -24,13 +25,14 @@ interface ReviewRemovalDialogProps {
 /** Pedido de eliminação de uma avaliação, analisado pela equipa da plataforma. */
 const ReviewRemovalDialog = ({ reviewId, onOpenChange, onSubmitted }: ReviewRemovalDialogProps) => {
   const [justification, setJustification] = useState("");
+  const { t } = useTranslation("orders");
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async () => {
     if (!reviewId) return;
     if (justification.trim().length < MIN_LENGTH) {
-      toast({ title: `Escreve pelo menos ${MIN_LENGTH} caracteres`, variant: "destructive" });
+      toast({ title: t("removal.tooShort", { count: MIN_LENGTH }), variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -40,10 +42,10 @@ const ReviewRemovalDialog = ({ reviewId, onOpenChange, onSubmitted }: ReviewRemo
     });
     setSubmitting(false);
     if (error) {
-      toast({ title: "Não foi possível enviar o pedido", description: error.message, variant: "destructive" });
+      toast({ title: t("removal.failed"), description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Pedido enviado", description: "A equipa da plataforma vai analisar o teu pedido." });
+    toast({ title: t("removal.sent"), description: t("removal.sentText") });
     setJustification("");
     setConfirmed(false);
     onSubmitted();
@@ -54,17 +56,16 @@ const ReviewRemovalDialog = ({ reviewId, onOpenChange, onSubmitted }: ReviewRemo
     <Dialog open={reviewId !== null} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Pedir eliminação da avaliação</DialogTitle>
+          <DialogTitle>{t("removal.title")}</DialogTitle>
           <DialogDescription>
-            Explica porque queres eliminar a avaliação. Ela continua visível até a equipa da
-            plataforma decidir.
+            {t("removal.description")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <Textarea
             value={justification}
             onChange={(e) => setJustification(e.target.value.slice(0, 1000))}
-            placeholder="Justificação..."
+            placeholder={t("removal.placeholder")}
             rows={4}
           />
           <label htmlFor="removal-confirm" className="flex cursor-pointer items-start gap-3 text-xs text-muted-foreground">
@@ -75,13 +76,12 @@ const ReviewRemovalDialog = ({ reviewId, onOpenChange, onSubmitted }: ReviewRemo
               className="mt-0.5"
             />
             <span>
-              Confirmo que a justificação é verdadeira. Uma justificação falsa ou sem fundamento
-              pode ter consequências legais.
+              {t("removal.confirm")}
             </span>
           </label>
           <Button onClick={submit} disabled={submitting || !confirmed} className="w-full gap-2">
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Enviar pedido
+            {t("removal.send")}
           </Button>
         </div>
       </DialogContent>

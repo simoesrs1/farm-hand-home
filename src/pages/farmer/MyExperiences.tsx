@@ -10,10 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ExperienceRow } from "@/components/ExperienceForm";
 import { formatDuration } from "@/lib/experience-sessions";
 import { formatEuro } from "@/lib/format";
+import { useTranslation } from "react-i18next";
 
 /** Lista das experiências do agricultor (/agricultor/experiencias). */
 const MyExperiences = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(["farmer", "common", "offerings"]);
   const { user, loading: authLoading } = useAuth();
   const [farmerId, setFarmerId] = useState<string | null>(null);
   const [experiences, setExperiences] = useState<ExperienceRow[]>([]);
@@ -46,7 +48,7 @@ const MyExperiences = () => {
   const toggleActive = async (exp: ExperienceRow, active: boolean) => {
     const { error } = await supabase.from("farm_experiences").update({ active }).eq("id", exp.id);
     if (error) {
-      toast({ title: "Não foi possível atualizar", description: error.message, variant: "destructive" });
+      toast({ title: t("lists.updateFailed"), description: error.message, variant: "destructive" });
       return;
     }
     setExperiences((list) => list.map((e) => (e.id === exp.id ? { ...e, active } : e)));
@@ -63,8 +65,8 @@ const MyExperiences = () => {
   if (!farmerId) {
     return (
       <div className="container py-16 text-center">
-        <p className="text-muted-foreground">Complete o registo de agricultor para criar experiências.</p>
-        <Button className="mt-4" onClick={() => navigate("/onboarding/agricultor")}>Completar perfil</Button>
+        <p className="text-muted-foreground">{t("editors.completeForExperiences")}</p>
+        <Button className="mt-4" onClick={() => navigate("/onboarding/agricultor")}>{t("editors.completeProfile")}</Button>
       </div>
     );
   }
@@ -72,17 +74,17 @@ const MyExperiences = () => {
   return (
     <div className="container max-w-4xl py-8">
       <button onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Voltar
+        <ArrowLeft className="h-4 w-4" /> {t("common:actions.back")}
       </button>
       <PageHeader
         className="mb-0"
-        eyebrow="Área do agricultor"
-        title="As minhas experiências"
-        description="Atividades que os clientes podem reservar na sua quinta."
+        eyebrow={t("area")}
+        title={t("common:menu.farmer.myExperiences")}
+        description={t("lists.experiencesText")}
         actions={
           <Button asChild className="gap-2">
             <Link to="/agricultor/experiencias/nova">
-              <Plus className="h-4 w-4" /> Nova experiência
+              <Plus className="h-4 w-4" /> {t("editors.newExperience")}
             </Link>
           </Button>
         }
@@ -91,7 +93,7 @@ const MyExperiences = () => {
       {experiences.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center">
           <Tent className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Ainda não criou nenhuma experiência.</p>
+          <p className="text-sm text-muted-foreground">{t("lists.noExperiences")}</p>
         </div>
       ) : (
         <ul className="mt-6 space-y-3">
@@ -100,18 +102,18 @@ const MyExperiences = () => {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-foreground">{exp.title}</p>
                 <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                  <span>{formatEuro(Number(exp.base_price))} {exp.pricing_mode === "per_person" ? "por pessoa" : "por grupo"}</span>
+                  <span>{formatEuro(Number(exp.base_price))} {exp.pricing_mode === "per_person" ? t("offerings:units.perPersonLong") : t("offerings:units.perGroupLong")}</span>
                   <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {formatDuration(exp.duration_minutes)}</span>
-                  <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {exp.min_people}–{exp.max_people} pessoas</span>
+                  <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {t("offerings:experienceDialog.people", { min: exp.min_people, max: exp.max_people })}</span>
                 </p>
               </div>
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Switch checked={exp.active} onCheckedChange={(v) => toggleActive(exp, v)} aria-label="Experiência ativa" />
-                {exp.active ? "Ativa" : "Inativa"}
+                <Switch checked={exp.active} onCheckedChange={(v) => toggleActive(exp, v)} aria-label={t("lists.experienceActive")} />
+                {exp.active ? t("lists.activeF") : t("lists.inactiveF")}
               </label>
               <Button asChild size="sm" variant="outline" className="gap-1.5">
                 <Link to={`/agricultor/experiencias/${exp.id}/editar`}>
-                  <Pencil className="h-4 w-4" /> Editar
+                  <Pencil className="h-4 w-4" /> {t("common:actions.edit")}
                 </Link>
               </Button>
             </li>

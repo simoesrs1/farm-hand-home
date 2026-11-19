@@ -2,6 +2,7 @@
  * "Porta aberta" — weekly windows in which a farmer receives clients to hand
  * over orders. Stored on farmer_details.pickup_hours as a JSON array.
  */
+import i18n from "@/i18n";
 export interface PickupWindow {
   /** 0 = Domingo … 6 = Sábado */
   day: number;
@@ -11,17 +12,16 @@ export interface PickupWindow {
   end: string;
 }
 
-export const DAY_LABELS = [
-  "Domingo",
-  "Segunda",
-  "Terça",
-  "Quarta",
-  "Quinta",
-  "Sexta",
-  "Sábado",
-];
+const DAYS = ["0", "1", "2", "3", "4", "5", "6"] as const;
 
-export const DAY_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+/** Nome do dia no idioma atual (0 = domingo). */
+export const dayLabel = (day: number) => i18n.t(`common:days.${DAYS[day]}`);
+
+/** Abreviatura do dia no idioma atual ("Seg", "Mon"…). */
+export const dayShort = (day: number) => i18n.t(`common:daysShort.${DAYS[day]}`);
+
+/** Os sete dias, de domingo a sábado. */
+export const dayLabels = () => DAYS.map((_, d) => dayLabel(d));
 
 export const parsePickupHours = (raw: unknown): PickupWindow[] => {
   if (!Array.isArray(raw)) return [];
@@ -65,7 +65,7 @@ export const pickupStatus = (
   const openNow = windows.find(
     (w) => w.day === day && toMinutes(w.start) <= mins && mins < toMinutes(w.end),
   );
-  if (openNow) return { open: true, label: `Porta aberta agora (até ${openNow.end})` };
+  if (openNow) return { open: true, label: i18n.t("common:pickup.openNow", { end: openNow.end }) };
 
   // Find the next window within the coming 7 days.
   for (let offset = 0; offset < 7; offset++) {
@@ -75,11 +75,15 @@ export const pickupStatus = (
       .sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
     if (candidates.length > 0) {
       const next = candidates[0];
-      const when = offset === 0 ? "hoje" : offset === 1 ? "amanhã" : DAY_LABELS[d].toLowerCase();
-      return { open: false, label: `Abre ${when} às ${next.start}` };
+      const time = next.start;
+      if (offset === 0) return { open: false, label: i18n.t("common:pickup.opensToday", { time }) };
+      if (offset === 1) return { open: false, label: i18n.t("common:pickup.opensTomorrow", { time }) };
+      // Em inglês e alemão os dias escrevem-se com maiúscula.
+      const dayName = /^(en|de)/.test(i18n.resolvedLanguage ?? "") ? dayLabel(d) : dayLabel(d).toLowerCase();
+      return { open: false, label: i18n.t("common:pickup.opensOn", { day: dayName, time }) };
     }
   }
-  return { open: false, label: "Horário indisponível" };
+  return { open: false, label: i18n.t("common:pickup.unavailable") };
 };
 
 /** True when `date` falls inside one of the farmer's open-door windows. */
@@ -128,7 +132,7 @@ export const pickupSlots = (
 };
 
 export const formatSlotDate = (d: Date) =>
-  `${DAY_SHORT[d.getDay()]}, ${d.getDate()}/${d.getMonth() + 1}`;
+  `${dayShort(d.getDay())}, ${d.getDate()}/${d.getMonth() + 1}`;
 
 export const formatSlotTime = (d: Date) =>
   `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -144,7 +148,7 @@ export const formatPickupHours = (windows: PickupWindow[]): string[] => {
     .sort((a, b) => a[0] - b[0])
     .map(
       ([d, list]) =>
-        `${DAY_SHORT[d]} ${list
+        `${dayShort(d)} ${list
           .sort((a, b) => toMinutes(a.start) - toMinutes(b.start))
           .map((w) => `${w.start}–${w.end}`)
           .join(", ")}`,

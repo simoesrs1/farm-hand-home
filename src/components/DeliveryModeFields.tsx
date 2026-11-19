@@ -8,6 +8,7 @@ import DeliveryFeeFields from "@/components/DeliveryFeeFields";
 import { supabase } from "@/integrations/supabase/client";
 import { DELIVERY_MODE_OPTIONS, hasHomeDelivery, type DeliveryModeValue } from "@/lib/delivery-defaults";
 import { farmerDelivers } from "@/lib/fulfillment";
+import { Trans, useTranslation } from "react-i18next";
 
 interface DeliveryModeFieldsProps {
   farmerId: string | null;
@@ -42,6 +43,7 @@ const DeliveryModeFields = ({
   preparationDays,
   onPreparationDaysChange,
 }: DeliveryModeFieldsProps) => {
+  const { t } = useTranslation("farmer");
   // Sem raio e localização da quinta, o cliente não consegue escolher a entrega.
   const [deliveryConfigured, setDeliveryConfigured] = useState<boolean | null>(null);
   useEffect(() => {
@@ -73,7 +75,7 @@ const DeliveryModeFields = ({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label>Forma de entrega</Label>
+        <Label>{t("deliveryMode.label")}</Label>
         <div className="grid gap-2 sm:grid-cols-3">
           {DELIVERY_MODE_OPTIONS.map((o) => (
             <button
@@ -96,12 +98,13 @@ const DeliveryModeFields = ({
         <div className="flex gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs text-foreground">
           <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
           <p>
-            Ainda não definiu a zona de entrega. Enquanto não o fizer, os clientes não podem escolher a
-            entrega ao domicílio. Configure a distância e os horários em{" "}
-            <Link to="/agricultor/disponibilidade" className="font-medium text-primary underline-offset-2 hover:underline">
-              Disponibilidade
-            </Link>{" "}
-            e a localização da quinta nos dados da exploração.
+            <Trans
+              t={t}
+              i18nKey="deliveryMode.notConfigured"
+              components={{
+                link: <Link to="/agricultor/disponibilidade" className="font-medium text-primary underline-offset-2 hover:underline" />,
+              }}
+            />
           </p>
         </div>
       )}
@@ -109,7 +112,7 @@ const DeliveryModeFields = ({
       {withDelivery && (
         <>
           <div className="space-y-2">
-            <Label htmlFor="preparation-days">Prazo mínimo de preparação (dias)</Label>
+            <Label htmlFor="preparation-days">{t("deliveryMode.prepDays")}</Label>
             <Input
               id="preparation-days"
               type="number"
@@ -121,19 +124,16 @@ const DeliveryModeFields = ({
               className="w-32"
             />
             <p className="text-xs text-muted-foreground">
-              O cliente só pode marcar a entrega a partir deste número de dias depois da compra, dentro
-              dos seus horários de entrega. Deixe a 0 para permitir entregas logo no horário seguinte.
+              {t("deliveryMode.prepDaysHint")}
             </p>
           </div>
           <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
             <div>
               <Label htmlFor="delivery-tracking" className="text-sm font-medium">
-                Disponibilizo acompanhamento da entrega
+                {t("deliveryMode.tracking")}
               </Label>
               <p className="text-xs text-muted-foreground">
-                O acompanhamento já está incluído no preço da entrega ao domicílio e não pode ser
-                cobrado à parte ao cliente. Terá de atualizar o estado da encomenda (embalada,
-                expedida da quinta, em trânsito) na página Encomendas.
+                {t("deliveryMode.trackingHint")}
               </p>
             </div>
             <Switch id="delivery-tracking" checked={tracking} onCheckedChange={onTrackingChange} />

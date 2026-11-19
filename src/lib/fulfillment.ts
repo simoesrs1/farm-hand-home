@@ -11,6 +11,7 @@
  * quem valida a encomenda; esta versão serve para o carrinho e o artigo.
  */
 import { distanceKm, type LatLng } from "@/lib/geo";
+import i18n from "@/i18n";
 import type { Database } from "@/integrations/supabase/types";
 
 export type DeliveryMode = Database["public"]["Enums"]["delivery_mode"];
@@ -52,9 +53,14 @@ export const earliestDelivery = (days: number, now: Date = new Date()) =>
 export const isWithinDeliveryRadius = (farm: LatLng, point: LatLng, radiusKm: number) =>
   distanceKm(farm, point) <= radiusKm;
 
+/** Nome de cada forma de entrega, no idioma atual. */
 export const FULFILLMENT_LABELS: Record<Fulfillment, string> = {
-  pickup: "Levantar na quinta",
-  delivery: "Receber em casa",
+  get pickup() {
+    return i18n.t("common:fulfillment.pickup");
+  },
+  get delivery() {
+    return i18n.t("common:fulfillment.delivery");
+  },
 };
 
 /**
@@ -64,10 +70,10 @@ export const FULFILLMENT_LABELS: Record<Fulfillment, string> = {
  */
 export const deliveryModeLabel = (mode: DeliveryMode | undefined, deliveryAvailable = true) => {
   if (mode === "shipping") {
-    return deliveryAvailable ? "Entrega ao domicílio pelo agricultor" : "Entrega ao domicílio ainda indisponível";
+    return i18n.t(deliveryAvailable ? "common:deliveryMode.shipping" : "common:deliveryMode.shippingUnavailable");
   }
   if (mode === "both") {
-    return deliveryAvailable ? "Levantamento ou entrega ao domicílio" : "Levantamento na quinta";
+    return i18n.t(deliveryAvailable ? "common:deliveryMode.both" : "common:deliveryMode.pickup");
   }
-  return "Levantamento na quinta";
+  return i18n.t("common:deliveryMode.pickup");
 };

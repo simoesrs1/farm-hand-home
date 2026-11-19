@@ -3,6 +3,8 @@
  * Lisboa. Guardadas em farm_experiences.sessions como
  * [{ "day": 6, "times": ["10:00", "15:00"] }] (0 = domingo).
  */
+import i18n from "@/i18n";
+
 export interface SessionDay {
   day: number;
   times: string[];
@@ -78,5 +80,6 @@ export const upcomingSessions = (sessions: SessionDay[], days = 60, now = new Da
 export const formatDuration = (minutes: number) => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return [h ? `${h} h` : "", m ? `${m} min` : ""].filter(Boolean).join(" ") || "0 min";
+  const min = i18n.t("common:duration.minutes", { count: m });
+  return [h ? i18n.t("common:duration.hours", { count: h }) : "", m ? min : ""].filter(Boolean).join(" ") || i18n.t("common:duration.minutes", { count: 0 });
 };

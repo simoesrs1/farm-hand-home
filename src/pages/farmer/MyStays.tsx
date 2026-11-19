@@ -9,10 +9,12 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { StayRow } from "@/components/StayForm";
 import { formatEuro } from "@/lib/format";
+import { useTranslation } from "react-i18next";
 
 /** Lista do alojamento do agricultor (/agricultor/alojamento). */
 const MyStays = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(["farmer", "common", "offerings"]);
   const { user, loading: authLoading } = useAuth();
   const [farmerId, setFarmerId] = useState<string | null>(null);
   const [stays, setStays] = useState<StayRow[]>([]);
@@ -45,7 +47,7 @@ const MyStays = () => {
   const toggleActive = async (stay: StayRow, active: boolean) => {
     const { error } = await supabase.from("farm_stays").update({ active }).eq("id", stay.id);
     if (error) {
-      toast({ title: "Não foi possível atualizar", description: error.message, variant: "destructive" });
+      toast({ title: t("lists.updateFailed"), description: error.message, variant: "destructive" });
       return;
     }
     setStays((list) => list.map((s) => (s.id === stay.id ? { ...s, active } : s)));
@@ -62,8 +64,8 @@ const MyStays = () => {
   if (!farmerId) {
     return (
       <div className="container py-16 text-center">
-        <p className="text-muted-foreground">Complete o registo de agricultor para criar alojamento.</p>
-        <Button className="mt-4" onClick={() => navigate("/onboarding/agricultor")}>Completar perfil</Button>
+        <p className="text-muted-foreground">{t("editors.completeForStays")}</p>
+        <Button className="mt-4" onClick={() => navigate("/onboarding/agricultor")}>{t("editors.completeProfile")}</Button>
       </div>
     );
   }
@@ -71,17 +73,17 @@ const MyStays = () => {
   return (
     <div className="container max-w-4xl py-8">
       <button onClick={() => navigate(-1)} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Voltar
+        <ArrowLeft className="h-4 w-4" /> {t("common:actions.back")}
       </button>
       <PageHeader
         className="mb-0"
-        eyebrow="Área do agricultor"
-        title="O meu alojamento"
-        description="Quartos e unidades que os clientes podem reservar na sua quinta."
+        eyebrow={t("area")}
+        title={t("common:menu.farmer.myStays")}
+        description={t("lists.staysText")}
         actions={
           <Button asChild className="gap-2">
             <Link to="/agricultor/alojamento/novo">
-              <Plus className="h-4 w-4" /> Novo alojamento
+              <Plus className="h-4 w-4" /> {t("editors.newStay")}
             </Link>
           </Button>
         }
@@ -90,7 +92,7 @@ const MyStays = () => {
       {stays.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center">
           <BedDouble className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Ainda não criou nenhum alojamento.</p>
+          <p className="text-sm text-muted-foreground">{t("lists.noStays")}</p>
         </div>
       ) : (
         <ul className="mt-6 space-y-3">
@@ -99,18 +101,18 @@ const MyStays = () => {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-foreground">{s.title}</p>
                 <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                  <span>{formatEuro(Number(s.base_price))} / noite {s.pricing_mode === "per_person" ? "por pessoa" : "por quarto"}</span>
-                  <span className="inline-flex items-center gap-1"><BedDouble className="h-3.5 w-3.5" /> {s.units_count} quarto(s)</span>
-                  <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> até {s.capacity_per_unit} por quarto</span>
+                  <span>{formatEuro(Number(s.base_price))} {s.pricing_mode === "per_person" ? t("offerings:units.perNightPerson") : t("offerings:units.perNightRoom")}</span>
+                  <span className="inline-flex items-center gap-1"><BedDouble className="h-3.5 w-3.5" /> {t("offerings:stayDialog.rooms", { count: s.units_count })}</span>
+                  <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {t("offerings:stayCard.capacity", { count: s.capacity_per_unit })}</span>
                 </p>
               </div>
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Switch checked={s.active} onCheckedChange={(v) => toggleActive(s, v)} aria-label="Alojamento ativo" />
-                {s.active ? "Ativo" : "Inativo"}
+                <Switch checked={s.active} onCheckedChange={(v) => toggleActive(s, v)} aria-label={t("lists.stayActive")} />
+                {s.active ? t("lists.activeM") : t("lists.inactiveM")}
               </label>
               <Button asChild size="sm" variant="outline" className="gap-1.5">
                 <Link to={`/agricultor/alojamento/${s.id}/editar`}>
-                  <Pencil className="h-4 w-4" /> Editar
+                  <Pencil className="h-4 w-4" /> {t("common:actions.edit")}
                 </Link>
               </Button>
             </li>

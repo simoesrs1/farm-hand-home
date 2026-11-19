@@ -21,7 +21,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrderChat from "@/components/OrderChat";
-import { formatEuro } from "@/lib/format";
+import { formatDate, formatDateTime, formatEuro, formatTime, unitLabel } from "@/lib/format";
+import { Trans, useTranslation } from "react-i18next";
+import TranslatedText from "@/components/TranslatedText";
 
 interface OrderItem {
   id: string;
@@ -77,21 +79,18 @@ const mapsUrl = (f: FarmerRef | null) => {
   return null;
 };
 
-const formatDate = (iso: string | null) =>
-  iso
-    ? new Date(iso).toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
-    : null;
+const formatLongDate = (iso: string | null) =>
+  iso ? formatDate(iso, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : null;
 
-const formatTime = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }) : null;
+const formatHour = (iso: string | null) => (iso ? formatTime(iso) : null);
 
 type StepKey = "pending" | "accepted" | "packed" | "in_transit" | "out_for_delivery" | "delivered" | "problem";
 
 // Passos do acompanhamento da entrega, marcados pelo agricultor (ver order-action).
 const TRACKING_STEPS = [
-  { key: "packed", column: "packed_at", label: "Embalada", Icon: Package },
-  { key: "in_transit", column: "in_transit_at", label: "Expedida da quinta", Icon: Truck },
-  { key: "out_for_delivery", column: "out_for_delivery_at", label: "Em trânsito", Icon: Navigation },
+  { key: "packed", column: "packed_at", Icon: Package },
+  { key: "in_transit", column: "in_transit_at", Icon: Truck },
+  { key: "out_for_delivery", column: "out_for_delivery_at", Icon: Navigation },
 ] as const;
 
 const OrderStatus = () => {
@@ -101,6 +100,9 @@ const OrderStatus = () => {
   const [loading, setLoading] = useState(true);
   const [showQr, setShowQr] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const { t } = useTranslation(["orders", "common"]);
+  // "terça-feira, 19 de novembro de 2026 às 10:30"
+  const at = (iso: string | null) => t("statusPage.at", { date: formatLongDate(iso), time: formatHour(iso) });
 
   const fetchOrder = async () => {
     if (!id) return;
@@ -145,8 +147,8 @@ const OrderStatus = () => {
   if (!user) {
     return (
       <main className="container py-16 text-center">
-        <p className="text-muted-foreground">Inicia sessão para ver o estado das tuas encomendas.</p>
-        <Link to="/auth"><Button className="mt-4">Entrar</Button></Link>
+        <p className="text-muted-foreground">{t("statusPage.loginPrompt")}</p>
+        <Link to="/auth"><Button className="mt-4">{t("my.login")}</Button></Link>
       </main>
     );
   }
@@ -163,8 +165,8 @@ const OrderStatus = () => {
   if (!order) {
     return (
       <main className="container max-w-3xl py-16 text-center">
-        <p className="text-muted-foreground">Encomenda não encontrada.</p>
-        <Link to="/encomendas"><Button className="mt-4">As minhas encomendas</Button></Link>
+        <p className="text-muted-foreground">{t("statusPage.notFound")}</p>
+        <Link to="/encomendas"><Button className="mt-4">{t("my.title")}</Button></Link>
       </main>
     );
   }
@@ -178,51 +180,48 @@ const OrderStatus = () => {
   const trackingSteps: { key: StepKey; label: string; description: string; Icon: typeof Clock; done: boolean }[] =
     isDelivery && order.delivery_tracking
       ? TRACKING_STEPS.map((s) => {
-          const at = order[s.column];
+          const doneAt = order[s.column];
           return {
             key: s.key,
-            label: s.label,
-            description: at ? `${formatDate(at)} às ${formatTime(at)}` : "",
+            label: t(`statusPage.tracking.${s.key}`),
+            description: doneAt ? at(doneAt) : "",
             Icon: s.Icon,
-            done: !!at || order.status === "delivered",
+            done: !!doneAt || order.status === "delivered",
           };
         })
       : [];
 
-  const deliveredLabel = isBooking
-    ? order.status === "delivered" ? (isStay ? "Check-in feito" : "Experiência concluída") : "Reservada"
-    : isDelivery
-      ? order.status === "delivered" ? "Entregue" : "A preparar a entrega"
-      : order.status === "delivered" ? "Levantada" : "Pronta para levantamento";
+  const kindKey = isStay ? "stay" : isBooking ? "experience" : isDelivery ? "delivery" : "pickup";
+  const deliveredLabel = t(
+    order.status === "delivered" ? `statusPage.done.${kindKey}` : `statusPage.waiting.${kindKey}`,
+  );
 
   const deliveredDescription =
     order.status === "delivered" && order.delivered_at
-      ? `${isBooking ? (isStay ? "Check-in confirmado" : "Chegada confirmada") : isDelivery ? "Entrega concluída" : "Levantamento concluído"} · ${formatDate(order.delivered_at)} às ${formatTime(order.delivered_at)}`
+      ? `${t(`statusPage.confirmed.${kindKey}`)} · ${at(order.delivered_at)}`
       : order.scheduled_pickup_at
-        ? `${isStay ? "Entrada" : isBooking ? "Sessão" : isDelivery ? "Entrega marcada" : "Levantamento agendado"} · ${formatDate(order.scheduled_pickup_at)} às ${formatTime(order.scheduled_pickup_at)}`
+        ? `${t(`statusPage.scheduled.${kindKey}`)} · ${at(order.scheduled_pickup_at)}`
         : isDelivery && order.expected_delivery_at && order.status === "awaiting_pickup"
-          ? `Entrega prevista · ${formatDate(order.expected_delivery_at)}`
+          ? `${t("statusPage.expectedDelivery")} · ${formatLongDate(order.expected_delivery_at)}`
           : order.status === "awaiting_pickup"
-            ? `Prazo limite · ${formatDate(order.pickup_deadline)}`
+            ? `${t("statusPage.deadline")} · ${formatLongDate(order.pickup_deadline)}`
             : "";
 
   const steps: { key: StepKey; label: string; description: string; Icon: typeof Clock; done: boolean; failed?: boolean }[] = [
     {
       key: "pending",
-      label: "Encomenda pendente",
-      description: order.paid_at
-        ? `Pagamento confirmado · ${formatDate(order.paid_at)} às ${formatTime(order.paid_at)}`
-        : "A aguardar confirmação do pagamento",
+      label: t("statusPage.pending"),
+      description: order.paid_at ? `${t("statusPage.paid")} · ${at(order.paid_at)}` : t("statusPage.awaitingPayment"),
       Icon: CreditCard,
       done: order.status !== "pending_payment" || !!order.paid_at,
       failed: order.status === "pending_payment" && !order.paid_at ? false : false,
     },
     {
       key: "accepted",
-      label: order.accepted_at ? "Aceite pelo agricultor" : "À espera de aceitação",
+      label: order.accepted_at ? t("my.accepted") : t("statusPage.awaitingAcceptance"),
       description: order.accepted_at
-        ? `Aceite · ${formatDate(order.accepted_at)} às ${formatTime(order.accepted_at)}`
-        : "O agricultor vai confirmar a tua encomenda em breve",
+        ? `${t("statusPage.acceptedShort")} · ${at(order.accepted_at)}`
+        : t("statusPage.acceptSoon"),
       Icon: CheckCircle2,
       done: !!order.accepted_at,
     },
@@ -239,15 +238,15 @@ const OrderStatus = () => {
   const problemStep: { label: string; description: string; detail: string | null } | null =
     order.status === "refunded"
       ? {
-          label: "Devolvida",
-          description: "O valor foi devolvido — sem stock ou encomenda cancelada.",
+          label: t("status.refunded"),
+          description: t("statusPage.refundedText"),
           detail: null,
         }
       : order.status === "expired"
         ? {
-            label: "Expirada (não levantada)",
-            description: "A encomenda não foi levantada dentro do prazo e expirou.",
-            detail: order.expired_at ? `Expirou · ${formatDate(order.expired_at)} às ${formatTime(order.expired_at)}` : null,
+            label: t("statusPage.expired"),
+            description: t("statusPage.expiredText"),
+            detail: order.expired_at ? `${t("statusPage.expiredAt")} · ${at(order.expired_at)}` : null,
           }
         : null;
 
@@ -258,15 +257,15 @@ const OrderStatus = () => {
     <main className="container max-w-3xl py-8">
       <div className="mb-6 flex items-center justify-between">
         <Link to="/encomendas" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> As minhas encomendas
+          <ArrowLeft className="h-4 w-4" /> {t("my.title")}
         </Link>
         <button
           type="button"
           onClick={fetchOrder}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          aria-label="Atualizar estado"
+          aria-label={t("statusPage.refreshAria")}
         >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} /> Atualizar
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} /> {t("statusPage.refresh")}
         </button>
       </div>
 
@@ -274,10 +273,10 @@ const OrderStatus = () => {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">
-              {order.farmer?.company_name ?? "Encomenda"}
+              {order.farmer?.company_name ?? t("statusPage.orderFallback")}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Encomendada em {formatDate(order.created_at)} às {formatTime(order.created_at)}
+              {t("statusPage.orderedOn", { when: at(order.created_at) })}
             </p>
           </div>
           <p className="font-mono tabular-nums text-xl font-semibold text-foreground">{formatEuro(order.total)}</p>
@@ -330,21 +329,24 @@ const OrderStatus = () => {
             <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div>
               <p className="text-sm font-medium text-foreground">
-                {isDelivery ? "Data e hora da entrega" : "Data e hora do levantamento"}
+                {isDelivery ? t("statusPage.deliveryDateTime") : t("statusPage.pickupDateTime")}
               </p>
               {order.scheduled_pickup_at ? (
                 <p className="mt-0.5 text-sm text-muted-foreground">
-                  {formatDate(order.scheduled_pickup_at)} às{" "}
-                  <span className="font-semibold text-foreground">{formatTime(order.scheduled_pickup_at)}</span>
+                  <Trans
+                    t={t}
+                    i18nKey="statusPage.atBold"
+                    values={{ date: formatLongDate(order.scheduled_pickup_at), time: formatHour(order.scheduled_pickup_at) }}
+                    components={{ b: <span className="font-semibold text-foreground" /> }}
+                  />
                 </p>
               ) : isDelivery && order.expected_delivery_at ? (
                 <p className="mt-0.5 text-sm text-muted-foreground">
-                  Sem hora marcada — entrega prevista para {formatDate(order.expected_delivery_at)}. Combina a hora
-                  com o agricultor pelo chat.
+                  {t("statusPage.noTimeDelivery", { date: formatLongDate(order.expected_delivery_at) })}
                 </p>
               ) : (
                 <p className="mt-0.5 text-sm text-muted-foreground">
-                  Sem horário agendado — prazo limite: {formatDate(order.pickup_deadline)}
+                  {t("statusPage.noTime", { date: formatLongDate(order.pickup_deadline) })}
                 </p>
               )}
             </div>
@@ -355,12 +357,10 @@ const OrderStatus = () => {
         {order.status === "awaiting_pickup" && (
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
-              {isDelivery
-                ? "Mostra o QR ao agricultor quando receberes a encomenda."
-                : "Mostra o QR ao agricultor no levantamento."}
+              {isDelivery ? t("statusPage.qrDelivery") : t("statusPage.qrPickup")}
             </p>
             <Button onClick={() => setShowQr(true)}>
-              {isDelivery ? "Mostrar QR de entrega" : "Mostrar QR de levantamento"}
+              {isDelivery ? t("qr.showDelivery") : t("qr.showPickup")}
             </Button>
           </div>
         )}
@@ -369,7 +369,7 @@ const OrderStatus = () => {
           <div className="mt-6 flex items-start gap-2 border-t border-border pt-4">
             <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Entrega ao domicílio em</p>
+              <p className="text-xs text-muted-foreground">{t("statusPage.deliveryAt")}</p>
               <p className="text-sm text-foreground">{order.delivery_address}</p>
             </div>
           </div>
@@ -385,7 +385,7 @@ const OrderStatus = () => {
                   rel="noreferrer"
                   className="mt-1 inline-flex text-xs font-medium text-primary hover:underline"
                 >
-                  Abrir no Google Maps →
+                  {t("my.openMaps")}
                 </a>
               )}
             </div>
@@ -396,7 +396,7 @@ const OrderStatus = () => {
         {order.order_items?.length > 0 && (
           <div className="mt-4 border-t border-border pt-4">
             <p className="text-sm font-medium text-foreground">
-              {order.order_items.length} {order.order_items.length === 1 ? "artigo" : "artigos"}
+              {t("my.items", { count: order.order_items.length })}
             </p>
             <ul className="mt-3 space-y-2">
               {order.order_items.map((it) => (
@@ -405,9 +405,9 @@ const OrderStatus = () => {
                     <img src={it.product_image} alt={it.product_name} className="h-10 w-10 rounded-md object-cover" />
                   )}
                   <div className="flex-1">
-                    <p className="font-medium text-foreground">{it.product_name}</p>
+                    <TranslatedText type="order_item" id={it.id} field="product_name" text={it.product_name} as="p" className="font-medium text-foreground" />
                     <p className="text-xs text-muted-foreground">
-                      {it.quantity} {it.unit ?? ""} × {formatEuro(it.unit_price)}
+                      {it.quantity} {unitLabel(it.unit, it.quantity)} × {formatEuro(it.unit_price)}
                     </p>
                   </div>
                   <p className="font-medium text-foreground">{formatEuro(it.subtotal)}</p>
@@ -415,7 +415,7 @@ const OrderStatus = () => {
               ))}
               {order.delivery_fee > 0 && (
                 <li className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Entrega ao domicílio</span>
+                  <span className="text-muted-foreground">{t("my.homeDeliveryFee")}</span>
                   <span className="font-medium text-foreground">{formatEuro(order.delivery_fee)}</span>
                 </li>
               )}
@@ -433,7 +433,7 @@ const OrderStatus = () => {
         {order.status === "delivered" && (
           <div className="mt-4 flex justify-end border-t border-border pt-4">
             <Link to={`/avaliar/${order.id}`}>
-              <Button>Avaliar agricultor</Button>
+              <Button>{t("review.rate")}</Button>
             </Link>
           </div>
         )}
@@ -442,20 +442,20 @@ const OrderStatus = () => {
       <Dialog open={showQr} onOpenChange={setShowQr}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{isDelivery ? "Entrega ao domicílio" : "Levantamento na quinta"}</DialogTitle>
+            <DialogTitle>{isDelivery ? t("qr.deliveryTitle") : t("qr.pickupTitle")}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-2">
             <div className="rounded-xl bg-white p-4">
               <QRCodeSVG value={`FC:${order.pickup_code}`} size={220} level="H" />
             </div>
             <div className="text-center">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Código</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("qr.code")}</p>
               <p className="mt-1 font-mono text-2xl font-bold tracking-[0.3em] text-foreground">
                 {order.pickup_code}
               </p>
             </div>
             <p className="text-center text-xs text-muted-foreground">
-              Válido até {new Date(order.pickup_deadline).toLocaleString("pt-PT")}
+              {t("qr.validUntil", { date: formatDateTime(order.pickup_deadline) })}
             </p>
           </div>
         </DialogContent>

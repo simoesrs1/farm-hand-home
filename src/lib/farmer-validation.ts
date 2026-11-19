@@ -5,6 +5,7 @@
  * quando o valor é válido. As verificações de unicidade (NIF / nº de
  * exploração) são feitas no servidor, via RPC, e não fazem parte deste módulo.
  */
+import i18n from "@/i18n";
 
 export interface FarmerFormValues {
   explorationId: string;
@@ -35,7 +36,7 @@ export type FarmerField =
 
 export type FarmerFieldErrors = Partial<Record<FarmerField, string>>;
 
-const REQUIRED = "Campo obrigatório.";
+const required = () => i18n.t("farmer:validation.required");
 
 /** Prefixos válidos de NIF português (singulares, coletivos e casos especiais). */
 const NIF_PREFIXES = [
@@ -60,55 +61,55 @@ export const isValidPtNif = (nif: string): boolean => {
 
 export const validateExplorationId = (value: string): string | null => {
   const v = value.trim();
-  if (!v) return REQUIRED;
-  if (v.length < 3) return "Deve ter pelo menos 3 caracteres.";
+  if (!v) return required();
+  if (v.length < 3) return i18n.t("farmer:validation.min3");
   return null;
 };
 
 export const validateExplorationNumber = (value: string): string | null => {
   const v = value.trim();
-  if (!v) return REQUIRED;
-  if (!/^[A-Za-z0-9]+$/.test(v)) return "Use apenas letras e números, sem espaços.";
-  if (v.length < 7 || v.length > 20) return "Deve ter entre 7 e 20 caracteres.";
+  if (!v) return required();
+  if (!/^[A-Za-z0-9]+$/.test(v)) return i18n.t("farmer:validation.alnum");
+  if (v.length < 7 || v.length > 20) return i18n.t("farmer:validation.len7to20");
   return null;
 };
 
 export const validateCompanyName = (value: string): string | null => {
   const v = value.trim();
-  if (!v) return REQUIRED;
-  if (v.length < 3) return "Deve ter pelo menos 3 caracteres.";
+  if (!v) return required();
+  if (v.length < 3) return i18n.t("farmer:validation.min3");
   return null;
 };
 
 export const validateCompanyNif = (value: string): string | null => {
   const v = value.trim();
-  if (!v) return REQUIRED;
-  if (!/^\d+$/.test(v)) return "O NIF só pode conter dígitos.";
-  if (v.length !== 9) return "O NIF tem de ter 9 dígitos.";
-  if (!isValidPtNif(v)) return "NIF inválido — verifique os dígitos introduzidos.";
+  if (!v) return required();
+  if (!/^\d+$/.test(v)) return i18n.t("farmer:validation.nifDigits");
+  if (v.length !== 9) return i18n.t("farmer:validation.nif9");
+  if (!isValidPtNif(v)) return i18n.t("farmer:validation.nifInvalid");
   return null;
 };
 
 export const validateCaeCode = (value: string): string | null => {
   const v = value.trim();
-  if (!v) return REQUIRED;
-  if (!/^\d{5}$/.test(v)) return "O CAE tem de ter 5 dígitos (ex: 01110).";
+  if (!v) return required();
+  if (!/^\d{5}$/.test(v)) return i18n.t("farmer:validation.cae");
   return null;
 };
 
 export const validatePhone = (value: string): string | null => {
   const v = value.replace(/[\s.\-()]/g, "");
-  if (!v) return REQUIRED;
+  if (!v) return required();
   if (!/^(?:\+351|00351)?[23789]\d{8}$/.test(v)) {
-    return "Telefone inválido (ex: +351 912 345 678).";
+    return i18n.t("farmer:validation.phone");
   }
   return null;
 };
 
 export const validateAddress = (value: string): string | null => {
   const v = value.trim();
-  if (!v) return REQUIRED;
-  if (v.length < 5) return "Indique uma morada completa.";
+  if (!v) return required();
+  if (v.length < 5) return i18n.t("farmer:validation.address");
   return null;
 };
 
@@ -117,15 +118,15 @@ export const validateWebsite = (value: string): string | null => {
   const v = value.trim();
   if (!v) return null;
   if (!/^(https?:\/\/)?([\w-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(v)) {
-    return "Endereço inválido (ex: https://aminhaquinta.pt).";
+    return i18n.t("farmer:validation.website");
   }
   return null;
 };
 
 export const validatePickupAddress = (value: string): string | null => {
   const v = value.trim();
-  if (!v) return REQUIRED;
-  if (v.length < 5) return "Indique uma morada completa.";
+  if (!v) return required();
+  if (v.length < 5) return i18n.t("farmer:validation.address");
   return null;
 };
 
@@ -134,7 +135,7 @@ export const validatePickupLocation = (
   lng: number | null,
 ): string | null =>
   lat == null || lng == null
-    ? "Marque o local de levantamento no mapa."
+    ? i18n.t("farmer:validation.pickupPoint")
     : null;
 
 /** Acrescenta o protocolo ao website quando o agricultor o omite. */

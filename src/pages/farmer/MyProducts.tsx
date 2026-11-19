@@ -20,6 +20,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { pendingLotUnitsByProduct } from "@/lib/lot-allocations";
+import { useTranslation } from "react-i18next";
+import { formatDate } from "@/lib/format";
 
 type ProductRow = {
   id: string;
@@ -50,8 +52,8 @@ const todayISO = () => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 
-const formatDate = (iso: string) =>
-  new Date(`${iso}T00:00:00`).toLocaleDateString("pt-PT", {
+const formatDay = (iso: string) =>
+  formatDate(`${iso}T00:00:00`, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -75,6 +77,7 @@ const availabilityState = (p: ProductRow): AvailabilityState => {
 const MyProducts = () => {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
+  const { t } = useTranslation(["farmer", "common"]);
 
   const [loading, setLoading] = useState(true);
   const [farmerId, setFarmerId] = useState<string | null>(null);
@@ -126,7 +129,7 @@ const MyProducts = () => {
       .eq("active", true)
       .order("name", { ascending: true });
     if (error) {
-      toast({ title: "Erro a carregar produtos", description: error.message, variant: "destructive" });
+      toast({ title: t("products.loadError"), description: error.message, variant: "destructive" });
     } else {
       setProducts((data ?? []) as ProductRow[]);
     }
@@ -172,7 +175,7 @@ const MyProducts = () => {
     if (sel === "100+") {
       const n = parseInt(custom[p.id] ?? "", 10);
       if (!Number.isFinite(n) || n <= 100) {
-        toast({ title: "Indique um valor superior a 100", variant: "destructive" });
+        toast({ title: t("products.moreThan100"), variant: "destructive" });
         return 0;
       }
       return n;
@@ -188,10 +191,10 @@ const MyProducts = () => {
     const { error } = await supabase.rpc("set_batch_expiry", { p_batch_id: b.id, p_expires_at: date });
     setSavingId(null);
     if (error) {
-      toast({ title: "Não foi possível repor o stock", description: error.message, variant: "destructive" });
+      toast({ title: t("products.restockFailed"), description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Stock reposto à venda", description: `${b.quantity_remaining} un. com validade ${formatDate(date)}.` });
+    toast({ title: t("products.restocked"), description: t("products.restockedText", { count: b.quantity_remaining, date: formatDay(date) }) });
     setPendingExpiry((s) => ({ ...s, [b.id]: "" }));
     load();
   };
@@ -201,17 +204,17 @@ const MyProducts = () => {
     if (amount <= 0) return;
     const current = p.stock_quantity ?? 0;
     if (sign === -1 && current <= 0) {
-      toast({ title: "Sem stock para retirar", variant: "destructive" });
+      toast({ title: t("products.nothingToRemove"), variant: "destructive" });
       return;
     }
     const exp = expiry[p.id] || null;
     // Todo o stock à venda tem validade.
     if (sign === 1 && !exp) {
-      toast({ title: "Indique a validade do novo stock", variant: "destructive" });
+      toast({ title: t("products.needExpiry"), variant: "destructive" });
       return;
     }
     if (sign === 1 && exp && exp < todayISO()) {
-      toast({ title: "A validade não pode estar no passado", variant: "destructive" });
+      toast({ title: t("products.expiryPast"), variant: "destructive" });
       return;
     }
     setSavingId(p.id);
@@ -221,12 +224,12 @@ const MyProducts = () => {
         : await supabase.rpc("remove_stock_fifo", { p_product_id: p.id, p_quantity: amount });
     setSavingId(null);
     if (error) {
-      toast({ title: "Erro a atualizar stock", description: error.message, variant: "destructive" });
+      toast({ title: t("products.stockError"), description: error.message, variant: "destructive" });
       return;
     }
     const newStock = Number(data ?? 0);
     toast({
-      title: "Stock atualizado",
+      title: t("products.stockUpdated"),
       description: `${p.name}: ${sign === 1 ? "+" : "−"}${amount} → ${newStock}`,
     });
     setPreset((s) => ({ ...s, [p.id]: "1" }));
@@ -246,9 +249,9 @@ const MyProducts = () => {
   if (!farmerId) {
     return (
       <div className="container py-16 text-center">
-        <p className="text-muted-foreground">Complete o registo de agricultor para gerir produtos.</p>
+        <p className="text-muted-foreground">{t("products.completeProfile")}</p>
         <Button className="mt-4" onClick={() => navigate("/onboarding/agricultor")}>
-          Completar perfil
+          {t("editors.completeProfile")}
         </Button>
       </div>
     );
@@ -260,18 +263,18 @@ const MyProducts = () => {
         onClick={() => navigate(-1)}
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Voltar
+        <ArrowLeft className="h-4 w-4" /> {t("common:actions.back")}
       </button>
 
       <PageHeader
         className="mb-0"
-        eyebrow="Área do agricultor"
-        title="Os meus produtos"
-        description="Gestão de stock dos artigos já publicados."
+        eyebrow={t("area")}
+        title={t("common:menu.farmer.myProducts")}
+        description={t("products.description")}
         actions={
           <Button asChild className="gap-2">
             <Link to="/agricultor/produtos/novo">
-              <Plus className="h-4 w-4" /> Adicionar produto
+              <Plus className="h-4 w-4" /> {t("common:menu.farmer.addProduct")}
             </Link>
           </Button>
         }
@@ -280,10 +283,10 @@ const MyProducts = () => {
       {products.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center">
           <PackageOpen className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Ainda não publicou nenhum produto.</p>
+          <p className="text-sm text-muted-foreground">{t("products.none")}</p>
           <Button asChild size="sm" className="gap-2">
             <Link to="/agricultor/produtos/novo">
-              <Plus className="h-4 w-4" /> Adicionar o primeiro
+              <Plus className="h-4 w-4" /> {t("products.addFirst")}
             </Link>
           </Button>
         </div>
@@ -318,7 +321,7 @@ const MyProducts = () => {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-foreground">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">por {p.unit}</p>
+                    <p className="text-xs text-muted-foreground">{t("products.perUnit", { unit: p.unit })}</p>
                   </div>
                   <span
                     className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
@@ -329,7 +332,7 @@ const MyProducts = () => {
                         : "bg-success/10 text-success"
                     }`}
                   >
-                    {isOut ? "Sem stock" : `${stock} em stock`}
+                    {isOut ? t("products.outOfStock") : t("products.inStock", { count: stock })}
                   </span>
                   <div className="flex w-full gap-2 sm:w-auto">
                     <Button
@@ -338,7 +341,7 @@ const MyProducts = () => {
                       className="flex-1 gap-1.5 sm:flex-none"
                       onClick={() => navigate(`/agricultor/produtos/${p.id}/editar`)}
                     >
-                      <Pencil className="h-4 w-4" /> Editar
+                      <Pencil className="h-4 w-4" /> {t("common:actions.edit")}
                     </Button>
                     <Button
                       size="sm"
@@ -346,7 +349,7 @@ const MyProducts = () => {
                       className="flex-1 gap-1.5 sm:flex-none"
                       onClick={() => setHistoryProduct(p)}
                     >
-                      <History className="h-4 w-4" /> Histórico
+                      <History className="h-4 w-4" /> {t("products.history")}
                     </Button>
                   </div>
                 </div>
@@ -354,9 +357,9 @@ const MyProducts = () => {
                 {/* 2. Resumo: disponibilidade e stock */}
                 <div className="grid gap-4 border-t border-border p-4 sm:grid-cols-2">
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground">Disponibilidade</p>
+                    <p className="text-xs font-medium text-muted-foreground">{t("availability.title")}</p>
                     {avail === "none" ? (
-                      <p className="mt-1 text-sm text-foreground">Sem prazo de levantamento</p>
+                      <p className="mt-1 text-sm text-foreground">{t("products.noDeadline")}</p>
                     ) : (
                       <p
                         className={`mt-1 inline-flex items-center gap-1.5 text-sm ${
@@ -369,28 +372,23 @@ const MyProducts = () => {
                       >
                         <CalendarClock className="h-4 w-4 shrink-0" />
                         <span>
-                          {p.availability_start && `${formatDate(p.availability_start)} – `}
-                          {formatDate(p.availability_end!)}
-                          {avail === "expired" && " · prazo terminado"}
-                          {avail === "ending" &&
-                            ` · termina ${
-                              daysUntil(p.availability_end!) === 0
-                                ? "hoje"
-                                : `em ${daysUntil(p.availability_end!)} dia(s)`
-                            }`}
-                          {avail === "upcoming" && " · ainda não iniciado"}
+                          {p.availability_start && `${formatDay(p.availability_start)} – `}
+                          {formatDay(p.availability_end!)}
+                          {avail === "expired" && ` · ${t("products.periodEnded")}`}
+                          {avail === "ending" && ` · ${t("products.endsIn", { count: daysUntil(p.availability_end!) })}`}
+                          {avail === "upcoming" && ` · ${t("products.notStarted")}`}
                         </span>
                       </p>
                     )}
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground">Stock à venda</p>
+                    <p className="text-xs font-medium text-muted-foreground">{t("products.stockForSale")}</p>
                     <p className="mt-1 text-sm text-foreground">
-                      {stock} {p.unit} · aviso quando chegar a {threshold}
+                      {t("products.stockLine", { stock, unit: p.unit, threshold })}
                     </p>
                     {(awaitingLot[p.id] ?? 0) > 0 && (
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {awaitingLot[p.id]} {p.unit} vendidas à espera de indicação do lote (ainda contam nos lotes).
+                        {t("products.awaitingLot", { count: awaitingLot[p.id], unit: p.unit })}
                       </p>
                     )}
                   </div>
@@ -398,10 +396,10 @@ const MyProducts = () => {
 
                 {/* 3. Atualizar stock */}
                 <div className="border-t border-border p-4">
-                  <p className="mb-2 text-sm font-medium text-foreground">Atualizar stock</p>
+                  <p className="mb-2 text-sm font-medium text-foreground">{t("products.updateStock")}</p>
                   <div className="flex flex-wrap items-end gap-3">
                     <div className="space-y-1">
-                      <Label htmlFor={`qty-${p.id}`} className="text-xs text-muted-foreground">Quantidade</Label>
+                      <Label htmlFor={`qty-${p.id}`} className="text-xs text-muted-foreground">{t("products.quantity")}</Label>
                       <select
                         id={`qty-${p.id}`}
                         value={sel}
@@ -418,7 +416,7 @@ const MyProducts = () => {
                     </div>
                     {sel === "100+" && (
                       <div className="space-y-1">
-                        <Label htmlFor={`custom-${p.id}`} className="text-xs text-muted-foreground">Nº exato</Label>
+                        <Label htmlFor={`custom-${p.id}`} className="text-xs text-muted-foreground">{t("products.exact")}</Label>
                         <Input
                           id={`custom-${p.id}`}
                           type="number"
@@ -426,14 +424,14 @@ const MyProducts = () => {
                           step={1}
                           value={custom[p.id] ?? ""}
                           onChange={(e) => setCustom((s) => ({ ...s, [p.id]: e.target.value }))}
-                          placeholder="Ex.: 150"
+                          placeholder={t("products.exactPlaceholder")}
                           className="h-9 w-28"
                         />
                       </div>
                     )}
                     <div className="space-y-1">
                       <Label htmlFor={`exp-${p.id}`} className="text-xs text-muted-foreground">
-                        Validade (para adicionar)
+                        {t("products.expiryToAdd")}
                       </Label>
                       <Input
                         id={`exp-${p.id}`}
@@ -452,7 +450,7 @@ const MyProducts = () => {
                         className="h-9 gap-1.5"
                       >
                         {savingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                        Adicionar
+                        {t("common:actions.add")}
                       </Button>
                       <Button
                         size="sm"
@@ -461,7 +459,7 @@ const MyProducts = () => {
                         disabled={savingId === p.id || stock <= 0}
                         className="h-9 gap-1.5"
                       >
-                        <Minus className="h-4 w-4" /> Retirar
+                        <Minus className="h-4 w-4" /> {t("products.remove")}
                       </Button>
                     </div>
                   </div>
@@ -471,19 +469,19 @@ const MyProducts = () => {
                     (é também o primeiro a ser vendido). */}
                 <div className="border-t border-border p-4">
                   <p className="mb-2 text-sm font-medium text-foreground">
-                    Lotes em stock <span className="font-normal text-muted-foreground">(vende-se primeiro o que termina primeiro)</span>
+                    {t("products.lots")} <span className="font-normal text-muted-foreground">({t("products.lotsHint")})</span>
                   </p>
                   {datedBatches.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Sem lotes em stock.</p>
+                    <p className="text-sm text-muted-foreground">{t("products.noLots")}</p>
                   ) : (
                     <ul className="divide-y divide-border rounded-lg border border-border text-sm">
                       {datedBatches.map((b, i) => {
                         const days = daysUntil(b.expires_at!);
                         return (
                           <li key={b.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2">
-                            <span className="w-28 shrink-0 text-xs font-semibold text-primary">{i === 0 ? "Vende-se primeiro" : ""}</span>
+                            <span className="w-28 shrink-0 text-xs font-semibold text-primary">{i === 0 ? t("products.sellsFirst") : ""}</span>
                             <span className="font-medium text-foreground">{b.quantity_remaining} {p.unit}</span>
-                            <span className="text-foreground">Validade {formatDate(b.expires_at!)}</span>
+                            <span className="text-foreground">{t("products.expiry", { date: formatDay(b.expires_at!) })}</span>
                             <span
                               className={`text-xs ${
                                 days <= 0
@@ -493,9 +491,9 @@ const MyProducts = () => {
                                   : "text-muted-foreground"
                               }`}
                             >
-                              {days <= 0 ? "termina hoje" : days === 1 ? "termina amanhã" : `termina em ${days} dias`}
+                              {days <= 0 ? t("products.endsToday") : days === 1 ? t("products.endsTomorrow") : t("products.endsInDays", { count: days })}
                             </span>
-                            <span className="text-xs text-muted-foreground">Inserido {new Date(b.added_at).toLocaleDateString("pt-PT")}</span>
+                            <span className="text-xs text-muted-foreground">{t("products.added", { date: formatDate(b.added_at) })}</span>
                           </li>
                         );
                       })}
@@ -507,14 +505,14 @@ const MyProducts = () => {
                 {pendingBatches.length > 0 && (
                   <div className="border-t border-border bg-muted/30 p-4">
                     <p className="mb-2 text-sm font-medium text-foreground">
-                      À espera de validade <span className="font-normal text-muted-foreground">(fora do stock à venda)</span>
+                      {t("products.awaitingExpiry")} <span className="font-normal text-muted-foreground">({t("products.notForSale")})</span>
                     </p>
                     <ul className="space-y-2">
                       {pendingBatches.map((b) => (
                         <li key={b.id} className="flex flex-wrap items-end gap-3">
                           <span className="pb-2 text-sm font-medium text-foreground">{b.quantity_remaining} {p.unit}</span>
                           <div className="space-y-1">
-                            <Label htmlFor={`pending-${b.id}`} className="text-xs text-muted-foreground">Validade</Label>
+                            <Label htmlFor={`pending-${b.id}`} className="text-xs text-muted-foreground">{t("products.expiryLabel")}</Label>
                             <Input
                               id={`pending-${b.id}`}
                               type="date"
@@ -530,7 +528,7 @@ const MyProducts = () => {
                             disabled={!pendingExpiry[b.id] || savingId === b.id}
                             onClick={() => confirmBatchExpiry(b)}
                           >
-                            Repor à venda
+                            {t("products.putBack")}
                           </Button>
                         </li>
                       ))}

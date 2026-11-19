@@ -1,0 +1,242 @@
+{
+  "status": {
+    "pending_payment": "En attente de paiement",
+    "awaiting_pickup": "En attente de retrait",
+    "delivered": "Retirée",
+    "expired": "Expirée",
+    "refunded": "Remboursée",
+    "cancelled": "Annulée",
+    "cancelledByFarmer": "Annulée par l'agriculteur",
+    "home": {
+      "awaiting_pickup": "En attente de livraison",
+      "delivered": "Livrée"
+    },
+    "booking": {
+      "awaiting_pickup": "Réservée",
+      "delivered": "Terminée",
+      "expired": "Absence"
+    }
+  },
+  "booking": {
+    "stay": "Hébergement",
+    "experience": "Expérience",
+    "stayDetails": "Arrivée {{checkIn}} · Départ {{checkOut}} · {{guests}} · {{rooms}}",
+    "guests_one": "{{count}} personne",
+    "guests_other": "{{count}} personnes",
+    "rooms_one": "{{count}} chambre",
+    "rooms_other": "{{count}} chambres",
+    "people_one": "{{count}} personne",
+    "people_other": "{{count}} personnes"
+  },
+  "my": {
+    "loginPrompt": "Connecte-toi pour voir tes commandes.",
+    "login": "Se connecter",
+    "tryAgain": "Réessaie dans quelques instants.",
+    "farmFallback": "Ferme",
+    "accepted": "Commande acceptée par l'agriculteur",
+    "awaitingAcceptance": "En attente d'acceptation par l'agriculteur",
+    "viewStatus": "Voir le statut →",
+    "viewStatusPickup": "Voir le statut et le retrait →",
+    "homeDelivery": "Livraison à domicile : {{address}}",
+    "track": "Suivre",
+    "openMaps": "Ouvrir dans Google Maps →",
+    "details_one": "Détails ({{count}} article)",
+    "details_other": "Détails ({{count}} articles)",
+    "homeDeliveryFee": "Livraison à domicile",
+    "deadline": "Délai :",
+    "items_one": "{{count}} article",
+    "items_other": "{{count}} articles",
+    "home": "Accueil",
+    "title": "Mes commandes",
+    "empty": "Tu n'as pas encore de commandes.",
+    "seeCatalog": "Voir le catalogue",
+    "active": "En cours",
+    "noActive": "Tu n'as pas de commandes en cours.",
+    "past": "Terminées",
+    "noPast": "Pas encore de commandes terminées."
+  },
+  "complaint": {
+    "failed": "Impossible d'enregistrer la réclamation",
+    "filed": "Réclamation enregistrée",
+    "filedText": "L'agriculteur a 48 heures pour livrer la commande.",
+    "open": "Réclamation enregistrée. L'agriculteur a jusqu'au {{date}} pour livrer.",
+    "overdue": "Réclamation enregistrée. L'équipe de la plateforme va vérifier la situation.",
+    "rejected": "La réclamation a été examinée et refusée par l'équipe de la plateforme.",
+    "button": "Je n'ai pas reçu la commande",
+    "title": "Tu n'as pas reçu la commande ?",
+    "text": "L'agriculteur sera prévenu et a 48 heures pour la livrer. Si la livraison n'a pas lieu, l'équipe de la plateforme vérifie la situation et le montant est remboursé.",
+    "confirm": "Enregistrer la réclamation"
+  },
+  "cancelBooking": {
+    "failed": "Annulation impossible",
+    "done": "Réservation annulée",
+    "refund": "{{amount}} vont être remboursés.",
+    "button": "Annuler la réservation",
+    "keep": "Garder la réservation",
+    "title": "Annuler la réservation ?",
+    "refunded": "{{amount}} remboursés.",
+    "refundedWithFee": "{{amount}} remboursés (frais d'annulation de {{fee}}).",
+    "free_one": "Tu es encore dans le délai d'annulation gratuite (jusqu'à {{count}} jour avant). {{amount}} vont être remboursés.",
+    "free_other": "Tu es encore dans le délai d'annulation gratuite (jusqu'à {{count}} jours avant). {{amount}} vont être remboursés.",
+    "feeStay_one": "Il reste moins de {{count}} jour avant la réservation : 25 % du prix de l'hébergement ({{fee}}) sont retenus et {{amount}} remboursés.",
+    "feeStay_other": "Il reste moins de {{count}} jours avant la réservation : 25 % du prix de l'hébergement ({{fee}}) sont retenus et {{amount}} remboursés.",
+    "feeExperience_one": "Il reste moins de {{count}} jour avant la réservation : 25 % du prix de l'expérience ({{fee}}) sont retenus et {{amount}} remboursés.",
+    "feeExperience_other": "Il reste moins de {{count}} jours avant la réservation : 25 % du prix de l'expérience ({{fee}}) sont retenus et {{amount}} remboursés."
+  },
+  "review": {
+    "hidePhotoFailed": "Impossible de retirer la photo",
+    "photoHidden": "Photo retirée",
+    "photoHiddenText": "Ton avis n'affiche plus que ton nom.",
+    "rate": "Noter l'agriculteur",
+    "deleted": "Avis supprimé",
+    "done": "Déjà noté",
+    "removalPending": "Suppression en cours d'examen",
+    "requestRemoval": "Demander la suppression",
+    "hidePhoto": "Retirer ma photo"
+  },
+  "qr": {
+    "showBooking": "Afficher le QR de la réservation",
+    "showDelivery": "Afficher le QR de livraison",
+    "showPickup": "Afficher le QR de retrait",
+    "bookingTitle": "Réservation à la ferme",
+    "deliveryTitle": "Livraison à domicile",
+    "pickupTitle": "Retrait à la ferme",
+    "bookingText": "Montre ce QR code (ou le code ci-dessous) à l'agriculteur en arrivant à la ferme.",
+    "deliveryText": "Montre ce QR code (ou le code ci-dessous) à l'agriculteur en recevant la commande.",
+    "pickupText": "Montre ce QR code (ou le code ci-dessous) à l'agriculteur pour retirer la commande.",
+    "code": "Code",
+    "validUntil": "Valable jusqu'au {{date}}"
+  },
+  "statusPage": {
+    "at": "{{date}} à {{time}}",
+    "atBold": "{{date}} à <b>{{time}}</b>",
+    "loginPrompt": "Connecte-toi pour voir le statut de tes commandes.",
+    "notFound": "Commande introuvable.",
+    "tracking": {
+      "packed": "Emballée",
+      "in_transit": "Expédiée de la ferme",
+      "out_for_delivery": "En transit"
+    },
+    "done": {
+      "stay": "Arrivée enregistrée",
+      "experience": "Expérience terminée",
+      "delivery": "Livrée",
+      "pickup": "Retirée"
+    },
+    "waiting": {
+      "stay": "Réservée",
+      "experience": "Réservée",
+      "delivery": "Préparation de la livraison",
+      "pickup": "Prête à être retirée"
+    },
+    "confirmed": {
+      "stay": "Arrivée confirmée",
+      "experience": "Arrivée confirmée",
+      "delivery": "Livraison effectuée",
+      "pickup": "Retrait effectué"
+    },
+    "scheduled": {
+      "stay": "Arrivée",
+      "experience": "Séance",
+      "delivery": "Livraison prévue",
+      "pickup": "Retrait prévu"
+    },
+    "expectedDelivery": "Livraison prévue",
+    "deadline": "Date limite",
+    "pending": "Commande en attente",
+    "paid": "Paiement confirmé",
+    "awaitingPayment": "En attente de confirmation du paiement",
+    "awaitingAcceptance": "En attente d'acceptation",
+    "acceptedShort": "Acceptée",
+    "acceptSoon": "L'agriculteur va bientôt confirmer ta commande",
+    "refundedText": "Le montant a été remboursé — rupture de stock ou commande annulée.",
+    "expired": "Expirée (non retirée)",
+    "expiredText": "La commande n'a pas été retirée dans le délai et a expiré.",
+    "expiredAt": "Expirée",
+    "refreshAria": "Actualiser le statut",
+    "refresh": "Actualiser",
+    "orderFallback": "Commande",
+    "orderedOn": "Commandée le {{when}}",
+    "deliveryDateTime": "Date et heure de la livraison",
+    "pickupDateTime": "Date et heure du retrait",
+    "noTimeDelivery": "Pas d'heure fixée — livraison prévue le {{date}}. Convenez de l'heure avec l'agriculteur via le chat.",
+    "noTime": "Pas d'horaire prévu — date limite : {{date}}",
+    "qrDelivery": "Montre le QR à l'agriculteur en recevant la commande.",
+    "qrPickup": "Montre le QR à l'agriculteur lors du retrait.",
+    "deliveryAt": "Livraison à domicile à"
+  },
+  "chat": {
+    "fileTooBig": "Fichier de plus de 8 Mo",
+    "sendFailed": "Impossible d'envoyer le message",
+    "archived": "La conversation de cette commande a été archivée (plus de 5 jours après la livraison).",
+    "title": "Conversation de la commande",
+    "empty": "Aucun message. Envoie le premier pour commencer la conversation.",
+    "attach": "Joindre un fichier",
+    "toFarmer": "Message pour l'agriculteur...",
+    "toClient": "Message pour le client...",
+    "attachment": "Pièce jointe"
+  },
+  "report": {
+    "reasonTooShort": "Décris le motif (5 caractères minimum)",
+    "proofRequired": "Une preuve est obligatoire pour faire un signalement",
+    "proofTooBig": "Preuve de plus de 8 Mo",
+    "filed": "Signalement enregistré pour examen par l'équipe.",
+    "failed": "Impossible de faire le signalement",
+    "button": "Signaler",
+    "title": "Faire un signalement",
+    "description": "Décris ce qui s'est passé et joins une preuve (photo, PDF). Le signalement est enregistré pour examen par l'équipe de la plateforme.",
+    "placeholder": "Décris le problème...",
+    "proof": "Preuve (obligatoire)",
+    "warning": "Pour signaler un abus de la part de l'agriculteur, tu dois fournir des preuves concrètes de cet abus. Sans preuves, l'agriculteur peut engager une action en justice pour diffamation.",
+    "sending": "Envoi...",
+    "send": "Envoyer le signalement"
+  },
+  "rate": {
+    "chooseRating": "Choisis une note",
+    "chooseRatingText": "Sélectionne de 1 à 5 étoiles.",
+    "sendFailed": "Envoi impossible",
+    "sent": "Avis envoyé",
+    "sentText": "Merci pour ton retour !",
+    "loginPrompt": "Connecte-toi pour donner ton avis.",
+    "blocked": {
+      "notFound": "Commande introuvable.",
+      "alreadyRated": "Cette commande a déjà été évaluée.",
+      "notYet": "Tu pourras donner ton avis après avoir reçu la commande, si l'agriculteur l'annule ou si la livraison a plus de 24 heures de retard."
+    },
+    "yourRating": "Ta note",
+    "final": "Une fois envoyé, l'avis ne peut plus être modifié.",
+    "stars_one": "{{count}} étoile",
+    "stars_other": "{{count}} étoiles",
+    "comment": "Commentaire (facultatif)",
+    "commentPlaceholder": "Raconte ton expérience avec cet agriculteur...",
+    "showPhoto": "J'autorise l'affichage de ma photo dans cet avis",
+    "showPhotoHint": "Elle est visible par tous. Tu peux retirer l'autorisation dans Mes commandes.",
+    "send": "Envoyer l'avis"
+  },
+  "trackingDialog": {
+    "title": "Suis ta livraison",
+    "orderFrom": "Commande de {{farm}}.",
+    "text": "La livraison est terminée quand l'agriculteur scanne ton QR code.",
+    "loadFailed": "Impossible de charger le statut de la livraison.",
+    "current": "Statut actuel",
+    "steps": {
+      "accepted_at": "Acceptée",
+      "packed_at": "Emballée",
+      "in_transit_at": "Expédiée de la ferme",
+      "out_for_delivery_at": "En transit",
+      "delivered_at": "Livrée"
+    }
+  },
+  "removal": {
+    "tooShort_one": "Écris au moins {{count}} caractère",
+    "tooShort_other": "Écris au moins {{count}} caractères",
+    "failed": "Impossible d'envoyer la demande",
+    "sent": "Demande envoyée",
+    "sentText": "L'équipe de la plateforme va examiner ta demande.",
+    "title": "Demander la suppression de l'avis",
+    "description": "Explique pourquoi tu veux supprimer l'avis. Il reste visible jusqu'à la décision de l'équipe de la plateforme.",
+    "placeholder": "Justification...",
+    "confirm": "Je confirme que la justification est vraie. Une justification fausse ou infondée peut avoir des conséquences juridiques.",
+    "send": "Envoyer la demande"
+  }
+}

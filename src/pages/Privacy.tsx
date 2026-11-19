@@ -1,149 +1,11 @@
 import { Link } from "react-router-dom";
-import { Cookie } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import LegalLayout, { LegalSection } from "@/components/LegalLayout";
-import { useConsent } from "@/contexts/ConsentContext";
-import { CONSENT_CATEGORIES } from "@/lib/consent";
+import CookieSection from "@/components/CookieSection";
+import LegalLayout, { type LegalDoc, type LegalSection } from "@/components/LegalLayout";
 import { LEGAL } from "@/lib/legal";
-
-const STORAGE_ITEMS: {
-  name: string;
-  type: string;
-  category: string;
-  purpose: string;
-  duration: string;
-}[] = [
-  {
-    name: "sb-…-auth-token",
-    type: "Armazenamento local",
-    category: "Necessário",
-    purpose: "Mantém a sessão iniciada e a segurança da conta.",
-    duration: "Até terminar sessão",
-  },
-  {
-    name: "fc_consent",
-    type: "Cookie",
-    category: "Necessário",
-    purpose: "Guarda as suas escolhas sobre cookies.",
-    duration: "Sessão do navegador",
-  },
-  {
-    name: "fc_sid",
-    type: "Cookie",
-    category: "Necessário",
-    purpose: "Identifica a sessão do navegador para limitar o carrinho à visita atual.",
-    duration: "Sessão do navegador",
-  },
-  {
-    name: "farmconnect_cart",
-    type: "Armazenamento local",
-    category: "Necessário / Preferências",
-    purpose: "Conteúdo do carrinho. Só é guardado entre visitas se autorizar as preferências.",
-    duration: "Sessão (ou persistente, com preferências)",
-  },
-  {
-    name: "farmconnect_pickup_slot",
-    type: "Armazenamento local",
-    category: "Necessário / Preferências",
-    purpose: "Horário de levantamento escolhido na página do produto.",
-    duration: "Sessão (ou persistente, com preferências)",
-  },
-  {
-    name: "farmconnect:pending_profile_type",
-    type: "Armazenamento de sessão",
-    category: "Necessário",
-    purpose: "Lembra o tipo de perfil escolhido durante o registo com a Google.",
-    duration: "Até concluir o registo",
-  },
-  {
-    name: "Cookies da Google (ex.: NID)",
-    type: "Cookie de terceiros",
-    category: "Mapas",
-    purpose: "Definidos pela Google ao carregar o Google Maps.",
-    duration: "Definida pela Google",
-  },
-];
-
-const CookieSection = () => {
-  const { openPreferences, choices, decided } = useConsent();
-  return (
-    <>
-      <p>
-        Cookies são pequenos ficheiros guardados no seu navegador; tecnologias semelhantes, como
-        o armazenamento local, funcionam de forma parecida. Usamo-los nos termos do artigo 5.º
-        da Lei n.º 41/2004: os estritamente necessários não precisam de consentimento; todos os
-        outros só são usados se os autorizar.
-      </p>
-      <p>
-        <strong>Não usamos cookies de publicidade nem de análise estatística.</strong> A sua
-        escolha é guardada apenas durante a sessão do navegador: quando o fechar, voltamos a
-        perguntar.
-      </p>
-
-      <ul>
-        {CONSENT_CATEGORIES.map((c) => (
-          <li key={c.id}>
-            <strong>{c.title}</strong> — {c.description}
-          </li>
-        ))}
-      </ul>
-
-      <div className="-mx-4 overflow-x-auto sm:mx-0">
-        <table className="w-full min-w-[640px] border-collapse text-left text-xs">
-          <thead>
-            <tr className="border-b border-border text-foreground">
-              <th className="px-3 py-2 font-semibold">Nome</th>
-              <th className="px-3 py-2 font-semibold">Tipo</th>
-              <th className="px-3 py-2 font-semibold">Categoria</th>
-              <th className="px-3 py-2 font-semibold">Finalidade</th>
-              <th className="px-3 py-2 font-semibold">Duração</th>
-            </tr>
-          </thead>
-          <tbody>
-            {STORAGE_ITEMS.map((item) => (
-              <tr key={item.name} className="border-b border-border align-top">
-                <td className="px-3 py-2 font-mono text-[11px] text-foreground">{item.name}</td>
-                <td className="px-3 py-2">{item.type}</td>
-                <td className="px-3 py-2">{item.category}</td>
-                <td className="px-3 py-2">{item.purpose}</td>
-                <td className="px-3 py-2">{item.duration}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <p>
-        A Google trata os dados recolhidos pelo Google Maps de acordo com a sua{" "}
-        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
-          política de privacidade
-        </a>
-        . Pode também apagar cookies nas definições do seu navegador.
-      </p>
-
-      <p>
-        No mapa de agricultores, pode usar a localização do seu aparelho para ver os agricultores
-        dentro de um raio. O navegador pede-lhe autorização antes de a partilhar; a localização é
-        usada apenas no seu navegador, para esse filtro, e não é guardada nem enviada para a
-        plataforma.
-      </p>
-
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-foreground">
-          {decided
-            ? `Estado atual: preferências ${choices.preferences ? "ativas" : "desativadas"}, mapas ${
-                choices.maps ? "ativos" : "desativados"
-              }.`
-            : "Ainda não fez nenhuma escolha nesta sessão."}
-        </p>
-        <Button onClick={openPreferences} className="gap-2 sm:shrink-0">
-          <Cookie className="h-4 w-4" />
-          Gerir cookies
-        </Button>
-      </div>
-    </>
-  );
-};
+import privacyEn from "@/pages/legal/privacy.en";
+import privacyDe from "@/pages/legal/privacy.de";
+import privacyEs from "@/pages/legal/privacy.es";
+import privacyFr from "@/pages/legal/privacy.fr";
 
 const sections: LegalSection[] = [
   {
@@ -248,6 +110,15 @@ const sections: LegalSection[] = [
             substitui o texto se o Agricultor a aceitar.
           </li>
           <li>
+            <strong>Tradução automática:</strong> quando alguém vê a Plataforma noutro idioma, os
+            textos escritos por utilizadores (descrições de produtos, quintas, experiências e
+            alojamento, avaliações, notificações e mensagens do chat de uma encomenda) são
+            enviados à Anthropic para serem traduzidos. Só é enviado o texto, sem nome, contacto
+            ou morada de quem o escreveu. As traduções ficam guardadas na nossa base de dados
+            para não voltarem a ser pedidas, e as mensagens do chat só são traduzidas para as
+            duas partes da encomenda.
+          </li>
+          <li>
             <strong>Cálculo de percursos:</strong> quando o Agricultor organiza a rota das
             entregas ao domicílio, os pontos de entrega (coordenadas, sem nome nem morada) são
             enviados ao openrouteservice para calcular o percurso mais rápido por estrada.
@@ -346,19 +217,23 @@ const sections: LegalSection[] = [
   },
 ];
 
+/** Versão original (português), que prevalece sobre as traduções. */
+const privacyPt: LegalDoc = {
+  title: "Política de Privacidade",
+  intro: (
+    <p>
+      Explicamos aqui que dados pessoais tratamos, porquê, com quem os partilhamos e como pode
+      exercer os seus direitos, nos termos do Regulamento Geral sobre a Proteção de Dados
+      (RGPD) e da Lei n.º 58/2019.
+    </p>
+  ),
+  sections,
+};
+
+// Ao alterar a política, atualizar também as traduções em src/pages/legal/privacy.*.tsx.
+// A secção de cookies (CookieSection) é a mesma em todos os idiomas, com textos em legal.json.
 const Privacy = () => (
-  <LegalLayout
-    eyebrow="Legal"
-    title="Política de Privacidade"
-    intro={
-      <p>
-        Explicamos aqui que dados pessoais tratamos, porquê, com quem os partilhamos e como pode
-        exercer os seus direitos, nos termos do Regulamento Geral sobre a Proteção de Dados
-        (RGPD) e da Lei n.º 58/2019.
-      </p>
-    }
-    sections={sections}
-  />
+  <LegalLayout original={privacyPt} translations={{ en: privacyEn, de: privacyDe, es: privacyEs, fr: privacyFr }} />
 );
 
 export default Privacy;

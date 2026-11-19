@@ -3,14 +3,25 @@
  * A pontuação é calculada diariamente na base de dados
  * (compute_farmer_activity, migração 20261003150000); aqui só se interpreta.
  */
+import i18n from "@/i18n";
+import { formatDate } from "@/lib/format";
 
 export type ActivityLevel = "semente" | "rebento" | "colheita" | "pomar";
 
+const level = (id: ActivityLevel, min: number) => ({
+  id,
+  min,
+  /** Nome do nível no idioma atual. */
+  get label() {
+    return i18n.t(`common:activity.levels.${id}`);
+  },
+});
+
 export const ACTIVITY_LEVELS: { id: ActivityLevel; label: string; min: number }[] = [
-  { id: "semente", label: "Semente", min: 0 },
-  { id: "rebento", label: "Rebento", min: 40 },
-  { id: "colheita", label: "Colheita", min: 70 },
-  { id: "pomar", label: "Pomar", min: 90 },
+  level("semente", 0),
+  level("rebento", 40),
+  level("colheita", 70),
+  level("pomar", 90),
 ];
 
 export const levelFor = (score: number): ActivityLevel => {
@@ -20,7 +31,7 @@ export const levelFor = (score: number): ActivityLevel => {
 };
 
 export const levelLabel = (level: string) =>
-  ACTIVITY_LEVELS.find((l) => l.id === level)?.label ?? "Semente";
+  (ACTIVITY_LEVELS.find((l) => l.id === level) ?? ACTIVITY_LEVELS[0]).label;
 
 /** Próximo nível e pontos que faltam; null no nível máximo. */
 export const nextLevel = (score: number) => {
@@ -44,7 +55,7 @@ export const isPaused = (pausedUntil?: string | null) =>
   !!pausedUntil && pausedUntil > todayLisbon();
 
 export const formatReturnDate = (date: string) =>
-  new Date(`${date}T12:00:00`).toLocaleDateString("pt-PT", {
+  formatDate(`${date}T12:00:00`, {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -87,23 +98,23 @@ export const suggestedActions = (c: ActivityComponents): SuggestedAction[] => {
 
   if (orders.pending && orders.pending > 0) {
     out.push({
-      text: `Aceite ${orders.pending === 1 ? "a encomenda pendente" : `as ${orders.pending} encomendas pendentes`} — a rapidez de resposta pesa na pontuação.`,
+      text: i18n.t("common:activity.actions.pending", { count: orders.pending }),
       to: "/agricultor/encomendas",
     });
   }
   if (!catalog.active_products) {
-    out.push({ text: "Adicione o seu primeiro produto para aparecer no catálogo.", to: "/agricultor/produtos/novo" });
+    out.push({ text: i18n.t("common:activity.actions.firstProduct"), to: "/agricultor/produtos/novo" });
   } else {
     if ((catalog.days_since_update ?? 0) >= 7) {
       out.push({
-        text: `O catálogo não é atualizado há ${catalog.days_since_update} dias. Confirme o stock para subir no catálogo.`,
+        text: i18n.t("common:activity.actions.stale", { count: catalog.days_since_update ?? 0 }),
         to: "/agricultor/produtos",
       });
     }
     const outOfStock = (catalog.active_products ?? 0) - (catalog.in_stock_products ?? 0);
     if (outOfStock > 0) {
       out.push({
-        text: `${outOfStock} ${outOfStock === 1 ? "produto está" : "produtos estão"} sem stock. Reponha ou desative-os.`,
+        text: i18n.t("common:activity.actions.outOfStock", { count: outOfStock }),
         to: "/agricultor/produtos",
       });
     }
@@ -111,7 +122,7 @@ export const suggestedActions = (c: ActivityComponents): SuggestedAction[] => {
   const unanswered = (chat.client_messages ?? 0) - (chat.answered ?? 0);
   if (unanswered > 0) {
     out.push({
-      text: `${unanswered} ${unanswered === 1 ? "mensagem de cliente ficou" : "mensagens de clientes ficaram"} sem resposta em 24 h.`,
+      text: i18n.t("common:activity.actions.unanswered", { count: unanswered }),
       to: "/agricultor/encomendas",
     });
   }

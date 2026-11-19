@@ -6,18 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import PickupAvailabilityBadge from "@/components/PickupAvailabilityBadge";
 import SavingsBadge from "@/components/SavingsBadge";
+import TranslatedText from "@/components/TranslatedText";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { type Product } from "@/data/products";
 import { type MarketPrice } from "@/hooks/useMarketPrices";
 import { type PickupWindow } from "@/lib/pickup-hours";
 import { cn } from "@/lib/utils";
-import { formatEuro } from "@/lib/format";
+import { formatEuro, formatNumber } from "@/lib/format";
 import { deliveryModeLabel } from "@/lib/fulfillment";
 import { gsap } from "@/lib/animation";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useTranslation } from "react-i18next";
 
-const ratingFormat = new Intl.NumberFormat("pt-PT", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 /**
  * "Voar para o cesto": uma cópia da imagem voa até ao ícone do carrinho
@@ -87,6 +88,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(
   ({ product: p, market, showLocation = false, highlighted = false, className }, ref) => {
     const { addItem, items: cartItems } = useCart();
     const { toast } = useToast();
+    const { t } = useTranslation("catalog");
     const reducedMotion = useReducedMotion();
     const imgRef = useRef<HTMLImageElement>(null);
 
@@ -115,7 +117,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(
           />
           {p.isOrganic && (
             <Badge variant="organic" className="absolute left-2 top-2">
-              Biológico
+              {t("product.organic")}
             </Badge>
           )}
           {showLocation && p.location && (
@@ -132,7 +134,7 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(
               to={`/produto/${p.id}`}
               className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
             >
-              {p.name}
+              <TranslatedText type="product" id={p.id} field="name" text={p.name} />
             </Link>
           </h3>
           <Link
@@ -144,18 +146,18 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(
           {p.reviews > 0 && (
             <span
               className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground"
-              title="Avaliação média do agricultor"
+              title={t("product.farmerRating")}
             >
               <Star className="h-3 w-3 fill-highlight text-coral" aria-hidden />
-              <span className="font-medium text-foreground">{ratingFormat.format(p.rating)}</span>
-              ({p.reviews} {p.reviews === 1 ? "avaliação" : "avaliações"})
+              <span className="font-medium text-foreground">{formatNumber(p.rating, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
+              ({t("product.reviews", { count: p.reviews })})
             </span>
           )}
           <span
             className={cn("mt-1 text-xs font-medium", lowStock ? "text-destructive" : "text-success")}
-            title="Stock definido pelo agricultor"
+            title={t("product.stockHint")}
           >
-            {available} em stock
+            {t("product.inStock", { count: available })}
           </span>
           {p.pickupWindows && <PickupAvailabilityBadge windows={p.pickupWindows} className="self-start" />}
           <p className="mt-2 text-xs text-muted-foreground">{deliveryLabel(p)}</p>
@@ -173,11 +175,11 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(
               onClick={() => {
                 if (!reducedMotion && imgRef.current) flyToCart(imgRef.current);
                 addItem(p);
-                toast({ title: "Adicionado ao carrinho", description: p.name });
+                toast({ title: t("product.added"), description: p.name });
               }}
             >
               <Plus className="h-3.5 w-3.5" />
-              {canAdd ? "Adicionar" : "Sem stock"}
+              {canAdd ? t("product.add") : t("product.outOfStock")}
             </Button>
           </div>
         </div>

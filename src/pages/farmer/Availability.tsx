@@ -27,13 +27,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import {
-  DAY_LABELS,
+  dayLabels,
   parsePickupHours,
   pickupStatus,
   weeklyHours,
   type PickupWindow,
 } from "@/lib/pickup-hours";
 import { formatReturnDate, isPaused, todayLisbon } from "@/lib/farmer-activity";
+import { Trans, useTranslation } from "react-i18next";
 
 const MAX_PAUSE_DAYS = 183;
 const PAUSE_NOTE_MAX = 280;
@@ -57,6 +58,7 @@ interface PauseCardProps {
  * encomendas e congela a pontuação de atividade até à data de regresso.
  */
 const PauseCard = ({ farmerId, pausedUntil, pauseNote, onChange }: PauseCardProps) => {
+  const { t } = useTranslation(["farmer", "common"]);
   const today = todayLisbon();
   const [returnDate, setReturnDate] = useState(addDays(today, 14));
   const [note, setNote] = useState(pauseNote);
@@ -71,25 +73,25 @@ const PauseCard = ({ farmerId, pausedUntil, pauseNote, onChange }: PauseCardProp
       .eq("id", farmerId);
     setBusy(false);
     if (error) {
-      toast({ title: "Não foi possível guardar", description: error.message, variant: "destructive" });
+      toast({ title: t("availability.saveFailed"), description: error.message, variant: "destructive" });
       return;
     }
     onChange(until, until ? noteValue.trim() : "");
     toast(
       until
         ? {
-            title: "Pausa ativada",
-            description: `Os seus produtos voltam a aparecer a ${formatReturnDate(until)}.`,
+            title: t("availability.pauseOn"),
+            description: t("availability.pauseOnText", { date: formatReturnDate(until) }),
           }
-        : { title: "Pausa terminada", description: "Os seus produtos já estão de volta ao catálogo." },
+        : { title: t("availability.pauseOff"), description: t("availability.pauseOffText") },
     );
   };
 
   const handleActivate = () => {
     if (!returnDate || returnDate <= today || returnDate > addDays(today, MAX_PAUSE_DAYS)) {
       toast({
-        title: "Data de regresso inválida",
-        description: "Escolha uma data a partir de amanhã e até 6 meses.",
+        title: t("availability.badReturn"),
+        description: t("availability.badReturnText"),
         variant: "destructive",
       });
       return;
@@ -104,11 +106,10 @@ const PauseCard = ({ farmerId, pausedUntil, pauseNote, onChange }: PauseCardProp
           <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
           <div className="flex-1 text-sm">
             <p className="font-medium text-foreground">
-              Está em pausa até {formatReturnDate(pausedUntil)}.
+              {t("availability.pausedUntil", { date: formatReturnDate(pausedUntil) })}
             </p>
             <p className="mt-1 text-muted-foreground">
-              Os seus produtos não aparecem no catálogo e não recebe encomendas. A sua pontuação de
-              atividade está congelada, por isso não perde posição.
+              {t("availability.pausedText")}
             </p>
             {pauseNote && <p className="mt-2 italic text-muted-foreground">"{pauseNote}"</p>}
           </div>
@@ -116,7 +117,7 @@ const PauseCard = ({ farmerId, pausedUntil, pauseNote, onChange }: PauseCardProp
         <div className="mt-4 flex justify-end">
           <Button variant="outline" className="gap-2" disabled={busy} onClick={() => save(null, "")}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
-            Terminar pausa agora
+            {t("availability.endPause")}
           </Button>
         </div>
       </Card>
@@ -128,16 +129,15 @@ const PauseCard = ({ farmerId, pausedUntil, pauseNote, onChange }: PauseCardProp
       <div className="flex items-start gap-3">
         <PauseCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <div className="text-sm">
-          <p className="font-medium text-foreground">Vai de férias ou está em entressafra?</p>
+          <p className="font-medium text-foreground">{t("availability.pauseQuestion")}</p>
           <p className="mt-1 text-muted-foreground">
-            Ative a pausa: os seus produtos ficam ocultos, não recebe encomendas e a sua pontuação de
-            atividade fica congelada até regressar.
+            {t("availability.pauseExplain")}
           </p>
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-[180px_1fr]">
         <div className="space-y-2">
-          <Label htmlFor="pause-until">Data de regresso</Label>
+          <Label htmlFor="pause-until">{t("availability.returnDate")}</Label>
           <Input
             id="pause-until"
             type="date"
@@ -148,21 +148,21 @@ const PauseCard = ({ farmerId, pausedUntil, pauseNote, onChange }: PauseCardProp
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="pause-note">Mensagem para os clientes (opcional)</Label>
+          <Label htmlFor="pause-note">{t("availability.pauseNote")}</Label>
           <Textarea
             id="pause-note"
             rows={2}
             maxLength={PAUSE_NOTE_MAX}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Ex: Estamos na entressafra. Voltamos com as primeiras laranjas!"
+            placeholder={t("availability.pauseNotePlaceholder")}
           />
         </div>
       </div>
       <div className="flex justify-end">
         <Button variant="outline" className="gap-2" disabled={busy} onClick={handleActivate}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PauseCircle className="h-4 w-4" />}
-          Ativar pausa
+          {t("availability.activatePause")}
         </Button>
       </div>
     </Card>
@@ -177,6 +177,7 @@ interface ScheduleEditorProps {
 
 /** Weekly time-window editor, shared by open-door hours and delivery hours. */
 const ScheduleEditor = ({ windows, onChange, idPrefix }: ScheduleEditorProps) => {
+  const { t } = useTranslation(["farmer", "common"]);
   const addWindow = (day: number) => onChange([...windows, { day, start: "09:00", end: "18:00" }]);
   const updateWindow = (index: number, patch: Partial<PickupWindow>) =>
     onChange(windows.map((w, i) => (i === index ? { ...w, ...patch } : w)));
@@ -184,7 +185,7 @@ const ScheduleEditor = ({ windows, onChange, idPrefix }: ScheduleEditorProps) =>
 
   return (
     <div className="space-y-4">
-      {DAY_LABELS.map((label, day) => {
+      {dayLabels().map((label, day) => {
         const dayWindows = windows
           .map((w, index) => ({ w, index }))
           .filter(({ w }) => w.day === day);
@@ -195,11 +196,11 @@ const ScheduleEditor = ({ windows, onChange, idPrefix }: ScheduleEditorProps) =>
                 <Clock className="h-4 w-4 text-primary" />
                 <h3 className="font-medium">{label}</h3>
                 {dayWindows.length === 0 && (
-                  <span className="text-xs text-muted-foreground">Fechado</span>
+                  <span className="text-xs text-muted-foreground">{t("availability.closed")}</span>
                 )}
               </div>
               <Button type="button" size="sm" variant="outline" onClick={() => addWindow(day)}>
-                <Plus className="h-4 w-4" /> Horário
+                <Plus className="h-4 w-4" /> {t("availability.addWindow")}
               </Button>
             </div>
 
@@ -212,22 +213,22 @@ const ScheduleEditor = ({ windows, onChange, idPrefix }: ScheduleEditorProps) =>
                       value={w.start}
                       onChange={(e) => updateWindow(index, { start: e.target.value })}
                       className="w-32"
-                      aria-label={`Início ${label}`}
+                      aria-label={t("availability.startAria", { day: label })}
                     />
-                    <span className="text-muted-foreground">às</span>
+                    <span className="text-muted-foreground">{t("availability.to")}</span>
                     <Input
                       type="time"
                       value={w.end}
                       onChange={(e) => updateWindow(index, { end: e.target.value })}
                       className="w-32"
-                      aria-label={`Fim ${label}`}
+                      aria-label={t("availability.endAria", { day: label })}
                     />
                     <Button
                       type="button"
                       size="icon"
                       variant="ghost"
                       onClick={() => removeWindow(index)}
-                      aria-label="Remover horário"
+                      aria-label={t("availability.removeWindow")}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -245,6 +246,7 @@ const ScheduleEditor = ({ windows, onChange, idPrefix }: ScheduleEditorProps) =>
 const FarmerAvailability = () => {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
+  const { t } = useTranslation(["farmer", "common"]);
 
   const [farmerId, setFarmerId] = useState<string | null>(null);
   const [farmName, setFarmName] = useState<string>("");
@@ -304,8 +306,8 @@ const FarmerAvailability = () => {
     );
     if (invalid) {
       toast({
-        title: "Horário inválido",
-        description: "A hora de fim tem de ser posterior à hora de início.",
+        title: t("availability.badWindow"),
+        description: t("availability.badWindowText"),
         variant: "destructive",
       });
       return;
@@ -313,8 +315,8 @@ const FarmerAvailability = () => {
     const radius = parseFloat(radiusKm.replace(",", "."));
     if (deliveryEnabled && (!Number.isFinite(radius) || radius <= 0)) {
       toast({
-        title: "Indique a distância de entrega",
-        description: "Diga até quantos quilómetros faz entregas ao domicílio.",
+        title: t("availability.noRadius"),
+        description: t("availability.noRadiusText"),
         variant: "destructive",
       });
       return;
@@ -332,12 +334,12 @@ const FarmerAvailability = () => {
       .eq("id", farmerId);
     setSaving(false);
     if (error) {
-      toast({ title: "Erro a guardar", description: error.message, variant: "destructive" });
+      toast({ title: t("availability.saveError"), description: error.message, variant: "destructive" });
       return;
     }
     toast({
-      title: "Disponibilidade atualizada",
-      description: "Os clientes já veem quando pode entregar as encomendas.",
+      title: t("availability.saved"),
+      description: t("availability.savedText"),
     });
   };
 
@@ -358,24 +360,24 @@ const FarmerAvailability = () => {
         onClick={() => navigate(-1)}
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Voltar
+        <ArrowLeft className="h-4 w-4" /> {t("common:actions.back")}
       </button>
 
       <PageHeader
         className="mb-0"
-        eyebrow="Área do agricultor"
-        title="Disponibilidade"
-        description="Indique os dias e horas em que tem a porta aberta para entregar as encomendas."
+        eyebrow={t("area")}
+        title={t("availability.title")}
+        description={t("availability.description")}
       />
 
       <div className="mt-5 flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/10 p-4">
         <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <div className="text-sm">
           <p className="font-medium text-foreground">
-            Quanto mais tempo disponível, mais hipóteses tem de vender.
+            {t("availability.moreTime")}
           </p>
           <p className="mt-1 text-muted-foreground">
-            Neste momento tem <strong>{total}h</strong> de porta aberta por semana.
+            <Trans t={t} i18nKey="availability.weeklyHours" values={{ hours: total }} components={{ b: <strong /> }} />
             {status && ` ${status.label}.`}
           </p>
         </div>
@@ -393,25 +395,25 @@ const FarmerAvailability = () => {
         />
       )}
 
-      <h2 className="mt-8 font-display text-xl font-semibold">Porta aberta (levantamento)</h2>
+      <h2 className="mt-8 font-display text-xl font-semibold">{t("availability.openDoor")}</h2>
       <div className="mt-3">
         <ScheduleEditor windows={windows} onChange={setWindows} idPrefix="pickup" />
       </div>
 
       <Card className="mt-4 p-4 space-y-2">
-        <Label htmlFor="note">Nota para os clientes (opcional)</Label>
+        <Label htmlFor="note">{t("availability.note")}</Label>
         <Textarea
           id="note"
           rows={3}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Ex: Toque à campainha do portão verde. Fora deste horário, combine pelo chat."
+          placeholder={t("availability.notePlaceholder")}
         />
       </Card>
 
-      <h2 className="mt-10 font-display text-xl font-semibold">Entrega ao domicílio</h2>
+      <h2 className="mt-10 font-display text-xl font-semibold">{t("availability.homeDelivery")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Entregas feitas por si, em mão, na morada do cliente — não é envio por transportadora.
+        {t("availability.homeDeliveryText")}
       </p>
 
       <Card className="mt-3 p-4 space-y-4">
@@ -419,22 +421,22 @@ const FarmerAvailability = () => {
           <div className="flex items-start gap-3">
             <Truck className="mt-0.5 h-5 w-5 text-primary" />
             <div>
-              <p className="font-medium">Faço entregas ao domicílio</p>
+              <p className="font-medium">{t("availability.iDeliver")}</p>
               <p className="text-sm text-muted-foreground">
-                Ative para indicar até onde entrega e em que horas.
+                {t("availability.iDeliverHint")}
               </p>
             </div>
           </div>
           <Switch
             checked={deliveryEnabled}
             onCheckedChange={setDeliveryEnabled}
-            aria-label="Faço entregas ao domicílio"
+            aria-label={t("availability.iDeliver")}
           />
         </div>
 
         {deliveryEnabled && (
           <div className="space-y-2">
-            <Label htmlFor="radius">Distância máxima de entrega (km)</Label>
+            <Label htmlFor="radius">{t("availability.radius")}</Label>
             <Input
               id="radius"
               type="number"
@@ -443,10 +445,10 @@ const FarmerAvailability = () => {
               value={radiusKm}
               onChange={(e) => setRadiusKm(e.target.value)}
               className="w-32"
-              placeholder="Ex: 15"
+              placeholder={t("availability.radiusPlaceholder")}
             />
             <p className="text-xs text-muted-foreground">
-              Só entrega a clientes dentro desta distância da sua exploração.
+              {t("availability.radiusHint")}
             </p>
           </div>
         )}
@@ -455,7 +457,7 @@ const FarmerAvailability = () => {
       {deliveryEnabled && (
         <>
           <h3 className="mt-6 text-sm font-medium text-muted-foreground">
-            Horários de entrega de produtos
+            {t("availability.deliveryHours")}
           </h3>
           <div className="mt-3">
             <ScheduleEditor
@@ -466,13 +468,13 @@ const FarmerAvailability = () => {
           </div>
 
           <Card className="mt-4 p-4 space-y-2">
-            <Label htmlFor="delivery-note">Nota sobre as entregas (opcional)</Label>
+            <Label htmlFor="delivery-note">{t("availability.deliveryNote")}</Label>
             <Textarea
               id="delivery-note"
               rows={3}
               value={deliveryNote}
               onChange={(e) => setDeliveryNote(e.target.value)}
-              placeholder="Ex: Entregas agrupadas por zona. Combine a morada exata pelo chat."
+              placeholder={t("availability.deliveryNotePlaceholder")}
             />
           </Card>
         </>
@@ -484,14 +486,14 @@ const FarmerAvailability = () => {
           variant="outline"
           className="gap-2"
           disabled={windows.length === 0}
-          onClick={() => downloadPickupIcs(windows, farmName || "A minha quinta", note)}
+          onClick={() => downloadPickupIcs(windows, farmName || t("availability.myFarm"), note)}
         >
           <CalendarArrowDown className="h-4 w-4" />
-          Exportar calendário (iCal)
+          {t("availability.exportIcal")}
         </Button>
         <Button onClick={handleSave} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Guardar disponibilidade
+          {t("availability.save")}
         </Button>
       </div>
     </div>

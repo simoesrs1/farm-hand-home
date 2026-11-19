@@ -4,6 +4,7 @@ import type { StayRow } from "@/components/StayForm";
 import StayDialog from "@/components/StayDialog";
 import StayCard from "@/components/StayCard";
 import { isVideoPath, signMedia } from "@/lib/media-upload";
+import { useTranslation } from "react-i18next";
 
 interface FarmerStaysProps {
   farmerId: string;
@@ -14,6 +15,7 @@ interface FarmerStaysProps {
 /** Secção "Alojamento na quinta" do perfil público do agricultor. */
 const FarmerStays = ({ farmerId, farmName, isOwner }: FarmerStaysProps) => {
   const [stays, setStays] = useState<StayRow[]>([]);
+  const { t } = useTranslation("offerings");
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState<StayRow | null>(null);
 
@@ -45,8 +47,8 @@ const FarmerStays = ({ farmerId, farmName, isOwner }: FarmerStaysProps) => {
 
   return (
     <section className="mt-10">
-      <h2 className="font-display text-2xl font-bold text-foreground">Alojamento na quinta</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Durma na quinta e leve um brinde da casa.</p>
+      <h2 className="font-display text-2xl font-bold text-foreground">{t("farmSections.stays")}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{t("farmSections.staysText")}</p>
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {stays.map((s) => (
           <StayCard key={s.id} stay={s} thumb={thumbs[s.id]} onClick={() => setSelected(s)} />

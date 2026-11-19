@@ -19,8 +19,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
 import { useToast } from "@/hooks/use-toast";
-import { getCategoryByName } from "@/data/categories";
+import { categoryLabel, getCategoryByName } from "@/data/categories";
 import SavingsBadge from "@/components/SavingsBadge";
+import TranslatedText from "@/components/TranslatedText";
 import PickupAvailabilityBadge from "@/components/PickupAvailabilityBadge";
 import {
   formatPickupHours,
@@ -50,6 +51,8 @@ import {
   modeAllowsPickup,
   type Fulfillment,
 } from "@/lib/fulfillment";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 interface Detail extends Product {
   description: string;
@@ -75,6 +78,7 @@ const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation(["catalog", "common"]);
   const { addItem, updateQuantity, items: cartItems } = useCart();
   const { registerStock } = useStock();
   const marketPrices = useMarketPrices();
@@ -136,7 +140,7 @@ const ProductDetail = () => {
         name: r.name,
         description: r.description ?? "",
         farmerId: r.farmer_id,
-        farmer: (farmer as any)?.company_name ?? "Agricultor",
+        farmer: (farmer as any)?.company_name ?? i18n.t("catalog:categoryPage.farmerFallback"),
         price,
         originalPrice: r.client_price,
         unit: r.unit,
@@ -241,7 +245,7 @@ const ProductDetail = () => {
   if (loading) {
     return (
       <main className="py-16">
-        <div className="container max-w-4xl text-center text-muted-foreground">A carregar produto…</div>
+        <div className="container max-w-4xl text-center text-muted-foreground">{t("product.loading")}</div>
       </main>
     );
   }
@@ -250,12 +254,12 @@ const ProductDetail = () => {
     return (
       <main className="py-16">
         <div className="container max-w-2xl text-center">
-          <h1 className="font-display text-2xl font-bold">Produto indisponível</h1>
+          <h1 className="font-display text-2xl font-bold">{t("product.unavailable")}</h1>
           <p className="mt-2 text-muted-foreground">
-            Este produto já não está à venda ou foi removido pelo agricultor.
+            {t("product.unavailableText")}
           </p>
           <Link to="/catalogo" className="mt-6 inline-block">
-            <Button>Ver catálogo</Button>
+            <Button>{t("product.seeCatalog")}</Button>
           </Link>
         </div>
       </main>
@@ -270,9 +274,14 @@ const ProductDetail = () => {
     if (fulfillment) scopedStorage.set(STORAGE_KEYS.fulfillment, fulfillment);
     if (pickupTime) scopedStorage.set(STORAGE_KEYS.pickupSlot, pickupTime);
     toast({
-      title: "Adicionado ao carrinho",
+      title: t("product.added"),
       description: pickupTime
-        ? `${amount} × ${product.name} · ${isDelivery ? "entrega" : "levantamento"} ${formatSlotDate(new Date(pickupTime))} às ${formatSlotTime(new Date(pickupTime))}`
+        ? t(isDelivery ? "product.addedDelivery" : "product.addedPickup", {
+            amount,
+            name: product.name,
+            date: formatSlotDate(new Date(pickupTime)),
+            time: formatSlotTime(new Date(pickupTime)),
+          })
         : `${amount} × ${product.name}`,
     });
   };
@@ -294,7 +303,7 @@ const ProductDetail = () => {
           onClick={() => navigate(-1)}
           className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" /> Voltar
+          <ArrowLeft className="h-4 w-4" /> {t("common:actions.back")}
         </button>
 
         <div className="grid gap-8 lg:grid-cols-2">
@@ -327,12 +336,12 @@ const ProductDetail = () => {
           {/* Detalhe */}
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-              {product.name}
+              <TranslatedText type="product" id={product.id} field="name" text={product.name} />
             </h1>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="font-mono tabular-nums text-2xl font-bold text-primary">{formatEuro(product.price)}</span>
               <span className="text-sm text-muted-foreground">/ {product.unit}</span>
-              <span className="text-xs text-muted-foreground">· IVA {product.vatRate}%</span>
+              <span className="text-xs text-muted-foreground">· {t("common:units.vat", { rate: product.vatRate })}</span>
             </div>
 
             <SavingsBadge
@@ -343,20 +352,28 @@ const ProductDetail = () => {
             />
 
             {product.description && (
-              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                {product.description}
-              </p>
+              <div className="mt-4">
+                <TranslatedText
+                  type="product"
+                  id={product.id}
+                  field="description"
+                  text={product.description}
+                  as="p"
+                  className="text-sm leading-relaxed text-muted-foreground"
+                  toggle
+                />
+              </div>
             )}
 
             <div className="mt-4 flex flex-wrap gap-2">
               {product.isOrganic && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-leaf-light px-2.5 py-1 text-xs font-medium text-kale">
-                  <Leaf className="h-3 w-3" /> Biológico
+                  <Leaf className="h-3 w-3" /> {t("product.organic")}
                 </span>
               )}
               {product.isLactoseFree && (
                 <span className="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                  Sem lactose
+                  {t("product.lactoseFree")}
                 </span>
               )}
               {product.category && (
@@ -364,7 +381,7 @@ const ProductDetail = () => {
                   to={`/catalogo`}
                   className="inline-flex items-center rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground"
                 >
-                  {product.category}
+                  {categoryLabel(product.category)}
                 </Link>
               )}
             </div>
@@ -374,29 +391,28 @@ const ProductDetail = () => {
               <div className="rounded-xl border border-border p-4">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Package className="h-4 w-4" />
-                  <span className="text-xs uppercase tracking-wide">Stock</span>
+                  <span className="text-xs uppercase tracking-wide">{t("product.stock")}</span>
                 </div>
                 <p className={`mt-1 font-semibold ${product.stock <= 5 ? "text-destructive" : "text-success"}`}>
-                  {product.stock} {product.unit} disponíveis
+                  {t("product.available", { count: product.stock, unit: product.unit })}
                 </p>
               </div>
               <div className="rounded-xl border border-border p-4">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Truck className="h-4 w-4" />
-                  <span className="text-xs uppercase tracking-wide">Entrega</span>
+                  <span className="text-xs uppercase tracking-wide">{t("product.delivery")}</span>
                 </div>
                 <p className="mt-1 text-sm font-semibold text-foreground">{deliveryLabel}</p>
                 {offersDelivery && (
                   <p className="mt-1 text-xs text-primary">
-                    O agricultor entrega em mão
                     {product.deliveryRadiusKm != null
-                      ? ` até ${product.deliveryRadiusKm} km`
-                      : ""}
+                      ? t("product.handDeliveryUpTo", { km: product.deliveryRadiusKm })
+                      : t("product.handDelivery")}
                   </p>
                 )}
                 {deliveryPending && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Este produto também pode ser entregue ao domicílio, mas o agricultor ainda não definiu a zona de entrega.
+                    {t("product.deliveryPending")}
                   </p>
                 )}
               </div>
@@ -406,13 +422,13 @@ const ProductDetail = () => {
               <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Truck className="h-4 w-4 text-primary" />
-                  Entrega ao domicílio pelo agricultor
+                  {t("common:deliveryMode.shipping")}
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {product.deliveryRadiusKm != null
-                    ? `Entrega em mão até ${product.deliveryRadiusKm} km da quinta.`
-                    : "Entrega em mão feita pelo próprio agricultor."}
-                  {prepDays > 0 ? ` Prazo mínimo de preparação: ${prepDays} dia(s).` : ""}
+                    ? t("product.deliveryRadius", { km: product.deliveryRadiusKm })
+                    : t("product.deliveryByFarmer")}
+                  {prepDays > 0 ? ` ${t("product.prepDays", { count: prepDays })}` : ""}
                 </p>
                 {deliveryHours.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -427,7 +443,14 @@ const ProductDetail = () => {
                   </div>
                 )}
                 {product.deliveryNote && (
-                  <p className="mt-2 text-xs text-muted-foreground">{product.deliveryNote}</p>
+                  <TranslatedText
+                    type="farm"
+                    id={product.farmerId}
+                    field="delivery_note"
+                    text={product.deliveryNote}
+                    as="p"
+                    className="mt-2 text-xs text-muted-foreground"
+                  />
                 )}
               </div>
             )}
@@ -435,18 +458,18 @@ const ProductDetail = () => {
 
             {product.modifications && (
               <p className="mt-3 rounded-lg border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
-                Alterações declaradas pelo produtor: {product.modifications}
+                {t("product.modifications")} {product.modifications}
               </p>
             )}
 
             {/* Compra */}
             <div className="mt-6 rounded-2xl border border-border p-5">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Reservar · pague com segurança
+                {t("product.reserve")}
               </p>
 
               <div className="mt-4 flex items-center gap-4">
-                <span className="text-sm font-medium">Quantidade</span>
+                <span className="text-sm font-medium">{t("product.quantity")}</span>
                 <div className="flex items-center gap-2">
                   <Button
                     size="icon"
@@ -472,7 +495,7 @@ const ProductDetail = () => {
 
               {fulfillmentChoices.length > 1 && (
                 <div className="mt-4 space-y-2">
-                  <p className="text-sm font-medium text-foreground">Como quer receber?</p>
+                  <p className="text-sm font-medium text-foreground">{t("product.howReceive")}</p>
                   <div className="grid grid-cols-2 gap-2">
                     {fulfillmentChoices.map((f) => (
                       <button
@@ -494,7 +517,7 @@ const ProductDetail = () => {
                     ))}
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    A escolha segue para o carrinho e pode ser alterada antes do pagamento.
+                    {t("product.choiceToCart")}
                   </p>
                 </div>
               )}
@@ -503,17 +526,17 @@ const ProductDetail = () => {
               <div className="mt-4 rounded-lg border border-border bg-muted/40 p-3">
                 <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
                   <MapPin className="h-4 w-4 text-primary" />
-                  {product.pickupAddress || "Levantamento na propriedade"}
+                  {product.pickupAddress || t("product.pickupAtFarm")}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" variant="outline" className="gap-1.5">
-                      <MapPin className="h-3.5 w-3.5" /> Ver no mapa
+                      <MapPin className="h-3.5 w-3.5" /> {t("product.viewMap")}
                     </Button>
                   </a>
                   <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" variant="outline" className="gap-1.5">
-                      <Navigation className="h-3.5 w-3.5" /> Direções
+                      <Navigation className="h-3.5 w-3.5" /> {t("product.directions")}
                     </Button>
                   </a>
                   <Link to={`/agricultor/${product.farmerId}`}>
@@ -528,7 +551,7 @@ const ProductDetail = () => {
               {!isDelivery && hours.length > 0 && (
                 <div className="mt-4">
                   <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    Horários do produtor
+                    {t("product.farmerHours")}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {hours.map((h) => (
@@ -542,7 +565,14 @@ const ProductDetail = () => {
                   </div>
                   <PickupAvailabilityBadge windows={product.pickupWindows} />
                   {product.pickupNote && (
-                    <p className="mt-2 text-xs text-muted-foreground">{product.pickupNote}</p>
+                    <TranslatedText
+                      type="farm"
+                      id={product.farmerId}
+                      field="pickup_hours_note"
+                      text={product.pickupNote}
+                      as="p"
+                      className="mt-2 text-xs text-muted-foreground"
+                    />
                   )}
                 </div>
               )}
@@ -551,7 +581,7 @@ const ProductDetail = () => {
                 <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <CalendarClock className="h-4 w-4 text-primary" />
-                    {isDelivery ? "Escolher horário de entrega" : "Escolher horário de levantamento"}
+                    {isDelivery ? t("product.chooseDeliveryTime") : t("product.choosePickupTime")}
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <Select
@@ -561,8 +591,8 @@ const ProductDetail = () => {
                         setPickupTime("");
                       }}
                     >
-                      <SelectTrigger aria-label={isDelivery ? "Dia de entrega" : "Dia de levantamento"}>
-                        <SelectValue placeholder="Escolher dia" />
+                      <SelectTrigger aria-label={isDelivery ? t("product.deliveryDay") : t("product.pickupDay")}>
+                        <SelectValue placeholder={t("product.chooseDay")} />
                       </SelectTrigger>
                       <SelectContent className="max-h-72">
                         {days.map(([key, d]) => (
@@ -577,8 +607,8 @@ const ProductDetail = () => {
                       onValueChange={setPickupTime}
                       disabled={!pickupDay}
                     >
-                      <SelectTrigger aria-label={isDelivery ? "Hora de entrega" : "Hora de levantamento"}>
-                        <SelectValue placeholder="Escolher hora" />
+                      <SelectTrigger aria-label={isDelivery ? t("product.deliveryHour") : t("product.pickupHour")}>
+                        <SelectValue placeholder={t("product.chooseHour")} />
                       </SelectTrigger>
                       <SelectContent className="max-h-72">
                         {timesForDay.map((d) => (
@@ -591,11 +621,11 @@ const ProductDetail = () => {
                   </div>
                   <p className="text-[11px] text-muted-foreground">
                     {isDelivery
-                      ? `Só aparecem dias e horas dentro do horário de entregas do agricultor${
-                          prepDays > 0 ? `, a partir de ${prepDays} dia(s) depois da compra` : ""
-                        }.`
-                      : "Só aparecem dias e horas dentro da porta aberta do agricultor."}{" "}
-                    A escolha segue para o carrinho e pode ser alterada antes do pagamento.
+                      ? prepDays > 0
+                        ? t("product.slotsDeliveryPrep", { count: prepDays })
+                        : t("product.slotsDelivery")
+                      : t("product.slotsPickup")}{" "}
+                    {t("product.choiceToCart")}
                   </p>
                 </div>
               )}
@@ -607,11 +637,11 @@ const ProductDetail = () => {
                 onClick={handleAdd}
               >
                 <ShoppingCart className="h-4 w-4" />
-                {maxAddable <= 0 ? "Sem stock disponível" : `Adicionar ao carrinho · ${formatEuro(product.price * qty)}`}
+                {maxAddable <= 0 ? t("product.noStock") : t("product.addToCart", { price: formatEuro(product.price * qty) })}
               </Button>
               {inCart > 0 && (
                 <Link to="/carrinho" className="mt-2 block text-center text-xs text-primary underline">
-                  Já tem {inCart} no carrinho — ir para o carrinho
+                  {t("product.inCart", { count: inCart })}
                 </Link>
               )}
             </div>
