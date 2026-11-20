@@ -12,8 +12,13 @@ const STORAGE_ITEMS = [
   { key: "sid", name: "fc_sid" },
   { key: "cart", name: "farmconnect_cart" },
   { key: "pickupSlot", name: "farmconnect_pickup_slot" },
+  { key: "fulfillment", name: "farmconnect_fulfillment" },
+  { key: "deliveryRoute", name: "farmconnect_delivery_route" },
+  { key: "prev", name: "<chave>::prev" },
   { key: "pendingProfile", name: "farmconnect:pending_profile_type" },
   { key: "lang", name: "valorrural_lang" },
+  { key: "animations", name: "valorrural:animacoes-pausadas" },
+  { key: "fonts", name: "Google Fonts" },
   { key: "google", name: "Google (NID…)" },
 ] as const;
 

@@ -52,13 +52,13 @@
         "duration": "Hasta cerrar sesión"
       },
       "consent": {
-        "type": "Cookie",
+        "type": "Cookie (o almacenamiento de sesión, si las cookies están bloqueadas)",
         "category": "Necesaria",
         "purpose": "Guarda sus elecciones sobre cookies.",
         "duration": "Sesión del navegador"
       },
       "sid": {
-        "type": "Cookie",
+        "type": "Cookie (o almacenamiento de sesión, si las cookies están bloqueadas)",
         "category": "Necesaria",
         "purpose": "Identifica la sesión del navegador para limitar el carrito a la visita actual.",
         "duration": "Sesión del navegador"
@@ -92,10 +92,40 @@
         "category": "Mapas",
         "purpose": "Instaladas por Google al cargar Google Maps.",
         "duration": "Definida por Google"
+      },
+      "fulfillment": {
+        "type": "Almacenamiento local",
+        "category": "Necesaria / Preferencias",
+        "purpose": "Su elección entre recoger en la granja o recibir en casa, hecha en la página del artículo.",
+        "duration": "Sesión (o persistente, con preferencias)"
+      },
+      "deliveryRoute": {
+        "type": "Almacenamiento local",
+        "category": "Necesaria / Preferencias",
+        "purpose": "Opciones del agricultor en el mapa de entregas (ruta optimizada, regreso al origen).",
+        "duration": "Sesión (o persistente, con preferencias)"
+      },
+      "prev": {
+        "type": "Almacenamiento local",
+        "category": "Necesaria",
+        "purpose": "Copia temporal de los datos anteriores de una visita previa, mientras aún no ha elegido si acepta las preferencias. Se recupera si acepta y se borra si rechaza.",
+        "duration": "Hasta que haga su elección"
+      },
+      "animations": {
+        "type": "Almacenamiento local",
+        "category": "Necesaria",
+        "purpose": "Recuerda si pidió pausar las animaciones del sitio.",
+        "duration": "Persistente, hasta que vuelva a activar las animaciones o borre el navegador"
+      },
+      "fonts": {
+        "type": "Solicitud a terceros (sin cookies)",
+        "category": "Necesaria",
+        "purpose": "Carga las fuentes del sitio desde Google, que recibe su dirección IP.",
+        "duration": "No guarda datos en el navegador"
       }
     },
     "google": "Google trata los datos recogidos por Google Maps según su <link>política de privacidad</link>. También puede borrar las cookies en los ajustes de su navegador.",
-    "location": "En el mapa de agricultores, puede usar la ubicación de su dispositivo para ver los agricultores dentro de un radio. El navegador le pide autorización antes de compartirla; la ubicación solo se usa en su navegador, para ese filtro, y no se guarda ni se envía a la plataforma.",
+    "location": "En el mapa de agricultores y al ordenar por distancia, puede usar la ubicación de su dispositivo para ver los agricultores más cercanos. El navegador le pide permiso antes de compartirla; la ubicación se usa solo en su navegador, para ese filtro y ordenación, y no se guarda ni se envía a la plataforma.",
     "state": "Estado actual: preferencias {{preferences}}, mapas {{maps}}.",
     "on": "activadas",
     "off": "desactivadas",

@@ -3,11 +3,22 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import i18n from "@/i18n";
 import Terms from "@/pages/Terms";
+import Privacy from "@/pages/Privacy";
+import { ConsentProvider } from "@/contexts/ConsentContext";
 
 const renderTerms = () =>
   render(
     <MemoryRouter>
       <Terms />
+    </MemoryRouter>,
+  );
+
+const renderPrivacy = () =>
+  render(
+    <MemoryRouter>
+      <ConsentProvider>
+        <Privacy />
+      </ConsentProvider>
     </MemoryRouter>,
   );
 
@@ -35,4 +46,18 @@ describe("páginas legais", () => {
     // As âncoras são as mesmas em todos os idiomas (ex.: /termos#ordenacao).
     expect(document.getElementById("ordenacao")).not.toBeNull();
   });
+
+  it.each(["pt", "en", "de", "es", "fr"])(
+    "a Política de Privacidade em %s tem a secção de IA e a tabela de cookies",
+    async (lang) => {
+      await i18n.changeLanguage(lang);
+      renderPrivacy();
+      // Âncoras iguais em todos os idiomas (ex.: /privacidade#ia).
+      for (const id of ["dados", "automaticos", "partilha", "ia", "conservacao", "cookies"]) {
+        expect(document.getElementById(id)).not.toBeNull();
+      }
+      expect(screen.getAllByText(/Anthropic/).length).toBeGreaterThan(0);
+      expect(screen.getByText("valorrural:animacoes-pausadas")).toBeInTheDocument();
+    },
+  );
 });

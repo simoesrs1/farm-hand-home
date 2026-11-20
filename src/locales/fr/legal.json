@@ -52,13 +52,13 @@
         "duration": "Jusqu'à la déconnexion"
       },
       "consent": {
-        "type": "Cookie",
+        "type": "Cookie (ou stockage de session, si les cookies sont bloqués)",
         "category": "Nécessaire",
         "purpose": "Conserve vos choix concernant les cookies.",
         "duration": "Session du navigateur"
       },
       "sid": {
-        "type": "Cookie",
+        "type": "Cookie (ou stockage de session, si les cookies sont bloqués)",
         "category": "Nécessaire",
         "purpose": "Identifie la session du navigateur pour limiter le panier à la visite en cours.",
         "duration": "Session du navigateur"
@@ -92,10 +92,40 @@
         "category": "Cartes",
         "purpose": "Déposés par Google lors du chargement de Google Maps.",
         "duration": "Définie par Google"
+      },
+      "fulfillment": {
+        "type": "Stockage local",
+        "category": "Nécessaire / Préférences",
+        "purpose": "Votre choix entre le retrait à la ferme et la livraison à domicile, fait sur la page de l'article.",
+        "duration": "Session (ou persistant, avec préférences)"
+      },
+      "deliveryRoute": {
+        "type": "Stockage local",
+        "category": "Nécessaire / Préférences",
+        "purpose": "Options de l'agriculteur sur la carte des livraisons (itinéraire optimisé, retour au départ).",
+        "duration": "Session (ou persistant, avec préférences)"
+      },
+      "prev": {
+        "type": "Stockage local",
+        "category": "Nécessaire",
+        "purpose": "Copie temporaire des données ci-dessus d'une visite précédente, tant que vous n'avez pas choisi d'accepter ou non les préférences. Elle est restaurée si vous acceptez et supprimée si vous refusez.",
+        "duration": "Jusqu'à votre choix"
+      },
+      "animations": {
+        "type": "Stockage local",
+        "category": "Nécessaire",
+        "purpose": "Mémorise si vous avez demandé de mettre en pause les animations du site.",
+        "duration": "Persistant, jusqu'à ce que vous réactiviez les animations ou vidiez le navigateur"
+      },
+      "fonts": {
+        "type": "Requête à un tiers (sans cookies)",
+        "category": "Nécessaire",
+        "purpose": "Charge les polices du site depuis Google, qui reçoit votre adresse IP.",
+        "duration": "N'enregistre aucune donnée dans le navigateur"
       }
     },
     "google": "Google traite les données collectées par Google Maps conformément à sa <link>politique de confidentialité</link>. Vous pouvez aussi supprimer les cookies dans les paramètres de votre navigateur.",
-    "location": "Sur la carte des agriculteurs, vous pouvez utiliser la position de votre appareil pour voir les agriculteurs dans un rayon donné. Le navigateur vous demande l'autorisation avant de la partager ; la position n'est utilisée que dans votre navigateur, pour ce filtre, et n'est ni conservée ni envoyée à la plateforme.",
+    "location": "Sur la carte des agriculteurs et lors du tri par distance, vous pouvez utiliser la position de votre appareil pour voir les agriculteurs les plus proches. Le navigateur vous demande l'autorisation avant de la partager ; la position est utilisée uniquement dans votre navigateur, pour ce filtre et ce tri, et n'est ni enregistrée ni envoyée à la plateforme.",
     "state": "État actuel : préférences {{preferences}}, cartes {{maps}}.",
     "on": "activées",
     "off": "désactivées",

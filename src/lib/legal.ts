@@ -10,7 +10,7 @@ export const LEGAL = {
   email: "info@valorrural.pt",
   phone: "+351 912 345 678",
   /** Data da versão em vigor dos documentos legais (AAAA-MM-DD; mostrada no idioma do site). */
-  lastUpdated: "2026-11-17",
+  lastUpdated: "2026-11-20",
   /** Percentagem retida pela plataforma em cada encomenda (create-order). */
   commissionPercent: 10,
 } as const;

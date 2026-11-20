@@ -52,13 +52,13 @@
         "duration": "Until you log out"
       },
       "consent": {
-        "type": "Cookie",
+        "type": "Cookie (or session storage, if cookies are blocked)",
         "category": "Necessary",
         "purpose": "Stores your cookie choices.",
         "duration": "Browser session"
       },
       "sid": {
-        "type": "Cookie",
+        "type": "Cookie (or session storage, if cookies are blocked)",
         "category": "Necessary",
         "purpose": "Identifies the browser session to limit the cart to the current visit.",
         "duration": "Browser session"
@@ -92,10 +92,40 @@
         "category": "Maps",
         "purpose": "Set by Google when Google Maps loads.",
         "duration": "Set by Google"
+      },
+      "fulfillment": {
+        "type": "Local storage",
+        "category": "Necessary / Preferences",
+        "purpose": "Your choice between farm pickup and home delivery, made on the item page.",
+        "duration": "Session (or persistent, with preferences)"
+      },
+      "deliveryRoute": {
+        "type": "Local storage",
+        "category": "Necessary / Preferences",
+        "purpose": "The farmer's options on the delivery map (optimised route, return to start).",
+        "duration": "Session (or persistent, with preferences)"
+      },
+      "prev": {
+        "type": "Local storage",
+        "category": "Necessary",
+        "purpose": "Temporary copy of the data above from a previous visit, while you have not yet chosen whether to accept preferences. It is restored if you accept and deleted if you refuse.",
+        "duration": "Until you make your choice"
+      },
+      "animations": {
+        "type": "Local storage",
+        "category": "Necessary",
+        "purpose": "Remembers whether you asked to pause the site's animations.",
+        "duration": "Persistent, until you turn animations back on or clear your browser"
+      },
+      "fonts": {
+        "type": "Third-party request (no cookies)",
+        "category": "Necessary",
+        "purpose": "Loads the site's fonts from Google, which receives your IP address.",
+        "duration": "Stores no data in the browser"
       }
     },
     "google": "Google processes the data collected by Google Maps according to its <link>privacy policy</link>. You can also delete cookies in your browser settings.",
-    "location": "On the farmers map, you can use your device's location to see farmers within a radius. Your browser asks for permission before sharing it; the location is only used in your browser for that filter and is neither stored nor sent to the platform.",
+    "location": "On the farmer map and when sorting by distance, you can use your device's location to see the nearest farmers. Your browser asks for permission before sharing it; the location is used only in your browser, for that filter and sorting, and is neither stored nor sent to the platform.",
     "state": "Current status: preferences {{preferences}}, maps {{maps}}.",
     "on": "on",
     "off": "off",

@@ -52,13 +52,13 @@
         "duration": "Bis zur Abmeldung"
       },
       "consent": {
-        "type": "Cookie",
+        "type": "Cookie (oder Sitzungsspeicher, falls Cookies blockiert sind)",
         "category": "Erforderlich",
         "purpose": "Speichert Ihre Cookie-Entscheidungen.",
         "duration": "Browsersitzung"
       },
       "sid": {
-        "type": "Cookie",
+        "type": "Cookie (oder Sitzungsspeicher, falls Cookies blockiert sind)",
         "category": "Erforderlich",
         "purpose": "Erkennt die Browsersitzung, um den Warenkorb auf den aktuellen Besuch zu beschränken.",
         "duration": "Browsersitzung"
@@ -92,10 +92,40 @@
         "category": "Karten",
         "purpose": "Von Google beim Laden von Google Maps gesetzt.",
         "duration": "Von Google festgelegt"
+      },
+      "fulfillment": {
+        "type": "Lokaler Speicher",
+        "category": "Notwendig / Präferenzen",
+        "purpose": "Ihre Wahl zwischen Abholung am Hof und Lieferung nach Hause, getroffen auf der Artikelseite.",
+        "duration": "Sitzung (oder dauerhaft, mit Präferenzen)"
+      },
+      "deliveryRoute": {
+        "type": "Lokaler Speicher",
+        "category": "Notwendig / Präferenzen",
+        "purpose": "Optionen des Landwirts auf der Lieferkarte (optimierte Route, Rückkehr zum Start).",
+        "duration": "Sitzung (oder dauerhaft, mit Präferenzen)"
+      },
+      "prev": {
+        "type": "Lokaler Speicher",
+        "category": "Notwendig",
+        "purpose": "Vorübergehende Kopie der obigen Daten aus einem früheren Besuch, solange Sie noch nicht entschieden haben, ob Sie Präferenzen akzeptieren. Sie wird wiederhergestellt, wenn Sie zustimmen, und gelöscht, wenn Sie ablehnen.",
+        "duration": "Bis Sie Ihre Wahl treffen"
+      },
+      "animations": {
+        "type": "Lokaler Speicher",
+        "category": "Notwendig",
+        "purpose": "Merkt sich, ob Sie die Animationen der Website pausiert haben.",
+        "duration": "Dauerhaft, bis Sie die Animationen wieder einschalten oder den Browser leeren"
+      },
+      "fonts": {
+        "type": "Anfrage an Dritte (ohne Cookies)",
+        "category": "Notwendig",
+        "purpose": "Lädt die Schriftarten der Website von Google, das dabei Ihre IP-Adresse erhält.",
+        "duration": "Speichert keine Daten im Browser"
       }
     },
     "google": "Google verarbeitet die von Google Maps erhobenen Daten gemäß seiner <link>Datenschutzerklärung</link>. Sie können Cookies auch in den Einstellungen Ihres Browsers löschen.",
-    "location": "Auf der Landwirte-Karte können Sie den Standort Ihres Geräts verwenden, um Landwirte in einem Umkreis zu sehen. Der Browser fragt vor der Freigabe um Erlaubnis; der Standort wird nur in Ihrem Browser für diesen Filter verwendet und weder gespeichert noch an die Plattform gesendet.",
+    "location": "Auf der Landwirte-Karte und bei der Sortierung nach Entfernung können Sie den Standort Ihres Geräts nutzen, um die nächstgelegenen Landwirte zu sehen. Ihr Browser fragt vor der Freigabe um Erlaubnis; der Standort wird nur in Ihrem Browser für diesen Filter und diese Sortierung verwendet und weder gespeichert noch an die Plattform gesendet.",
     "state": "Aktueller Status: Präferenzen {{preferences}}, Karten {{maps}}.",
     "on": "aktiv",
     "off": "deaktiviert",
