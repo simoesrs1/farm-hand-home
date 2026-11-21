@@ -195,7 +195,19 @@
     "view": "Voir les notifications",
     "viewShort": "Voir",
     "title": "Notifications",
-    "empty": "Aucune notification."
+    "empty": "Aucune notification.",
+    "titleClient": "Notifications d'achats",
+    "titleFarmer": "Notifications de ventes",
+    "otherFarmer_one": "Vous avez {{count}} notification de ventes non lue.",
+    "otherFarmer_other": "Vous avez {{count}} notifications de ventes non lues.",
+    "otherClient_one": "Vous avez {{count}} notification d'achats non lue.",
+    "otherClient_other": "Vous avez {{count}} notifications d'achats non lues.",
+    "switchToFarmer": "Passer en agriculteur",
+    "switchToClient": "Passer en client",
+    "ariaOtherFarmer_one": "Notifications ({{count}} non lue dans le profil agriculteur)",
+    "ariaOtherFarmer_other": "Notifications ({{count}} non lues dans le profil agriculteur)",
+    "ariaOtherClient_one": "Notifications ({{count}} non lue dans le profil client)",
+    "ariaOtherClient_other": "Notifications ({{count}} non lues dans le profil client)"
   },
   "activity": {
     "levels": {

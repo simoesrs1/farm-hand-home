@@ -195,7 +195,19 @@
     "view": "Ver notificações",
     "viewShort": "Ver",
     "title": "Notificações",
-    "empty": "Sem notificações."
+    "empty": "Sem notificações.",
+    "titleClient": "Notificações de compras",
+    "titleFarmer": "Notificações de vendas",
+    "otherFarmer_one": "Tem {{count}} notificação de vendas por ler.",
+    "otherFarmer_other": "Tem {{count}} notificações de vendas por ler.",
+    "otherClient_one": "Tem {{count}} notificação de compras por ler.",
+    "otherClient_other": "Tem {{count}} notificações de compras por ler.",
+    "switchToFarmer": "Mudar para agricultor",
+    "switchToClient": "Mudar para cliente",
+    "ariaOtherFarmer_one": "Notificações (tem {{count}} por ler no perfil de agricultor)",
+    "ariaOtherFarmer_other": "Notificações (tem {{count}} por ler no perfil de agricultor)",
+    "ariaOtherClient_one": "Notificações (tem {{count}} por ler no perfil de cliente)",
+    "ariaOtherClient_other": "Notificações (tem {{count}} por ler no perfil de cliente)"
   },
   "activity": {
     "levels": {

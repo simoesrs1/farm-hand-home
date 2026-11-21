@@ -195,7 +195,19 @@
     "view": "View notifications",
     "viewShort": "View",
     "title": "Notifications",
-    "empty": "No notifications."
+    "empty": "No notifications.",
+    "titleClient": "Purchase notifications",
+    "titleFarmer": "Sales notifications",
+    "otherFarmer_one": "You have {{count}} unread sales notification.",
+    "otherFarmer_other": "You have {{count}} unread sales notifications.",
+    "otherClient_one": "You have {{count}} unread purchase notification.",
+    "otherClient_other": "You have {{count}} unread purchase notifications.",
+    "switchToFarmer": "Switch to farmer",
+    "switchToClient": "Switch to customer",
+    "ariaOtherFarmer_one": "Notifications ({{count}} unread in your farmer profile)",
+    "ariaOtherFarmer_other": "Notifications ({{count}} unread in your farmer profile)",
+    "ariaOtherClient_one": "Notifications ({{count}} unread in your customer profile)",
+    "ariaOtherClient_other": "Notifications ({{count}} unread in your customer profile)"
   },
   "activity": {
     "levels": {

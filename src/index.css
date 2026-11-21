@@ -149,6 +149,14 @@
   html.motion-paused .animate-reviews-marquee {
     animation: none;
   }
+
+  /* Bola do sino (notificações no outro perfil): continua a animar com o
+     "reduzir movimento" do sistema, mas para com "Pausar animações" (WCAG 2.2.2).
+     Parada, fica com a cor de destaque. */
+  html.motion-paused .animate-rainbow-dot {
+    animation: none;
+    background-color: hsl(var(--primary));
+  }
 }
 
 @layer utilities {

@@ -195,7 +195,19 @@
     "view": "Benachrichtigungen ansehen",
     "viewShort": "Ansehen",
     "title": "Benachrichtigungen",
-    "empty": "Keine Benachrichtigungen."
+    "empty": "Keine Benachrichtigungen.",
+    "titleClient": "Einkaufsbenachrichtigungen",
+    "titleFarmer": "Verkaufsbenachrichtigungen",
+    "otherFarmer_one": "Sie haben {{count}} ungelesene Verkaufsbenachrichtigung.",
+    "otherFarmer_other": "Sie haben {{count}} ungelesene Verkaufsbenachrichtigungen.",
+    "otherClient_one": "Sie haben {{count}} ungelesene Einkaufsbenachrichtigung.",
+    "otherClient_other": "Sie haben {{count}} ungelesene Einkaufsbenachrichtigungen.",
+    "switchToFarmer": "Zum Landwirt wechseln",
+    "switchToClient": "Zum Kunden wechseln",
+    "ariaOtherFarmer_one": "Benachrichtigungen ({{count}} ungelesen im Landwirtprofil)",
+    "ariaOtherFarmer_other": "Benachrichtigungen ({{count}} ungelesen im Landwirtprofil)",
+    "ariaOtherClient_one": "Benachrichtigungen ({{count}} ungelesen im Kundenprofil)",
+    "ariaOtherClient_other": "Benachrichtigungen ({{count}} ungelesen im Kundenprofil)"
   },
   "activity": {
     "levels": {

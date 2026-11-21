@@ -110,11 +110,22 @@ export default {
           from: { transform: "translateX(0)" },
           to: { transform: "translateX(-50%)" },
         },
+        // Bola do sino: notificações por ler no outro perfil (cliente/agricultor).
+        // Ciclo lento, saturação e luminosidade fixas (sem flashes).
+        "rainbow-dot": {
+          "0%, 100%": { backgroundColor: "hsl(0 85% 55%)" },
+          "17%": { backgroundColor: "hsl(60 85% 50%)" },
+          "33%": { backgroundColor: "hsl(120 70% 45%)" },
+          "50%": { backgroundColor: "hsl(180 80% 45%)" },
+          "67%": { backgroundColor: "hsl(240 80% 60%)" },
+          "83%": { backgroundColor: "hsl(300 80% 55%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "reviews-marquee": "reviews-marquee 60s linear infinite",
+        "rainbow-dot": "rainbow-dot 3s linear infinite",
       },
     },
   },
