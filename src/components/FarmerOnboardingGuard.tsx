@@ -1,49 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { isFarmerManagementPath, useFarmerStatus } from "@/hooks/useFarmerStatus";
+import i18n from "@/i18n";
 
 /**
- * Bloqueia agricultores que ainda não completaram o registo (passo 2)
- * forçando a navegação para /onboarding/agricultor em qualquer outra rota.
- * Permite o /auth para casos de re-login.
+ * Agricultores sem os dados da exploração (registo por completar) podem
+ * explorar a aplicação ("Preencher mais tarde"), mas não a área de venda:
+ * ao abrir uma página de gestão (/agricultor/produtos, encomendas, …) vão
+ * para /onboarding/agricultor. O perfil público /agricultor/:id fica livre.
  */
 const FarmerOnboardingGuard = () => {
-  const { user, profile, loading, activeMode } = useAuth();
+  const { isFarmer, loading, registered } = useFarmerStatus();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [checking, setChecking] = useState(false);
+  const { pathname } = useLocation();
 
   useEffect(() => {
-    if (loading || !user || !profile) return;
-    if (profile.profile_type !== "vendedor") return;
-    // No modo cliente o agricultor navega livremente (só precisa do email verificado)
-    if (activeMode !== "vendedor") return;
-
-    const allowedRoutes = ["/onboarding/agricultor", "/auth"];
-    if (allowedRoutes.includes(location.pathname)) return;
-
-
-    let cancelled = false;
-    setChecking(true);
-    (async () => {
-      const { data } = await supabase
-        .from("farmer_details")
-        .select("registration_step")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (cancelled) return;
-      if (!data || data.registration_step < 2) {
-        navigate("/onboarding/agricultor", { replace: true });
-      }
-      setChecking(false);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, profile, loading, activeMode, location.pathname, navigate]);
+    if (!isFarmer || loading || registered) return;
+    if (!isFarmerManagementPath(pathname)) return;
+    toast({
+      title: i18n.t("farmer:status.completeTitle"),
+      description: i18n.t("farmer:status.completeText"),
+    });
+    navigate("/onboarding/agricultor", { replace: true });
+  }, [isFarmer, loading, registered, pathname, navigate]);
 
   return null;
 };

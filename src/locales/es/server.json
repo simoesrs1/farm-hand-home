@@ -129,5 +129,11 @@
   "tipo_de_perfil_invalido_x": "Tipo de perfil no válido: {{a}}",
   "total_invalido": "Total no válido",
   "um_dos_brindes_escolhidos_ja_nao_esta": "Uno de los regalos elegidos ya no está disponible.",
-  "valores_invalidos": "Valores no válidos"
+  "valores_invalidos": "Valores no válidos",
+  "este_agricultor_ainda_nao_foi_verificado": "Este agricultor aún no ha sido verificado y no puede vender por el momento.",
+  "perfil_de_agricultor_nao_encontrado": "No se ha encontrado el perfil de agricultor.",
+  "o_registo_ja_foi_concluido": "El registro ya se ha completado. Para cambiar los datos, haga una solicitud de cambio.",
+  "preencha_corretamente_todos_os_campos_do_registo": "Rellene correctamente todos los campos obligatorios del registro.",
+  "o_nif_da_empresa_nao_e_valido": "El NIF de la empresa no es válido.",
+  "indique_o_que_a_quinta_oferece": "Indique lo que ofrece la granja: productos, experiencias o alojamiento."
 }

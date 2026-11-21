@@ -537,7 +537,10 @@
     "justificationPlaceholder": "Erklären Sie den Grund für die Änderungen (mindestens 20 Zeichen)…",
     "documents": "Nachweise *",
     "documentsHint": "Fügen Sie Bescheinigungen, Nachweise oder andere Unterlagen bei, die den Antrag stützen.",
-    "submit": "Antrag einreichen"
+    "submit": "Antrag einreichen",
+    "unverified": "Konto wird geprüft",
+    "unverifiedText": "Das ValorRural-Team prüft die von Ihnen gesendeten Daten. Bis zur Freigabe werden Ihre Produkte, Erlebnisse und Unterkünfte <b>Kunden nicht angezeigt</b> und <b>Sie können nicht verkaufen</b>. Sie werden benachrichtigt, sobald Ihr Konto verifiziert ist.",
+    "unverifiedHint": "Änderungen können Sie beantragen, sobald Ihr Konto verifiziert ist."
   },
   "validation": {
     "required": "Pflichtfeld.",
@@ -571,7 +574,7 @@
     "incomplete": "Formular unvollständig",
     "incompleteText": "Korrigieren Sie die rot markierten Felder, bevor Sie die Registrierung abschließen.",
     "done": "Profil vollständig!",
-    "doneText": "Ihr Landwirt-Profil wurde erfolgreich erstellt.",
+    "doneText": "Ihre Daten wurden zur Prüfung gesendet. Sie können bereits Produkte, Erlebnisse und Unterkünfte anlegen; Kunden sehen sie, sobald Ihr Konto verifiziert ist.",
     "step": "Schritt 2 von 2",
     "title": "Vervollständigen Sie Ihr Landwirt-Profil",
     "subtitle": "Geben Sie die offiziellen Daten Ihres Betriebs ein.",
@@ -596,6 +599,15 @@
     "fileTypes": "PDF, JPG, PNG (max. 10 MB pro Datei)",
     "initialScore_one": "Geschätzte Anfangspunktzahl: +{{count}} Punkt",
     "initialScore_other": "Geschätzte Anfangspunktzahl: +{{count}} Punkte",
-    "submit": "Registrierung abschließen"
+    "submit": "Registrierung abschließen",
+    "later": "Später ausfüllen",
+    "laterHint": "Sie können die App erkunden und jederzeit zu diesem Formular zurückkehren. Ohne diese Daten können Sie nicht verkaufen."
+  },
+  "status": {
+    "completeTitle": "Hofdaten vervollständigen",
+    "completeText": "Um zu verkaufen, füllen Sie zuerst die Hofdaten aus. Danach prüft das ValorRural-Team sie.",
+    "incomplete": "Sie können noch nicht verkaufen: Vervollständigen Sie die Hofdaten. Bis dahin können Sie die App frei erkunden.",
+    "completeButton": "Daten vervollständigen",
+    "unverified": "Ihre Daten werden vom ValorRural-Team geprüft. Sie können bereits Produkte, Erlebnisse und Unterkünfte anlegen, Kunden sehen sie aber erst nach der Verifizierung Ihres Kontos."
   }
 }

@@ -132,6 +132,8 @@ const FarmerInfo = () => {
   }, [user]);
 
   const isLocked = details?.verification_status !== "verified";
+  // Agricultor novo à espera da primeira verificação (não é um pedido de alteração).
+  const awaitingFirstReview = details?.verification_status === "unverified";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,7 +241,15 @@ const FarmerInfo = () => {
       />
 
       {/* Status banner */}
-      {isLocked ? (
+      {awaitingFirstReview ? (
+        <Alert className="mb-6 border-warning/40 bg-warning/10">
+          <Lock className="h-4 w-4 text-warning" />
+          <AlertTitle>{t("info.unverified")}</AlertTitle>
+          <AlertDescription>
+            <Trans t={t} i18nKey="info.unverifiedText" components={{ b: <strong /> }} />
+          </AlertDescription>
+        </Alert>
+      ) : isLocked ? (
         <Alert variant="destructive" className="mb-6">
           <Lock className="h-4 w-4" />
           <AlertTitle>{t("info.locked")}</AlertTitle>
@@ -332,7 +342,7 @@ const FarmerInfo = () => {
             </Button>
             {isLocked && (
               <p className="mt-2 text-xs text-muted-foreground">
-                {t("info.pendingRequest")}
+                {awaitingFirstReview ? t("info.unverifiedHint") : t("info.pendingRequest")}
               </p>
             )}
           </div>

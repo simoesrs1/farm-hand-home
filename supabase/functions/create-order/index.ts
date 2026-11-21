@@ -199,10 +199,15 @@ Deno.serve(async (req) => {
 
       const { data: farmerRow } = await admin
         .from("farmer_details")
-        .select("id, pickup_days, user_id, pickup_hours, paused_until, free_delivery_threshold, delivery_hours, delivery_radius_km, pickup_lat, pickup_lng")
+        .select("id, pickup_days, user_id, pickup_hours, paused_until, free_delivery_threshold, delivery_hours, delivery_radius_km, pickup_lat, pickup_lng, verification_status, registration_step")
         .eq("id", farmerId)
         .maybeSingle();
       if (!farmerRow) throw new GroupError(400, "Agricultor indisponível para receber a encomenda.", farmerId);
+      // Só vende quem tem o registo completo e foi verificado pela equipa (a RLS
+      // já oculta os produtos, mas este cliente usa o service_role).
+      if (farmerRow.verification_status !== "verified" || (farmerRow.registration_step ?? 0) < 2) {
+        throw new GroupError(400, "Este agricultor ainda não foi verificado e não pode vender de momento.", farmerId);
+      }
       // Pausa voluntária: a RLS já oculta os produtos, mas este cliente usa o
       // service_role. paused_until é a data de regresso (Europe/Lisbon).
       if (farmerRow.paused_until && farmerRow.paused_until > todayLisbon) {

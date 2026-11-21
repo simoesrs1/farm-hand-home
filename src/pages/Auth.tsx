@@ -6,7 +6,7 @@ import logoValorRuralFull from "@/assets/logo-valorrural-full.png";
 import GoogleIcon from "@/components/GoogleIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { PENDING_PROFILE_TYPE_KEY, useAuth } from "@/contexts/AuthContext";
 import {
   isEmailTakenError,
   isExistingUserResponse,
@@ -22,14 +22,13 @@ import {eye} from 'react-icons-kit/feather/eye'
  * provider é que cria o utilizador). Fica guardado enquanto o browser sai para
  * a Google e é reclamado no regresso, via claim_initial_profile_type.
  */
-const PENDING_PROFILE_TYPE_KEY = "farmconnect:pending_profile_type";
 import { Trans, useTranslation } from "react-i18next";
 
 const Auth = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, refreshProfile } = useAuth();
+  const { user, profile } = useAuth();
   const { t, i18n } = useTranslation(["account", "common"]);
   // O separador vem do endereço (/auth ou /auth?tab=signup), para que os botões
   // "Entrar" e "Registar" do cabeçalho funcionem mesmo com esta página já aberta.
@@ -79,22 +78,14 @@ const Auth = () => {
 
   // Sessão ativa: login por password, sessão anterior, ou regresso do OAuth
   // (o detectSessionInUrl do cliente Supabase já trocou o código por sessão).
+  // O AuthContext só carrega o perfil depois de reclamar o tipo escolhido no
+  // registo com a Google, por isso aqui o tipo já é o certo.
+  const profileLoaded = !!profile;
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !profileLoaded) return;
     let cancelled = false;
 
     (async () => {
-      const pending = sessionStorage.getItem(PENDING_PROFILE_TYPE_KEY);
-      if (pending === "cliente" || pending === "vendedor") {
-        sessionStorage.removeItem(PENDING_PROFILE_TYPE_KEY);
-        // Não tem efeito se o perfil já tiver tipo definido (login, não registo).
-        const { error } = await supabase.rpc("claim_initial_profile_type", {
-          _profile_type: pending,
-        });
-        if (error) console.error("claim_initial_profile_type", error);
-        else await refreshProfile();
-      }
-
       const target = await resolvePostLoginRoute(userId);
       if (!cancelled) navigate(target, { replace: true });
     })();
@@ -102,7 +93,7 @@ const Auth = () => {
     return () => {
       cancelled = true;
     };
-  }, [userId, navigate, refreshProfile, resolvePostLoginRoute]);
+  }, [userId, profileLoaded, navigate, resolvePostLoginRoute]);
 
   if (userId) return null;
 

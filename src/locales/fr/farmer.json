@@ -537,7 +537,10 @@
     "justificationPlaceholder": "Expliquez le motif des modifications (20 caractères minimum)…",
     "documents": "Justificatifs *",
     "documentsHint": "Joignez des attestations, justificatifs ou autres documents à l'appui de la demande.",
-    "submit": "Envoyer la demande"
+    "submit": "Envoyer la demande",
+    "unverified": "Compte en cours de vérification",
+    "unverifiedText": "L'équipe ValorRural vérifie les données que vous avez envoyées. Jusqu'à l'approbation, vos produits, expériences et hébergements <b>ne sont pas visibles par les clients</b> et <b>vous ne pouvez pas vendre</b>. Vous serez notifié dès que votre compte sera vérifié.",
+    "unverifiedHint": "Vous pourrez demander des modifications une fois votre compte vérifié."
   },
   "validation": {
     "required": "Champ obligatoire.",
@@ -571,7 +574,7 @@
     "incomplete": "Formulaire incomplet",
     "incompleteText": "Corrigez les champs indiqués en rouge avant de terminer l'inscription.",
     "done": "Profil complet !",
-    "doneText": "Votre profil d'agriculteur a été créé avec succès.",
+    "doneText": "Vos données ont été envoyées pour vérification. Vous pouvez déjà créer des produits, des expériences et des hébergements ; les clients les verront dès que votre compte sera vérifié.",
     "step": "Étape 2 sur 2",
     "title": "Complétez votre profil d'agriculteur",
     "subtitle": "Renseignez les données officielles de votre exploitation.",
@@ -596,6 +599,15 @@
     "fileTypes": "PDF, JPG, PNG (10 Mo max. chacun)",
     "initialScore_one": "Score initial estimé : +{{count}} point",
     "initialScore_other": "Score initial estimé : +{{count}} points",
-    "submit": "Terminer l'inscription"
+    "submit": "Terminer l'inscription",
+    "later": "Remplir plus tard",
+    "laterHint": "Vous pouvez explorer l'application et revenir à ce formulaire quand vous le souhaitez. Sans ces données, vous ne pouvez pas vendre."
+  },
+  "status": {
+    "completeTitle": "Complétez les données de l'exploitation",
+    "completeText": "Pour vendre, remplissez d'abord les données de l'exploitation. L'équipe ValorRural les vérifiera ensuite.",
+    "incomplete": "Vous ne pouvez pas encore vendre : complétez les données de l'exploitation. En attendant, explorez librement l'application.",
+    "completeButton": "Compléter les données",
+    "unverified": "Vos données sont en cours de vérification par l'équipe ValorRural. Vous pouvez déjà créer des produits, des expériences et des hébergements, mais les clients ne les verront qu'une fois votre compte vérifié."
   }
 }

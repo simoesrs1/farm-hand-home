@@ -1558,6 +1558,26 @@ export type Database = {
         Args: { p_company_nif: string; p_exclude_id?: string }
         Returns: boolean
       }
+      complete_farmer_onboarding: {
+        Args: {
+          p_address: string
+          p_cae_code: string
+          p_company_name: string
+          p_company_nif: string
+          p_description: string
+          p_exploration_id: string
+          p_exploration_number: string
+          p_offers_experiences: boolean
+          p_offers_products: boolean
+          p_offers_stays: boolean
+          p_phone: string
+          p_pickup_address: string
+          p_pickup_lat: number
+          p_pickup_lng: number
+          p_website: string
+        }
+        Returns: undefined
+      }
       compute_farmer_activity: { Args: never; Returns: number }
       consume_product_stock: {
         Args: {

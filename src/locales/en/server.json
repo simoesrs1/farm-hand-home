@@ -129,5 +129,11 @@
   "tipo_de_perfil_invalido_x": "Invalid profile type: {{a}}",
   "total_invalido": "Invalid total",
   "um_dos_brindes_escolhidos_ja_nao_esta": "One of the chosen gifts is no longer available.",
-  "valores_invalidos": "Invalid values"
+  "valores_invalidos": "Invalid values",
+  "este_agricultor_ainda_nao_foi_verificado": "This farmer has not been verified yet and cannot sell at the moment.",
+  "perfil_de_agricultor_nao_encontrado": "Farmer profile not found.",
+  "o_registo_ja_foi_concluido": "Registration has already been completed. To change your details, submit a change request.",
+  "preencha_corretamente_todos_os_campos_do_registo": "Please fill in all required registration fields correctly.",
+  "o_nif_da_empresa_nao_e_valido": "The company tax number (NIF) is not valid.",
+  "indique_o_que_a_quinta_oferece": "Tell us what the farm offers: products, experiences or accommodation."
 }

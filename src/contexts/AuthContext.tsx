@@ -1,7 +1,38 @@
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+
+/**
+ * Tipo de perfil escolhido no registo com a Google, guardado antes de sair
+ * para a Google (sessionStorage). No regresso é reclamado aqui, em qualquer
+ * página onde o utilizador chegue, e não só em /auth.
+ */
+export const PENDING_PROFILE_TYPE_KEY = "farmconnect:pending_profile_type";
+
+/**
+ * Reclama o tipo de perfil pendente (uma só vez; sem efeito se já escolhido).
+ * O perfil é lido em dois sítios ao arrancar (getSession e onAuthStateChange):
+ * ambos esperam pela mesma reclamação, para nenhum ler o tipo antigo.
+ */
+let claimInFlight: Promise<void> | null = null;
+const claimPendingProfileType = () => {
+  if (claimInFlight) return claimInFlight;
+  claimInFlight = (async () => {
+    let pending: string | null = null;
+    try {
+      pending = sessionStorage.getItem(PENDING_PROFILE_TYPE_KEY);
+      if (pending) sessionStorage.removeItem(PENDING_PROFILE_TYPE_KEY);
+    } catch {
+      return;
+    }
+    if (pending !== "cliente" && pending !== "vendedor") return;
+    const { error } = await supabase.rpc("claim_initial_profile_type", { _profile_type: pending });
+    if (error) console.error("claim_initial_profile_type", error);
+  })().finally(() => {
+    claimInFlight = null;
+  });
+  return claimInFlight;
+};
 
 type ProfileRow = {
   full_name: string | null;
@@ -45,6 +76,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async (userId: string) => {
+    // O perfil só fica disponível depois de reclamado o tipo escolhido no registo.
+    await claimPendingProfileType();
     const { data } = await supabase
       .from("profiles")
       .select("full_name, profile_type, active_mode")

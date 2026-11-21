@@ -537,7 +537,10 @@
     "justificationPlaceholder": "Explain the reason for the changes (at least 20 characters)…",
     "documents": "Supporting documents *",
     "documentsHint": "Attach certificates, proofs or other documents supporting the request.",
-    "submit": "Submit request"
+    "submit": "Submit request",
+    "unverified": "Account under verification",
+    "unverifiedText": "The ValorRural team is verifying the details you sent. Until approval, your products, experiences and accommodation <b>are not shown to customers</b> and <b>you cannot make sales</b>. You will be notified when your account is verified.",
+    "unverifiedHint": "You can request changes once your account is verified."
   },
   "validation": {
     "required": "Required field.",
@@ -571,7 +574,7 @@
     "incomplete": "Form incomplete",
     "incompleteText": "Fix the fields marked in red before completing registration.",
     "done": "Profile complete!",
-    "doneText": "Your farmer profile was created successfully.",
+    "doneText": "Your details have been sent for verification. You can already create products, experiences and accommodation; customers will see them as soon as your account is verified.",
     "step": "Step 2 of 2",
     "title": "Complete your farmer profile",
     "subtitle": "Fill in your farm's official details.",
@@ -596,6 +599,15 @@
     "fileTypes": "PDF, JPG, PNG (max. 10MB each)",
     "initialScore_one": "Estimated initial score: +{{count}} point",
     "initialScore_other": "Estimated initial score: +{{count}} points",
-    "submit": "Complete registration"
+    "submit": "Complete registration",
+    "later": "Fill in later",
+    "laterHint": "You can explore the app and come back to this form whenever you like. Without these details you cannot sell."
+  },
+  "status": {
+    "completeTitle": "Complete your farm details",
+    "completeText": "To sell, first fill in your farm details. The ValorRural team will then verify them.",
+    "incomplete": "You cannot sell yet: complete your farm details. Until then, feel free to explore the app.",
+    "completeButton": "Complete details",
+    "unverified": "Your details are being verified by the ValorRural team. You can already create products, experiences and accommodation, but customers will only see them once your account is verified."
   }
 }

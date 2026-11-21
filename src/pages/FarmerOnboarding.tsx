@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { farmerStatusKey } from "@/hooks/useFarmerStatus";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,6 +109,7 @@ const FarmerOnboarding = () => {
   const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation(["farmer", "common", "account"]);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const [values, setValues] = useState<FarmerFormValues>(EMPTY_VALUES);
@@ -325,43 +328,51 @@ const FarmerOnboarding = () => {
         });
       }
 
-      const { error: updateError } = await supabase
-        .from("farmer_details")
-        .update({
-          exploration_id: values.explorationId.trim(),
-          exploration_number: values.explorationNumber.trim().toUpperCase(),
-          company_name: values.companyName.trim(),
-          company_nif: values.companyNif,
-          cae_code: values.caeCode.trim(),
-          address: values.address.trim(),
-          phone: values.phone.trim(),
-          website: normalizeWebsite(values.website),
-          description: values.description.trim(),
-          pickup_address: values.pickupAddress.trim(),
-          pickup_lat: values.pickupLat,
-          pickup_lng: values.pickupLng,
-          offers_products: offerings.products,
-          offers_experiences: offerings.experiences,
-          offers_stays: offerings.stays,
-          registration_step: 2,
-          initial_score: Math.min(certificates.length * 10, 50),
-        })
-        .eq("id", farmerDetailsId);
-
-      if (updateError) throw updateError;
-
+      // Primeiro os certificados: a pontuação inicial é calculada no servidor
+      // a partir dos que já estão guardados.
+      let certIds: string[] = [];
       if (certRecords.length > 0) {
-        const { error: certError } = await supabase
+        const { data: inserted, error: certError } = await supabase
           .from("farmer_certificates")
           .insert(
             certRecords.map((cert) => ({
               ...cert,
               farmer_id: farmerDetailsId,
             })),
-          );
+          )
+          .select("id");
         if (certError) throw certError;
+        certIds = (inserted ?? []).map((c) => c.id);
       }
 
+      // Os dados oficiais só se gravam por esta função (uma única vez); depois
+      // do registo, mudam apenas por pedido de alteração.
+      const { error: updateError } = await supabase.rpc("complete_farmer_onboarding", {
+        p_exploration_id: values.explorationId.trim(),
+        p_exploration_number: values.explorationNumber.trim().toUpperCase(),
+        p_company_name: values.companyName.trim(),
+        p_company_nif: values.companyNif,
+        p_cae_code: values.caeCode.trim(),
+        p_address: values.address.trim(),
+        p_phone: values.phone.trim(),
+        p_website: normalizeWebsite(values.website),
+        p_description: values.description.trim(),
+        p_pickup_address: values.pickupAddress.trim(),
+        p_pickup_lat: values.pickupLat!,
+        p_pickup_lng: values.pickupLng!,
+        p_offers_products: offerings.products,
+        p_offers_experiences: offerings.experiences,
+        p_offers_stays: offerings.stays,
+      });
+      if (updateError) {
+        // Sem registo concluído, os certificados voltariam a ser inseridos na
+        // tentativa seguinte: apaga os desta tentativa.
+        if (certIds.length > 0) await supabase.from("farmer_certificates").delete().in("id", certIds);
+        throw updateError;
+      }
+
+      // O aviso e a área de venda passam a ver o registo completo.
+      await queryClient.invalidateQueries({ queryKey: farmerStatusKey(user?.id) });
       toast({
         title: t("onboarding.done"),
         description: t("onboarding.doneText"),
@@ -782,6 +793,17 @@ const FarmerOnboarding = () => {
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("onboarding.submit")}
             </Button>
+            {/* Pode explorar a aplicação e preencher depois; sem estes dados não pode vender. */}
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={() => navigate("/catalogo")}
+              disabled={loading}
+            >
+              {t("onboarding.later")}
+            </Button>
+            <p className="text-center text-xs text-muted-foreground">{t("onboarding.laterHint")}</p>
           </form>
         </div>
       </div>

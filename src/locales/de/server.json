@@ -129,5 +129,11 @@
   "tipo_de_perfil_invalido_x": "Ungültiger Profiltyp: {{a}}",
   "total_invalido": "Ungültiger Gesamtbetrag",
   "um_dos_brindes_escolhidos_ja_nao_esta": "Eines der gewählten Geschenke ist nicht mehr verfügbar.",
-  "valores_invalidos": "Ungültige Werte"
+  "valores_invalidos": "Ungültige Werte",
+  "este_agricultor_ainda_nao_foi_verificado": "Dieser Landwirt wurde noch nicht verifiziert und kann derzeit nicht verkaufen.",
+  "perfil_de_agricultor_nao_encontrado": "Landwirtprofil nicht gefunden.",
+  "o_registo_ja_foi_concluido": "Die Registrierung ist bereits abgeschlossen. Um Ihre Daten zu ändern, stellen Sie einen Änderungsantrag.",
+  "preencha_corretamente_todos_os_campos_do_registo": "Bitte füllen Sie alle Pflichtfelder der Registrierung korrekt aus.",
+  "o_nif_da_empresa_nao_e_valido": "Die Steuernummer (NIF) des Unternehmens ist ungültig.",
+  "indique_o_que_a_quinta_oferece": "Geben Sie an, was der Hof anbietet: Produkte, Erlebnisse oder Unterkunft."
 }

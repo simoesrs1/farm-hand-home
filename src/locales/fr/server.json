@@ -129,5 +129,11 @@
   "tipo_de_perfil_invalido_x": "Type de profil invalide : {{a}}",
   "total_invalido": "Total invalide",
   "um_dos_brindes_escolhidos_ja_nao_esta": "L'un des cadeaux choisis n'est plus disponible.",
-  "valores_invalidos": "Valeurs invalides"
+  "valores_invalidos": "Valeurs invalides",
+  "este_agricultor_ainda_nao_foi_verificado": "Cet agriculteur n'a pas encore été vérifié et ne peut pas vendre pour le moment.",
+  "perfil_de_agricultor_nao_encontrado": "Profil d'agriculteur introuvable.",
+  "o_registo_ja_foi_concluido": "L'inscription est déjà terminée. Pour modifier vos données, faites une demande de modification.",
+  "preencha_corretamente_todos_os_campos_do_registo": "Veuillez remplir correctement tous les champs obligatoires de l'inscription.",
+  "o_nif_da_empresa_nao_e_valido": "Le numéro fiscal (NIF) de l'entreprise n'est pas valide.",
+  "indique_o_que_a_quinta_oferece": "Indiquez ce que propose la ferme : produits, expériences ou hébergement."
 }

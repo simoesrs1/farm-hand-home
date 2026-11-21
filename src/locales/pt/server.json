@@ -129,5 +129,11 @@
   "tipo_de_perfil_invalido_x": "Tipo de perfil inválido: {{a}}",
   "total_invalido": "Total inválido",
   "um_dos_brindes_escolhidos_ja_nao_esta": "Um dos brindes escolhidos já não está disponível.",
-  "valores_invalidos": "Valores inválidos"
+  "valores_invalidos": "Valores inválidos",
+  "este_agricultor_ainda_nao_foi_verificado": "Este agricultor ainda não foi verificado e não pode vender de momento.",
+  "perfil_de_agricultor_nao_encontrado": "Perfil de agricultor não encontrado.",
+  "o_registo_ja_foi_concluido": "O registo já foi concluído. Para alterar os dados, faça um pedido de alteração.",
+  "preencha_corretamente_todos_os_campos_do_registo": "Preencha corretamente todos os campos obrigatórios do registo.",
+  "o_nif_da_empresa_nao_e_valido": "O NIF da empresa não é válido.",
+  "indique_o_que_a_quinta_oferece": "Indique o que a quinta oferece: produtos, experiências ou alojamento."
 }
