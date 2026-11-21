@@ -67,7 +67,29 @@
     "newPassword": "Neues Passwort",
     "update": "Passwort aktualisieren",
     "logout": "Abmelden",
-    "logoutText": "Melden Sie sich auf diesem Gerät ab."
+    "logoutText": "Melden Sie sich auf diesem Gerät ab.",
+    "delete": {
+      "title": "Konto löschen",
+      "text": "Löscht Ihre persönlichen Daten und schließt das Konto in beiden Profilen (Kunde und Landwirt). Sie können mit derselben E-Mail ein neues Konto anlegen, müssen aber alles neu ausfüllen.",
+      "button": "Mein Konto löschen",
+      "failed": "Das Konto konnte nicht gelöscht werden",
+      "blockedText": "Schließen Sie vor dem Löschen des Kontos noch Offenes ab:",
+      "clientOrders_one": "{{count}} eigene Bestellung oder Buchung ist nicht abgeschlossen",
+      "clientOrders_other": "{{count}} eigene Bestellungen oder Buchungen sind nicht abgeschlossen",
+      "farmerOrders_one": "{{count}} Kundenbestellung oder -buchung ist noch zu liefern",
+      "farmerOrders_other": "{{count}} Kundenbestellungen oder -buchungen sind noch zu liefern",
+      "farmerSubscriptions_one": "{{count}} Kunde mit aktivem Abo (unter Abos kündigen)",
+      "farmerSubscriptions_other": "{{count}} Kunden mit aktivem Abo (unter Abos kündigen)",
+      "confirmText": "Diese Aktion kann nicht rückgängig gemacht werden.",
+      "whatDeleted": "Wir löschen Namen, Foto, Favoriten und Benachrichtigungen; Hof, Produkte, Erlebnisse, Unterkünfte und Abos werden nicht mehr angezeigt.",
+      "whatKept": "Bestellungen und Rechnungen werden gesetzlich 10 Jahre aufbewahrt, ohne Verbindung zu Ihrem Namen.",
+      "whatReviews": "Ihre Bewertungen bleiben anonym erhalten.",
+      "whatEmail": "Sie können mit derselben E-Mail ein neues Konto von vorn anlegen.",
+      "typeEmail": "Geben Sie zur Bestätigung die E-Mail des Kontos ein ({{email}})",
+      "confirm": "Endgültig löschen",
+      "done": "Konto gelöscht",
+      "doneText": "Ihre persönlichen Daten wurden gelöscht. Danke, dass Sie ValorRural genutzt haben."
+    }
   },
   "verify": {
     "sent": "Code gesendet",

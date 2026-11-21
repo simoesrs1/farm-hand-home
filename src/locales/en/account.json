@@ -67,7 +67,29 @@
     "newPassword": "New password",
     "update": "Update password",
     "logout": "Log out",
-    "logoutText": "Log out of your account on this device."
+    "logoutText": "Log out of your account on this device.",
+    "delete": {
+      "title": "Delete account",
+      "text": "Deletes your personal data and closes the account, in both profiles (customer and farmer). You can create a new account with the same email, but you will have to fill everything in again.",
+      "button": "Delete my account",
+      "failed": "Could not delete the account",
+      "blockedText": "Before deleting your account, finish what is pending:",
+      "clientOrders_one": "{{count}} of your orders or bookings is not finished",
+      "clientOrders_other": "{{count}} of your orders or bookings are not finished",
+      "farmerOrders_one": "{{count}} customer order or booking still to deliver",
+      "farmerOrders_other": "{{count}} customer orders or bookings still to deliver",
+      "farmerSubscriptions_one": "{{count}} customer with an active subscription (cancel it in Subscriptions)",
+      "farmerSubscriptions_other": "{{count}} customers with an active subscription (cancel them in Subscriptions)",
+      "confirmText": "This action cannot be undone.",
+      "whatDeleted": "We delete your name, photo, favourites and notifications; your farm, products, experiences, accommodation and subscriptions are no longer shown.",
+      "whatKept": "Orders and invoicing are kept for 10 years, as required by law, without being linked to your name.",
+      "whatReviews": "The reviews you wrote remain, anonymised.",
+      "whatEmail": "You can create a new account with the same email, starting from scratch.",
+      "typeEmail": "To confirm, type the account email ({{email}})",
+      "confirm": "Delete permanently",
+      "done": "Account deleted",
+      "doneText": "Your personal data has been deleted. Thank you for using ValorRural."
+    }
   },
   "verify": {
     "sent": "Code sent",

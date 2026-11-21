@@ -286,8 +286,9 @@ const privacyEn: LegalDoc = {
             as automatic translation), and to withdraw consent at any time. You can exercise them
             by writing to <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>; we reply within one
             month. Some data can be corrected directly in your <Link to="/perfil">profile</Link>.
-            Closing the account and erasing the data are done on request, by email, keeping only
-            what the law requires us to retain.
+            You can delete your account at any time in Settings: we erase your personal data and keep
+            only what the law requires (orders and invoicing, for 10 years), without linking it to your
+            name.
           </p>
           <p>
             You may also lodge a complaint with the Portuguese data protection authority (CNPD),

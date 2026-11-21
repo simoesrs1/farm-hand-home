@@ -141,5 +141,7 @@
   "subscricao_nao_encontrada": "Subscrição não encontrada.",
   "esta_subscricao_ja_foi_cancelada": "Esta subscrição já foi cancelada.",
   "para_deixar_de_oferecer_subscricoes": "Para deixar de oferecer subscrições, suspenda primeiro todos os planos.",
-  "nao_pode_comprar_a_sua_propria_quinta": "Não pode comprar à sua própria quinta."
+  "nao_pode_comprar_a_sua_propria_quinta": "Não pode comprar à sua própria quinta.",
+  "o_email_escrito_nao_corresponde": "O email escrito não corresponde ao da conta.",
+  "ainda_tem_encomendas_reservas_por_concluir": "Ainda tem encomendas, reservas ou subscrições por concluir."
 }

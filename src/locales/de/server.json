@@ -141,5 +141,7 @@
   "subscricao_nao_encontrada": "Abo nicht gefunden.",
   "esta_subscricao_ja_foi_cancelada": "Dieses Abo wurde bereits gekündigt.",
   "para_deixar_de_oferecer_subscricoes": "Um keine Abos mehr anzubieten, setzen Sie zuerst alle Pläne aus.",
-  "nao_pode_comprar_a_sua_propria_quinta": "Sie können nicht bei Ihrem eigenen Hof kaufen."
+  "nao_pode_comprar_a_sua_propria_quinta": "Sie können nicht bei Ihrem eigenen Hof kaufen.",
+  "o_email_escrito_nao_corresponde": "Die eingegebene E-Mail stimmt nicht mit der des Kontos überein.",
+  "ainda_tem_encomendas_reservas_por_concluir": "Sie haben noch offene Bestellungen, Buchungen oder Abos."
 }

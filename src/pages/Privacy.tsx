@@ -294,8 +294,9 @@ const sections: LegalSection[] = [
           automática), e de retirar o consentimento a qualquer momento. Pode exercê-los
           escrevendo para <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>; respondemos no
           prazo de um mês. Parte dos dados pode ser corrigida diretamente no seu{" "}
-          <Link to="/perfil">perfil</Link>. O encerramento da conta e o apagamento dos dados são
-          feitos a pedido, por email, mantendo apenas o que a lei nos obriga a conservar.
+          <Link to="/perfil">perfil</Link>. Pode eliminar a conta a qualquer momento em Definições: apagamos os seus dados pessoais e
+          conservamos apenas o que a lei obriga (encomendas e faturação, durante 10 anos), sem
+          ligação ao seu nome.
         </p>
         <p>
           Pode também apresentar reclamação à Comissão Nacional de Proteção de Dados (CNPD), Av.

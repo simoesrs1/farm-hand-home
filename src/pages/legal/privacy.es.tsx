@@ -307,9 +307,9 @@ const privacyEs: LegalDoc = {
             traducción automática), y a retirar el consentimiento en cualquier momento. Puede
             ejercerlos escribiendo a <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a>;
             respondemos en el plazo de un mes. Parte de los datos puede corregirse directamente
-            en su <Link to="/perfil">perfil</Link>. El cierre de la cuenta y la supresión de los
-            datos se hacen a petición, por email, conservando solo lo que la ley nos obliga a
-            guardar.
+            en su <Link to="/perfil">perfil</Link>. Puede eliminar la cuenta en cualquier momento en Ajustes: borramos sus datos personales y
+            conservamos solo lo que exige la ley (pedidos y facturación, durante 10 años), sin vínculo
+            con su nombre.
           </p>
           <p>
             También puede presentar una reclamación ante la autoridad portuguesa de protección de

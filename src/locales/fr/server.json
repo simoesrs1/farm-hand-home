@@ -141,5 +141,7 @@
   "subscricao_nao_encontrada": "Abonnement introuvable.",
   "esta_subscricao_ja_foi_cancelada": "Cet abonnement a déjà été résilié.",
   "para_deixar_de_oferecer_subscricoes": "Pour ne plus proposer d'abonnements, suspendez d'abord toutes les formules.",
-  "nao_pode_comprar_a_sua_propria_quinta": "Vous ne pouvez pas acheter à votre propre ferme."
+  "nao_pode_comprar_a_sua_propria_quinta": "Vous ne pouvez pas acheter à votre propre ferme.",
+  "o_email_escrito_nao_corresponde": "L'email saisi ne correspond pas à celui du compte.",
+  "ainda_tem_encomendas_reservas_por_concluir": "Vous avez encore des commandes, réservations ou abonnements en cours."
 }

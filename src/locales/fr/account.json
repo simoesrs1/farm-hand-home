@@ -67,7 +67,29 @@
     "newPassword": "Nouveau mot de passe",
     "update": "Mettre à jour le mot de passe",
     "logout": "Se déconnecter",
-    "logoutText": "Déconnectez-vous de ce compte sur cet appareil."
+    "logoutText": "Déconnectez-vous de ce compte sur cet appareil.",
+    "delete": {
+      "title": "Supprimer le compte",
+      "text": "Efface vos données personnelles et ferme le compte, dans les deux profils (client et agriculteur). Vous pourrez créer un nouveau compte avec le même email, mais il faudra tout remplir à nouveau.",
+      "button": "Supprimer mon compte",
+      "failed": "Impossible de supprimer le compte",
+      "blockedText": "Avant de supprimer le compte, terminez ce qui est en cours :",
+      "clientOrders_one": "{{count}} de vos commandes ou réservations n'est pas terminée",
+      "clientOrders_other": "{{count}} de vos commandes ou réservations ne sont pas terminées",
+      "farmerOrders_one": "{{count}} commande ou réservation client à livrer",
+      "farmerOrders_other": "{{count}} commandes ou réservations clients à livrer",
+      "farmerSubscriptions_one": "{{count}} client avec un abonnement actif (résiliez-le dans Abonnements)",
+      "farmerSubscriptions_other": "{{count}} clients avec un abonnement actif (résiliez-les dans Abonnements)",
+      "confirmText": "Cette action est irréversible.",
+      "whatDeleted": "Nous effaçons le nom, la photo, les favoris et les notifications ; la ferme, les produits, les expériences, l'hébergement et les abonnements ne sont plus affichés.",
+      "whatKept": "Les commandes et la facturation sont conservées 10 ans, comme l'exige la loi, sans lien avec votre nom.",
+      "whatReviews": "Les avis que vous avez écrits restent, anonymisés.",
+      "whatEmail": "Vous pourrez créer un nouveau compte avec le même email, en repartant de zéro.",
+      "typeEmail": "Pour confirmer, saisissez l'email du compte ({{email}})",
+      "confirm": "Supprimer définitivement",
+      "done": "Compte supprimé",
+      "doneText": "Vos données personnelles ont été effacées. Merci d'avoir utilisé ValorRural."
+    }
   },
   "verify": {
     "sent": "Code envoyé",

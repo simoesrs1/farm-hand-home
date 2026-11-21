@@ -141,5 +141,7 @@
   "subscricao_nao_encontrada": "No se ha encontrado la suscripción.",
   "esta_subscricao_ja_foi_cancelada": "Esta suscripción ya se ha cancelado.",
   "para_deixar_de_oferecer_subscricoes": "Para dejar de ofrecer suscripciones, suspenda primero todos los planes.",
-  "nao_pode_comprar_a_sua_propria_quinta": "No puede comprar en su propia granja."
+  "nao_pode_comprar_a_sua_propria_quinta": "No puede comprar en su propia granja.",
+  "o_email_escrito_nao_corresponde": "El email escrito no coincide con el de la cuenta.",
+  "ainda_tem_encomendas_reservas_por_concluir": "Todavía tiene pedidos, reservas o suscripciones sin terminar."
 }

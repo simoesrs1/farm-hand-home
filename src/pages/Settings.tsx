@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, KeyRound, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/PageHeader";
+import DeleteAccountSection from "@/components/DeleteAccountSection";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -88,6 +89,8 @@ const Settings = () => {
           {t("settings.logout")}
         </Button>
       </div>
+
+      <DeleteAccountSection />
     </main>
   );
 };

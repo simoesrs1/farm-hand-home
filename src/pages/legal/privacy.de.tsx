@@ -309,9 +309,9 @@ const privacyDe: LegalDoc = {
             Ihre Einwilligung jederzeit zu widerrufen. Sie können diese Rechte per E-Mail an{" "}
             <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a> ausüben; wir antworten innerhalb
             eines Monats. Einen Teil der Daten können Sie direkt in Ihrem{" "}
-            <Link to="/perfil">Profil</Link> korrigieren. Die Schließung des Kontos und die
-            Löschung der Daten erfolgen auf Anfrage per E-Mail; wir bewahren nur auf, was wir
-            gesetzlich aufbewahren müssen.
+            <Link to="/perfil">Profil</Link> korrigieren. Sie können Ihr Konto jederzeit in den Einstellungen löschen: Wir löschen Ihre
+            personenbezogenen Daten und bewahren nur auf, was das Gesetz verlangt (Bestellungen und
+            Rechnungen, 10 Jahre lang), ohne Verbindung zu Ihrem Namen.
           </p>
           <p>
             Sie können sich auch bei der portugiesischen Datenschutzbehörde (CNPD) beschweren, Av.

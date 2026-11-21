@@ -141,5 +141,7 @@
   "subscricao_nao_encontrada": "Subscription not found.",
   "esta_subscricao_ja_foi_cancelada": "This subscription has already been cancelled.",
   "para_deixar_de_oferecer_subscricoes": "To stop offering subscriptions, first suspend all plans.",
-  "nao_pode_comprar_a_sua_propria_quinta": "You cannot buy from your own farm."
+  "nao_pode_comprar_a_sua_propria_quinta": "You cannot buy from your own farm.",
+  "o_email_escrito_nao_corresponde": "The email you typed does not match the account email.",
+  "ainda_tem_encomendas_reservas_por_concluir": "You still have orders, bookings or subscriptions to finish."
 }

@@ -67,7 +67,29 @@
     "newPassword": "Nova senha",
     "update": "Atualizar senha",
     "logout": "Terminar sessão",
-    "logoutText": "Sai da conta neste dispositivo."
+    "logoutText": "Sai da conta neste dispositivo.",
+    "delete": {
+      "title": "Eliminar conta",
+      "text": "Apaga os seus dados pessoais e fecha a conta, nos dois perfis (cliente e agricultor). Pode voltar a criar uma conta com o mesmo email, mas terá de preencher tudo de novo.",
+      "button": "Eliminar a minha conta",
+      "failed": "Não foi possível eliminar a conta",
+      "blockedText": "Antes de eliminar a conta, conclua o que está pendente:",
+      "clientOrders_one": "{{count}} encomenda ou reserva sua por concluir",
+      "clientOrders_other": "{{count}} encomendas ou reservas suas por concluir",
+      "farmerOrders_one": "{{count}} encomenda ou reserva de clientes por entregar",
+      "farmerOrders_other": "{{count}} encomendas ou reservas de clientes por entregar",
+      "farmerSubscriptions_one": "{{count}} cliente com subscrição ativa (cancele-a em Subscrições)",
+      "farmerSubscriptions_other": "{{count}} clientes com subscrição ativa (cancele-as em Subscrições)",
+      "confirmText": "Esta ação não pode ser desfeita.",
+      "whatDeleted": "Apagamos o nome, a fotografia, os favoritos e as notificações; a quinta, os produtos, as experiências, o alojamento e as subscrições deixam de aparecer.",
+      "whatKept": "As encomendas e a faturação ficam guardadas 10 anos, como a lei obriga, sem ligação ao seu nome.",
+      "whatReviews": "As avaliações que escreveu ficam, anónimas.",
+      "whatEmail": "Pode criar uma conta nova com o mesmo email, começando do zero.",
+      "typeEmail": "Para confirmar, escreva o email da conta ({{email}})",
+      "confirm": "Eliminar definitivamente",
+      "done": "Conta eliminada",
+      "doneText": "Os seus dados pessoais foram apagados. Obrigado por ter usado a ValorRural."
+    }
   },
   "verify": {
     "sent": "Código enviado",

@@ -313,8 +313,9 @@ const privacyFr: LegalDoc = {
             votre consentement à tout moment. Vous pouvez les exercer en écrivant à{" "}
             <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a> ; nous répondons dans un délai
             d'un mois. Une partie des données peut être corrigée directement dans votre{" "}
-            <Link to="/perfil">profil</Link>. La clôture du compte et l'effacement des données se
-            font sur demande, par email, en ne conservant que ce que la loi nous oblige à garder.
+            <Link to="/perfil">profil</Link>. Vous pouvez supprimer votre compte à tout moment dans Paramètres : nous effaçons vos données
+            personnelles et ne conservons que ce que la loi impose (commandes et facturation, pendant 10
+            ans), sans lien avec votre nom.
           </p>
           <p>
             Vous pouvez aussi introduire une réclamation auprès de l'autorité portugaise de

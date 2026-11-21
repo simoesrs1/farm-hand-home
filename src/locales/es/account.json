@@ -67,7 +67,29 @@
     "newPassword": "Nueva contraseña",
     "update": "Actualizar contraseña",
     "logout": "Cerrar sesión",
-    "logoutText": "Cierra la sesión en este dispositivo."
+    "logoutText": "Cierra la sesión en este dispositivo.",
+    "delete": {
+      "title": "Eliminar cuenta",
+      "text": "Borra sus datos personales y cierra la cuenta, en los dos perfiles (cliente y agricultor). Puede crear una cuenta nueva con el mismo email, pero tendrá que rellenarlo todo de nuevo.",
+      "button": "Eliminar mi cuenta",
+      "failed": "No se ha podido eliminar la cuenta",
+      "blockedText": "Antes de eliminar la cuenta, termine lo que está pendiente:",
+      "clientOrders_one": "{{count}} pedido o reserva suyo sin terminar",
+      "clientOrders_other": "{{count}} pedidos o reservas suyos sin terminar",
+      "farmerOrders_one": "{{count}} pedido o reserva de clientes por entregar",
+      "farmerOrders_other": "{{count}} pedidos o reservas de clientes por entregar",
+      "farmerSubscriptions_one": "{{count}} cliente con suscripción activa (cancélela en Suscripciones)",
+      "farmerSubscriptions_other": "{{count}} clientes con suscripción activa (cancélelas en Suscripciones)",
+      "confirmText": "Esta acción no se puede deshacer.",
+      "whatDeleted": "Borramos el nombre, la foto, los favoritos y las notificaciones; la granja, los productos, las experiencias, el alojamiento y las suscripciones dejan de aparecer.",
+      "whatKept": "Los pedidos y la facturación se conservan 10 años, como exige la ley, sin vínculo con su nombre.",
+      "whatReviews": "Las reseñas que escribió se mantienen, anónimas.",
+      "whatEmail": "Puede crear una cuenta nueva con el mismo email, empezando de cero.",
+      "typeEmail": "Para confirmar, escriba el email de la cuenta ({{email}})",
+      "confirm": "Eliminar definitivamente",
+      "done": "Cuenta eliminada",
+      "doneText": "Sus datos personales se han borrado. Gracias por haber usado ValorRural."
+    }
   },
   "verify": {
     "sent": "Código enviado",
