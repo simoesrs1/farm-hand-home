@@ -35,7 +35,9 @@
     "signupGoogle": "Registar com a Google",
     "loginGoogle": "Entrar com a Google",
     "googleFarmer": "A conta Google fica associada ao perfil de <b>agricultor</b> selecionado acima.",
-    "googleClient": "A conta Google fica associada ao perfil de <b>cliente</b> selecionado acima."
+    "googleClient": "A conta Google fica associada ao perfil de <b>cliente</b> selecionado acima.",
+    "noAccountTitle": "Conta não encontrada",
+    "noAccountText": "Não encontrámos nenhuma conta associada a esta conta Google. Para criar conta, escolha o tipo de perfil e use \"Registar com a Google\"."
   },
   "profile": {
     "updated": "Perfil atualizado",

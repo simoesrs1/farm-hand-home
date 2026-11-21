@@ -34,6 +34,43 @@ const claimPendingProfileType = () => {
   return claimInFlight;
 };
 
+/**
+ * Marca do "Entrar com a Google", guardada antes de sair para a Google. O
+ * Supabase cria uma conta nova se a conta Google não estiver associada a
+ * nenhuma; no regresso, se veio do "Entrar" e a conta acabou de ser criada, a
+ * Edge Function cancel-oauth-signup apaga-a e o utilizador vê "conta não
+ * encontrada" no separador "Registar".
+ */
+export const OAUTH_LOGIN_INTENT_KEY = "farmconnect:oauth_login_intent";
+const NEW_ACCOUNT_WINDOW_MS = 10 * 60 * 1000;
+
+let loginCheckInFlight: Promise<boolean> | null = null;
+/** Devolve true se a conta foi apagada (a página vai ser recarregada). */
+const undoAccidentalOAuthSignup = (u: User) => {
+  if (loginCheckInFlight) return loginCheckInFlight;
+  loginCheckInFlight = (async () => {
+    let intent: string | null = null;
+    try {
+      intent = sessionStorage.getItem(OAUTH_LOGIN_INTENT_KEY);
+      if (intent) sessionStorage.removeItem(OAUTH_LOGIN_INTENT_KEY);
+    } catch {
+      return false;
+    }
+    if (intent !== "1") return false;
+    const createdAt = Date.parse(u.created_at);
+    if (!Number.isFinite(createdAt) || Date.now() - createdAt > NEW_ACCOUNT_WINDOW_MS) return false;
+
+    const { data, error } = await supabase.functions.invoke("cancel-oauth-signup");
+    if (error || !(data as { deleted?: boolean } | null)?.deleted) return false;
+    await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+    window.location.replace("/auth?tab=signup&no_account=1");
+    return true;
+  })().finally(() => {
+    loginCheckInFlight = null;
+  });
+  return loginCheckInFlight;
+};
+
 type ProfileRow = {
   full_name: string | null;
   profile_type: string;
@@ -75,7 +112,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string, signedInUser?: User) => {
+    // Conta criada sem querer no "Entrar com a Google": é apagada e não se carrega perfil.
+    if (signedInUser && (await undoAccidentalOAuthSignup(signedInUser))) return;
     // O perfil só fica disponível depois de reclamado o tipo escolhido no registo.
     await claimPendingProfileType();
     const { data } = await supabase
@@ -92,7 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => fetchProfile(session.user.id), 0);
+          setTimeout(() => fetchProfile(session.user.id, session.user), 0);
         } else {
           setProfile(null);
         }
@@ -104,7 +143,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user.id, session.user);
       }
       setLoading(false);
     });

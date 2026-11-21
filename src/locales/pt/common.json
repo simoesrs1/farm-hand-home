@@ -230,7 +230,7 @@
   },
   "errors": {
     "emailTaken": "Este email já está registado.",
-    "invalidLogin": "Email ou palavra-passe incorretos.",
+    "invalidLogin": "Email ou palavra-passe incorretos. Se ainda não tem conta, use Registar.",
     "emailNotConfirmed": "Confirma o teu email antes de entrar.",
     "weakPassword": "Palavra-passe demasiado fraca ou comprometida. Escolhe outra.",
     "rateLimit": "Demasiadas tentativas. Tenta novamente daqui a alguns minutos.",

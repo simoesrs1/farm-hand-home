@@ -35,7 +35,9 @@
     "signupGoogle": "Sign up with Google",
     "loginGoogle": "Log in with Google",
     "googleFarmer": "The Google account will be linked to the <b>farmer</b> profile selected above.",
-    "googleClient": "The Google account will be linked to the <b>customer</b> profile selected above."
+    "googleClient": "The Google account will be linked to the <b>customer</b> profile selected above.",
+    "noAccountTitle": "Account not found",
+    "noAccountText": "We couldn't find an account linked to this Google account. To create one, choose your profile type and use \"Sign up with Google\"."
   },
   "profile": {
     "updated": "Profile updated",

@@ -35,7 +35,9 @@
     "signupGoogle": "S'inscrire avec Google",
     "loginGoogle": "Se connecter avec Google",
     "googleFarmer": "Le compte Google sera associé au profil <b>agriculteur</b> sélectionné ci-dessus.",
-    "googleClient": "Le compte Google sera associé au profil <b>client</b> sélectionné ci-dessus."
+    "googleClient": "Le compte Google sera associé au profil <b>client</b> sélectionné ci-dessus.",
+    "noAccountTitle": "Compte introuvable",
+    "noAccountText": "Nous n'avons trouvé aucun compte associé à ce compte Google. Pour en créer un, choisissez votre type de profil et utilisez « S'inscrire avec Google »."
   },
   "profile": {
     "updated": "Profil mis à jour",

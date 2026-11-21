@@ -35,7 +35,9 @@
     "signupGoogle": "Mit Google registrieren",
     "loginGoogle": "Mit Google anmelden",
     "googleFarmer": "Das Google-Konto wird mit dem oben gewählten <b>Landwirt</b>-Profil verknüpft.",
-    "googleClient": "Das Google-Konto wird mit dem oben gewählten <b>Kunden</b>-Profil verknüpft."
+    "googleClient": "Das Google-Konto wird mit dem oben gewählten <b>Kunden</b>-Profil verknüpft.",
+    "noAccountTitle": "Konto nicht gefunden",
+    "noAccountText": "Wir haben kein Konto gefunden, das mit diesem Google-Konto verknüpft ist. Um ein Konto zu erstellen, wählen Sie Ihren Profiltyp und nutzen Sie „Mit Google registrieren“."
   },
   "profile": {
     "updated": "Profil aktualisiert",

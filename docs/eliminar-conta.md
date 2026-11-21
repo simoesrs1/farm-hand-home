@@ -27,6 +27,20 @@ Tudo é feito pela Edge Function `delete-account`, depois de o utilizador escrev
 
 **Conservado:** encomendas, reservas, faturação e mensagens do chat das encomendas, durante 10 anos (lei fiscal), ligadas à conta anónima.
 
+## Voltar a entrar depois de eliminar
+
+A conta antiga não volta a abrir: fica bloqueada, com um email interno e sem ligações de início de sessão.
+
+- **Registar** (email ou Google): cria uma conta nova, vazia.
+- **Entrar com email**: dá "Email ou palavra-passe incorretos. Se ainda não tem conta, use Registar." Por segurança, não se diz se o email existe.
+- **Entrar com a Google**: o Supabase não distingue entrar de registar e cria sempre uma conta quando a conta Google não está associada a nenhuma. Para isso não acontecer no "Entrar":
+  1. o botão guarda `farmconnect:oauth_login_intent` no `sessionStorage` antes de sair para a Google;
+  2. no regresso, o `AuthContext` vê a marca e, se a conta foi criada há menos de 10 minutos, chama a Edge Function `cancel-oauth-signup`;
+  3. a função só apaga a conta se for de facto nova e vazia: criada há menos de 10 minutos, só com a Google, sem tipo de perfil escolhido (`profile_type_claimed = false`) e sem encomendas nem subscrições;
+  4. o site termina a sessão e abre `/auth?tab=signup&no_account=1`, com o aviso "Conta não encontrada".
+
+Isto aplica-se a qualquer pessoa sem conta, e não só a contas eliminadas.
+
 ## Por confirmar
 
 - Se o papel `postgres` pode apagar de `auth.identities` no projeto (passo 4). Se não puder, a eliminação funciona na mesma, mas o login com a Google com o mesmo email abriria a conta bloqueada; o erro fica nos registos da função.

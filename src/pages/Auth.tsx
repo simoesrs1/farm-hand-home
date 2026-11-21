@@ -6,7 +6,7 @@ import logoValorRuralFull from "@/assets/logo-valorrural-full.png";
 import GoogleIcon from "@/components/GoogleIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { PENDING_PROFILE_TYPE_KEY, useAuth } from "@/contexts/AuthContext";
+import { OAUTH_LOGIN_INTENT_KEY, PENDING_PROFILE_TYPE_KEY, useAuth } from "@/contexts/AuthContext";
 import {
   isEmailTakenError,
   isExistingUserResponse,
@@ -33,6 +33,8 @@ const Auth = () => {
   // O separador vem do endereço (/auth ou /auth?tab=signup), para que os botões
   // "Entrar" e "Registar" do cabeçalho funcionem mesmo com esta página já aberta.
   const isSignup = searchParams.get("tab") === "signup";
+  // Regresso do "Entrar com a Google" sem conta registada (ver AuthContext).
+  const noAccount = isSignup && searchParams.get("no_account") === "1";
   const [profileType, setProfileType] = useState<"cliente" | "vendedor">("cliente");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -116,6 +118,7 @@ const Auth = () => {
         const next = new URLSearchParams(prev);
         if (signup) next.set("tab", "signup");
         else next.delete("tab");
+        next.delete("no_account");
         return next;
       },
       { replace: true },
@@ -187,9 +190,15 @@ const Auth = () => {
     setEmailTaken(false);
 
     try {
-      // Só no registo é que há tipo de perfil a reclamar no regresso.
-      if (isSignup) sessionStorage.setItem(PENDING_PROFILE_TYPE_KEY, profileType);
-      else sessionStorage.removeItem(PENDING_PROFILE_TYPE_KEY);
+      // Só no registo é que há tipo de perfil a reclamar no regresso. No
+      // "Entrar", uma conta criada agora é desfeita no regresso (AuthContext).
+      if (isSignup) {
+        sessionStorage.setItem(PENDING_PROFILE_TYPE_KEY, profileType);
+        sessionStorage.removeItem(OAUTH_LOGIN_INTENT_KEY);
+      } else {
+        sessionStorage.removeItem(PENDING_PROFILE_TYPE_KEY);
+        sessionStorage.setItem(OAUTH_LOGIN_INTENT_KEY, "1");
+      }
 
       const redirectTo = new URL("/auth", window.location.origin);
       if (safeNext) redirectTo.searchParams.set("next", safeNext);
@@ -203,6 +212,7 @@ const Auth = () => {
     } catch (error: unknown) {
       console.error("Google auth error", error);
       sessionStorage.removeItem(PENDING_PROFILE_TYPE_KEY);
+      sessionStorage.removeItem(OAUTH_LOGIN_INTENT_KEY);
       toast({
         title: t("auth.error"),
         description: toUserMessage(error),
@@ -246,6 +256,19 @@ const Auth = () => {
               {t("auth.signup")}
             </button>
           </div>
+
+          {noAccount && (
+            <div
+              role="alert"
+              className="mb-6 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+            >
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <p className="font-medium">{t("auth.noAccountTitle")}</p>
+                <p className="text-foreground">{t("auth.noAccountText")}</p>
+              </div>
+            </div>
+          )}
 
           {isSignup && (
             <div className="mb-6">

@@ -230,7 +230,7 @@
   },
   "errors": {
     "emailTaken": "Cet email est déjà enregistré.",
-    "invalidLogin": "Email ou mot de passe incorrect.",
+    "invalidLogin": "Email ou mot de passe incorrect. Si vous n'avez pas encore de compte, utilisez S'inscrire.",
     "emailNotConfirmed": "Confirme ton email avant de te connecter.",
     "weakPassword": "Mot de passe trop faible ou compromis. Choisis-en un autre.",
     "rateLimit": "Trop de tentatives. Réessaie dans quelques minutes.",
