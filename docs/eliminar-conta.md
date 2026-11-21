@@ -35,11 +35,14 @@ A conta antiga não volta a abrir: fica bloqueada, com um email interno e sem li
 - **Entrar com email**: dá "Email ou palavra-passe incorretos. Se ainda não tem conta, use Registar." Por segurança, não se diz se o email existe.
 - **Entrar com a Google**: o Supabase não distingue entrar de registar e cria sempre uma conta quando a conta Google não está associada a nenhuma. Para isso não acontecer no "Entrar":
   1. o botão guarda `farmconnect:oauth_login_intent` no `sessionStorage` antes de sair para a Google;
-  2. no regresso, o `AuthContext` vê a marca e, se a conta foi criada há menos de 10 minutos, chama a Edge Function `cancel-oauth-signup`;
-  3. a função só apaga a conta se for de facto nova e vazia: criada há menos de 10 minutos, só com a Google, sem tipo de perfil escolhido (`profile_type_claimed = false`) e sem encomendas nem subscrições;
-  4. o site termina a sessão e abre `/auth?tab=signup&no_account=1`, com o aviso "Conta não encontrada".
+  2. no regresso, o `AuthContext` vê a marca. Se o perfil passou pelo "Registar" (`profile_type_claimed = true`), entra normalmente;
+  3. senão, chama a Edge Function `cancel-oauth-signup`:
+     - conta de teste (`is_test_account`) ou com dados de agricultor (`farmer_details`): conta como registada e entra;
+     - conta vazia (só com a Google, sem encomendas nem subscrições): é apagada;
+     - conta com encomendas ou subscrições: não se apaga, mas também não entra pelo "Entrar". A pessoa usa uma vez "Registar com a Google" para escolher o tipo de perfil;
+  4. em todos os casos sem registo, e também se a função falhar, o site termina a sessão e abre `/auth?tab=signup&no_account=1`, com o aviso "Conta não encontrada".
 
-Isto aplica-se a qualquer pessoa sem conta, e não só a contas eliminadas.
+Aplica-se a todas as contas, de teste ou normais, qualquer que seja a data de criação, e não só a contas eliminadas.
 
 ## Por confirmar
 
