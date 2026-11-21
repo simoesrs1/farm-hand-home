@@ -114,7 +114,9 @@ const FarmerOnboarding = () => {
 
   const [values, setValues] = useState<FarmerFormValues>(EMPTY_VALUES);
   const [offerings, setOfferings] = useState<Offerings>(NO_OFFERINGS);
-  const noOffering = !hasAnyOffering(offerings);
+  // Contas de teste (profiles.is_test_account): todos os passos são facultativos.
+  const [isTestAccount, setIsTestAccount] = useState(false);
+  const noOffering = !hasAnyOffering(offerings) && !isTestAccount;
   const [touched, setTouched] = useState<Partial<Record<FarmerField, boolean>>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
@@ -135,7 +137,20 @@ const FarmerOnboarding = () => {
   const [loading, setLoading] = useState(false);
   const [farmerDetailsId, setFarmerDetailsId] = useState<string | null>(null);
 
-  const errors = useMemo(() => validateFarmerForm(values), [values]);
+  const errors = useMemo(() => {
+    const all = validateFarmerForm(values);
+    if (!isTestAccount) return all;
+    // Conta de teste: campos vazios não contam como erro; os preenchidos validam-se na mesma.
+    const filtered: typeof all = {};
+    for (const [field, message] of Object.entries(all) as [FarmerField, string | undefined][]) {
+      const empty =
+        field === "pickupLocation"
+          ? values.pickupLat == null
+          : !String(values[field as keyof FarmerFormValues] ?? "").trim();
+      if (!empty) filtered[field] = message;
+    }
+    return filtered;
+  }, [values, isTestAccount]);
 
   /** Só mostramos o erro depois de o campo ser tocado ou de haver tentativa de submissão. */
   const showError = (field: FarmerField): string | undefined => {
@@ -169,11 +184,11 @@ const FarmerOnboarding = () => {
   }, [user, profile, authLoading]);
 
   const checkOnboardingStatus = async () => {
-    const { data } = await supabase
-      .from("farmer_details")
-      .select("id, registration_step")
-      .eq("user_id", user!.id)
-      .single();
+    const [{ data }, { data: prof }] = await Promise.all([
+      supabase.from("farmer_details").select("id, registration_step").eq("user_id", user!.id).single(),
+      supabase.from("profiles").select("is_test_account").eq("id", user!.id).maybeSingle(),
+    ]);
+    setIsTestAccount(!!prof?.is_test_account);
 
     if (data) {
       setFarmerDetailsId(data.id);
@@ -358,8 +373,8 @@ const FarmerOnboarding = () => {
         p_website: normalizeWebsite(values.website),
         p_description: values.description.trim(),
         p_pickup_address: values.pickupAddress.trim(),
-        p_pickup_lat: values.pickupLat!,
-        p_pickup_lng: values.pickupLng!,
+        p_pickup_lat: values.pickupLat,
+        p_pickup_lng: values.pickupLng,
         p_offers_products: offerings.products,
         p_offers_experiences: offerings.experiences,
         p_offers_stays: offerings.stays,
@@ -437,6 +452,12 @@ const FarmerOnboarding = () => {
 
           {/* noValidate: as mensagens de erro são as nossas, não as do browser. */}
           <form onSubmit={handleSubmit} noValidate className="space-y-5 p-6">
+            {isTestAccount && (
+              <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-foreground">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span>{t("onboarding.testAccount")}</span>
+              </div>
+            )}
             {/* O que vai disponibilizar: uma, duas ou as três opções. */}
             <section className="rounded-xl border border-border bg-background/50 p-5" data-invalid={submitAttempted && noOffering}>
               <div className="mb-1 flex items-center gap-2 text-foreground">

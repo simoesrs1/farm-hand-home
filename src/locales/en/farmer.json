@@ -601,7 +601,8 @@
     "initialScore_other": "Estimated initial score: +{{count}} points",
     "submit": "Complete registration",
     "later": "Fill in later",
-    "laterHint": "You can explore the app and come back to this form whenever you like. Without these details you cannot sell."
+    "laterHint": "You can explore the app and come back to this form whenever you like. Without these details you cannot sell.",
+    "testAccount": "Test account: all fields are optional. Any you fill in are still validated."
   },
   "status": {
     "completeTitle": "Complete your farm details",

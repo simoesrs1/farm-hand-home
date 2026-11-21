@@ -601,7 +601,8 @@
     "initialScore_other": "Score initial estimé : +{{count}} points",
     "submit": "Terminer l'inscription",
     "later": "Remplir plus tard",
-    "laterHint": "Vous pouvez explorer l'application et revenir à ce formulaire quand vous le souhaitez. Sans ces données, vous ne pouvez pas vendre."
+    "laterHint": "Vous pouvez explorer l'application et revenir à ce formulaire quand vous le souhaitez. Sans ces données, vous ne pouvez pas vendre.",
+    "testAccount": "Compte de test : tous les champs sont facultatifs. Ceux que vous remplissez sont tout de même vérifiés."
   },
   "status": {
     "completeTitle": "Complétez les données de l'exploitation",

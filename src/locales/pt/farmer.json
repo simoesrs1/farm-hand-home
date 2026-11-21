@@ -601,7 +601,8 @@
     "initialScore_other": "Pontuação inicial estimada: +{{count}} pontos",
     "submit": "Completar registo",
     "later": "Preencher mais tarde",
-    "laterHint": "Pode explorar a aplicação e voltar a este formulário quando quiser. Sem estes dados não pode vender."
+    "laterHint": "Pode explorar a aplicação e voltar a este formulário quando quiser. Sem estes dados não pode vender.",
+    "testAccount": "Conta de teste: todos os campos são facultativos. Os que preencher são validados na mesma."
   },
   "status": {
     "completeTitle": "Complete os dados da exploração",

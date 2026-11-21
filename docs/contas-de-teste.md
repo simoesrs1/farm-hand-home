@@ -30,6 +30,19 @@ update public.farmer_details set verification_status = 'verified'
 
 Depois, com essa conta, complete o registo da exploração em `/onboarding/agricultor`. A quinta fica logo verificada e visível para as contas de teste.
 
+### Registo da exploração facultativo
+
+Nas contas de teste, todos os passos do registo são facultativos (`supabase/migrations/20261121190000_registo_facultativo_testes.sql` e `FarmerOnboarding.tsx`):
+
+- pode concluir com campos vazios; os campos preenchidos são validados na mesma (NIF, CAE, nº de exploração, etc.);
+- sem escolha do que a quinta oferece, ficam ativos produtos, experiências, alojamento e subscrições;
+- sem nome da empresa, a quinta fica com o nome do perfil ou "Quinta de teste";
+- sem localização de levantamento, a quinta não aparece no mapa nem mostra distâncias.
+
+Nas contas normais, todos os campos obrigatórios continuam obrigatórios, também no servidor.
+
+Só se marca uma conta como de teste quando isso for pedido; todas as outras são contas normais.
+
 ## Desmarcar
 
 ```sql

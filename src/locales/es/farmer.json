@@ -601,7 +601,8 @@
     "initialScore_other": "Puntuación inicial estimada: +{{count}} puntos",
     "submit": "Completar registro",
     "later": "Rellenar más tarde",
-    "laterHint": "Puede explorar la aplicación y volver a este formulario cuando quiera. Sin estos datos no puede vender."
+    "laterHint": "Puede explorar la aplicación y volver a este formulario cuando quiera. Sin estos datos no puede vender.",
+    "testAccount": "Cuenta de prueba: todos los campos son opcionales. Los que rellene se validan igualmente."
   },
   "status": {
     "completeTitle": "Complete los datos de la explotación",

@@ -1707,8 +1707,8 @@ export type Database = {
           p_offers_subscriptions: boolean
           p_phone: string
           p_pickup_address: string
-          p_pickup_lat: number
-          p_pickup_lng: number
+          p_pickup_lat: number | null
+          p_pickup_lng: number | null
           p_website: string
         }
         Returns: undefined

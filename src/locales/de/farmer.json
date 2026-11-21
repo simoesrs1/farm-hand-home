@@ -601,7 +601,8 @@
     "initialScore_other": "Geschätzte Anfangspunktzahl: +{{count}} Punkte",
     "submit": "Registrierung abschließen",
     "later": "Später ausfüllen",
-    "laterHint": "Sie können die App erkunden und jederzeit zu diesem Formular zurückkehren. Ohne diese Daten können Sie nicht verkaufen."
+    "laterHint": "Sie können die App erkunden und jederzeit zu diesem Formular zurückkehren. Ohne diese Daten können Sie nicht verkaufen.",
+    "testAccount": "Testkonto: Alle Felder sind optional. Ausgefüllte Felder werden trotzdem geprüft."
   },
   "status": {
     "completeTitle": "Hofdaten vervollständigen",
