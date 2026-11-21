@@ -26,7 +26,11 @@
     "payError": "Erro ao processar pagamento",
     "paid": "Pagamento simulado com sucesso!",
     "paidDelivery": "A sua encomenda foi criada. O agricultor vai entregá-la na morada indicada.",
-    "paidPickup": "A sua encomenda está pronta para levantar."
+    "paidPickup": "A sua encomenda está pronta para levantar.",
+    "groupProblem": "Falta completar a encomenda de {{farmer}}",
+    "payFailedFarmer": "Não foi possível pagar a encomenda de {{farmer}}",
+    "paidMany_one": "Foi criada {{count}} encomenda.",
+    "paidMany_other": "Foram criadas {{count}} encomendas, uma por agricultor."
   },
   "empty": {
     "title": "O seu carrinho está vazio",
@@ -47,7 +51,6 @@
   "pickup": "Levantamento",
   "pickupQr": "Na quinta com QR",
   "total": "Total",
-  "multiFarmer": "O carrinho tem produtos de vários agricultores. Finalize um agricultor de cada vez para poder agendar o levantamento ou a entrega.",
   "noCommonOption": "Não há uma forma de entrega comum a todos estes produtos: uns só podem ser levantados na quinta e outros só entregues em casa, ou o agricultor ainda não configurou as entregas. Remova alguns produtos ou finalize-os em encomendas separadas.",
   "howReceive": "Como quer receber a encomenda?",
   "scheduleDelivery": "Agendar entrega",
@@ -83,6 +86,10 @@
     "p2": "Confirme sempre o local de levantamento indicado pelo agricultor antes de se deslocar e prefira deslocações em horário diurno.",
     "scheduled": "Levantamento agendado: {{date}} às {{time}}. O agricultor recebe a encomenda com este horário.",
     "p3": "A ValorRural <b>não se responsabiliza por atos de terceiros</b> nem pela segurança física das pessoas durante o processo de levantamento.",
-    "confirm": "Compreendo e quero continuar"
-  }
+    "confirm": "Compreendo e quero continuar",
+    "scheduledFarmer": "{{farmer}}: levantamento agendado para {{date}} às {{time}}."
+  },
+  "multiFarmerWarning": "Tem produtos de {{count}} agricultores diferentes. Verifique a forma de entrega de cada um: podem ser diferentes, e cada agricultor dá origem a uma encomenda separada.",
+  "groupChoiceHint": "A escolha aplica-se a todos os artigos deste agricultor.",
+  "directionsFarm": "Direções para a quinta"
 }

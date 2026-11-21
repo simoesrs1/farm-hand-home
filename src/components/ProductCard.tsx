@@ -1,6 +1,6 @@
 import { forwardRef, useRef } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Plus, Star } from "lucide-react";
+import { MapPin, Navigation, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +15,7 @@ import { type PickupWindow } from "@/lib/pickup-hours";
 import { cn } from "@/lib/utils";
 import { formatEuro, formatNumber } from "@/lib/format";
 import { deliveryModeLabel } from "@/lib/fulfillment";
+import { directionsUrl, formatKm, type LatLng } from "@/lib/geo";
 import { gsap } from "@/lib/animation";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useTranslation } from "react-i18next";
@@ -74,6 +75,10 @@ interface ProductCardProps {
   showLocation?: boolean;
   /** Realça o cartão (ex.: quando se chega por uma notificação com ?produto=). */
   highlighted?: boolean;
+  /** Distância à localização de pesquisa, em km (mostrada sobre a imagem). */
+  distanceKm?: number | null;
+  /** Quinta onde se levanta: mostra o botão "Direções" (Google Maps). */
+  directionsTo?: LatLng | null;
   className?: string;
 }
 
@@ -85,7 +90,7 @@ const deliveryLabel = (p: Product) => deliveryModeLabel(p.deliveryMode, p.delive
  * por cima do cartão; a ligação ao agricultor e o botão ficam por cima dela.
  */
 const ProductCard = forwardRef<HTMLElement, ProductCardProps>(
-  ({ product: p, market, showLocation = false, highlighted = false, className }, ref) => {
+  ({ product: p, market, showLocation = false, highlighted = false, distanceKm, directionsTo, className }, ref) => {
     const { addItem, items: cartItems } = useCart();
     const { toast } = useToast();
     const { t } = useTranslation("catalog");
@@ -119,6 +124,12 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(
             <Badge variant="organic" className="absolute left-2 top-2">
               {t("product.organic")}
             </Badge>
+          )}
+          {distanceKm != null && (
+            <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 font-mono text-xs font-medium tabular-nums text-foreground backdrop-blur-sm">
+              <MapPin className="h-3 w-3 shrink-0 text-primary" />
+              {formatKm(distanceKm)}
+            </div>
           )}
           {showLocation && p.location && (
             <div className="absolute bottom-2 left-2 flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-xs font-medium text-foreground backdrop-blur-sm">
@@ -161,6 +172,17 @@ const ProductCard = forwardRef<HTMLElement, ProductCardProps>(
           </span>
           {p.pickupWindows && <PickupAvailabilityBadge windows={p.pickupWindows} className="self-start" />}
           <p className="mt-2 text-xs text-muted-foreground">{deliveryLabel(p)}</p>
+          {directionsTo && (
+            <a
+              href={directionsUrl(directionsTo)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative z-10 mt-1 inline-flex items-center gap-1 self-start text-xs font-medium text-primary underline-offset-4 hover:underline"
+            >
+              <Navigation className="h-3 w-3" aria-hidden />
+              {t("product.directions")}
+            </a>
+          )}
           <SavingsBadge price={p.price} originalPrice={p.originalPrice} unit={p.unit} market={market} />
 
           <div className="mt-auto flex items-end justify-between gap-2 pt-3">

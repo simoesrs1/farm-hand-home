@@ -122,10 +122,16 @@
         "category": "Necessary",
         "purpose": "Loads the site's fonts from Google, which receives your IP address.",
         "duration": "Stores no data in the browser"
+      },
+      "searchLocation": {
+        "type": "Local storage",
+        "category": "Necessary / Preferences",
+        "purpose": "Last location used to sort by distance (device, district, municipality or point on the map). It is not sent to the platform.",
+        "duration": "Session (or persistent, with preferences)"
       }
     },
     "google": "Google processes the data collected by Google Maps according to its <link>privacy policy</link>. You can also delete cookies in your browser settings.",
-    "location": "On the farmer map and when sorting by distance, you can use your device's location to see the nearest farmers. Your browser asks for permission before sharing it; the location is used only in your browser, for that filter and sorting, and is neither stored nor sent to the platform.",
+    "location": "You can use your device's location, choose a district or a point on the map, or type a municipality, to see the nearest farmers, products, experiences and accommodation first. Your browser asks for permission before sharing your device's location. The chosen location is used only in your browser, to filter and sort by distance, and is never sent to the platform. It is kept in the browser for the session and, if you allow preferences, between visits; you can clear it at any time.",
     "state": "Current status: preferences {{preferences}}, maps {{maps}}.",
     "on": "on",
     "off": "off",

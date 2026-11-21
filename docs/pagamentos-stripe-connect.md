@@ -87,6 +87,8 @@ Hoje o preço ao cliente é `preço do agricultor × (1 + comissão) × (1 + IVA
 
 ## Pontos em aberto
 
+- **Vários agricultores num só pagamento** (desde 21 nov 2026): o carrinho envia `{ groups: [...] }` ao `create-order`, um grupo por agricultor, e é criada uma encomenda por grupo. A função valida todos os grupos antes de gravar e, se uma gravação falhar a meio, apaga as encomendas já criadas nesse pedido, mas não é uma transação. Na fase 2, o Checkout deve cobrar o total de uma vez e criar as encomendas numa função SQL transacional (ou no webhook), e cada encomenda transfere o seu `farmer_amount` ao respetivo agricultor.
+
 - **Faturação e IVA da comissão**: a confirmar com o contabilista, que também deve dizer se se usa `on_behalf_of`.
 - **Valor mínimo de encomenda**: a parte fixa da taxa do Stripe (cerca de 0,25 €) come a comissão nas encomendas pequenas.
 - **Regra das encomendas expiradas**: o código de `expire-orders` e a mensagem ao cliente não dizem o mesmo sobre quem fica com quê. Tem de ficar decidido antes da fase 3.

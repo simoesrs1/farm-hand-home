@@ -275,5 +275,20 @@
     "grupo_other": "groups",
     "noite_one": "night",
     "noite_other": "nights"
+  },
+  "searchLocation": {
+    "near": "Nearest to:",
+    "you": "you (device location)",
+    "none": "See what is nearest to you first.",
+    "change": "Change",
+    "choose": "Choose location",
+    "useDevice": "Use my location",
+    "locating": "Getting your location…",
+    "orMunicipality": "Or type the municipality",
+    "placeholder": "E.g. Fundão",
+    "noResults": "No municipality found.",
+    "deviceFailed": "Could not get your location",
+    "deviceDenied": "Location was not allowed. Enable it in your browser or type the municipality.",
+    "deviceRetry": "Try again or type the municipality."
   }
 }

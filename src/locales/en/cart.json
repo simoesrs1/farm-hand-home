@@ -26,7 +26,11 @@
     "payError": "Error processing payment",
     "paid": "Simulated payment successful!",
     "paidDelivery": "Your order has been created. The farmer will deliver it to the address you gave.",
-    "paidPickup": "Your order is ready for collection."
+    "paidPickup": "Your order is ready for collection.",
+    "groupProblem": "The order from {{farmer}} is incomplete",
+    "payFailedFarmer": "Could not pay for the order from {{farmer}}",
+    "paidMany_one": "{{count}} order was created.",
+    "paidMany_other": "{{count}} orders were created, one per farmer."
   },
   "empty": {
     "title": "Your cart is empty",
@@ -47,7 +51,6 @@
   "pickup": "Collection",
   "pickupQr": "At the farm with QR",
   "total": "Total",
-  "multiFarmer": "Your cart has products from several farmers. Check out one farmer at a time so you can schedule collection or delivery.",
   "noCommonOption": "There is no delivery method common to all these products: some can only be collected at the farm and others only delivered, or the farmer hasn't set up deliveries yet. Remove some products or check them out in separate orders.",
   "howReceive": "How would you like to receive your order?",
   "scheduleDelivery": "Schedule delivery",
@@ -83,6 +86,10 @@
     "p2": "Always confirm the collection place given by the farmer before you travel, and prefer to travel during daylight hours.",
     "scheduled": "Collection scheduled: {{date}} at {{time}}. The farmer receives the order with this time.",
     "p3": "ValorRural <b>is not responsible for the acts of third parties</b> or for people's physical safety during collection.",
-    "confirm": "I understand and want to continue"
-  }
+    "confirm": "I understand and want to continue",
+    "scheduledFarmer": "{{farmer}}: pickup scheduled for {{date}} at {{time}}."
+  },
+  "multiFarmerWarning": "You have products from {{count}} different farmers. Check the delivery method for each one: they may differ, and each farmer becomes a separate order.",
+  "groupChoiceHint": "This choice applies to all items from this farmer.",
+  "directionsFarm": "Directions to the farm"
 }

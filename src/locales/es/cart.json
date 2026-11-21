@@ -26,7 +26,11 @@
     "payError": "Error al procesar el pago",
     "paid": "¡Pago simulado realizado con éxito!",
     "paidDelivery": "Su pedido se ha creado. El agricultor lo entregará en la dirección indicada.",
-    "paidPickup": "Su pedido está listo para recoger."
+    "paidPickup": "Su pedido está listo para recoger.",
+    "groupProblem": "Falta completar el pedido de {{farmer}}",
+    "payFailedFarmer": "No se ha podido pagar el pedido de {{farmer}}",
+    "paidMany_one": "Se ha creado {{count}} pedido.",
+    "paidMany_other": "Se han creado {{count}} pedidos, uno por agricultor."
   },
   "empty": {
     "title": "Su carrito está vacío",
@@ -47,7 +51,6 @@
   "pickup": "Recogida",
   "pickupQr": "En la granja con QR",
   "total": "Total",
-  "multiFarmer": "El carrito tiene productos de varios agricultores. Finalice un agricultor cada vez para poder programar la recogida o la entrega.",
   "noCommonOption": "No hay una forma de entrega común a todos estos productos: unos solo pueden recogerse en la granja y otros solo entregarse a domicilio, o el agricultor aún no ha configurado las entregas. Quite algunos productos o finalícelos en pedidos separados.",
   "howReceive": "¿Cómo quiere recibir el pedido?",
   "scheduleDelivery": "Programar entrega",
@@ -83,6 +86,10 @@
     "p2": "Confirme siempre el lugar de recogida indicado por el agricultor antes de desplazarse y prefiera desplazarse de día.",
     "scheduled": "Recogida programada: {{date}} a las {{time}}. El agricultor recibe el pedido con este horario.",
     "p3": "ValorRural <b>no se responsabiliza de los actos de terceros</b> ni de la seguridad física de las personas durante la recogida.",
-    "confirm": "Lo entiendo y quiero continuar"
-  }
+    "confirm": "Lo entiendo y quiero continuar",
+    "scheduledFarmer": "{{farmer}}: recogida programada para el {{date}} a las {{time}}."
+  },
+  "multiFarmerWarning": "Tiene productos de {{count}} agricultores diferentes. Compruebe la forma de entrega de cada uno: pueden ser distintas, y cada agricultor genera un pedido independiente.",
+  "groupChoiceHint": "La elección se aplica a todos los artículos de este agricultor.",
+  "directionsFarm": "Cómo llegar a la granja"
 }

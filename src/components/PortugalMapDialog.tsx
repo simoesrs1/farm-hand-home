@@ -10,6 +10,7 @@ import { useConsent } from "@/contexts/ConsentContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PT_REGIONS, formatKm, withinRadius, type LatLng } from "@/lib/geo";
+import { clearSearchLocation, setSearchLocation, useSearchLocation, type SearchLocation } from "@/lib/search-location";
 import { isPaused } from "@/lib/farmer-activity";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -18,6 +19,10 @@ import i18n from "@/i18n";
 
 type FarmPoint = LatLng & { id: string; name: string; address: string | null };
 type SearchCenter = LatLng & { label: string };
+
+/** Muda (ou limpa) a localização de pesquisa partilhada. */
+const setCenter = (location: SearchLocation | null) =>
+  location ? setSearchLocation(location) : clearSearchLocation();
 
 const PORTUGAL_CENTER = { lat: 39.5, lng: -8.0 };
 const RADIUS_MIN = 5;
@@ -48,7 +53,19 @@ const PortugalMapDialog = () => {
 
   const [farms, setFarms] = useState<FarmPoint[]>([]);
   const [loadingFarms, setLoadingFarms] = useState(false);
-  const [center, setCenter] = useState<SearchCenter | null>(null);
+  // O centro da pesquisa é a localização de pesquisa partilhada com o catálogo
+  // (ordenação por proximidade), por isso a escolha feita aqui fica lá também.
+  const searchLocation = useSearchLocation();
+  const center = useMemo<SearchCenter | null>(() => {
+    if (!searchLocation) return null;
+    const label =
+      searchLocation.source === "device"
+        ? i18n.t("catalog:mapDialog.yourLocation")
+        : searchLocation.source === "map"
+          ? i18n.t("catalog:mapDialog.pickedPoint")
+          : searchLocation.label;
+    return { lat: searchLocation.lat, lng: searchLocation.lng, label };
+  }, [searchLocation]);
   const [radius, setRadius] = useState(RADIUS_DEFAULT);
   const [locating, setLocating] = useState(false);
 
@@ -112,7 +129,7 @@ const PortugalMapDialog = () => {
       });
       instance.addListener("click", (e: google.maps.MapMouseEvent) => {
         if (!e.latLng) return;
-        setCenter({ lat: e.latLng.lat(), lng: e.latLng.lng(), label: i18n.t("catalog:mapDialog.pickedPoint") });
+        setCenter({ lat: e.latLng.lat(), lng: e.latLng.lng(), label: "", source: "map" });
       });
       setMap(instance);
     };
@@ -227,11 +244,11 @@ const PortugalMapDialog = () => {
       return;
     }
     setLocating(true);
-    // A localização fica só no navegador, para este filtro; não é guardada nem enviada.
+    // A localização fica só no navegador (localização de pesquisa); nunca é enviada.
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false);
-        setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: t("mapDialog.yourLocation") });
+        setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: "", source: "device" });
       },
       (err) => {
         setLocating(false);
@@ -281,7 +298,7 @@ const PortugalMapDialog = () => {
                   value=""
                   onChange={(e) => {
                     const r = PT_REGIONS.find((x) => x.name === e.target.value);
-                    if (r) setCenter({ lat: r.lat, lng: r.lng, label: r.name });
+                    if (r) setCenter({ lat: r.lat, lng: r.lng, label: r.name, source: "district" });
                   }}
                   className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
                 >

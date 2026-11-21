@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { distanceKm, formatKm, type LatLng } from "@/lib/geo";
+import { requestDeviceLocation, useSearchLocation } from "@/lib/search-location";
+import SearchLocationBar from "@/components/SearchLocationBar";
 import { isVideoPath, signMedia } from "@/lib/media-upload";
 import { useTranslation } from "react-i18next";
 
@@ -49,8 +51,10 @@ function FarmListings<T extends FarmListing>({ table, title, description, countL
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<SortOption>("recentes");
-  const [userPos, setUserPos] = useState<LatLng | null>(null);
+  // Com localização de pesquisa (a mesma do catálogo), abre do mais perto para o mais longe.
+  const userPos = useSearchLocation();
+  const [sortChoice, setSort] = useState<SortOption | null>(null);
+  const sort: SortOption = sortChoice ?? (userPos ? "perto" : "recentes");
   const [selected, setSelected] = useState<T | null>(null);
   const [myFarmerId, setMyFarmerId] = useState<string | null>(null);
 
@@ -125,22 +129,15 @@ function FarmListings<T extends FarmListing>({ table, title, description, countL
   }, [items, farms, query, sort, userPos]);
 
   const changeSort = (value: SortOption) => {
-    if (value !== "perto" || userPos) {
-      setSort(value);
-      return;
-    }
+    setSort(value);
+    if (value !== "perto" || userPos) return;
     if (!("geolocation" in navigator)) {
       toast({ title: t("listings.locationUnavailable"), description: t("listings.locationUnavailableText"), variant: "destructive" });
       return;
     }
-    // A localização fica só no navegador, para ordenar; não é guardada nem enviada.
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setSort("perto");
-      },
-      () => toast({ title: t("listings.locationFailed"), description: t("listings.locationFailedText"), variant: "destructive" }),
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
+    // A localização fica só no navegador (localização de pesquisa); nunca é enviada.
+    requestDeviceLocation().catch(() =>
+      toast({ title: t("listings.locationFailed"), description: t("listings.locationFailedText"), variant: "destructive" }),
     );
   };
 
@@ -153,6 +150,13 @@ function FarmListings<T extends FarmListing>({ table, title, description, countL
           <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">{title}</h1>
           <p className="mt-2 text-muted-foreground">{description}</p>
         </div>
+
+        <SearchLocationBar
+          className="mb-4"
+          location={userPos}
+          onPicked={() => setSort(null)}
+          onCleared={() => sortChoice === "perto" && setSort(null)}
+        />
 
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:max-w-sm">

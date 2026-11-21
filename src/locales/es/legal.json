@@ -122,10 +122,16 @@
         "category": "Necesaria",
         "purpose": "Carga las fuentes del sitio desde Google, que recibe su dirección IP.",
         "duration": "No guarda datos en el navegador"
+      },
+      "searchLocation": {
+        "type": "Almacenamiento local",
+        "category": "Necesaria / Preferencias",
+        "purpose": "Última ubicación usada para ordenar por distancia (dispositivo, distrito, municipio o punto en el mapa). No se envía a la plataforma.",
+        "duration": "Sesión (o persistente, con preferencias)"
       }
     },
     "google": "Google trata los datos recogidos por Google Maps según su <link>política de privacidad</link>. También puede borrar las cookies en los ajustes de su navegador.",
-    "location": "En el mapa de agricultores y al ordenar por distancia, puede usar la ubicación de su dispositivo para ver los agricultores más cercanos. El navegador le pide permiso antes de compartirla; la ubicación se usa solo en su navegador, para ese filtro y ordenación, y no se guarda ni se envía a la plataforma.",
+    "location": "Puede usar la ubicación de su dispositivo, elegir un distrito o un punto en el mapa, o escribir un municipio, para ver primero los agricultores, productos, experiencias y alojamientos más cercanos. El navegador le pide permiso antes de compartir la ubicación del dispositivo. La ubicación elegida se usa solo en su navegador, para filtrar y ordenar por distancia, y nunca se envía a la plataforma. Se guarda en el navegador durante la sesión y, si autoriza las preferencias, entre visitas; puede borrarla en cualquier momento.",
     "state": "Estado actual: preferencias {{preferences}}, mapas {{maps}}.",
     "on": "activadas",
     "off": "desactivadas",

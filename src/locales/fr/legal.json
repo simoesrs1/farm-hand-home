@@ -122,10 +122,16 @@
         "category": "Nécessaire",
         "purpose": "Charge les polices du site depuis Google, qui reçoit votre adresse IP.",
         "duration": "N'enregistre aucune donnée dans le navigateur"
+      },
+      "searchLocation": {
+        "type": "Stockage local",
+        "category": "Nécessaire / Préférences",
+        "purpose": "Dernier lieu utilisé pour trier par distance (appareil, district, commune ou point sur la carte). Il n'est pas envoyé à la plateforme.",
+        "duration": "Session (ou persistant, avec préférences)"
       }
     },
     "google": "Google traite les données collectées par Google Maps conformément à sa <link>politique de confidentialité</link>. Vous pouvez aussi supprimer les cookies dans les paramètres de votre navigateur.",
-    "location": "Sur la carte des agriculteurs et lors du tri par distance, vous pouvez utiliser la position de votre appareil pour voir les agriculteurs les plus proches. Le navigateur vous demande l'autorisation avant de la partager ; la position est utilisée uniquement dans votre navigateur, pour ce filtre et ce tri, et n'est ni enregistrée ni envoyée à la plateforme.",
+    "location": "Vous pouvez utiliser la position de votre appareil, choisir un district ou un point sur la carte, ou saisir une commune, pour voir d'abord les agriculteurs, produits, expériences et hébergements les plus proches. Le navigateur vous demande l'autorisation avant de partager la position de l'appareil. Le lieu choisi est utilisé uniquement dans votre navigateur, pour filtrer et trier par distance, et n'est jamais envoyé à la plateforme. Il est conservé dans le navigateur pendant la session et, si vous autorisez les préférences, entre les visites ; vous pouvez l'effacer à tout moment.",
     "state": "État actuel : préférences {{preferences}}, cartes {{maps}}.",
     "on": "activées",
     "off": "désactivées",

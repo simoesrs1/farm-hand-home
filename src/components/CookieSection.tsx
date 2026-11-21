@@ -14,6 +14,7 @@ const STORAGE_ITEMS = [
   { key: "pickupSlot", name: "farmconnect_pickup_slot" },
   { key: "fulfillment", name: "farmconnect_fulfillment" },
   { key: "deliveryRoute", name: "farmconnect_delivery_route" },
+  { key: "searchLocation", name: "farmconnect_search_location" },
   { key: "prev", name: "<chave>::prev" },
   { key: "pendingProfile", name: "farmconnect:pending_profile_type" },
   { key: "lang", name: "valorrural_lang" },

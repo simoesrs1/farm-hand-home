@@ -1,17 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Trash2, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle, ShieldAlert, MapPin, Truck, Store } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ShoppingCart, ArrowLeft, CreditCard, AlertTriangle, ShieldAlert, CalendarClock, Users } from "lucide-react";
 import DeliveryPointPicker from "@/components/DeliveryPointPicker";
 import PageHeader from "@/components/PageHeader";
+import CartFarmerGroup from "@/components/CartFarmerGroup";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import { useStock } from "@/contexts/StockContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
@@ -24,74 +22,68 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { FunctionsHttpError } from "@supabase/supabase-js";
+import { formatSlotDate, formatSlotTime } from "@/lib/pickup-hours";
+import { farmerDelivers, fulfillmentOptions, type Fulfillment } from "@/lib/fulfillment";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  formatSlotDate,
-  formatSlotTime,
-  parsePickupHours,
-  pickupSlots,
-  type PickupWindow,
-} from "@/lib/pickup-hours";
-import { computeDeliveryFee } from "@/lib/delivery-fee";
-import {
-  earliestDelivery,
-  farmerDelivers,
-  FULFILLMENT_LABELS,
-  fulfillmentOptions,
-  isWithinDeliveryRadius,
-  preparationDays,
-  type DeliveryMode,
-  type Fulfillment,
-} from "@/lib/fulfillment";
-import type { LatLng } from "@/lib/geo";
-import { CalendarClock } from "lucide-react";
+  deriveGroup,
+  emptyChoice,
+  groupProblem,
+  parseFarmerSettings,
+  type CartProduct,
+  type FarmerSettings,
+  type GroupChoice,
+  type GroupProblem,
+} from "@/lib/cart-groups";
 import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
 import { formatEuro } from "@/lib/format";
 import { Trans, useTranslation } from "react-i18next";
-import TranslatedText from "@/components/TranslatedText";
 
-/** Campos de entrega de cada produto do carrinho, lidos da base de dados. */
-interface CartProduct {
-  id: string;
-  delivery_mode: DeliveryMode;
-  delivery_tracking: boolean;
-  delivery_fee: number | null;
-  shipping_days: number | null;
-}
+/** Agricultor sem perfil público (ex.: em pausa): sem horários nem entregas. */
+const EMPTY_SETTINGS: FarmerSettings = {
+  pickupWindows: [],
+  pickupNote: "",
+  deliveryWindows: [],
+  deliveryNote: "",
+  radiusKm: null,
+  farmPoint: null,
+  freeThreshold: null,
+};
+
+/** Título e texto do aviso para o que falta preencher numa encomenda. */
+const PROBLEM_TOAST = {
+  noCommon: { title: "toast.noCommon", text: "toast.noCommonText" },
+  chooseDelivery: { title: "toast.chooseDelivery", text: "toast.chooseDeliveryText" },
+  choosePickup: { title: "toast.choosePickup", text: "toast.choosePickupText" },
+  noAddress: { title: "toast.noAddress", text: "toast.noAddressText" },
+  noPoint: { title: "toast.noPoint", text: "toast.noPointText" },
+  outOfRadius: { title: "toast.outOfRadius", text: "toast.outOfRadiusText" },
+} as const satisfies Record<Exclude<GroupProblem, "loading">, { title: string; text: string }>;
 
 const Cart = () => {
   const { items, totalPrice, updateQuantity, removeItem, clearCart } = useCart();
-  const { getAvailable, refreshStock, consume } = useStock();
-  const { user, profile, activeMode } = useAuth();
+  const { refreshStock, consume } = useStock();
+  const { user, activeMode } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation(["cart", "common", "catalog"]);
   const [paying, setPaying] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
-  const [pickupWindows, setPickupWindows] = useState<PickupWindow[]>([]);
-  const [pickupNote, setPickupNote] = useState<string>("");
-  const [deliveryWindows, setDeliveryWindows] = useState<PickupWindow[]>([]);
-  const [deliveryNote, setDeliveryNote] = useState<string>("");
-  const [deliveryRadiusKm, setDeliveryRadiusKm] = useState<number | null>(null);
-  const [farmPoint, setFarmPoint] = useState<LatLng | null>(null);
-  const [farmerLoaded, setFarmerLoaded] = useState(false);
-  const [slot, setSlot] = useState<string>("");
   const [cartProducts, setCartProducts] = useState<CartProduct[] | null>(null);
-  // Escolha do cliente; começa pela preferência indicada na página do artigo.
-  const [chosenFulfillment, setChosenFulfillment] = useState<Fulfillment | null>(() =>
-    scopedStorage.get<Fulfillment>(STORAGE_KEYS.fulfillment),
+  const [farmerSettings, setFarmerSettings] = useState<Record<string, FarmerSettings>>({});
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  // Escolhas por agricultor: forma de entrega, horário, morada e ponto.
+  const [choices, setChoices] = useState<Record<string, GroupChoice>>({});
+  // Ponto de partida de um agricultor novo no carrinho: o que o cliente
+  // escolheu na página do produto (forma de entrega e horário).
+  const [defaultChoice] = useState<GroupChoice>(() =>
+    emptyChoice(
+      scopedStorage.get<Fulfillment>(STORAGE_KEYS.fulfillment),
+      scopedStorage.get<string>(STORAGE_KEYS.pickupSlot) ?? "",
+    ),
   );
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [deliveryPoint, setDeliveryPoint] = useState<{ lat: number; lng: number } | null>(null);
-  const [mapOpen, setMapOpen] = useState(false);
-  const [withTracking, setWithTracking] = useState(false);
-  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState<number | null>(null);
+  const [mapFarmerId, setMapFarmerId] = useState<string | null>(null);
+  const [highlighted, setHighlighted] = useState<string | null>(null);
+  const groupRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Formas de entrega de cada produto, para mostrar as opções certas antes de pagar.
   const itemIdsKey = useMemo(() => [...new Set(items.map((i) => i.id))].sort().join(","), [items]);
@@ -141,7 +133,7 @@ const Cart = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Group items by farmer for clearer display
+  // Artigos agrupados por agricultor: cada grupo dá uma encomenda.
   const grouped = useMemo(() => {
     const map = new Map<string, { farmer: string; farmerId: string; items: typeof items }>();
     for (const item of items) {
@@ -153,23 +145,16 @@ const Cart = () => {
     }
     return Array.from(map.values());
   }, [items]);
+  const multiFarmer = grouped.length > 1;
 
-
-  const farmerId = grouped.length === 1 ? grouped[0].farmerId : null;
-
-  // Horários de porta aberta e de entregas, raio e localização da quinta: o
-  // cliente só pode agendar dentro de horários reais do agricultor.
+  // Horários de porta aberta e de entregas, raio e localização de cada quinta:
+  // o cliente só pode agendar dentro de horários reais do agricultor.
+  const farmerIdsKey = useMemo(() => grouped.map((g) => g.farmerId).sort().join(","), [grouped]);
   useEffect(() => {
-    setFarmerLoaded(false);
-    if (!farmerId) {
-      setPickupWindows([]);
-      setPickupNote("");
-      setDeliveryWindows([]);
-      setDeliveryNote("");
-      setDeliveryRadiusKm(null);
-      setFarmPoint(null);
-      setSlot("");
-      setFreeDeliveryThreshold(null);
+    const ids = farmerIdsKey ? farmerIdsKey.split(",") : [];
+    setSettingsLoaded(false);
+    if (ids.length === 0) {
+      setFarmerSettings({});
       return;
     }
     let cancelled = false;
@@ -177,79 +162,62 @@ const Cart = () => {
       const { data } = await supabase
         .from("public_farmer_profiles")
         .select(
-          "pickup_hours, pickup_hours_note, free_delivery_threshold, delivery_hours, delivery_note, delivery_radius_km, pickup_lat, pickup_lng",
+          "id, pickup_hours, pickup_hours_note, free_delivery_threshold, delivery_hours, delivery_note, delivery_radius_km, pickup_lat, pickup_lng",
         )
-        .eq("id", farmerId)
-        .maybeSingle();
+        .in("id", ids);
       if (cancelled) return;
-      setPickupWindows(parsePickupHours(data?.pickup_hours));
-      setPickupNote(data?.pickup_hours_note ?? "");
-      setDeliveryWindows(parsePickupHours(data?.delivery_hours));
-      setDeliveryNote(data?.delivery_note ?? "");
-      setDeliveryRadiusKm(data?.delivery_radius_km != null ? Number(data.delivery_radius_km) : null);
-      setFarmPoint(
-        data?.pickup_lat != null && data?.pickup_lng != null
-          ? { lat: Number(data.pickup_lat), lng: Number(data.pickup_lng) }
-          : null,
-      );
-      setFreeDeliveryThreshold(data?.free_delivery_threshold ?? null);
-      setSlot("");
-      setFarmerLoaded(true);
+      const next: Record<string, FarmerSettings> = {};
+      for (const row of data ?? []) if (row.id) next[row.id] = parseFarmerSettings(row);
+      setFarmerSettings(next);
+      setSettingsLoaded(true);
     })();
     return () => {
       cancelled = true;
     };
-  }, [farmerId]);
+  }, [farmerIdsKey]);
 
-  // Levantar ou receber em casa: só as opções comuns a todos os produtos.
-  const delivers = farmerDelivers(deliveryRadiusKm, farmPoint);
-  const options = useMemo(
-    () => (cartProducts ? fulfillmentOptions(cartProducts.map((p) => p.delivery_mode), { delivers }) : []),
-    [cartProducts, delivers],
+  // Estado de cada agricultor: opções, horários, preço da entrega e o que falta.
+  const groups = useMemo(
+    () =>
+      grouped.map((g) => {
+        const ids = new Set(g.items.map((i) => i.id));
+        const products = cartProducts ? cartProducts.filter((p) => ids.has(p.id)) : null;
+        const settings = farmerSettings[g.farmerId] ?? (settingsLoaded ? EMPTY_SETTINGS : null);
+        const choice = choices[g.farmerId] ?? defaultChoice;
+        const productsTotal = g.items.reduce((acc, i) => acc + i.price * i.quantity, 0);
+        const state = deriveGroup(products, settings, choice, productsTotal);
+        return { ...g, settings: settings ?? undefined, choice, state, problem: groupProblem(state, choice) };
+      }),
+    [grouped, cartProducts, farmerSettings, settingsLoaded, choices, defaultChoice],
   );
-  const fulfillment: Fulfillment | null =
-    chosenFulfillment && options.includes(chosenFulfillment) ? chosenFulfillment : options[0] ?? null;
-  const isDelivery = fulfillment === "delivery";
-  const noCommonOption = grouped.length === 1 && cartProducts !== null && farmerLoaded && options.length === 0;
-  const chooseFulfillment = (value: Fulfillment) => {
-    setChosenFulfillment(value);
-    scopedStorage.set(STORAGE_KEYS.fulfillment, value);
+  const allReady = groups.every((g) => g.state.ready);
+  const orderTotal = groups.reduce((acc, g) => acc + g.state.total, 0);
+  const pickupGroups = groups.filter((g) => g.state.fulfillment === "pickup");
+  const blocked = groups.some((g) => g.state.noCommonOption);
+
+  const updateChoice = (farmerId: string, patch: Partial<GroupChoice>) => {
+    if (patch.fulfillment) scopedStorage.set(STORAGE_KEYS.fulfillment, patch.fulfillment);
+    if (highlighted === farmerId) setHighlighted(null);
+    setChoices((prev) => {
+      const next = { ...prev, [farmerId]: { ...(prev[farmerId] ?? defaultChoice), ...patch } };
+      // A morada e o ponto costumam ser os mesmos: preenchem os outros
+      // agricultores que ainda não os têm.
+      for (const g of grouped) {
+        if (g.farmerId === farmerId) continue;
+        const other = next[g.farmerId] ?? defaultChoice;
+        const fill: Partial<GroupChoice> = {};
+        if (patch.address !== undefined && other.address === "") fill.address = patch.address;
+        if (patch.point !== undefined && other.point === null) fill.point = patch.point;
+        if (Object.keys(fill).length > 0) next[g.farmerId] = { ...other, ...fill };
+      }
+      return next;
+    });
   };
 
-  // Valor indicativo: o preço cobrado é calculado de novo no create-order.
-  const deliveryFee = useMemo(
-    () => (isDelivery ? computeDeliveryFee(cartProducts ?? [], totalPrice, freeDeliveryThreshold) : null),
-    [isDelivery, cartProducts, totalPrice, freeDeliveryThreshold],
-  );
-  const orderTotal = totalPrice + (deliveryFee?.fee ?? 0);
-  const trackingAvailable = isDelivery && (cartProducts ?? []).some((p) => p.delivery_tracking);
-  const outOfRadius =
-    isDelivery &&
-    deliveryPoint != null &&
-    farmPoint != null &&
-    deliveryRadiusKm != null &&
-    !isWithinDeliveryRadius(farmPoint, deliveryPoint, deliveryRadiusKm);
-
-  // Entrega: horário de entregas, a partir do prazo de preparação dos produtos.
-  const prepDays = useMemo(() => preparationDays(cartProducts ?? []), [cartProducts]);
-  const activeWindows = isDelivery ? deliveryWindows : pickupWindows;
-  const slots = useMemo(
-    () => pickupSlots(activeWindows, { earliest: isDelivery ? earliestDelivery(prepDays) : undefined }),
-    [activeWindows, isDelivery, prepDays],
-  );
-  const needsSchedule = activeWindows.length > 0;
-
-  // Ao trocar entre levantamento e entrega, o horário escolhido pode deixar de valer.
-  useEffect(() => {
-    if (slot && !slots.some((d) => d.toISOString() === slot)) setSlot("");
-  }, [slots, slot]);
-
-  // Pre-fill with the slot the client already picked on the product page.
-  useEffect(() => {
-    if (slot || slots.length === 0) return;
-    const stored = scopedStorage.get<string>(STORAGE_KEYS.pickupSlot);
-    if (stored && slots.some((d) => d.toISOString() === stored)) setSlot(stored);
-  }, [slots, slot]);
+  const focusGroup = (farmerId: string) => {
+    setHighlighted(farmerId);
+    groupRefs.current[farmerId]?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   const onCheckoutClick = () => {
     if (!user) {
@@ -265,53 +233,23 @@ const Cart = () => {
       });
       return;
     }
-    if (!fulfillment) {
+    if (!allReady) return;
+    // Cada agricultor tem de ter a forma de entrega completa.
+    for (const g of groups) {
+      if (!g.problem || g.problem === "loading") continue;
+      const msg = PROBLEM_TOAST[g.problem];
+      const km = g.settings?.radiusKm;
+      focusGroup(g.farmerId);
       toast({
-        title: t("toast.noCommon"),
-        description: t("toast.noCommonText"),
+        title: multiFarmer ? t("toast.groupProblem", { farmer: g.farmer }) : t(msg.title),
+        description: multiFarmer ? `${t(msg.title)}. ${t(msg.text, { km })}` : t(msg.text, { km }),
         variant: "destructive",
       });
       return;
     }
-    if (needsSchedule && !slot) {
-      toast({
-        title: isDelivery ? t("toast.chooseDelivery") : t("toast.choosePickup"),
-        description: isDelivery ? t("toast.chooseDeliveryText") : t("toast.choosePickupText"),
-        variant: "destructive",
-      });
-      return;
-    }
-    if (isDelivery) {
-      if (deliveryAddress.trim().length < 5) {
-        toast({
-          title: t("toast.noAddress"),
-          description: t("toast.noAddressText"),
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!deliveryPoint) {
-        toast({
-          title: t("toast.noPoint"),
-          description: t("toast.noPointText"),
-          variant: "destructive",
-        });
-        return;
-      }
-      if (outOfRadius) {
-        toast({
-          title: t("toast.outOfRadius"),
-          description: t("toast.outOfRadiusText", { km: deliveryRadiusKm }),
-          variant: "destructive",
-        });
-        return;
-      }
-      // O aviso de segurança é sobre deslocações à quinta: na entrega não se aplica.
-      handleCheckout();
-      return;
-    }
-
-    setSafetyOpen(true);
+    // O aviso de segurança é sobre deslocações à quinta: só com levantamentos.
+    if (pickupGroups.length > 0) setSafetyOpen(true);
+    else handleCheckout();
   };
 
 
@@ -355,27 +293,40 @@ const Cart = () => {
         return;
       }
       // As formas de entrega podem ter mudado desde que o carrinho foi aberto.
-      const freshOptions = fulfillmentOptions(fresh.map((p) => p.delivery_mode), { delivers });
-      if (!fulfillment || !freshOptions.includes(fulfillment)) {
-        toast({
-          title: t("toast.optionsChanged"),
-          description: t("toast.optionsChangedText"),
-          variant: "destructive",
-        });
-        return;
+      for (const g of groups) {
+        const ids = new Set(g.items.map((i) => i.id));
+        const delivers = farmerDelivers(g.settings?.radiusKm, g.settings?.farmPoint);
+        const freshOptions = fulfillmentOptions(
+          fresh.filter((p) => ids.has(p.id)).map((p) => p.delivery_mode),
+          { delivers },
+        );
+        if (!g.state.fulfillment || !freshOptions.includes(g.state.fulfillment)) {
+          focusGroup(g.farmerId);
+          toast({
+            title: t("toast.optionsChanged"),
+            description: t("toast.optionsChangedText"),
+            variant: "destructive",
+          });
+          return;
+        }
       }
 
+      // Uma encomenda por agricultor, todas no mesmo pagamento.
       const payload = {
-        items: items.map((i) => ({
-          product_id: i.id,
-          quantity: i.quantity,
-        })),
-        fulfillment,
-        scheduled_pickup_at: slot || null,
-        delivery_address: isDelivery ? deliveryAddress.trim() : null,
-        delivery_lat: isDelivery ? deliveryPoint?.lat ?? null : null,
-        delivery_lng: isDelivery ? deliveryPoint?.lng ?? null : null,
-        delivery_tracking: isDelivery && fresh.some((p) => p.delivery_tracking) && withTracking,
+        groups: groups.map((g) => {
+          const isDelivery = g.state.fulfillment === "delivery";
+          const ids = new Set(g.items.map((i) => i.id));
+          return {
+            items: g.items.map((i) => ({ product_id: i.id, quantity: i.quantity })),
+            fulfillment: g.state.fulfillment,
+            scheduled_pickup_at: g.state.slot || null,
+            delivery_address: isDelivery ? g.choice.address.trim() : null,
+            delivery_lat: isDelivery ? g.choice.point?.lat ?? null : null,
+            delivery_lng: isDelivery ? g.choice.point?.lng ?? null : null,
+            delivery_tracking:
+              isDelivery && fresh.some((p) => ids.has(p.id) && p.delivery_tracking) && g.choice.tracking,
+          };
+        }),
       };
 
       const { data, error } = await supabase.functions.invoke("create-order", { body: payload });
@@ -389,16 +340,25 @@ const Cart = () => {
         // the result, otherwise a second .json()/.clone() throws and the real
         // message is lost.
         let msg = (data as any)?.error ?? error?.message ?? t("toast.payError");
+        let failedFarmer: string | null = (data as any)?.farmer_id ?? null;
         if (error instanceof FunctionsHttpError) {
           try {
             const body = await error.context.json();
             console.log("Function returned an error", body);
             if (body?.error) msg = body.error;
+            if (body?.farmer_id) failedFarmer = body.farmer_id;
           } catch {
             // body wasn't JSON — keep the generic message
           }
         }
-        toast({ title: t("toast.payFailed"), description: msg, variant: "destructive" });
+        // O servidor diz de que agricultor é o erro: assinala esse bloco.
+        const failedGroup = multiFarmer ? groups.find((g) => g.farmerId === failedFarmer) : undefined;
+        if (failedGroup) focusGroup(failedGroup.farmerId);
+        toast({
+          title: failedGroup ? t("toast.payFailedFarmer", { farmer: failedGroup.farmer }) : t("toast.payFailed"),
+          description: msg,
+          variant: "destructive",
+        });
         return;
       }
       // Decrement stock for each purchased line so it reflects everywhere
@@ -406,7 +366,11 @@ const Cart = () => {
       clearCart();
       toast({
         title: t("toast.paid"),
-        description: isDelivery ? t("toast.paidDelivery") : t("toast.paidPickup"),
+        description: multiFarmer
+          ? t("toast.paidMany", { count: groups.length })
+          : groups[0]?.state.fulfillment === "delivery"
+            ? t("toast.paidDelivery")
+            : t("toast.paidPickup"),
       });
       navigate("/encomendas");
     } finally {
@@ -435,6 +399,8 @@ const Cart = () => {
     );
   }
 
+  const mapGroup = groups.find((g) => g.farmerId === mapFarmerId);
+
   return (
     <main className="py-8">
       <div className="container max-w-5xl">
@@ -449,87 +415,34 @@ const Cart = () => {
         <PageHeader title={t("title")} />
 
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-          {/* Items grouped by farmer */}
+          {/* Artigos agrupados por agricultor, cada um com a sua forma de entrega */}
           <div className="space-y-6">
-            {grouped.map((group) => (
+            {multiFarmer && (
               <div
-                key={group.farmerId}
-                className="overflow-hidden rounded-2xl border border-border bg-card"
+                role="alert"
+                className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
               >
-                <div className="border-b border-border bg-muted/30 px-5 py-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {t("producer")}
-                  </p>
-                  <Link
-                    to={`/agricultor/${group.farmerId}`}
-                    className="font-display font-semibold text-foreground hover:text-primary"
-                  >
-                    {group.farmer}
-                  </Link>
-                </div>
-                <ul className="divide-y divide-border">
-                  {group.items.map((item) => {
-                    const available = getAvailable(item.id);
-                    const canIncrease = item.quantity < available;
-                    return (
-                    <li key={item.id} className="flex gap-4 p-4">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="h-20 w-20 shrink-0 rounded-lg object-cover"
-                      />
-                      <div className="flex flex-1 flex-col justify-between">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <h3 className="font-semibold text-foreground">
-                              <TranslatedText type="product" id={item.id} field="name" text={item.name} />
-                            </h3>
-                            <p className="text-xs text-muted-foreground">
-                              {formatEuro(item.price)} / {item.unit}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {t("catalog:product.inStock", { count: available })}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                            aria-label={t("common:actions.remove")}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                        <div className="flex items-end justify-between">
-                          <div className="flex items-center gap-1 rounded-lg border border-border">
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="p-2 text-muted-foreground hover:text-foreground"
-                              aria-label={t("decrease")}
-                            >
-                              <Minus className="h-3.5 w-3.5" />
-                            </button>
-                            <span className="min-w-[2rem] text-center text-sm font-medium text-foreground">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => canIncrease && updateQuantity(item.id, item.quantity + 1)}
-                              disabled={!canIncrease}
-                              className="p-2 text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                              aria-label={t("increase")}
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                          <span className="font-mono tabular-nums font-bold text-primary">
-                            {formatEuro(item.price * item.quantity)}
-                          </span>
-                        </div>
-                      </div>
-                    </li>
-                    );
-                  })}
-                </ul>
+                <Users className="mt-0.5 h-4 w-4 shrink-0" />
+                <p>{t("multiFarmerWarning", { count: grouped.length })}</p>
               </div>
+            )}
+
+            {groups.map((g) => (
+              <CartFarmerGroup
+                key={g.farmerId}
+                ref={(el) => {
+                  groupRefs.current[g.farmerId] = el;
+                }}
+                farmer={g.farmer}
+                farmerId={g.farmerId}
+                items={g.items}
+                state={g.state}
+                choice={g.choice}
+                settings={g.settings}
+                highlighted={highlighted === g.farmerId}
+                onChange={(patch) => updateChoice(g.farmerId, patch)}
+                onOpenMap={() => setMapFarmerId(g.farmerId)}
+              />
             ))}
 
             <button
@@ -545,29 +458,46 @@ const Cart = () => {
             <h2 className="font-display text-lg font-semibold text-foreground">
               {t("summary")}
             </h2>
-            <div className="mt-4 space-y-2 text-sm">
-              <div className="flex justify-between text-muted-foreground">
-                <span>{t("subtotal")}</span>
-                <span>{formatEuro(totalPrice)}</span>
-              </div>
-              {deliveryFee ? (
-                <>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>{t("homeDelivery")}</span>
-                    <span>{deliveryFee.fee > 0 ? `${formatEuro(deliveryFee.fee)}` : t("free")}</span>
-                  </div>
-                  {deliveryFee.remainingForFree != null && (
-                    <p className="text-[11px] text-primary">
-                      {t("remainingForFree", { amount: formatEuro(deliveryFee.remainingForFree) })}
-                    </p>
-                  )}
-                </>
-              ) : fulfillment === "pickup" ? (
+            <div className="mt-4 space-y-3 text-sm">
+              {multiFarmer && (
                 <div className="flex justify-between text-muted-foreground">
-                  <span>{t("pickup")}</span>
-                  <span>{t("pickupQr")}</span>
+                  <span>{t("subtotal")}</span>
+                  <span>{formatEuro(totalPrice)}</span>
                 </div>
-              ) : null}
+              )}
+              {groups.map((g) => (
+                <div key={g.farmerId} className="space-y-1">
+                  {multiFarmer ? (
+                    <div className="flex justify-between font-medium text-foreground">
+                      <span className="truncate pr-2">{g.farmer}</span>
+                      <span>{formatEuro(g.state.total)}</span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>{t("subtotal")}</span>
+                      <span>{formatEuro(g.state.productsTotal)}</span>
+                    </div>
+                  )}
+                  {g.state.deliveryFee ? (
+                    <>
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>{t("homeDelivery")}</span>
+                        <span>{g.state.deliveryFee.fee > 0 ? formatEuro(g.state.deliveryFee.fee) : t("free")}</span>
+                      </div>
+                      {g.state.deliveryFee.remainingForFree != null && (
+                        <p className="text-[11px] text-primary">
+                          {t("remainingForFree", { amount: formatEuro(g.state.deliveryFee.remainingForFree) })}
+                        </p>
+                      )}
+                    </>
+                  ) : g.state.fulfillment === "pickup" ? (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>{t("pickup")}</span>
+                      <span>{t("pickupQr")}</span>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
             </div>
             <div className="mt-4 flex justify-between border-t border-border pt-4">
               <span className="font-semibold text-foreground">{t("total")}</span>
@@ -576,158 +506,7 @@ const Cart = () => {
               </span>
             </div>
 
-            {grouped.length > 1 ? (
-              <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                {t("multiFarmer")}
-              </p>
-            ) : noCommonOption ? (
-              <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-foreground">
-                {t("noCommonOption")}
-              </p>
-            ) : (
-              <>
-                {/* Levantar ou receber em casa, quando os produtos permitem as duas. */}
-                {options.length > 1 && (
-                  <div className="mt-4 space-y-2">
-                    <p className="text-sm font-medium text-foreground">{t("howReceive")}</p>
-                    <RadioGroup
-                      value={fulfillment ?? undefined}
-                      onValueChange={(v) => chooseFulfillment(v as Fulfillment)}
-                      className="grid grid-cols-2 gap-2"
-                    >
-                      {options.map((o) => (
-                        <label
-                          key={o}
-                          htmlFor={`fulfillment-${o}`}
-                          className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm transition-colors ${
-                            fulfillment === o ? "border-primary bg-primary/10" : "border-border hover:bg-secondary/50"
-                          }`}
-                        >
-                          <RadioGroupItem value={o} id={`fulfillment-${o}`} className="sr-only" />
-                          {o === "delivery" ? (
-                            <Truck className="h-4 w-4 shrink-0 text-primary" />
-                          ) : (
-                            <Store className="h-4 w-4 shrink-0 text-primary" />
-                          )}
-                          <span className="font-medium text-foreground">{FULFILLMENT_LABELS[o]}</span>
-                        </label>
-                      ))}
-                    </RadioGroup>
-                  </div>
-                )}
-
-                {/* Agendamento: porta aberta (levantamento) ou horário de entregas. */}
-                {fulfillment && (needsSchedule ? (
-                  <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
-                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      <CalendarClock className="h-4 w-4 text-primary" />
-                      {isDelivery ? t("scheduleDelivery") : t("schedulePickup")}
-                    </div>
-                    <Select value={slot} onValueChange={setSlot}>
-                      <SelectTrigger aria-label={isDelivery ? t("deliveryTime") : t("pickupTime")}>
-                        <SelectValue placeholder={t("chooseDateTime")} />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-72">
-                        {slots.map((d) => (
-                          <SelectItem key={d.toISOString()} value={d.toISOString()}>
-                            {formatSlotDate(d)} · {formatSlotTime(d)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-[11px] text-muted-foreground">
-                      {isDelivery
-                        ? prepDays > 0
-                          ? t("slotsDeliveryPrep", { count: prepDays })
-                          : t("slotsDelivery")
-                        : t("slotsPickup")}
-                      {(isDelivery ? deliveryNote : pickupNote) && farmerId && (
-                        <>
-                          {" "}
-                          <TranslatedText
-                            type="farm"
-                            id={farmerId}
-                            field={isDelivery ? "delivery_note" : "pickup_hours_note"}
-                            text={isDelivery ? deliveryNote : pickupNote}
-                          />
-                        </>
-                      )}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-                    {isDelivery
-                      ? prepDays > 0
-                        ? t("noDeliveryHoursPrep", { count: prepDays })
-                        : t("noDeliveryHours")
-                      : t("noPickupHours")}
-                  </p>
-                ))}
-
-                {/* Entrega ao domicílio: morada e ponto exato no mapa, dentro do raio do agricultor. */}
-                {isDelivery && (
-                  <div className="mt-4 space-y-2 rounded-lg border border-border p-3">
-                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      <Truck className="h-4 w-4 text-primary" />
-                      {t("homeDelivery")}
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      {deliveryRadiusKm != null ? t("handDeliveryRadius", { km: deliveryRadiusKm }) : t("handDelivery")}
-                    </p>
-                    <Label htmlFor="delivery-address" className="text-xs">{t("address")}</Label>
-                    <Input
-                      id="delivery-address"
-                      value={deliveryAddress}
-                      onChange={(e) => setDeliveryAddress(e.target.value)}
-                      placeholder={t("addressPlaceholder")}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5"
-                      onClick={() => setMapOpen(true)}
-                    >
-                      <MapPin className="h-4 w-4" />
-                      {deliveryPoint ? t("pointChange") : t("pointMark")}
-                    </Button>
-                    {deliveryPoint && (
-                      <p className="text-[11px] text-muted-foreground">
-                        {t("point", { coords: `${deliveryPoint.lat.toFixed(5)}, ${deliveryPoint.lng.toFixed(5)}` })}
-                      </p>
-                    )}
-                    {outOfRadius && (
-                      <p className="text-[11px] font-medium text-destructive">
-                        {t("outOfRadius", { km: deliveryRadiusKm })}
-                      </p>
-                    )}
-                    {trackingAvailable && (
-                      <RadioGroup
-                        value={withTracking ? "with" : "without"}
-                        onValueChange={(v) => setWithTracking(v === "with")}
-                        className="gap-2 pt-2"
-                      >
-                        <label htmlFor="tracking-with" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
-                          <RadioGroupItem value="with" id="tracking-with" className="mt-0.5" />
-                          <div>
-                            <div className="text-sm font-medium">{t("withTracking")}</div>
-                            <p className="text-[11px] text-muted-foreground">
-                              {t("withTrackingText")}
-                            </p>
-                          </div>
-                        </label>
-                        <label htmlFor="tracking-without" className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 hover:bg-secondary/50">
-                          <RadioGroupItem value="without" id="tracking-without" className="mt-0.5" />
-                          <div className="text-sm font-medium">{t("withoutTracking")}</div>
-                        </label>
-                      </RadioGroup>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-
-            {fulfillment === "pickup" && (
+            {pickupGroups.length > 0 && (
               <div className="mt-4 flex gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-xs text-foreground">
                 <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
                 <p>
@@ -737,7 +516,7 @@ const Cart = () => {
             )}
             <Button
               onClick={onCheckoutClick}
-              disabled={paying || noCommonOption}
+              disabled={paying || blocked || !allReady}
               className="mt-6 w-full gap-2"
               size="lg"
             >
@@ -761,12 +540,22 @@ const Cart = () => {
                   <Trans t={t} i18nKey="safety.p1" components={{ b: <strong /> }} />
                 </p>
                 <p>{t("safety.p2")}</p>
-                {slot && (
-                  <p className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-2.5 font-medium text-foreground">
-                    <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
-                    {t("safety.scheduled", { date: formatSlotDate(new Date(slot)), time: formatSlotTime(new Date(slot)) })}
-                  </p>
-                )}
+                {pickupGroups
+                  .filter((g) => g.state.slot)
+                  .map((g) => {
+                    const d = new Date(g.state.slot);
+                    return (
+                      <p
+                        key={g.farmerId}
+                        className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 p-2.5 font-medium text-foreground"
+                      >
+                        <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
+                        {multiFarmer
+                          ? t("safety.scheduledFarmer", { farmer: g.farmer, date: formatSlotDate(d), time: formatSlotTime(d) })
+                          : t("safety.scheduled", { date: formatSlotDate(d), time: formatSlotTime(d) })}
+                      </p>
+                    );
+                  })}
                 <p className="text-xs text-muted-foreground">
                   <Trans t={t} i18nKey="safety.p3" components={{ b: <strong /> }} />
                 </p>
@@ -783,10 +572,10 @@ const Cart = () => {
       </AlertDialog>
 
       <DeliveryPointPicker
-        open={mapOpen}
-        onOpenChange={setMapOpen}
-        value={deliveryPoint}
-        onConfirm={setDeliveryPoint}
+        open={mapFarmerId !== null}
+        onOpenChange={(open) => !open && setMapFarmerId(null)}
+        value={mapGroup?.choice.point ?? null}
+        onConfirm={(point) => mapFarmerId && updateChoice(mapFarmerId, { point })}
       />
     </main>
   );

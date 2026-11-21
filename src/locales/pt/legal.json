@@ -122,10 +122,16 @@
         "category": "Necessário",
         "purpose": "Carrega os tipos de letra do site a partir da Google, que recebe o seu endereço IP.",
         "duration": "Não guarda dados no navegador"
+      },
+      "searchLocation": {
+        "type": "Armazenamento local",
+        "category": "Necessário / Preferências",
+        "purpose": "Última localização usada para ordenar por distância (do aparelho, distrito, concelho ou ponto no mapa). Não é enviada para a plataforma.",
+        "duration": "Sessão (ou persistente, com preferências)"
       }
     },
     "google": "A Google trata os dados recolhidos pelo Google Maps de acordo com a sua <link>política de privacidade</link>. Pode também apagar cookies nas definições do seu navegador.",
-    "location": "No mapa de agricultores e na ordenação por distância, pode usar a localização do seu aparelho para ver os agricultores mais próximos. O navegador pede-lhe autorização antes de a partilhar; a localização é usada apenas no seu navegador, para esse filtro e ordenação, e não é guardada nem enviada para a plataforma.",
+    "location": "Pode usar a localização do seu aparelho, escolher um distrito ou ponto no mapa, ou escrever um concelho, para ver primeiro os agricultores, produtos, experiências e alojamento mais perto. O navegador pede-lhe autorização antes de partilhar a localização do aparelho. A localização escolhida é usada apenas no seu navegador, para filtrar e ordenar por distância, e nunca é enviada para a plataforma. Fica guardada no navegador durante a sessão e, se autorizar as preferências, entre visitas; pode limpá-la a qualquer momento.",
     "state": "Estado atual: preferências {{preferences}}, mapas {{maps}}.",
     "on": "ativas",
     "off": "desativadas",

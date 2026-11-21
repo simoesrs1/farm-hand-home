@@ -48,3 +48,7 @@ export const PT_REGIONS: ({ name: string } & LatLng)[] = [
 
 export const formatKm = (km: number) =>
   `${km < 10 ? km.toFixed(1).replace(".", ",") : Math.round(km)} km`;
+
+/** Ligação ao Google Maps com o caminho até ao ponto (ex.: a quinta, para levantar). */
+export const directionsUrl = (to: LatLng) =>
+  `https://www.google.com/maps/dir/?api=1&destination=${to.lat},${to.lng}`;

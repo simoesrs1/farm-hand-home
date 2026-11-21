@@ -275,5 +275,20 @@
     "grupo_other": "Gruppen",
     "noite_one": "Nacht",
     "noite_other": "Nächte"
+  },
+  "searchLocation": {
+    "near": "Am nächsten zu:",
+    "you": "Ihnen (Gerätestandort)",
+    "none": "Sehen Sie zuerst, was in Ihrer Nähe ist.",
+    "change": "Ändern",
+    "choose": "Standort wählen",
+    "useDevice": "Meinen Standort verwenden",
+    "locating": "Standort wird ermittelt…",
+    "orMunicipality": "Oder Gemeinde eingeben",
+    "placeholder": "z. B. Fundão",
+    "noResults": "Keine Gemeinde gefunden.",
+    "deviceFailed": "Standort konnte nicht ermittelt werden",
+    "deviceDenied": "Der Standort wurde nicht erlaubt. Aktivieren Sie ihn im Browser oder geben Sie die Gemeinde ein.",
+    "deviceRetry": "Versuchen Sie es erneut oder geben Sie die Gemeinde ein."
   }
 }

@@ -14,7 +14,10 @@ import { parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { farmerRank } from "@/lib/farmer-activity";
-import { farmerDeliversFromProfile, modeAllowsDelivery } from "@/lib/fulfillment";
+import { farmerDeliversFromProfile, modeAllowsDelivery, modeAllowsPickup } from "@/lib/fulfillment";
+import { distanceKm } from "@/lib/geo";
+import { requestDeviceLocation, useSearchLocation } from "@/lib/search-location";
+import SearchLocationBar from "@/components/SearchLocationBar";
 import { Flip, gsap, useGSAP } from "@/lib/animation";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -73,21 +76,6 @@ const filters: { key: FilterKey; test: (p: SortableProduct) => boolean }[] = [
   },
 ];
 
-const distanceKm = (
-  a: { lat: number; lng: number },
-  b: { lat: number; lng: number }
-) => {
-  const R = 6371;
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((a.lat * Math.PI) / 180) *
-      Math.cos((b.lat * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-};
-
 const isVideo = (path: string) => /\.(mp4|webm|mov)$/i.test(path);
 
 const CategoryPage = () => {
@@ -100,9 +88,13 @@ const CategoryPage = () => {
   const [loading, setLoading] = useState(true);
   const marketPrices = useMarketPrices();
   const reducedMotion = useReducedMotion();
-  const [sort, setSort] = useState<SortOption>("relevancia");
+  // Com uma localização de pesquisa (do aparelho ou a última escolhida), a
+  // lista abre do mais perto para o mais longe; a escolha manual prevalece.
+  const searchLocation = useSearchLocation();
+  const [sortChoice, setSortChoice] = useState<SortOption | null>(null);
+  const sort: SortOption = sortChoice ?? (searchLocation ? "mais-perto" : "relevancia");
+  const userPos = searchLocation;
   const [active, setActive] = useState<Set<FilterKey>>(new Set());
-  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
 
   // Animação Flip: guarda as posições antes de mudar a lista e anima depois do render.
   const gridRef = useRef<HTMLDivElement>(null);
@@ -115,7 +107,7 @@ const CategoryPage = () => {
   const handleSortChange = (value: string) => {
     const option = value as SortOption;
     captureFlip();
-    setSort(option);
+    setSortChoice(option);
     if ((option === "mais-perto" || option === "mais-longe") && !userPos) {
       if (!navigator.geolocation) {
         toast({
@@ -124,17 +116,14 @@ const CategoryPage = () => {
         });
         return;
       }
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          captureFlip();
-          setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        },
-        () =>
+      requestDeviceLocation()
+        .then(() => captureFlip())
+        .catch(() =>
           toast({
             title: t("categoryPage.locationDenied"),
             description: t("categoryPage.locationDeniedText"),
-          })
-      );
+          }),
+        );
     }
   };
 
@@ -378,6 +367,20 @@ const CategoryPage = () => {
           </div>
         </div>
 
+        {/* Localização de pesquisa: ordena do mais perto para o mais longe. */}
+        <SearchLocationBar
+          className="mb-4"
+          location={searchLocation}
+          onPicked={() => {
+            captureFlip();
+            setSortChoice(null);
+          }}
+          onCleared={() => {
+            captureFlip();
+            if (sortChoice === "mais-perto" || sortChoice === "mais-longe") setSortChoice(null);
+          }}
+        />
+
         {/* Filtros e ordenação */}
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           {loading ? (
@@ -467,6 +470,12 @@ const CategoryPage = () => {
                   product={p}
                   market={marketPrices.get(marketKey(p.name))}
                   highlighted={highlightId === p.id}
+                  distanceKm={userPos && p.lat != null && p.lng != null ? distanceKm(userPos, { lat: p.lat, lng: p.lng }) : null}
+                  directionsTo={
+                    p.lat != null && p.lng != null && (!p.deliveryMode || modeAllowsPickup(p.deliveryMode))
+                      ? { lat: p.lat, lng: p.lng }
+                      : null
+                  }
                 />
               </div>
             ))}

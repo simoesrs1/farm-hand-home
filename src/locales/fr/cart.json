@@ -26,7 +26,11 @@
     "payError": "Erreur lors du traitement du paiement",
     "paid": "Paiement simulé réussi !",
     "paidDelivery": "Votre commande a été créée. L'agriculteur la livrera à l'adresse indiquée.",
-    "paidPickup": "Votre commande est prête à être retirée."
+    "paidPickup": "Votre commande est prête à être retirée.",
+    "groupProblem": "La commande de {{farmer}} est incomplète",
+    "payFailedFarmer": "Impossible de payer la commande de {{farmer}}",
+    "paidMany_one": "{{count}} commande a été créée.",
+    "paidMany_other": "{{count}} commandes ont été créées, une par agriculteur."
   },
   "empty": {
     "title": "Votre panier est vide",
@@ -47,7 +51,6 @@
   "pickup": "Retrait",
   "pickupQr": "À la ferme avec QR",
   "total": "Total",
-  "multiFarmer": "Le panier contient des produits de plusieurs agriculteurs. Finalisez un agriculteur à la fois pour pouvoir planifier le retrait ou la livraison.",
   "noCommonOption": "Aucun mode de livraison n'est commun à tous ces produits : certains ne peuvent être retirés qu'à la ferme et d'autres seulement livrés, ou l'agriculteur n'a pas encore configuré les livraisons. Retirez certains produits ou finalisez-les dans des commandes séparées.",
   "howReceive": "Comment souhaitez-vous recevoir la commande ?",
   "scheduleDelivery": "Planifier la livraison",
@@ -83,6 +86,10 @@
     "p2": "Confirmez toujours le lieu de retrait indiqué par l'agriculteur avant de vous déplacer et privilégiez les déplacements de jour.",
     "scheduled": "Retrait prévu : {{date}} à {{time}}. L'agriculteur reçoit la commande avec cet horaire.",
     "p3": "ValorRural <b>n'est pas responsable des actes de tiers</b> ni de la sécurité physique des personnes pendant le retrait.",
-    "confirm": "Je comprends et je veux continuer"
-  }
+    "confirm": "Je comprends et je veux continuer",
+    "scheduledFarmer": "{{farmer}} : retrait prévu le {{date}} à {{time}}."
+  },
+  "multiFarmerWarning": "Vous avez des produits de {{count}} agriculteurs différents. Vérifiez le mode de livraison de chacun : ils peuvent être différents, et chaque agriculteur donne lieu à une commande séparée.",
+  "groupChoiceHint": "Ce choix s'applique à tous les articles de cet agriculteur.",
+  "directionsFarm": "Itinéraire vers la ferme"
 }

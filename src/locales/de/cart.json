@@ -26,7 +26,11 @@
     "payError": "Fehler bei der Zahlungsabwicklung",
     "paid": "Simulierte Zahlung erfolgreich!",
     "paidDelivery": "Ihre Bestellung wurde erstellt. Der Landwirt liefert sie an die angegebene Adresse.",
-    "paidPickup": "Ihre Bestellung ist abholbereit."
+    "paidPickup": "Ihre Bestellung ist abholbereit.",
+    "groupProblem": "Die Bestellung bei {{farmer}} ist unvollständig",
+    "payFailedFarmer": "Die Bestellung bei {{farmer}} konnte nicht bezahlt werden",
+    "paidMany_one": "{{count}} Bestellung wurde erstellt.",
+    "paidMany_other": "{{count}} Bestellungen wurden erstellt, eine pro Landwirt."
   },
   "empty": {
     "title": "Ihr Warenkorb ist leer",
@@ -47,7 +51,6 @@
   "pickup": "Abholung",
   "pickupQr": "Auf dem Hof mit QR-Code",
   "total": "Gesamt",
-  "multiFarmer": "Ihr Warenkorb enthält Produkte mehrerer Landwirte. Schließen Sie jeweils einen Landwirt ab, um Abholung oder Lieferung planen zu können.",
   "noCommonOption": "Es gibt keine gemeinsame Lieferart für alle diese Produkte: Einige können nur auf dem Hof abgeholt, andere nur geliefert werden, oder der Landwirt hat die Lieferung noch nicht eingerichtet. Entfernen Sie einige Produkte oder schließen Sie sie in getrennten Bestellungen ab.",
   "howReceive": "Wie möchten Sie Ihre Bestellung erhalten?",
   "scheduleDelivery": "Lieferung planen",
@@ -83,6 +86,10 @@
     "p2": "Bestätigen Sie vor der Anfahrt immer den vom Landwirt angegebenen Abholort und fahren Sie möglichst bei Tageslicht.",
     "scheduled": "Geplante Abholung: {{date}} um {{time}}. Der Landwirt erhält die Bestellung mit dieser Uhrzeit.",
     "p3": "ValorRural <b>haftet nicht für Handlungen Dritter</b> und nicht für die körperliche Sicherheit von Personen während der Abholung.",
-    "confirm": "Ich verstehe und möchte fortfahren"
-  }
+    "confirm": "Ich verstehe und möchte fortfahren",
+    "scheduledFarmer": "{{farmer}}: Abholung geplant für {{date}} um {{time}}."
+  },
+  "multiFarmerWarning": "Sie haben Produkte von {{count}} verschiedenen Landwirten. Prüfen Sie die Lieferart bei jedem: Sie kann unterschiedlich sein, und jeder Landwirt ergibt eine eigene Bestellung.",
+  "groupChoiceHint": "Die Auswahl gilt für alle Artikel dieses Landwirts.",
+  "directionsFarm": "Route zum Hof"
 }

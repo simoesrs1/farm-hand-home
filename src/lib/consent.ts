@@ -161,6 +161,8 @@ export const STORAGE_KEYS = {
   fulfillment: "farmconnect_fulfillment",
   /** Escolhas do agricultor na rota das entregas: { optimized, returnToOrigin }. */
   deliveryRoute: "farmconnect_delivery_route",
+  /** Última localização de pesquisa (aparelho, distrito, concelho ou ponto no mapa). */
+  searchLocation: "farmconnect_search_location",
 } as const;
 
 type ScopedKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -212,6 +214,14 @@ export const scopedStorage = {
       return entry.value;
     } catch {
       return null;
+    }
+  },
+  remove(key: ScopedKey) {
+    try {
+      localStorage.removeItem(key);
+      localStorage.removeItem(pendingKey(key));
+    } catch {
+      // ignorar
     }
   },
   set<T>(key: ScopedKey, value: T) {

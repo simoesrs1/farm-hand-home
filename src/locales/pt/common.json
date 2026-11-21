@@ -275,5 +275,20 @@
     "grupo_other": "grupos",
     "noite_one": "noite",
     "noite_other": "noites"
+  },
+  "searchLocation": {
+    "near": "Mais perto de:",
+    "you": "si (localização do aparelho)",
+    "none": "Veja primeiro o que está mais perto de si.",
+    "change": "Alterar",
+    "choose": "Escolher localização",
+    "useDevice": "Usar a minha localização",
+    "locating": "A obter a localização…",
+    "orMunicipality": "Ou escreva o concelho",
+    "placeholder": "Ex.: Fundão",
+    "noResults": "Nenhum concelho encontrado.",
+    "deviceFailed": "Não foi possível obter a localização",
+    "deviceDenied": "A localização não foi autorizada. Ative-a no navegador ou escreva o concelho.",
+    "deviceRetry": "Tente novamente ou escreva o concelho."
   }
 }

@@ -275,5 +275,20 @@
     "grupo_other": "grupos",
     "noite_one": "noche",
     "noite_other": "noches"
+  },
+  "searchLocation": {
+    "near": "Más cerca de:",
+    "you": "usted (ubicación del dispositivo)",
+    "none": "Vea primero lo que está más cerca de usted.",
+    "change": "Cambiar",
+    "choose": "Elegir ubicación",
+    "useDevice": "Usar mi ubicación",
+    "locating": "Obteniendo la ubicación…",
+    "orMunicipality": "O escriba el municipio",
+    "placeholder": "Ej.: Fundão",
+    "noResults": "No se ha encontrado ningún municipio.",
+    "deviceFailed": "No se ha podido obtener la ubicación",
+    "deviceDenied": "No se ha autorizado la ubicación. Actívela en el navegador o escriba el municipio.",
+    "deviceRetry": "Inténtelo de nuevo o escriba el municipio."
   }
 }

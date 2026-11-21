@@ -275,5 +275,20 @@
     "grupo_other": "groupes",
     "noite_one": "nuit",
     "noite_other": "nuits"
+  },
+  "searchLocation": {
+    "near": "Au plus près de :",
+    "you": "vous (position de l'appareil)",
+    "none": "Voyez d'abord ce qui est le plus proche de vous.",
+    "change": "Modifier",
+    "choose": "Choisir un lieu",
+    "useDevice": "Utiliser ma position",
+    "locating": "Obtention de la position…",
+    "orMunicipality": "Ou saisissez la commune",
+    "placeholder": "Ex. : Fundão",
+    "noResults": "Aucune commune trouvée.",
+    "deviceFailed": "Impossible d'obtenir votre position",
+    "deviceDenied": "La position n'a pas été autorisée. Activez-la dans le navigateur ou saisissez la commune.",
+    "deviceRetry": "Réessayez ou saisissez la commune."
   }
 }

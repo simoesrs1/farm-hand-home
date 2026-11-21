@@ -122,10 +122,16 @@
         "category": "Notwendig",
         "purpose": "Lädt die Schriftarten der Website von Google, das dabei Ihre IP-Adresse erhält.",
         "duration": "Speichert keine Daten im Browser"
+      },
+      "searchLocation": {
+        "type": "Lokaler Speicher",
+        "category": "Notwendig / Präferenzen",
+        "purpose": "Zuletzt verwendeter Standort für die Sortierung nach Entfernung (Gerät, Bezirk, Gemeinde oder Punkt auf der Karte). Er wird nicht an die Plattform gesendet.",
+        "duration": "Sitzung (oder dauerhaft, mit Präferenzen)"
       }
     },
     "google": "Google verarbeitet die von Google Maps erhobenen Daten gemäß seiner <link>Datenschutzerklärung</link>. Sie können Cookies auch in den Einstellungen Ihres Browsers löschen.",
-    "location": "Auf der Landwirte-Karte und bei der Sortierung nach Entfernung können Sie den Standort Ihres Geräts nutzen, um die nächstgelegenen Landwirte zu sehen. Ihr Browser fragt vor der Freigabe um Erlaubnis; der Standort wird nur in Ihrem Browser für diesen Filter und diese Sortierung verwendet und weder gespeichert noch an die Plattform gesendet.",
+    "location": "Sie können den Standort Ihres Geräts verwenden, einen Bezirk oder einen Punkt auf der Karte wählen oder eine Gemeinde eingeben, um zuerst die nächstgelegenen Landwirte, Produkte, Erlebnisse und Unterkünfte zu sehen. Ihr Browser fragt um Erlaubnis, bevor er den Gerätestandort freigibt. Der gewählte Standort wird nur in Ihrem Browser verwendet, um nach Entfernung zu filtern und zu sortieren, und nie an die Plattform gesendet. Er bleibt für die Sitzung im Browser gespeichert und, wenn Sie Präferenzen erlauben, auch zwischen Besuchen; Sie können ihn jederzeit löschen.",
     "state": "Aktueller Status: Präferenzen {{preferences}}, Karten {{maps}}.",
     "on": "aktiv",
     "off": "deaktiviert",
