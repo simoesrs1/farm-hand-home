@@ -140,5 +140,6 @@
   "ja_tem_esta_subscricao_ativa": "Ya tiene esta suscripción activa.",
   "subscricao_nao_encontrada": "No se ha encontrado la suscripción.",
   "esta_subscricao_ja_foi_cancelada": "Esta suscripción ya se ha cancelado.",
-  "para_deixar_de_oferecer_subscricoes": "Para dejar de ofrecer suscripciones, suspenda primero todos los planes."
+  "para_deixar_de_oferecer_subscricoes": "Para dejar de ofrecer suscripciones, suspenda primero todos los planes.",
+  "nao_pode_comprar_a_sua_propria_quinta": "No puede comprar en su propia granja."
 }

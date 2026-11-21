@@ -81,6 +81,7 @@ const ENTRIES: [string, string][] = [
   ["Este agricultor está em pausa e não aceita encomendas de momento.", "este_agricultor_esta_em_pausa_e_nao"],
   ["Este agricultor ainda não foi verificado e não pode vender de momento.", "este_agricultor_ainda_nao_foi_verificado"],
   ["Esta subscrição não está disponível.", "esta_subscricao_nao_esta_disponivel"],
+  ["Não pode comprar à sua própria quinta.", "nao_pode_comprar_a_sua_propria_quinta"],
   ["Já tem esta subscrição ativa.", "ja_tem_esta_subscricao_ativa"],
   ["Subscrição não encontrada.", "subscricao_nao_encontrada"],
   ["Esta subscrição já foi cancelada.", "esta_subscricao_ja_foi_cancelada"],

@@ -140,5 +140,6 @@
   "ja_tem_esta_subscricao_ativa": "Vous avez déjà cet abonnement actif.",
   "subscricao_nao_encontrada": "Abonnement introuvable.",
   "esta_subscricao_ja_foi_cancelada": "Cet abonnement a déjà été résilié.",
-  "para_deixar_de_oferecer_subscricoes": "Pour ne plus proposer d'abonnements, suspendez d'abord toutes les formules."
+  "para_deixar_de_oferecer_subscricoes": "Pour ne plus proposer d'abonnements, suspendez d'abord toutes les formules.",
+  "nao_pode_comprar_a_sua_propria_quinta": "Vous ne pouvez pas acheter à votre propre ferme."
 }

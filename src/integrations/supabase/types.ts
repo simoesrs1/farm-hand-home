@@ -1322,6 +1322,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          is_test_account: boolean
           active_mode: string
           avatar_url: string | null
           created_at: string
@@ -1333,6 +1334,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          is_test_account?: boolean
           active_mode?: string
           avatar_url?: string | null
           created_at?: string
@@ -1344,6 +1346,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          is_test_account?: boolean
           active_mode?: string
           avatar_url?: string | null
           created_at?: string
@@ -1682,10 +1685,12 @@ export type Database = {
         Returns: boolean
       }
       cancel_subscription: { Args: { p_subscription_id: string }; Returns: number }
+      viewer_is_tester: { Args: never; Returns: boolean }
       subscribe_to_plan: {
         Args: { p_address: string; p_lat: number; p_lng: number; p_plan_id: string }
         Returns: string
       }
+      farmer_is_test: { Args: { _farmer_id: string }; Returns: boolean }
       complete_farmer_onboarding: {
         Args: {
           p_address: string

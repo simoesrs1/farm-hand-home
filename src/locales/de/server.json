@@ -140,5 +140,6 @@
   "ja_tem_esta_subscricao_ativa": "Sie haben dieses Abo bereits aktiv.",
   "subscricao_nao_encontrada": "Abo nicht gefunden.",
   "esta_subscricao_ja_foi_cancelada": "Dieses Abo wurde bereits gekündigt.",
-  "para_deixar_de_oferecer_subscricoes": "Um keine Abos mehr anzubieten, setzen Sie zuerst alle Pläne aus."
+  "para_deixar_de_oferecer_subscricoes": "Um keine Abos mehr anzubieten, setzen Sie zuerst alle Pläne aus.",
+  "nao_pode_comprar_a_sua_propria_quinta": "Sie können nicht bei Ihrem eigenen Hof kaufen."
 }

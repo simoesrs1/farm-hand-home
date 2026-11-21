@@ -148,11 +148,14 @@ Deno.serve(async (req) => {
 
     const { data: profile } = await admin
       .from("profiles")
-      .select("profile_type")
+      .select("profile_type, is_test_account")
       .eq("id", clientId)
       .maybeSingle();
     if (!profile) return jsonError(400, "Perfil não encontrado");
-    if (profile.profile_type === "vendedor") return jsonError(403, "Apenas clientes podem comprar");
+    // Contas de teste (docs/contas-de-teste.md) compram mesmo registadas como agricultor.
+    if (profile.profile_type === "vendedor" && !profile.is_test_account) {
+      return jsonError(403, "Apenas clientes podem comprar");
+    }
 
     const todayLisbon = new Intl.DateTimeFormat("en-CA", { timeZone: LISBON }).format(new Date());
 
@@ -203,6 +206,9 @@ Deno.serve(async (req) => {
         .eq("id", farmerId)
         .maybeSingle();
       if (!farmerRow) throw new GroupError(400, "Agricultor indisponível para receber a encomenda.", farmerId);
+      if (farmerRow.user_id === clientId) {
+        throw new GroupError(400, "Não pode comprar à sua própria quinta.", farmerId);
+      }
       // Só vende quem tem o registo completo e foi verificado pela equipa (a RLS
       // já oculta os produtos, mas este cliente usa o service_role).
       if (farmerRow.verification_status !== "verified" || (farmerRow.registration_step ?? 0) < 2) {

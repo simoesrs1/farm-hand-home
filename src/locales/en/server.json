@@ -140,5 +140,6 @@
   "ja_tem_esta_subscricao_ativa": "You already have this subscription active.",
   "subscricao_nao_encontrada": "Subscription not found.",
   "esta_subscricao_ja_foi_cancelada": "This subscription has already been cancelled.",
-  "para_deixar_de_oferecer_subscricoes": "To stop offering subscriptions, first suspend all plans."
+  "para_deixar_de_oferecer_subscricoes": "To stop offering subscriptions, first suspend all plans.",
+  "nao_pode_comprar_a_sua_propria_quinta": "You cannot buy from your own farm."
 }

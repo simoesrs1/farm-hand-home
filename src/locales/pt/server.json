@@ -140,5 +140,6 @@
   "ja_tem_esta_subscricao_ativa": "Já tem esta subscrição ativa.",
   "subscricao_nao_encontrada": "Subscrição não encontrada.",
   "esta_subscricao_ja_foi_cancelada": "Esta subscrição já foi cancelada.",
-  "para_deixar_de_oferecer_subscricoes": "Para deixar de oferecer subscrições, suspenda primeiro todos os planos."
+  "para_deixar_de_oferecer_subscricoes": "Para deixar de oferecer subscrições, suspenda primeiro todos os planos.",
+  "nao_pode_comprar_a_sua_propria_quinta": "Não pode comprar à sua própria quinta."
 }
