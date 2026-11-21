@@ -26,12 +26,14 @@ const PENDING_PROFILE_TYPE_KEY = "farmconnect:pending_profile_type";
 import { Trans, useTranslation } from "react-i18next";
 
 const Auth = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, refreshProfile } = useAuth();
   const { t, i18n } = useTranslation(["account", "common"]);
-  const [isSignup, setIsSignup] = useState(searchParams.get("tab") === "signup");
+  // O separador vem do endereço (/auth ou /auth?tab=signup), para que os botões
+  // "Entrar" e "Registar" do cabeçalho funcionem mesmo com esta página já aberta.
+  const isSignup = searchParams.get("tab") === "signup";
   const [profileType, setProfileType] = useState<"cliente" | "vendedor">("cliente");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -114,11 +116,22 @@ const Auth = () => {
    }
   }
 
-  const switchToLogin = () => {
-    setIsSignup(false);
+  const setIsSignup = (signup: boolean) => {
+    if (signup === isSignup) return;
     setEmailTaken(false);
     setPassword("");
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (signup) next.set("tab", "signup");
+        else next.delete("tab");
+        return next;
+      },
+      { replace: true },
+    );
   };
+
+  const switchToLogin = () => setIsSignup(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,10 +242,7 @@ const Auth = () => {
               className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
                 !isSignup ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
               }`}
-              onClick={() => {
-                setIsSignup(false);
-                setEmailTaken(false);
-              }}
+              onClick={() => setIsSignup(false)}
             >
               {t("auth.login")}
             </button>
@@ -240,10 +250,7 @@ const Auth = () => {
               className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
                 isSignup ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
               }`}
-              onClick={() => {
-                setIsSignup(true);
-                setEmailTaken(false);
-              }}
+              onClick={() => setIsSignup(true)}
             >
               {t("auth.signup")}
             </button>
