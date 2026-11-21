@@ -26,7 +26,7 @@ const LANG_NAMES: Record<string, string> = {
   fr: "francês",
 };
 
-type SourceType = "product" | "experience" | "stay" | "farm" | "review" | "notification" | "chat" | "order_item";
+type SourceType = "product" | "experience" | "stay" | "subscription" | "farm" | "review" | "notification" | "chat" | "order_item";
 type Item = { type: SourceType; id: string; field: string };
 
 // Campos que se podem traduzir em cada tipo de conteúdo.
@@ -34,6 +34,7 @@ const FIELDS: Record<SourceType, string[]> = {
   product: ["name", "description"],
   experience: ["title", "description"],
   stay: ["title", "description"],
+  subscription: ["title", "description", "includes"],
   farm: ["description", "pickup_hours_note", "delivery_note", "pause_note"],
   review: ["comment"],
   notification: ["title", "message"],
@@ -85,6 +86,15 @@ async function loadSources(admin: SupabaseClient, items: Item[], userId: string 
   if (stayIds.length) {
     const { data } = await admin.from("farm_stays").select("id, title, description").in("id", stayIds).eq("active", true);
     for (const r of data ?? []) put("stay", r.id, r);
+  }
+  const subscriptionIds = ids("subscription");
+  if (subscriptionIds.length) {
+    const { data } = await admin
+      .from("subscription_plans")
+      .select("id, title, description, includes")
+      .in("id", subscriptionIds)
+      .eq("active", true);
+    for (const r of data ?? []) put("subscription", r.id, r);
   }
   const farmIds = ids("farm");
   if (farmIds.length) {

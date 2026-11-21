@@ -10,6 +10,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import FarmerOnboardingGuard from "./components/FarmerOnboardingGuard";
 import FarmerStatusBanner from "./components/FarmerStatusBanner";
+import MySubscriptions from "./pages/farmer/MySubscriptions";
 import ClientEmailVerificationGate from "./components/ClientEmailVerificationGate";
 import { ConsentProvider } from "./contexts/ConsentContext";
 import CookieConsent from "./components/CookieConsent";
@@ -95,6 +96,7 @@ const App = () => (
                       <Route path="/agricultor/alojamento" element={<MyStays />} />
                       <Route path="/agricultor/alojamento/novo" element={<StayEditor />} />
                       <Route path="/agricultor/alojamento/:id/editar" element={<StayEditor />} />
+                      <Route path="/agricultor/subscricoes" element={<MySubscriptions />} />
                       <Route path="/agricultor/:id" element={<FarmerProfile />} />
                       <Route path="/resultados" element={<SearchResults />} />
                       <Route path="/carrinho" element={<Cart />} />

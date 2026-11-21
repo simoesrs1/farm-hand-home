@@ -57,7 +57,8 @@ const privacyFr: LegalDoc = {
             de retrait, code de retrait et, pour la livraison à domicile, l'adresse et le point de
             livraison marqué sur la carte. Pour les réservations d'expériences et d'hébergement :
             dates, nombre de personnes ou de voyageurs, chambres, cadeaux choisis, annulations,
-            frais et remboursements.
+            frais et remboursements. Pour les abonnements : la formule, le prix, la fréquence, l'adresse et le point de
+            livraison, les dates de prélèvement, la résiliation et, le cas échéant, l'indemnisation reçue.
           </li>
           <li>
             <strong>Communications et activité :</strong> messages du chat des commandes et

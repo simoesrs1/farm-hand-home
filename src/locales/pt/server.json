@@ -135,5 +135,10 @@
   "o_registo_ja_foi_concluido": "O registo já foi concluído. Para alterar os dados, faça um pedido de alteração.",
   "preencha_corretamente_todos_os_campos_do_registo": "Preencha corretamente todos os campos obrigatórios do registo.",
   "o_nif_da_empresa_nao_e_valido": "O NIF da empresa não é válido.",
-  "indique_o_que_a_quinta_oferece": "Indique o que a quinta oferece: produtos, experiências ou alojamento."
+  "indique_o_que_a_quinta_oferece": "Indique o que a quinta oferece: produtos, experiências ou alojamento.",
+  "esta_subscricao_nao_esta_disponivel": "Esta subscrição não está disponível.",
+  "ja_tem_esta_subscricao_ativa": "Já tem esta subscrição ativa.",
+  "subscricao_nao_encontrada": "Subscrição não encontrada.",
+  "esta_subscricao_ja_foi_cancelada": "Esta subscrição já foi cancelada.",
+  "para_deixar_de_oferecer_subscricoes": "Para deixar de oferecer subscrições, suspenda primeiro todos os planos."
 }

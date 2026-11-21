@@ -13,4 +13,8 @@ export const LEGAL = {
   lastUpdated: "2026-11-21",
   /** Percentagem retida pela plataforma em cada encomenda (create-order). */
   commissionPercent: 10,
+  /** Entrega de subscrição não feita (queixa aceite): indemnização ao cliente e multa ao agricultor.
+   *  Iguais a on_delivery_complaint_decision (supabase/migrations/20261121150000_subscricoes.sql). */
+  subscriptionCompensationPercent: 20,
+  subscriptionFinePercent: 10,
 } as const;

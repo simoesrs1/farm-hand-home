@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/PageHeader";
+import ClientSubscriptionsDialog from "@/components/ClientSubscriptionsDialog";
 import OrderChat, { ReportDialog } from "@/components/OrderChat";
 import ReviewRemovalDialog from "@/components/ReviewRemovalDialog";
 import {
@@ -71,6 +72,7 @@ interface Order {
   cancelled_by: string | null;
   cancellation_fee: number | null;
   refund_amount: number | null;
+  client_compensation: number | null;
   farmer_id: string;
   farmer: FarmerRef | null;
   order_items: OrderItem[];
@@ -176,7 +178,7 @@ interface Complaint {
 
 const MyOrders = () => {
   const { user } = useAuth();
-  const { t } = useTranslation(["orders", "common", "account"]);
+  const { t } = useTranslation(["orders", "common", "account", "offerings"]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Order | null>(null);
@@ -203,7 +205,7 @@ const MyOrders = () => {
   const loadOrders = useCallback(async () => {
     const { data } = await supabase
       .from("orders")
-      .select("id,total,status,pickup_code,pickup_deadline,paid_at,delivered_at,accepted_at,created_at,delivery_address,delivery_tracking,expected_delivery_at,kind,booking_start,booking_end,booking_people,booking_units,booking_amount,cancelled_by,cancellation_fee,refund_amount,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),delivery_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
+      .select("id,total,status,pickup_code,pickup_deadline,paid_at,delivered_at,accepted_at,created_at,delivery_address,delivery_tracking,expected_delivery_at,kind,booking_start,booking_end,booking_people,booking_units,booking_amount,cancelled_by,cancellation_fee,refund_amount,client_compensation,farmer_id,farmer:farmer_id(id,company_name,pickup_address,pickup_lat,pickup_lng),delivery_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
       .order("created_at", { ascending: false });
     setOrders((data as unknown as Order[]) ?? []);
   }, []);
@@ -341,6 +343,9 @@ const MyOrders = () => {
             <p className="text-xs text-muted-foreground">
               {formatDateTime(o.created_at)}
             </p>
+            {o.kind === "subscription" && (
+              <p className="text-xs font-medium text-primary">{t("offerings:subscriptions.deliveryBadge")}</p>
+            )}
             <p className="mt-1 font-display text-lg font-semibold text-foreground">
               <Link to={`/encomendas/${o.id}`} className="hover:underline">
                 {o.farmer?.company_name ?? t("my.farmFallback")}
@@ -516,6 +521,17 @@ const MyOrders = () => {
           </div>
         </div>
 
+        {o.kind === "subscription" && o.status === "refunded" && o.refund_amount != null && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            {Number(o.client_compensation ?? 0) > 0
+              ? t("offerings:subscriptions.refundedWithCompensation", {
+                  amount: formatEuro(Number(o.refund_amount)),
+                  compensation: formatEuro(Number(o.client_compensation)),
+                })
+              : t("cancelBooking.refunded", { amount: formatEuro(Number(o.refund_amount)) })}
+          </p>
+        )}
+
         {isBooking(o) && o.status === "refunded" && o.refund_amount != null && (
           <p className="mt-3 text-sm text-muted-foreground">
             {bookingTitleNode(o)}:{" "}
@@ -554,7 +570,11 @@ const MyOrders = () => {
         <ArrowLeft className="h-4 w-4" /> {t("my.home")}
       </Link>
 
-      <PageHeader eyebrow={t("account:myAccount")} title={t("my.title")} />
+      <PageHeader
+        eyebrow={t("account:myAccount")}
+        title={t("my.title")}
+        actions={<ClientSubscriptionsDialog onChanged={loadOrders} />}
+      />
 
       {loading ? (
         <div className="space-y-3">

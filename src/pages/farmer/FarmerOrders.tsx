@@ -74,6 +74,8 @@ interface Order {
   booking_units: number | null;
   cancelled_by: string | null;
   cancellation_fee: number | null;
+  farmer_fine: number | null;
+  client_compensation: number | null;
   order_items: OrderItem[];
 }
 
@@ -129,7 +131,7 @@ const meta = {
 const FarmerOrders = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const { t } = useTranslation(["farmer", "common", "orders"]);
+  const { t } = useTranslation(["farmer", "common", "orders", "offerings"]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [acting, setActing] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -164,7 +166,7 @@ const FarmerOrders = () => {
     const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,scheduled_pickup_at,delivered_at,expired_at,accepted_at,created_at,delivery_address,delivery_lat,delivery_lng,delivery_tracking,expected_delivery_at,packed_at,in_transit_at,out_for_delivery_at,delivery_fee,kind,booking_start,booking_end,booking_people,booking_units,cancelled_by,cancellation_fee,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
+        .select("id,total,commission_amount,farmer_amount,status,pickup_deadline,pickup_code,scheduled_pickup_at,delivered_at,expired_at,accepted_at,created_at,delivery_address,delivery_lat,delivery_lng,delivery_tracking,expected_delivery_at,packed_at,in_transit_at,out_for_delivery_at,delivery_fee,kind,booking_start,booking_end,booking_people,booking_units,cancelled_by,cancellation_fee,farmer_fine,client_compensation,order_items(id,product_name,product_image,quantity,unit,unit_price,subtotal)")
         .order("created_at", { ascending: false });
       if (!cancelled) {
         setOrders((data as Order[]) ?? []);
@@ -561,6 +563,17 @@ const FarmerOrders = () => {
                         { amount: formatEuro(farmerGets) },
                       )}
                     </p>
+                    {o.kind === "subscription" && (
+                      <p className="mt-1 text-xs font-medium text-primary">{t("offerings:subscriptions.deliveryBadge")}</p>
+                    )}
+                    {Number(o.farmer_fine ?? 0) > 0 && (
+                      <p className="mt-1 text-xs font-medium text-destructive">
+                        {t("offerings:subscriptions.penalty", {
+                          compensation: formatEuro(Number(o.client_compensation ?? 0)),
+                          fine: formatEuro(Number(o.farmer_fine)),
+                        })}
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${m.tone}`}>

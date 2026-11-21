@@ -48,7 +48,7 @@ const sections: LegalSection[] = [
           <strong>Encomendas e reservas:</strong> produtos, valores, comissão, horário de
           levantamento, código de levantamento e, nas entregas ao domicílio, a morada e o ponto
           de entrega marcado no mapa. Nas reservas de experiências e alojamento: datas, número
-          de pessoas ou hóspedes, quartos, brindes escolhidos, cancelamentos, taxas e reembolsos.
+          de pessoas ou hóspedes, quartos, brindes escolhidos, cancelamentos, taxas e reembolsos. Nas subscrições: o plano, o preço, a periodicidade, a morada e o ponto de entrega, as datas de cobrança, o cancelamento e, se houver, a indemnização recebida.
         </li>
         <li>
           <strong>Comunicações e atividade:</strong> mensagens do chat das encomendas e ficheiros

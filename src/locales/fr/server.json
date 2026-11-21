@@ -135,5 +135,10 @@
   "o_registo_ja_foi_concluido": "L'inscription est déjà terminée. Pour modifier vos données, faites une demande de modification.",
   "preencha_corretamente_todos_os_campos_do_registo": "Veuillez remplir correctement tous les champs obligatoires de l'inscription.",
   "o_nif_da_empresa_nao_e_valido": "Le numéro fiscal (NIF) de l'entreprise n'est pas valide.",
-  "indique_o_que_a_quinta_oferece": "Indiquez ce que propose la ferme : produits, expériences ou hébergement."
+  "indique_o_que_a_quinta_oferece": "Indiquez ce que propose la ferme : produits, expériences ou hébergement.",
+  "esta_subscricao_nao_esta_disponivel": "Cet abonnement n'est pas disponible.",
+  "ja_tem_esta_subscricao_ativa": "Vous avez déjà cet abonnement actif.",
+  "subscricao_nao_encontrada": "Abonnement introuvable.",
+  "esta_subscricao_ja_foi_cancelada": "Cet abonnement a déjà été résilié.",
+  "para_deixar_de_oferecer_subscricoes": "Pour ne plus proposer d'abonnements, suspendez d'abord toutes les formules."
 }

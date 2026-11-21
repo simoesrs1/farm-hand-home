@@ -135,5 +135,10 @@
   "o_registo_ja_foi_concluido": "El registro ya se ha completado. Para cambiar los datos, haga una solicitud de cambio.",
   "preencha_corretamente_todos_os_campos_do_registo": "Rellene correctamente todos los campos obligatorios del registro.",
   "o_nif_da_empresa_nao_e_valido": "El NIF de la empresa no es válido.",
-  "indique_o_que_a_quinta_oferece": "Indique lo que ofrece la granja: productos, experiencias o alojamiento."
+  "indique_o_que_a_quinta_oferece": "Indique lo que ofrece la granja: productos, experiencias o alojamiento.",
+  "esta_subscricao_nao_esta_disponivel": "Esta suscripción no está disponible.",
+  "ja_tem_esta_subscricao_ativa": "Ya tiene esta suscripción activa.",
+  "subscricao_nao_encontrada": "No se ha encontrado la suscripción.",
+  "esta_subscricao_ja_foi_cancelada": "Esta suscripción ya se ha cancelado.",
+  "para_deixar_de_oferecer_subscricoes": "Para dejar de ofrecer suscripciones, suspenda primero todos los planes."
 }

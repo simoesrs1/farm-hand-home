@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import OfferingsPicker from "@/components/OfferingsPicker";
-import type { Offerings } from "@/lib/farmer-offerings";
+import { hasAnyOffering, NO_OFFERINGS, type Offerings } from "@/lib/farmer-offerings";
 import {
   Upload,
   X,
@@ -113,8 +113,8 @@ const FarmerOnboarding = () => {
   const { toast } = useToast();
 
   const [values, setValues] = useState<FarmerFormValues>(EMPTY_VALUES);
-  const [offerings, setOfferings] = useState<Offerings>({ products: false, experiences: false, stays: false });
-  const noOffering = !offerings.products && !offerings.experiences && !offerings.stays;
+  const [offerings, setOfferings] = useState<Offerings>(NO_OFFERINGS);
+  const noOffering = !hasAnyOffering(offerings);
   const [touched, setTouched] = useState<Partial<Record<FarmerField, boolean>>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
@@ -363,6 +363,7 @@ const FarmerOnboarding = () => {
         p_offers_products: offerings.products,
         p_offers_experiences: offerings.experiences,
         p_offers_stays: offerings.stays,
+        p_offers_subscriptions: offerings.subscriptions,
       });
       if (updateError) {
         // Sem registo concluído, os certificados voltariam a ser inseridos na

@@ -8,7 +8,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
-export type ContentType = "product" | "experience" | "stay" | "farm" | "review" | "notification" | "chat" | "order_item";
+export type ContentType = "product" | "experience" | "stay" | "subscription" | "farm" | "review" | "notification" | "chat" | "order_item";
 
 export interface ContentRef {
   type: ContentType;

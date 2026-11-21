@@ -56,7 +56,8 @@ const privacyEs: LegalDoc = {
             recogida, código de recogida y, en las entregas a domicilio, la dirección y el punto
             de entrega marcado en el mapa. En las reservas de experiencias y alojamiento: fechas,
             número de personas o huéspedes, habitaciones, regalos elegidos, cancelaciones,
-            tarifas y reembolsos.
+            tarifas y reembolsos. En las suscripciones: el plan, el precio, la periodicidad, la dirección y el punto de
+            entrega, las fechas de cobro, la cancelación y, en su caso, la indemnización recibida.
           </li>
           <li>
             <strong>Comunicaciones y actividad:</strong> mensajes del chat de los pedidos y

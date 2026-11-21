@@ -597,6 +597,7 @@ export type Database = {
           offers_experiences: boolean
           offers_products: boolean
           offers_stays: boolean
+          offers_subscriptions: boolean
           pause_note: string | null
           paused_until: string | null
           phone: string | null
@@ -634,6 +635,7 @@ export type Database = {
           offers_experiences?: boolean
           offers_products?: boolean
           offers_stays?: boolean
+          offers_subscriptions?: boolean
           pause_note?: string | null
           paused_until?: string | null
           phone?: string | null
@@ -671,6 +673,7 @@ export type Database = {
           offers_experiences?: boolean
           offers_products?: boolean
           offers_stays?: boolean
+          offers_subscriptions?: boolean
           pause_note?: string | null
           paused_until?: string | null
           phone?: string | null
@@ -986,6 +989,9 @@ export type Database = {
           scheduled_pickup_at: string | null
           status: Database["public"]["Enums"]["order_status"]
           stay_id: string | null
+          subscription_id: string | null
+          client_compensation: number | null
+          farmer_fine: number | null
           total: number
           updated_at: string
         }
@@ -1024,6 +1030,9 @@ export type Database = {
           scheduled_pickup_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           stay_id?: string | null
+          subscription_id?: string | null
+          client_compensation?: number | null
+          farmer_fine?: number | null
           total: number
           updated_at?: string
         }
@@ -1062,6 +1071,9 @@ export type Database = {
           scheduled_pickup_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           stay_id?: string | null
+          subscription_id?: string | null
+          client_compensation?: number | null
+          farmer_fine?: number | null
           total?: number
           updated_at?: string
         }
@@ -1392,6 +1404,114 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_plans: {
+        Row: {
+          active: boolean
+          billing_interval: string
+          created_at: string
+          delivery_interval: string
+          delivery_radius_km: number
+          description: string
+          farmer_id: string
+          id: string
+          includes: string
+          preparation_days: number
+          price: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          billing_interval: string
+          created_at?: string
+          delivery_interval: string
+          delivery_radius_km: number
+          description: string
+          farmer_id: string
+          id?: string
+          includes: string
+          preparation_days?: number
+          price: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          billing_interval?: string
+          created_at?: string
+          delivery_interval?: string
+          delivery_radius_km?: number
+          description?: string
+          farmer_id?: string
+          id?: string
+          includes?: string
+          preparation_days?: number
+          price?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          billing_interval: string
+          cancelled_at: string | null
+          cancelled_by: string | null
+          client_id: string
+          created_at: string
+          delivery_address: string
+          delivery_interval: string
+          delivery_lat: number
+          delivery_lng: number
+          farmer_id: string
+          id: string
+          next_billing_at: string
+          next_delivery_at: string
+          plan_id: string
+          price: number
+          status: string
+          title: string
+        }
+        Insert: {
+          billing_interval: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          client_id: string
+          created_at?: string
+          delivery_address: string
+          delivery_interval: string
+          delivery_lat: number
+          delivery_lng: number
+          farmer_id: string
+          id?: string
+          next_billing_at: string
+          next_delivery_at: string
+          plan_id: string
+          price: number
+          status?: string
+          title: string
+        }
+        Update: {
+          billing_interval?: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          client_id?: string
+          created_at?: string
+          delivery_address?: string
+          delivery_interval?: string
+          delivery_lat?: number
+          delivery_lng?: number
+          farmer_id?: string
+          id?: string
+          next_billing_at?: string
+          next_delivery_at?: string
+          plan_id?: string
+          price?: number
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       farmer_public: {
@@ -1558,6 +1678,11 @@ export type Database = {
         Args: { p_company_nif: string; p_exclude_id?: string }
         Returns: boolean
       }
+      cancel_subscription: { Args: { p_subscription_id: string }; Returns: number }
+      subscribe_to_plan: {
+        Args: { p_address: string; p_lat: number; p_lng: number; p_plan_id: string }
+        Returns: string
+      }
       complete_farmer_onboarding: {
         Args: {
           p_address: string
@@ -1570,6 +1695,7 @@ export type Database = {
           p_offers_experiences: boolean
           p_offers_products: boolean
           p_offers_stays: boolean
+          p_offers_subscriptions: boolean
           p_phone: string
           p_pickup_address: string
           p_pickup_lat: number

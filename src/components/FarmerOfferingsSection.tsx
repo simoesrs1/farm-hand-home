@@ -4,7 +4,15 @@ import { Button } from "@/components/ui/button";
 import OfferingsPicker from "@/components/OfferingsPicker";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { OFFERINGS_CHANGED_EVENT, type Offerings } from "@/lib/farmer-offerings";
+import {
+  hasAnyOffering,
+  NO_OFFERINGS,
+  OFFERING_COLUMNS,
+  OFFERINGS_CHANGED_EVENT,
+  offeringsFromRow,
+  offeringsToRow,
+  type Offerings,
+} from "@/lib/farmer-offerings";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -14,18 +22,18 @@ import { useTranslation } from "react-i18next";
 const FarmerOfferingsSection = ({ farmerId }: { farmerId: string }) => {
   const { t } = useTranslation(["farmer", "common"]);
   const [saved, setSaved] = useState<Offerings | null>(null);
-  const [value, setValue] = useState<Offerings>({ products: true, experiences: false, stays: false });
+  const [value, setValue] = useState<Offerings>({ ...NO_OFFERINGS, products: true });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     supabase
       .from("farmer_details")
-      .select("offers_products, offers_experiences, offers_stays")
+      .select(OFFERING_COLUMNS)
       .eq("id", farmerId)
       .maybeSingle()
       .then(({ data }) => {
         if (!data) return;
-        const v = { products: data.offers_products, experiences: data.offers_experiences, stays: data.offers_stays };
+        const v = offeringsFromRow(data);
         setSaved(v);
         setValue(v);
       });
@@ -34,14 +42,14 @@ const FarmerOfferingsSection = ({ farmerId }: { farmerId: string }) => {
   const changed = !!saved && (Object.keys(value) as (keyof Offerings)[]).some((k) => value[k] !== saved[k]);
 
   const save = async () => {
-    if (!value.products && !value.experiences && !value.stays) {
+    if (!hasAnyOffering(value)) {
       toast({ title: t("offeringsSection.chooseOne"), variant: "destructive" });
       return;
     }
     setSaving(true);
     const { error } = await supabase
       .from("farmer_details")
-      .update({ offers_products: value.products, offers_experiences: value.experiences, offers_stays: value.stays })
+      .update(offeringsToRow(value))
       .eq("id", farmerId);
     setSaving(false);
     if (error) {

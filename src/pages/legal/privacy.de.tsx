@@ -56,7 +56,8 @@ const privacyDe: LegalDoc = {
             Abholzeit, Abholcode und, bei Lieferung nach Hause, die Adresse und der auf der Karte
             markierte Lieferpunkt. Bei Buchungen von Erlebnissen und Unterkünften: Daten, Anzahl
             der Personen oder Gäste, Zimmer, gewählte Geschenke, Stornierungen, Gebühren und
-            Erstattungen.
+            Erstattungen. Bei Abos: der Plan, der Preis, die Häufigkeit, Lieferadresse und -punkt, die
+            Abrechnungstermine, die Kündigung und gegebenenfalls die erhaltene Entschädigung.
           </li>
           <li>
             <strong>Kommunikation und Aktivität:</strong> Chatnachrichten zu Bestellungen und

@@ -270,6 +270,26 @@ const termsEn: LegalDoc = {
       ),
     },
     {
+      id: "subscricoes",
+      title: "Subscriptions",
+      content: (
+        <>
+          <p>
+            Farmers can create subscription plans (boxes) delivered regularly to the Customer's home. For each plan the Farmer sets the price per billing period (weekly, fortnightly or monthly), how often deliveries are made, what is included, the time until the first delivery and the maximum delivery distance. These terms are shown to the Customer before subscribing.
+          </p>
+          <p>
+            The subscription is paid at the start of each period and renews automatically until cancelled. Each delivery in the period is recorded as an order, with a QR code to confirm delivery. Existing subscribers keep the terms they signed up with, even if the Farmer changes the plan.
+          </p>
+          <p>
+            The Customer may cancel at any time, in My orders. Deliveries scheduled more than 48 hours ahead are refunded; closer ones are already being prepared and remain. If the Farmer cancels, all pending deliveries are refunded to the Customer.
+          </p>
+          <p>
+            If a promised delivery is not made, the Customer may complain under the orders section. If the {LEGAL.brand} team upholds the complaint, the Customer receives the value of that delivery plus compensation of {LEGAL.subscriptionCompensationPercent}% of that value, and the Farmer is charged a fine of {LEGAL.subscriptionFinePercent}% in favour of the platform. The compensation and the fine are borne by the Farmer and deducted from amounts due to them. Before the decision, the Farmer has 48 hours to show proof of delivery.
+          </p>
+        </>
+      ),
+    },
+    {
       id: "avaliacoes",
       title: "Reviews and user content",
       content: (

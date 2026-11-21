@@ -39,7 +39,8 @@
       "orders": "Commandes",
       "mySales": "Mes ventes",
       "availability": "Disponibilités (portes ouvertes)",
-      "validateDelivery": "Valider la livraison"
+      "validateDelivery": "Valider la livraison",
+      "mySubscriptions": "Mes abonnements"
     },
     "client": {
       "myOrders": "Mes commandes",
@@ -181,6 +182,10 @@
     "stays": {
       "label": "Hébergement",
       "description": "Chambres ou logements en Hébergement Local ou Tourisme Rural."
+    },
+    "subscriptions": {
+      "label": "Abonnements",
+      "description": "Paniers livrés régulièrement au domicile du client."
     }
   },
   "notifications": {
@@ -274,7 +279,9 @@
     "grupo_one": "groupe",
     "grupo_other": "groupes",
     "noite_one": "nuit",
-    "noite_other": "nuits"
+    "noite_other": "nuits",
+    "entrega_one": "livraison",
+    "entrega_other": "livraisons"
   },
   "searchLocation": {
     "near": "Au plus près de :",

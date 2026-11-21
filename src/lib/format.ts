@@ -41,11 +41,12 @@ export const formatTime = (value: DateInput, options: Intl.DateTimeFormatOptions
 export const formatNumber = (value: number, options?: Intl.NumberFormatOptions) =>
   value.toLocaleString(currentLocale(), options);
 
-const BOOKING_UNITS = ["pessoa", "grupo", "noite"] as const;
+const BOOKING_UNITS = ["pessoa", "grupo", "noite", "entrega"] as const;
 
 /**
  * Unidade de uma linha de encomenda no idioma atual. As reservas guardam
- * "pessoa", "grupo" ou "noite"; as outras unidades (Kg, L…) ficam como estão.
+ * "pessoa", "grupo" ou "noite" e as subscrições "entrega"; as outras unidades
+ * (Kg, L…) ficam como estão.
  */
 export const unitLabel = (unit: string | null | undefined, count = 1) => {
   if (!unit) return "";

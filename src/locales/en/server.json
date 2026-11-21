@@ -135,5 +135,10 @@
   "o_registo_ja_foi_concluido": "Registration has already been completed. To change your details, submit a change request.",
   "preencha_corretamente_todos_os_campos_do_registo": "Please fill in all required registration fields correctly.",
   "o_nif_da_empresa_nao_e_valido": "The company tax number (NIF) is not valid.",
-  "indique_o_que_a_quinta_oferece": "Tell us what the farm offers: products, experiences or accommodation."
+  "indique_o_que_a_quinta_oferece": "Tell us what the farm offers: products, experiences or accommodation.",
+  "esta_subscricao_nao_esta_disponivel": "This subscription is not available.",
+  "ja_tem_esta_subscricao_ativa": "You already have this subscription active.",
+  "subscricao_nao_encontrada": "Subscription not found.",
+  "esta_subscricao_ja_foi_cancelada": "This subscription has already been cancelled.",
+  "para_deixar_de_oferecer_subscricoes": "To stop offering subscriptions, first suspend all plans."
 }

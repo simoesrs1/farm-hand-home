@@ -135,5 +135,10 @@
   "o_registo_ja_foi_concluido": "Die Registrierung ist bereits abgeschlossen. Um Ihre Daten zu ändern, stellen Sie einen Änderungsantrag.",
   "preencha_corretamente_todos_os_campos_do_registo": "Bitte füllen Sie alle Pflichtfelder der Registrierung korrekt aus.",
   "o_nif_da_empresa_nao_e_valido": "Die Steuernummer (NIF) des Unternehmens ist ungültig.",
-  "indique_o_que_a_quinta_oferece": "Geben Sie an, was der Hof anbietet: Produkte, Erlebnisse oder Unterkunft."
+  "indique_o_que_a_quinta_oferece": "Geben Sie an, was der Hof anbietet: Produkte, Erlebnisse oder Unterkunft.",
+  "esta_subscricao_nao_esta_disponivel": "Dieses Abo ist nicht verfügbar.",
+  "ja_tem_esta_subscricao_ativa": "Sie haben dieses Abo bereits aktiv.",
+  "subscricao_nao_encontrada": "Abo nicht gefunden.",
+  "esta_subscricao_ja_foi_cancelada": "Dieses Abo wurde bereits gekündigt.",
+  "para_deixar_de_oferecer_subscricoes": "Um keine Abos mehr anzubieten, setzen Sie zuerst alle Pläne aus."
 }

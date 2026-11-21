@@ -280,6 +280,26 @@ const termsEs: LegalDoc = {
       ),
     },
     {
+      id: "subscricoes",
+      title: "Suscripciones",
+      content: (
+        <>
+          <p>
+            Los Agricultores pueden crear planes de suscripción (cestas) con entrega regular en casa del Cliente. En cada plan el Agricultor define el precio por periodo de cobro (semanal, quincenal o mensual), la frecuencia de las entregas, qué incluye, el plazo hasta la primera entrega y la distancia máxima de entrega. Estas condiciones se muestran al Cliente antes de suscribirse.
+          </p>
+          <p>
+            La suscripción se paga al inicio de cada periodo y se renueva automáticamente hasta su cancelación. Cada entrega del periodo queda registrada como un pedido, con código QR para confirmar la entrega. Quien ya se suscribió mantiene sus condiciones, aunque el Agricultor cambie el plan.
+          </p>
+          <p>
+            El Cliente puede cancelar en cualquier momento, en Mis pedidos. Las entregas previstas para dentro de más de 48 horas se reembolsan; las más próximas ya están en preparación y se mantienen. Si es el Agricultor quien cancela, se reembolsan al Cliente todas las entregas pendientes.
+          </p>
+          <p>
+            Si no se realiza una entrega prometida, el Cliente puede presentar una queja según la sección de pedidos. Si el equipo de {LEGAL.brand} da la razón al Cliente, este recibe el valor de esa entrega más una indemnización del {LEGAL.subscriptionCompensationPercent} % de dicho valor, y se aplica al Agricultor una multa del {LEGAL.subscriptionFinePercent} % a favor de la plataforma. La indemnización y la multa corren a cargo del Agricultor y se descuentan de los importes que tenga que recibir. Antes de la decisión, el Agricultor dispone de 48 horas para demostrar la entrega.
+          </p>
+        </>
+      ),
+    },
+    {
       id: "avaliacoes",
       title: "Valoraciones y contenidos de los usuarios",
       content: (

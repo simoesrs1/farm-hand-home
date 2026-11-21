@@ -284,6 +284,26 @@ const termsFr: LegalDoc = {
       ),
     },
     {
+      id: "subscricoes",
+      title: "Abonnements",
+      content: (
+        <>
+          <p>
+            Les Agriculteurs peuvent créer des formules d'abonnement (paniers) livrées régulièrement au domicile du Client. Pour chaque formule, l'Agriculteur fixe le prix par période de prélèvement (hebdomadaire, bimensuelle ou mensuelle), la fréquence des livraisons, le contenu, le délai avant la première livraison et la distance maximale de livraison. Ces conditions sont présentées au Client avant l'abonnement.
+          </p>
+          <p>
+            L'abonnement est payé au début de chaque période et se renouvelle automatiquement jusqu'à sa résiliation. Chaque livraison de la période est enregistrée comme une commande, avec un code QR pour confirmer la livraison. Les abonnés existants conservent leurs conditions, même si l'Agriculteur modifie la formule.
+          </p>
+          <p>
+            Le Client peut résilier à tout moment, dans Mes commandes. Les livraisons prévues dans plus de 48 heures sont remboursées ; les plus proches sont déjà en préparation et sont maintenues. Si c'est l'Agriculteur qui résilie, toutes les livraisons à venir sont remboursées au Client.
+          </p>
+          <p>
+            Si une livraison promise n'est pas effectuée, le Client peut déposer une réclamation selon la section relative aux commandes. Si l'équipe {LEGAL.brand} donne raison au Client, celui-ci reçoit la valeur de cette livraison plus une indemnisation de {LEGAL.subscriptionCompensationPercent} % de cette valeur, et une pénalité de {LEGAL.subscriptionFinePercent} % est appliquée à l'Agriculteur au profit de la plateforme. L'indemnisation et la pénalité sont à la charge de l'Agriculteur et déduites des montants qui lui sont dus. Avant la décision, l'Agriculteur dispose de 48 heures pour prouver la livraison.
+          </p>
+        </>
+      ),
+    },
+    {
       id: "avaliacoes",
       title: "Avis et contenus des utilisateurs",
       content: (

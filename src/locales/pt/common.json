@@ -39,7 +39,8 @@
       "orders": "Encomendas",
       "mySales": "As minhas vendas",
       "availability": "Disponibilidade (porta aberta)",
-      "validateDelivery": "Validar entrega"
+      "validateDelivery": "Validar entrega",
+      "mySubscriptions": "As minhas subscrições"
     },
     "client": {
       "myOrders": "As minhas encomendas",
@@ -181,6 +182,10 @@
     "stays": {
       "label": "Alojamento",
       "description": "Quartos ou unidades de Alojamento Local ou Turismo no Espaço Rural."
+    },
+    "subscriptions": {
+      "label": "Subscrições",
+      "description": "Cabazes com entrega regular em casa do cliente."
     }
   },
   "notifications": {
@@ -274,7 +279,9 @@
     "grupo_one": "grupo",
     "grupo_other": "grupos",
     "noite_one": "noite",
-    "noite_other": "noites"
+    "noite_other": "noites",
+    "entrega_one": "entrega",
+    "entrega_other": "entregas"
   },
   "searchLocation": {
     "near": "Mais perto de:",

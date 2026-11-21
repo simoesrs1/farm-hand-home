@@ -272,6 +272,26 @@ const sections: LegalSection[] = [
     ),
   },
   {
+    id: "subscricoes",
+    title: "Subscrições",
+    content: (
+      <>
+        <p>
+          Os Agricultores podem criar planos de subscrição (cabazes) com entrega regular em casa do Cliente. Em cada plano o Agricultor define o preço por período de faturação (semanal, quinzenal ou mensal), a frequência das entregas, o que inclui, o prazo até à primeira entrega e a distância máxima a que entrega. Estas condições são mostradas ao Cliente antes de subscrever.
+        </p>
+        <p>
+          A subscrição é paga no início de cada período e renova-se automaticamente até ser cancelada. Cada entrega do período fica registada como uma encomenda, com código QR para confirmar a entrega. Quem já subscreveu mantém as condições com que subscreveu, mesmo que o Agricultor altere o plano.
+        </p>
+        <p>
+          O Cliente pode cancelar a qualquer momento, em As minhas encomendas. As entregas marcadas para daqui a mais de 48 horas são devolvidas; as mais próximas já estão em preparação e mantêm-se. Se for o Agricultor a cancelar, são devolvidas ao Cliente todas as entregas por fazer.
+        </p>
+        <p>
+          Se uma entrega prometida não for feita, o Cliente pode fazer queixa nos termos da secção de encomendas. Se a equipa {LEGAL.brand} der razão ao Cliente, o Cliente recebe o valor dessa entrega mais uma indemnização de {LEGAL.subscriptionCompensationPercent}% desse valor, e é aplicada ao Agricultor uma multa de {LEGAL.subscriptionFinePercent}% a favor da plataforma. A indemnização e a multa são suportadas pelo Agricultor e descontadas nos valores que tenha a receber. Antes da decisão, o Agricultor tem 48 horas para demonstrar a entrega.
+        </p>
+      </>
+    ),
+  },
+  {
     id: "avaliacoes",
     title: "Avaliações e conteúdos dos utilizadores",
     content: (

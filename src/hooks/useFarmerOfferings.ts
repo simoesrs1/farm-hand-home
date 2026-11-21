@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { OFFERINGS_CHANGED_EVENT, type Offerings } from "@/lib/farmer-offerings";
+import { OFFERING_COLUMNS, OFFERINGS_CHANGED_EVENT, offeringsFromRow, type Offerings } from "@/lib/farmer-offerings";
 
 /** Escolhas do agricultor com sessão iniciada (null enquanto carrega ou sem registo). */
 export const useFarmerOfferings = (userId: string | null | undefined) => {
@@ -13,12 +13,10 @@ export const useFarmerOfferings = (userId: string | null | undefined) => {
     }
     const { data } = await supabase
       .from("farmer_details")
-      .select("offers_products, offers_experiences, offers_stays")
+      .select(OFFERING_COLUMNS)
       .eq("user_id", userId)
       .maybeSingle();
-    setOfferings(
-      data ? { products: data.offers_products, experiences: data.offers_experiences, stays: data.offers_stays } : null,
-    );
+    setOfferings(data ? offeringsFromRow(data) : null);
   }, [userId]);
 
   useEffect(() => {

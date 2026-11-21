@@ -42,6 +42,7 @@ const MANAGEMENT_SECTIONS = new Set([
   "a-minha-pagina",
   "experiencias",
   "alojamento",
+  "subscricoes",
   "encomendas",
   "scan",
   "vendas",

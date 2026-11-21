@@ -39,7 +39,8 @@
       "orders": "Orders",
       "mySales": "My sales",
       "availability": "Availability (open door)",
-      "validateDelivery": "Validate delivery"
+      "validateDelivery": "Validate delivery",
+      "mySubscriptions": "My subscriptions"
     },
     "client": {
       "myOrders": "My orders",
@@ -181,6 +182,10 @@
     "stays": {
       "label": "Accommodation",
       "description": "Rooms or units registered as Local Accommodation or Rural Tourism."
+    },
+    "subscriptions": {
+      "label": "Subscriptions",
+      "description": "Boxes delivered regularly to the customer's home."
     }
   },
   "notifications": {
@@ -274,7 +279,9 @@
     "grupo_one": "group",
     "grupo_other": "groups",
     "noite_one": "night",
-    "noite_other": "nights"
+    "noite_other": "nights",
+    "entrega_one": "delivery",
+    "entrega_other": "deliveries"
   },
   "searchLocation": {
     "near": "Nearest to:",

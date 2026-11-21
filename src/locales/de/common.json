@@ -39,7 +39,8 @@
       "orders": "Bestellungen",
       "mySales": "Meine Verkäufe",
       "availability": "Verfügbarkeit (offene Tür)",
-      "validateDelivery": "Lieferung bestätigen"
+      "validateDelivery": "Lieferung bestätigen",
+      "mySubscriptions": "Meine Abos"
     },
     "client": {
       "myOrders": "Meine Bestellungen",
@@ -181,6 +182,10 @@
     "stays": {
       "label": "Unterkunft",
       "description": "Zimmer oder Einheiten als Ferienunterkunft oder Landtourismus."
+    },
+    "subscriptions": {
+      "label": "Abos",
+      "description": "Kisten mit regelmäßiger Lieferung zum Kunden nach Hause."
     }
   },
   "notifications": {
@@ -274,7 +279,9 @@
     "grupo_one": "Gruppe",
     "grupo_other": "Gruppen",
     "noite_one": "Nacht",
-    "noite_other": "Nächte"
+    "noite_other": "Nächte",
+    "entrega_one": "Lieferung",
+    "entrega_other": "Lieferungen"
   },
   "searchLocation": {
     "near": "Am nächsten zu:",

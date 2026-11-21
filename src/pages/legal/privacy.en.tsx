@@ -54,7 +54,7 @@ const privacyEn: LegalDoc = {
             <strong>Orders and bookings:</strong> products, amounts, commission, pickup time,
             pickup code and, for home delivery, the address and the delivery point marked on the
             map. For experience and accommodation bookings: dates, number of people or guests,
-            rooms, chosen gifts, cancellations, fees and refunds.
+            rooms, chosen gifts, cancellations, fees and refunds. For subscriptions: the plan, price, frequency, delivery address and point, billing dates, cancellation and, where applicable, any compensation received.
           </li>
           <li>
             <strong>Communications and activity:</strong> order chat messages and attached files,

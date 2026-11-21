@@ -87,6 +87,7 @@ Hoje o preço ao cliente é `preço do agricultor × (1 + comissão) × (1 + IVA
 
 ## Pontos em aberto
 
+- **Subscrições dos agricultores** (desde 21 nov 2026, ver `docs/planos/2026-11-21-subscricoes-agricultores.md`): a cobrança de cada período é simulada em `bill_subscription_period`. Na fase 2, usar Stripe Billing na plataforma (sem `transfer_data`) e transferir o `farmer_amount` de cada entrega depois de confirmada, com `source_transaction`. Cobrança automática só com cartão ou SEPA; MB WAY e Multibanco obrigam a pagar cada fatura à mão. A multa e a indemnização (`farmer_fine`, `client_compensation`) devem ser descontadas nas transferências seguintes.
 - **Vários agricultores num só pagamento** (desde 21 nov 2026): o carrinho envia `{ groups: [...] }` ao `create-order`, um grupo por agricultor, e é criada uma encomenda por grupo. A função valida todos os grupos antes de gravar e, se uma gravação falhar a meio, apaga as encomendas já criadas nesse pedido, mas não é uma transação. Na fase 2, o Checkout deve cobrar o total de uma vez e criar as encomendas numa função SQL transacional (ou no webhook), e cada encomenda transfere o seu `farmer_amount` ao respetivo agricultor.
 
 - **Faturação e IVA da comissão**: a confirmar com o contabilista, que também deve dizer se se usa `on_behalf_of`.

@@ -8,12 +8,12 @@ interface OfferingsPickerProps {
   disabled?: boolean;
 }
 
-/** Escolha do que o agricultor disponibiliza (uma, duas ou as três opções). */
+/** Escolha do que o agricultor disponibiliza (uma ou mais opções). */
 const OfferingsPicker = ({ value, onChange, disabled }: OfferingsPickerProps) => {
   // Volta a desenhar quando muda o idioma (os nomes vêm de OFFERINGS).
   useTranslation();
   return (
-  <div className="grid gap-2 sm:grid-cols-3">
+  <div className="grid gap-2 sm:grid-cols-2">
     {OFFERINGS.map((o) => (
       <label
         key={o.key}

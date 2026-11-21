@@ -282,6 +282,26 @@ const termsDe: LegalDoc = {
       ),
     },
     {
+      id: "subscricoes",
+      title: "Abos",
+      content: (
+        <>
+          <p>
+            Landwirte können Abo-Pläne (Kisten) mit regelmäßiger Lieferung zum Kunden nach Hause anbieten. Für jeden Plan legt der Landwirt den Preis pro Abrechnungszeitraum (wöchentlich, alle zwei Wochen oder monatlich), die Lieferhäufigkeit, den Inhalt, die Frist bis zur ersten Lieferung und die maximale Lieferentfernung fest. Diese Bedingungen werden dem Kunden vor dem Abschluss angezeigt.
+          </p>
+          <p>
+            Das Abo wird zu Beginn jedes Zeitraums bezahlt und verlängert sich automatisch bis zur Kündigung. Jede Lieferung des Zeitraums wird als Bestellung mit QR-Code zur Bestätigung erfasst. Bestehende Abonnenten behalten ihre Bedingungen, auch wenn der Landwirt den Plan ändert.
+          </p>
+          <p>
+            Der Kunde kann jederzeit unter Meine Bestellungen kündigen. Lieferungen, die mehr als 48 Stunden entfernt sind, werden erstattet; nähere sind bereits in Vorbereitung und bleiben bestehen. Kündigt der Landwirt, werden dem Kunden alle offenen Lieferungen erstattet.
+          </p>
+          <p>
+            Wird eine versprochene Lieferung nicht erbracht, kann der Kunde gemäß dem Abschnitt über Bestellungen Beschwerde einlegen. Gibt das {LEGAL.brand}-Team dem Kunden recht, erhält der Kunde den Wert dieser Lieferung zuzüglich einer Entschädigung von {LEGAL.subscriptionCompensationPercent} % dieses Werts, und dem Landwirt wird eine Strafe von {LEGAL.subscriptionFinePercent} % zugunsten der Plattform auferlegt. Entschädigung und Strafe trägt der Landwirt; sie werden mit seinen Guthaben verrechnet. Vor der Entscheidung hat der Landwirt 48 Stunden, um die Lieferung nachzuweisen.
+          </p>
+        </>
+      ),
+    },
+    {
       id: "avaliacoes",
       title: "Bewertungen und Nutzerinhalte",
       content: (

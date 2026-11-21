@@ -39,7 +39,8 @@
       "orders": "Pedidos",
       "mySales": "Mis ventas",
       "availability": "Disponibilidad (puertas abiertas)",
-      "validateDelivery": "Validar entrega"
+      "validateDelivery": "Validar entrega",
+      "mySubscriptions": "Mis suscripciones"
     },
     "client": {
       "myOrders": "Mis pedidos",
@@ -181,6 +182,10 @@
     "stays": {
       "label": "Alojamiento",
       "description": "Habitaciones o unidades de Alojamiento Local o Turismo Rural."
+    },
+    "subscriptions": {
+      "label": "Suscripciones",
+      "description": "Cestas con entrega regular en casa del cliente."
     }
   },
   "notifications": {
@@ -274,7 +279,9 @@
     "grupo_one": "grupo",
     "grupo_other": "grupos",
     "noite_one": "noche",
-    "noite_other": "noches"
+    "noite_other": "noches",
+    "entrega_one": "entrega",
+    "entrega_other": "entregas"
   },
   "searchLocation": {
     "near": "Más cerca de:",

@@ -17,6 +17,7 @@ import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import FarmerReviewsBar from "@/components/FarmerReviewsBar";
 import FarmerExperiences from "@/components/FarmerExperiences";
 import FarmerStays from "@/components/FarmerStays";
+import FarmerSubscriptions from "@/components/FarmerSubscriptions";
 import { formatPickupHours, parsePickupHours, type PickupWindow } from "@/lib/pickup-hours";
 import { formatReturnDate, isPaused } from "@/lib/farmer-activity";
 import { farmerDeliversFromProfile } from "@/lib/fulfillment";
@@ -352,6 +353,7 @@ const FarmerProfile = () => {
 
         {id && !mockFarmer && <FarmerExperiences farmerId={id} farmName={display.farm} isOwner={isOwner} />}
         {id && !mockFarmer && <FarmerStays farmerId={id} farmName={display.farm} isOwner={isOwner} />}
+        {id && !mockFarmer && <FarmerSubscriptions farmerId={id} farmName={display.farm} isOwner={isOwner} />}
 
         {/* Products */}
         <section className="mt-10">
