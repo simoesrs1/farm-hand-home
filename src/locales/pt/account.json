@@ -105,5 +105,46 @@
     "resend": "Reenviar código",
     "send": "Enviar código por email",
     "backToFarmer": "Voltar ao perfil de agricultor"
+  },
+  "coins": {
+    "mine": "As minhas coins",
+    "intro": "Ganhe 1 coin por cada euro gasto. As coins não têm valor em dinheiro: trocam-se por brindes oferecidos pelos agricultores.",
+    "available": "Disponíveis",
+    "count_one": "{{formatted}} coin",
+    "count_other": "{{formatted}} coins",
+    "euroHint": "≈ {{value}} em brindes (valor indicativo)",
+    "rewardsSoon": "Em breve poderá trocá-las por brindes nas quintas aderentes.",
+    "pendingTitle_one": "{{formatted}} coin pendente",
+    "pendingTitle_other": "{{formatted}} coins pendentes",
+    "pendingLot_one": "{{formatted}} coin disponível a {{date}}",
+    "pendingLot_other": "{{formatted}} coins disponíveis a {{date}}",
+    "expiringTitle": "A expirar em breve",
+    "expiringLot_one": "{{formatted}} coin expira a {{date}}",
+    "expiringLot_other": "{{formatted}} coins expiram a {{date}}",
+    "howTitle": "Como se ganham",
+    "howOrders": "{{n}} coin por cada euro gasto em encomendas entregues (sem a taxa de entrega).",
+    "howSubscriptions": "+{{n}} coins por cada entrega de subscrição.",
+    "howBookings": "+{{n}} coins por cada experiência ou estadia concluída.",
+    "howReviews": "{{n}} coins por avaliar uma encomenda entregue, seja qual for a nota.",
+    "howTiming": "As coins ficam disponíveis {{days}} dias depois da entrega e expiram {{months}} meses depois.",
+    "historyTitle": "Histórico",
+    "historyEmpty": "Ainda não tem movimentos. As coins aparecem aqui quando uma encomenda for entregue.",
+    "movement": {
+      "earn": "Ganhas",
+      "expire": "Expiradas",
+      "reverse": "Retiradas",
+      "redeem": "Trocadas por brinde",
+      "return": "Devolvidas"
+    },
+    "source": {
+      "order": "encomenda",
+      "review": "avaliação",
+      "referral": "convite",
+      "referral_welcome": "boas-vindas",
+      "adjustment": "correção"
+    },
+    "legal": "As coins são pessoais e intransmissíveis, não têm valor em dinheiro, não se trocam por euros e não reduzem preços. O valor em euros é apenas indicativo, para comparar brindes.",
+    "loadFailed": "Não foi possível carregar as coins. Tente novamente.",
+    "reviewNote": "Recebe {{n}} coins por avaliar, seja qual for a nota."
   }
 }

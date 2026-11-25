@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { reviewContext, type ReviewableOrder } from "@/lib/review-eligibility";
 import { avatarPublicUrl, isStoredAvatar } from "@/lib/avatar";
 import { useTranslation } from "react-i18next";
+import { COIN_RULES } from "@/lib/coins";
 
 interface FarmerInfo {
   id: string;
@@ -34,6 +35,8 @@ const RateFarmer = () => {
   const [blocked, setBlocked] = useState<"notFound" | "alreadyRated" | "notYet" | null>(null);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [showPhoto, setShowPhoto] = useState(false);
+  // Só as avaliações de encomendas entregues dão coins (award_review_coins).
+  const [earnsCoins, setEarnsCoins] = useState(false);
 
   useEffect(() => {
     if (!user || !orderId) return;
@@ -53,6 +56,7 @@ const RateFarmer = () => {
       if (!order) setBlocked("notFound");
       else if ((reviews ?? []).some((r) => r.order_id === orderId)) setBlocked("alreadyRated");
       else if (!reviewContext(order)) setBlocked("notYet");
+      setEarnsCoins(!!order && reviewContext(order) === "delivered");
       setLoading(false);
     })();
   }, [user, orderId]);
@@ -107,6 +111,9 @@ const RateFarmer = () => {
       <div className="rounded-2xl border border-border bg-card p-6">
         <p className="mb-3 text-sm font-medium text-foreground">{t("rate.yourRating")}</p>
         <p className="mb-3 text-xs text-muted-foreground">{t("rate.final")}</p>
+        {earnsCoins && (
+          <p className="mb-3 text-xs text-primary">{t("account:coins.reviewNote", { n: COIN_RULES.review })}</p>
+        )}
         <div className="mb-6 flex gap-2">
           {[1, 2, 3, 4, 5].map((n) => {
             const active = (hover || rating) >= n;

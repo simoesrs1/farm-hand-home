@@ -105,5 +105,46 @@
     "resend": "Reenviar código",
     "send": "Enviar código por email",
     "backToFarmer": "Volver al perfil de agricultor"
+  },
+  "coins": {
+    "mine": "Mis coins",
+    "intro": "Gane 1 coin por cada euro gastado. Las coins no tienen valor en dinero: se canjean por regalos ofrecidos por los agricultores.",
+    "available": "Disponibles",
+    "count_one": "{{formatted}} coin",
+    "count_other": "{{formatted}} coins",
+    "euroHint": "≈ {{value}} en regalos (valor orientativo)",
+    "rewardsSoon": "Pronto podrá canjearlas por regalos en las granjas adheridas.",
+    "pendingTitle_one": "{{formatted}} coin pendiente",
+    "pendingTitle_other": "{{formatted}} coins pendientes",
+    "pendingLot_one": "{{formatted}} coin disponible el {{date}}",
+    "pendingLot_other": "{{formatted}} coins disponibles el {{date}}",
+    "expiringTitle": "Caducan pronto",
+    "expiringLot_one": "{{formatted}} coin caduca el {{date}}",
+    "expiringLot_other": "{{formatted}} coins caducan el {{date}}",
+    "howTitle": "Cómo se ganan",
+    "howOrders": "{{n}} coin por cada euro gastado en pedidos entregados (sin el gasto de envío).",
+    "howSubscriptions": "+{{n}} coins por cada entrega de suscripción.",
+    "howBookings": "+{{n}} coins por cada experiencia o estancia completada.",
+    "howReviews": "{{n}} coins por valorar un pedido entregado, sea cual sea la nota.",
+    "howTiming": "Las coins están disponibles {{days}} días después de la entrega y caducan {{months}} meses después.",
+    "historyTitle": "Historial",
+    "historyEmpty": "Todavía no hay movimientos. Las coins aparecen aquí cuando se entrega un pedido.",
+    "movement": {
+      "earn": "Ganadas",
+      "expire": "Caducadas",
+      "reverse": "Retiradas",
+      "redeem": "Canjeadas por un regalo",
+      "return": "Devueltas"
+    },
+    "source": {
+      "order": "pedido",
+      "review": "valoración",
+      "referral": "invitación",
+      "referral_welcome": "bienvenida",
+      "adjustment": "corrección"
+    },
+    "legal": "Las coins son personales e intransferibles, no tienen valor en dinero, no se canjean por euros y no reducen precios. El valor en euros es solo orientativo, para comparar regalos.",
+    "loadFailed": "No se han podido cargar las coins. Inténtelo de nuevo.",
+    "reviewNote": "Recibe {{n}} coins por valorar, sea cual sea la nota."
   }
 }

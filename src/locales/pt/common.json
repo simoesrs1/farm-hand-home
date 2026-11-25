@@ -45,7 +45,8 @@
     "client": {
       "myOrders": "As minhas encomendas",
       "cart": "Carrinho",
-      "favorites": "Favoritos"
+      "favorites": "Favoritos",
+      "myCoins": "As minhas coins"
     },
     "account": {
       "profile": "Perfil",

@@ -1687,6 +1687,7 @@ export type Database = {
       cancel_subscription: { Args: { p_subscription_id: string }; Returns: number }
       viewer_is_tester: { Args: never; Returns: boolean }
       my_account_deletion_blockers: { Args: never; Returns: Json }
+      my_coins_summary: { Args: never; Returns: Json }
       subscribe_to_plan: {
         Args: { p_address: string; p_lat: number; p_lng: number; p_plan_id: string }
         Returns: string

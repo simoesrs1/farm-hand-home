@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/PageHeader";
 import ClientSubscriptionsDialog from "@/components/ClientSubscriptionsDialog";
+import ClientCoinsDialog from "@/components/ClientCoinsDialog";
 import OrderChat, { ReportDialog } from "@/components/OrderChat";
 import ReviewRemovalDialog from "@/components/ReviewRemovalDialog";
 import {
@@ -573,7 +574,12 @@ const MyOrders = () => {
       <PageHeader
         eyebrow={t("account:myAccount")}
         title={t("my.title")}
-        actions={<ClientSubscriptionsDialog onChanged={loadOrders} />}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <ClientCoinsDialog />
+            <ClientSubscriptionsDialog onChanged={loadOrders} />
+          </div>
+        }
       />
 
       {loading ? (

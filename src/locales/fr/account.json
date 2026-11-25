@@ -105,5 +105,46 @@
     "resend": "Renvoyer le code",
     "send": "Envoyer le code par email",
     "backToFarmer": "Retour au profil agriculteur"
+  },
+  "coins": {
+    "mine": "Mes coins",
+    "intro": "Gagnez 1 coin pour chaque euro dépensé. Les coins n'ont aucune valeur monétaire : elles s'échangent contre des cadeaux offerts par les agriculteurs.",
+    "available": "Disponibles",
+    "count_one": "{{formatted}} coin",
+    "count_other": "{{formatted}} coins",
+    "euroHint": "≈ {{value}} en cadeaux (valeur indicative)",
+    "rewardsSoon": "Bientôt, vous pourrez les échanger contre des cadeaux dans les fermes participantes.",
+    "pendingTitle_one": "{{formatted}} coin en attente",
+    "pendingTitle_other": "{{formatted}} coins en attente",
+    "pendingLot_one": "{{formatted}} coin disponible le {{date}}",
+    "pendingLot_other": "{{formatted}} coins disponibles le {{date}}",
+    "expiringTitle": "Expirent bientôt",
+    "expiringLot_one": "{{formatted}} coin expire le {{date}}",
+    "expiringLot_other": "{{formatted}} coins expirent le {{date}}",
+    "howTitle": "Comment les gagner",
+    "howOrders": "{{n}} coin pour chaque euro dépensé en commandes livrées (hors frais de livraison).",
+    "howSubscriptions": "+{{n}} coins pour chaque livraison d'abonnement.",
+    "howBookings": "+{{n}} coins pour chaque expérience ou séjour terminé.",
+    "howReviews": "{{n}} coins pour l'évaluation d'une commande livrée, quelle que soit la note.",
+    "howTiming": "Les coins deviennent disponibles {{days}} jours après la livraison et expirent {{months}} mois plus tard.",
+    "historyTitle": "Historique",
+    "historyEmpty": "Aucun mouvement pour l'instant. Les coins apparaissent ici dès qu'une commande est livrée.",
+    "movement": {
+      "earn": "Gagnées",
+      "expire": "Expirées",
+      "reverse": "Retirées",
+      "redeem": "Échangées contre un cadeau",
+      "return": "Restituées"
+    },
+    "source": {
+      "order": "commande",
+      "review": "évaluation",
+      "referral": "invitation",
+      "referral_welcome": "bienvenue",
+      "adjustment": "correction"
+    },
+    "legal": "Les coins sont personnelles et incessibles, n'ont aucune valeur monétaire, ne s'échangent pas contre des euros et ne réduisent pas les prix. La valeur en euros est seulement indicative, pour comparer les cadeaux.",
+    "loadFailed": "Impossible de charger vos coins. Veuillez réessayer.",
+    "reviewNote": "Vous recevez {{n}} coins pour votre évaluation, quelle que soit la note."
   }
 }

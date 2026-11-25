@@ -105,5 +105,46 @@
     "resend": "Resend code",
     "send": "Send code by email",
     "backToFarmer": "Back to the farmer profile"
+  },
+  "coins": {
+    "mine": "My coins",
+    "intro": "Earn 1 coin for every euro you spend. Coins have no cash value: they are exchanged for gifts offered by the farmers.",
+    "available": "Available",
+    "count_one": "{{formatted}} coin",
+    "count_other": "{{formatted}} coins",
+    "euroHint": "≈ {{value}} in gifts (indicative value)",
+    "rewardsSoon": "Soon you'll be able to exchange them for gifts at participating farms.",
+    "pendingTitle_one": "{{formatted}} pending coin",
+    "pendingTitle_other": "{{formatted}} pending coins",
+    "pendingLot_one": "{{formatted}} coin available on {{date}}",
+    "pendingLot_other": "{{formatted}} coins available on {{date}}",
+    "expiringTitle": "Expiring soon",
+    "expiringLot_one": "{{formatted}} coin expires on {{date}}",
+    "expiringLot_other": "{{formatted}} coins expire on {{date}}",
+    "howTitle": "How to earn them",
+    "howOrders": "{{n}} coin for every euro spent on delivered orders (excluding the delivery fee).",
+    "howSubscriptions": "+{{n}} coins for every subscription delivery.",
+    "howBookings": "+{{n}} coins for every completed experience or stay.",
+    "howReviews": "{{n}} coins for reviewing a delivered order, whatever the rating.",
+    "howTiming": "Coins become available {{days}} days after delivery and expire {{months}} months later.",
+    "historyTitle": "History",
+    "historyEmpty": "No activity yet. Coins appear here once an order is delivered.",
+    "movement": {
+      "earn": "Earned",
+      "expire": "Expired",
+      "reverse": "Removed",
+      "redeem": "Exchanged for a gift",
+      "return": "Returned"
+    },
+    "source": {
+      "order": "order",
+      "review": "review",
+      "referral": "invitation",
+      "referral_welcome": "welcome",
+      "adjustment": "correction"
+    },
+    "legal": "Coins are personal and non-transferable, have no cash value, cannot be exchanged for euros and do not reduce prices. The euro value is only indicative, to compare gifts.",
+    "loadFailed": "Couldn't load your coins. Please try again.",
+    "reviewNote": "You get {{n}} coins for reviewing, whatever the rating."
   }
 }

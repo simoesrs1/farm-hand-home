@@ -105,5 +105,46 @@
     "resend": "Code erneut senden",
     "send": "Code per E-Mail senden",
     "backToFarmer": "Zurück zum Landwirt-Profil"
+  },
+  "coins": {
+    "mine": "Meine Coins",
+    "intro": "Sammeln Sie 1 Coin pro ausgegebenem Euro. Coins haben keinen Geldwert: Sie werden gegen Geschenke der Landwirte eingetauscht.",
+    "available": "Verfügbar",
+    "count_one": "{{formatted}} Coin",
+    "count_other": "{{formatted}} Coins",
+    "euroHint": "≈ {{value}} in Geschenken (Richtwert)",
+    "rewardsSoon": "Bald können Sie sie bei teilnehmenden Höfen gegen Geschenke eintauschen.",
+    "pendingTitle_one": "{{formatted}} ausstehender Coin",
+    "pendingTitle_other": "{{formatted}} ausstehende Coins",
+    "pendingLot_one": "{{formatted}} Coin verfügbar ab {{date}}",
+    "pendingLot_other": "{{formatted}} Coins verfügbar ab {{date}}",
+    "expiringTitle": "Laufen bald ab",
+    "expiringLot_one": "{{formatted}} Coin läuft am {{date}} ab",
+    "expiringLot_other": "{{formatted}} Coins laufen am {{date}} ab",
+    "howTitle": "So sammeln Sie Coins",
+    "howOrders": "{{n}} Coin pro ausgegebenem Euro bei gelieferten Bestellungen (ohne Liefergebühr).",
+    "howSubscriptions": "+{{n}} Coins pro Abo-Lieferung.",
+    "howBookings": "+{{n}} Coins pro abgeschlossenem Erlebnis oder Aufenthalt.",
+    "howReviews": "{{n}} Coins für die Bewertung einer gelieferten Bestellung, unabhängig von der Note.",
+    "howTiming": "Coins werden {{days}} Tage nach der Lieferung verfügbar und laufen {{months}} Monate später ab.",
+    "historyTitle": "Verlauf",
+    "historyEmpty": "Noch keine Bewegungen. Coins erscheinen hier, sobald eine Bestellung geliefert wurde.",
+    "movement": {
+      "earn": "Gesammelt",
+      "expire": "Abgelaufen",
+      "reverse": "Entfernt",
+      "redeem": "Gegen Geschenk eingetauscht",
+      "return": "Zurückerstattet"
+    },
+    "source": {
+      "order": "Bestellung",
+      "review": "Bewertung",
+      "referral": "Einladung",
+      "referral_welcome": "Willkommen",
+      "adjustment": "Korrektur"
+    },
+    "legal": "Coins sind persönlich und nicht übertragbar, haben keinen Geldwert, können nicht in Euro umgetauscht werden und senken keine Preise. Der Eurowert ist nur ein Richtwert zum Vergleich von Geschenken.",
+    "loadFailed": "Ihre Coins konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "reviewNote": "Sie erhalten {{n}} Coins für Ihre Bewertung, unabhängig von der Note."
   }
 }

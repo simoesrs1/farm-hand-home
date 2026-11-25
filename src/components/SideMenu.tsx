@@ -6,6 +6,7 @@ import {
   Boxes,
   ClipboardList,
   Clock,
+  Coins,
   Eye,
   Heart,
   LogOut,
@@ -113,6 +114,7 @@ const SideMenu = () => {
           { to: "/encomendas", labelKey: "menu.client.myOrders", Icon: ShoppingBag },
           { to: "/carrinho", labelKey: "menu.client.cart", Icon: ShoppingCart, badge: totalCount },
           { to: "/favoritos", labelKey: "menu.client.favorites", Icon: Heart },
+          { to: "/encomendas?coins=1", labelKey: "menu.client.myCoins", Icon: Coins },
         ]
       : [];
 
