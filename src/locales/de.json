@@ -19,8 +19,10 @@
       "choose": "Sprache wählen"
     },
     "content": {
-      "showOriginal": "Original anzeigen",
-      "showTranslation": "Übersetzung anzeigen"
+      "original": "Texte von Landwirten und Kunden werden im Original angezeigt.",
+      "translated": "Automatisch übersetzt.",
+      "translate": "Übersetzen",
+      "showOriginals": "Originale anzeigen"
     },
     "menu": {
       "button": "Menü",
@@ -542,8 +544,8 @@
       "addedDelivery": "{{amount}} × {{name}} · Lieferung {{date}} um {{time}}",
       "addedPickup": "{{amount}} × {{name}} · Abholung {{date}} um {{time}}",
       "stock": "Bestand",
-      "available_one": "{{count}} {{unit}} verfügbar",
-      "available_other": "{{count}} {{unit}} verfügbar",
+      "available_one": "{{amount}} verfügbar",
+      "available_other": "{{amount}} verfügbar",
       "delivery": "Lieferung",
       "handDelivery": "Der Landwirt liefert persönlich",
       "handDeliveryUpTo": "Der Landwirt liefert persönlich bis {{km}} km",
@@ -901,7 +903,9 @@
       "attach": "Datei anhängen",
       "toFarmer": "Nachricht an den Landwirt...",
       "toClient": "Nachricht an den Kunden...",
-      "attachment": "Anhang"
+      "attachment": "Anhang",
+      "translate": "Unterhaltung übersetzen",
+      "showOriginals": "Originale anzeigen"
     },
     "report": {
       "reasonTooShort": "Beschreibe den Grund (mindestens 5 Zeichen)",
@@ -1244,16 +1248,16 @@
       "how": "So funktioniert's"
     },
     "lots": {
-      "indicate": "Geben Sie {{quantity}} {{unit}} von \"{{name}}\" an",
+      "indicate": "Geben Sie {{amount}} von \"{{name}}\" an",
       "failed": "Die Chargen konnten nicht erfasst werden",
       "saved": "Chargen erfasst",
       "savedText": "Der Chargenbestand wurde aktualisiert.",
       "title": "Aus welcher Charge stammen sie?",
       "description": "Die Lieferung ist bereits bestätigt. Geben Sie an, aus welcher Charge die verkauften Einheiten stammen; vorgeschlagen wird die Charge mit dem nächsten Ablaufdatum. Sie können dies später unter Bestellungen tun.",
       "none": "Diese Bestellung hat keine Einheiten, die auf eine Charge warten.",
-      "progress": "{{total}} von {{quantity}} {{unit}}",
+      "progress": "{{total}} von {{amount}}",
       "noLots": "Dieses Produkt hat keine Chargen mit Bestand.",
-      "lotLine": "Haltbar bis {{date}} · {{quantity}} {{unit}}",
+      "lotLine": "Haltbar bis {{date}} · {{amount}}",
       "lotAria": "Einheiten der Charge mit Ablaufdatum {{date}}",
       "later": "Später",
       "save": "Chargen erfassen"
@@ -1475,9 +1479,9 @@
       "endsIn_zero": "endet heute",
       "notStarted": "noch nicht begonnen",
       "stockForSale": "Verkaufsbestand",
-      "stockLine": "{{stock}} {{unit}} · Warnung bei {{threshold}}",
-      "awaitingLot_one": "{{count}} {{unit}} verkauft, Charge noch anzugeben (zählt noch in den Chargen).",
-      "awaitingLot_other": "{{count}} {{unit}} verkauft, Charge noch anzugeben (zählen noch in den Chargen).",
+      "stockLine": "{{amount}} · Warnung bei {{threshold}}",
+      "awaitingLot_one": "{{amount}} verkauft, Charge noch anzugeben (zählt noch in den Chargen).",
+      "awaitingLot_other": "{{amount}} verkauft, Charge noch anzugeben (zählen noch in den Chargen).",
       "updateStock": "Bestand aktualisieren",
       "quantity": "Menge",
       "exact": "Genaue Anzahl",
@@ -2203,6 +2207,12 @@
           "category": "Notwendig / Präferenzen",
           "purpose": "Zuletzt verwendeter Standort für die Sortierung nach Entfernung (Gerät, Bezirk, Gemeinde oder Punkt auf der Karte). Er wird nicht an die Plattform gesendet.",
           "duration": "Sitzung (oder dauerhaft, mit Präferenzen)"
+        },
+        "translate": {
+          "type": "Lokaler Speicher",
+          "category": "Notwendig",
+          "purpose": "Merkt sich, dass Sie Texte von Landwirten und Kunden übersetzen lassen möchten.",
+          "duration": "Dauerhaft, bis Sie die Originale wählen oder den Browser leeren"
         }
       },
       "google": "Google verarbeitet die von Google Maps erhobenen Daten gemäß seiner <link>Datenschutzerklärung</link>. Sie können Cookies auch in den Einstellungen Ihres Browsers löschen.",

@@ -41,7 +41,7 @@ import {
 import { useMarketPrices, marketKey } from "@/hooks/useMarketPrices";
 import type { Product } from "@/data/products";
 import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
-import { formatEuro } from "@/lib/format";
+import { amountLabel, formatEuro, unitSuffix } from "@/lib/format";
 import {
   deliveryModeLabel,
   earliestDelivery,
@@ -360,7 +360,6 @@ const ProductDetail = () => {
                   text={product.description}
                   as="p"
                   className="text-sm leading-relaxed text-muted-foreground"
-                  toggle
                 />
               </div>
             )}
@@ -394,7 +393,7 @@ const ProductDetail = () => {
                   <span className="text-xs uppercase tracking-wide">{t("product.stock")}</span>
                 </div>
                 <p className={`mt-1 font-semibold ${product.stock <= 5 ? "text-destructive" : "text-success"}`}>
-                  {t("product.available", { count: product.stock, unit: product.unit })}
+                  {t("product.available", { count: product.stock, amount: amountLabel(product.stock, product.unit) })}
                 </p>
               </div>
               <div className="rounded-xl border border-border p-4">
@@ -490,7 +489,7 @@ const ProductDetail = () => {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                <span className="text-sm text-muted-foreground">{product.unit}</span>
+                <span className="text-sm text-muted-foreground">{unitSuffix(product.unit)}</span>
               </div>
 
               {fulfillmentChoices.length > 1 && (

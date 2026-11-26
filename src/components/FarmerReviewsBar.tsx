@@ -61,9 +61,7 @@ const ReviewCard = ({ review, clamp = false }: { review: Review; clamp?: boolean
             field="comment"
             text={review.comment}
             as="p"
-            className={`break-words text-sm text-foreground ${clamp ? "line-clamp-4" : ""}`}
-            toggle={!clamp}
-          />
+            className={`break-words text-sm text-foreground ${clamp ? "line-clamp-4" : ""}`}          />
         </div>
       )}
       <div className="mt-2 flex flex-wrap items-center gap-2">

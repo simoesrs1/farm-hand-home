@@ -53,3 +53,16 @@ export const unitLabel = (unit: string | null | undefined, count = 1) => {
   const known = BOOKING_UNITS.find((u) => u === unit);
   return known ? i18n.t(`common:orderUnits.${known}`, { count }) : unit;
 };
+
+/**
+ * Unidade a seguir a uma quantidade. Nos produtos a unidade é o tamanho da
+ * embalagem ("1 Kg", "500 g"), por isso leva "×"; sem número ("Kg") fica igual.
+ */
+export const unitSuffix = (unit: string | null | undefined, count = 1) => {
+  const label = unitLabel(unit, count);
+  return /^\s*\d/.test(label) ? `× ${label}` : label;
+};
+
+/** Quantidade com a unidade: "120 × 1 Kg", "120 Kg", "2 pessoas". */
+export const amountLabel = (quantity: number, unit: string | null | undefined) =>
+  [quantity, unitSuffix(unit, quantity)].filter((part) => part !== "").join(" ");

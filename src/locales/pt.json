@@ -19,8 +19,10 @@
       "choose": "Escolher idioma"
     },
     "content": {
-      "showOriginal": "Ver original",
-      "showTranslation": "Ver tradução"
+      "original": "Os textos dos agricultores e clientes estão no original.",
+      "translated": "Traduzido automaticamente.",
+      "translate": "Traduzir",
+      "showOriginals": "Ver originais"
     },
     "menu": {
       "button": "Menu",
@@ -542,8 +544,8 @@
       "addedDelivery": "{{amount}} × {{name}} · entrega {{date}} às {{time}}",
       "addedPickup": "{{amount}} × {{name}} · levantamento {{date}} às {{time}}",
       "stock": "Stock",
-      "available_one": "{{count}} {{unit}} disponível",
-      "available_other": "{{count}} {{unit}} disponíveis",
+      "available_one": "{{amount}} disponível",
+      "available_other": "{{amount}} disponíveis",
       "delivery": "Entrega",
       "handDelivery": "O agricultor entrega em mão",
       "handDeliveryUpTo": "O agricultor entrega em mão até {{km}} km",
@@ -901,7 +903,9 @@
       "attach": "Anexar ficheiro",
       "toFarmer": "Mensagem para o agricultor...",
       "toClient": "Mensagem para o cliente...",
-      "attachment": "Anexo"
+      "attachment": "Anexo",
+      "translate": "Traduzir conversa",
+      "showOriginals": "Ver originais"
     },
     "report": {
       "reasonTooShort": "Descreve o motivo (mínimo 5 caracteres)",
@@ -1244,16 +1248,16 @@
       "how": "Como funciona"
     },
     "lots": {
-      "indicate": "Indique {{quantity}} {{unit}} de \"{{name}}\"",
+      "indicate": "Indique {{amount}} de \"{{name}}\"",
       "failed": "Não foi possível registar os lotes",
       "saved": "Lotes registados",
       "savedText": "O stock dos lotes foi atualizado.",
       "title": "De que lote saíram?",
       "description": "A entrega já está confirmada. Indique de que lote saíram as unidades vendidas; a sugestão é o lote com a validade mais próxima. Pode fazê-lo mais tarde em Encomendas.",
       "none": "Esta encomenda não tem unidades à espera de lote.",
-      "progress": "{{total}} de {{quantity}} {{unit}}",
+      "progress": "{{total}} de {{amount}}",
       "noLots": "Este produto não tem lotes com stock.",
-      "lotLine": "Validade {{date}} · {{quantity}} {{unit}}",
+      "lotLine": "Validade {{date}} · {{amount}}",
       "lotAria": "Unidades do lote com validade {{date}}",
       "later": "Mais tarde",
       "save": "Registar lotes"
@@ -1475,9 +1479,9 @@
       "endsIn_zero": "termina hoje",
       "notStarted": "ainda não iniciado",
       "stockForSale": "Stock à venda",
-      "stockLine": "{{stock}} {{unit}} · aviso quando chegar a {{threshold}}",
-      "awaitingLot_one": "{{count}} {{unit}} vendida à espera de indicação do lote (ainda conta nos lotes).",
-      "awaitingLot_other": "{{count}} {{unit}} vendidas à espera de indicação do lote (ainda contam nos lotes).",
+      "stockLine": "{{amount}} · aviso quando chegar a {{threshold}}",
+      "awaitingLot_one": "{{amount}} vendida à espera de indicação do lote (ainda conta nos lotes).",
+      "awaitingLot_other": "{{amount}} vendidas à espera de indicação do lote (ainda contam nos lotes).",
       "updateStock": "Atualizar stock",
       "quantity": "Quantidade",
       "exact": "Nº exato",
@@ -2203,6 +2207,12 @@
           "category": "Necessário / Preferências",
           "purpose": "Última localização usada para ordenar por distância (do aparelho, distrito, concelho ou ponto no mapa). Não é enviada para a plataforma.",
           "duration": "Sessão (ou persistente, com preferências)"
+        },
+        "translate": {
+          "type": "Armazenamento local",
+          "category": "Necessário",
+          "purpose": "Lembra que pediu para traduzir os textos dos agricultores e clientes.",
+          "duration": "Persistente, até escolher ver os originais ou limpar o navegador"
         }
       },
       "google": "A Google trata os dados recolhidos pelo Google Maps de acordo com a sua <link>política de privacidade</link>. Pode também apagar cookies nas definições do seu navegador.",

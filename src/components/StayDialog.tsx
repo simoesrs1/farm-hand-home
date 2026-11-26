@@ -224,7 +224,6 @@ const StayDialog = ({ stay, farmName, isOwner, farmId, onOpenChange }: StayDialo
                 text={stay.description}
                 as="p"
                 className="whitespace-pre-line text-sm text-foreground"
-                toggle
               />
             </div>
 

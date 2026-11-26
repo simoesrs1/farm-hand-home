@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrderChat from "@/components/OrderChat";
-import { formatDate, formatDateTime, formatEuro, formatTime, unitLabel } from "@/lib/format";
+import { amountLabel, formatDate, formatDateTime, formatEuro, formatTime } from "@/lib/format";
 import { Trans, useTranslation } from "react-i18next";
 import TranslatedText from "@/components/TranslatedText";
 
@@ -407,7 +407,7 @@ const OrderStatus = () => {
                   <div className="flex-1">
                     <TranslatedText type="order_item" id={it.id} field="product_name" text={it.product_name} as="p" className="font-medium text-foreground" />
                     <p className="text-xs text-muted-foreground">
-                      {it.quantity} {unitLabel(it.unit, it.quantity)} × {formatEuro(it.unit_price)}
+                      {amountLabel(it.quantity, it.unit)} × {formatEuro(it.unit_price)}
                     </p>
                   </div>
                   <p className="font-medium text-foreground">{formatEuro(it.subtotal)}</p>

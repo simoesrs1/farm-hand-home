@@ -13,6 +13,8 @@ import FarmerStatusBanner from "./components/FarmerStatusBanner";
 import MySubscriptions from "./pages/farmer/MySubscriptions";
 import ClientEmailVerificationGate from "./components/ClientEmailVerificationGate";
 import { ConsentProvider } from "./contexts/ConsentContext";
+import { ContentTranslationProvider } from "./contexts/ContentTranslationContext";
+import ContentTranslationBar from "./components/ContentTranslationBar";
 import CookieConsent from "./components/CookieConsent";
 import { useScrollOnNavigate } from "./hooks/useScrollOnNavigate";
 
@@ -65,6 +67,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <ContentTranslationProvider>
       <BrowserRouter>
         <ConsentProvider>
           <AuthProvider>
@@ -78,6 +81,7 @@ const App = () => (
 
                   <Header />
                   <FarmerStatusBanner />
+                  <ContentTranslationBar />
                   <div className="flex-1">
                     <Routes>
                       <Route path="/" element={<Index />} />
@@ -131,6 +135,7 @@ const App = () => (
           </AuthProvider>
         </ConsentProvider>
       </BrowserRouter>
+      </ContentTranslationProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

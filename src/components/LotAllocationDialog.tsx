@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
-import { formatDate } from "@/lib/format";
+import { amountLabel, formatDate } from "@/lib/format";
 
 type PendingProduct = {
   productId: string;
@@ -97,7 +97,7 @@ const LotAllocationDialog = ({ orderId, onOpenChange, onDone }: LotAllocationDia
     if (!orderId) return;
     const wrong = products.find((p) => totalFor(p) !== p.quantity);
     if (wrong) {
-      toast({ title: t("lots.indicate", { quantity: wrong.quantity, unit: wrong.unit, name: wrong.name }), variant: "destructive" });
+      toast({ title: t("lots.indicate", { amount: amountLabel(wrong.quantity, wrong.unit), name: wrong.name }), variant: "destructive" });
       return;
     }
     const allocations = products.flatMap((p) =>
@@ -141,7 +141,7 @@ const LotAllocationDialog = ({ orderId, onOpenChange, onDone }: LotAllocationDia
                   <div className="flex items-baseline justify-between gap-2">
                     <p className="font-medium text-foreground">{p.name}</p>
                     <p className={`text-xs ${total === p.quantity ? "text-primary" : "text-destructive"}`}>
-                      {t("lots.progress", { total, quantity: p.quantity, unit: p.unit })}
+                      {t("lots.progress", { total, amount: amountLabel(p.quantity, p.unit) })}
                     </p>
                   </div>
                   {p.lots.length === 0 ? (
@@ -151,7 +151,7 @@ const LotAllocationDialog = ({ orderId, onOpenChange, onDone }: LotAllocationDia
                       {p.lots.map((l) => (
                         <li key={l.id} className="flex flex-wrap items-center gap-3 px-3 py-2 text-sm">
                           <span className="flex-1 text-foreground">
-                            {t("lots.lotLine", { date: formatDay(l.expires_at), quantity: l.quantity_remaining, unit: p.unit })}
+                            {t("lots.lotLine", { date: formatDay(l.expires_at), amount: amountLabel(l.quantity_remaining, p.unit) })}
                           </span>
                           <Input
                             inputMode="decimal"

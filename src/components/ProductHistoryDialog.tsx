@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { formatDate, formatEuro, formatTime } from "@/lib/format";
+import { amountLabel, formatDate, formatEuro, formatTime } from "@/lib/format";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 
@@ -205,8 +205,7 @@ const ProductHistoryDialog = ({
                             }
                           >
                             {delta > 0 ? "+" : "−"}
-                            {Math.abs(delta)}
-                            {unit ? ` ${unit}` : ""}
+                            {amountLabel(Math.abs(delta), unit)}
                           </span>
                           <span className="text-muted-foreground">
                             {" "}

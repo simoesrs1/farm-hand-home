@@ -19,8 +19,10 @@
       "choose": "Elegir idioma"
     },
     "content": {
-      "showOriginal": "Ver original",
-      "showTranslation": "Ver traducción"
+      "original": "Los textos de agricultores y clientes se muestran en el original.",
+      "translated": "Traducido automáticamente.",
+      "translate": "Traducir",
+      "showOriginals": "Ver originales"
     },
     "menu": {
       "button": "Menú",
@@ -542,8 +544,8 @@
       "addedDelivery": "{{amount}} × {{name}} · entrega {{date}} a las {{time}}",
       "addedPickup": "{{amount}} × {{name}} · recogida {{date}} a las {{time}}",
       "stock": "Stock",
-      "available_one": "{{count}} {{unit}} disponible",
-      "available_other": "{{count}} {{unit}} disponibles",
+      "available_one": "{{amount}} disponible",
+      "available_other": "{{amount}} disponibles",
       "delivery": "Entrega",
       "handDelivery": "El agricultor entrega en mano",
       "handDeliveryUpTo": "El agricultor entrega en mano hasta {{km}} km",
@@ -901,7 +903,9 @@
       "attach": "Adjuntar archivo",
       "toFarmer": "Mensaje para el agricultor...",
       "toClient": "Mensaje para el cliente...",
-      "attachment": "Adjunto"
+      "attachment": "Adjunto",
+      "translate": "Traducir conversación",
+      "showOriginals": "Ver originales"
     },
     "report": {
       "reasonTooShort": "Describe el motivo (mínimo 5 caracteres)",
@@ -1244,16 +1248,16 @@
       "how": "Cómo funciona"
     },
     "lots": {
-      "indicate": "Indique {{quantity}} {{unit}} de \"{{name}}\"",
+      "indicate": "Indique {{amount}} de \"{{name}}\"",
       "failed": "No se han podido registrar los lotes",
       "saved": "Lotes registrados",
       "savedText": "Se ha actualizado el stock de los lotes.",
       "title": "¿De qué lote salieron?",
       "description": "La entrega ya está confirmada. Indique de qué lote salieron las unidades vendidas; la sugerencia es el lote con la caducidad más próxima. Puede hacerlo más tarde en Pedidos.",
       "none": "Este pedido no tiene unidades pendientes de lote.",
-      "progress": "{{total}} de {{quantity}} {{unit}}",
+      "progress": "{{total}} de {{amount}}",
       "noLots": "Este producto no tiene lotes con stock.",
-      "lotLine": "Caducidad {{date}} · {{quantity}} {{unit}}",
+      "lotLine": "Caducidad {{date}} · {{amount}}",
       "lotAria": "Unidades del lote con caducidad {{date}}",
       "later": "Más tarde",
       "save": "Registrar lotes"
@@ -1475,9 +1479,9 @@
       "endsIn_zero": "termina hoy",
       "notStarted": "aún no iniciado",
       "stockForSale": "Stock a la venta",
-      "stockLine": "{{stock}} {{unit}} · aviso al llegar a {{threshold}}",
-      "awaitingLot_one": "{{count}} {{unit}} vendida pendiente de indicar el lote (aún cuenta en los lotes).",
-      "awaitingLot_other": "{{count}} {{unit}} vendidas pendientes de indicar el lote (aún cuentan en los lotes).",
+      "stockLine": "{{amount}} · aviso al llegar a {{threshold}}",
+      "awaitingLot_one": "{{amount}} vendida pendiente de indicar el lote (aún cuenta en los lotes).",
+      "awaitingLot_other": "{{amount}} vendidas pendientes de indicar el lote (aún cuentan en los lotes).",
       "updateStock": "Actualizar stock",
       "quantity": "Cantidad",
       "exact": "N.º exacto",
@@ -2203,6 +2207,12 @@
           "category": "Necesaria / Preferencias",
           "purpose": "Última ubicación usada para ordenar por distancia (dispositivo, distrito, municipio o punto en el mapa). No se envía a la plataforma.",
           "duration": "Sesión (o persistente, con preferencias)"
+        },
+        "translate": {
+          "type": "Almacenamiento local",
+          "category": "Necesaria",
+          "purpose": "Recuerda que ha pedido traducir los textos de agricultores y clientes.",
+          "duration": "Persistente, hasta que elija ver los originales o limpie el navegador"
         }
       },
       "google": "Google trata los datos recogidos por Google Maps según su <link>política de privacidad</link>. También puede borrar las cookies en los ajustes de su navegador.",

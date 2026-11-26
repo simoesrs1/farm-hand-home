@@ -18,6 +18,7 @@ const STORAGE_ITEMS = [
   { key: "prev", name: "<chave>::prev" },
   { key: "pendingProfile", name: "farmconnect:pending_profile_type" },
   { key: "lang", name: "valorrural_lang" },
+  { key: "translate", name: "valorrural_translate_content" },
   { key: "animations", name: "valorrural:animacoes-pausadas" },
   { key: "fonts", name: "Google Fonts" },
   { key: "google", name: "Google (NID…)" },

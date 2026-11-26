@@ -21,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { pendingLotUnitsByProduct } from "@/lib/lot-allocations";
 import { useTranslation } from "react-i18next";
-import { formatDate } from "@/lib/format";
+import { amountLabel, formatDate } from "@/lib/format";
 
 type ProductRow = {
   id: string;
@@ -384,11 +384,11 @@ const MyProducts = () => {
                   <div>
                     <p className="text-xs font-medium text-muted-foreground">{t("products.stockForSale")}</p>
                     <p className="mt-1 text-sm text-foreground">
-                      {t("products.stockLine", { stock, unit: p.unit, threshold })}
+                      {t("products.stockLine", { amount: amountLabel(stock, p.unit), threshold })}
                     </p>
                     {(awaitingLot[p.id] ?? 0) > 0 && (
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {t("products.awaitingLot", { count: awaitingLot[p.id], unit: p.unit })}
+                        {t("products.awaitingLot", { count: awaitingLot[p.id], amount: amountLabel(awaitingLot[p.id], p.unit) })}
                       </p>
                     )}
                   </div>
@@ -480,7 +480,7 @@ const MyProducts = () => {
                         return (
                           <li key={b.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2">
                             <span className="w-28 shrink-0 text-xs font-semibold text-primary">{i === 0 ? t("products.sellsFirst") : ""}</span>
-                            <span className="font-medium text-foreground">{b.quantity_remaining} {p.unit}</span>
+                            <span className="font-medium text-foreground">{amountLabel(b.quantity_remaining, p.unit)}</span>
                             <span className="text-foreground">{t("products.expiry", { date: formatDay(b.expires_at!) })}</span>
                             <span
                               className={`text-xs ${
@@ -510,7 +510,7 @@ const MyProducts = () => {
                     <ul className="space-y-2">
                       {pendingBatches.map((b) => (
                         <li key={b.id} className="flex flex-wrap items-end gap-3">
-                          <span className="pb-2 text-sm font-medium text-foreground">{b.quantity_remaining} {p.unit}</span>
+                          <span className="pb-2 text-sm font-medium text-foreground">{amountLabel(b.quantity_remaining, p.unit)}</span>
                           <div className="space-y-1">
                             <Label htmlFor={`pending-${b.id}`} className="text-xs text-muted-foreground">{t("products.expiryLabel")}</Label>
                             <Input

@@ -19,8 +19,10 @@
       "choose": "Choose language"
     },
     "content": {
-      "showOriginal": "Show original",
-      "showTranslation": "Show translation"
+      "original": "Texts from farmers and customers are shown in the original.",
+      "translated": "Translated automatically.",
+      "translate": "Translate",
+      "showOriginals": "Show originals"
     },
     "menu": {
       "button": "Menu",
@@ -542,8 +544,8 @@
       "addedDelivery": "{{amount}} × {{name}} · delivery {{date}} at {{time}}",
       "addedPickup": "{{amount}} × {{name}} · collection {{date}} at {{time}}",
       "stock": "Stock",
-      "available_one": "{{count}} {{unit}} available",
-      "available_other": "{{count}} {{unit}} available",
+      "available_one": "{{amount}} available",
+      "available_other": "{{amount}} available",
       "delivery": "Delivery",
       "handDelivery": "The farmer delivers by hand",
       "handDeliveryUpTo": "The farmer delivers by hand up to {{km}} km",
@@ -901,7 +903,9 @@
       "attach": "Attach file",
       "toFarmer": "Message to the farmer...",
       "toClient": "Message to the customer...",
-      "attachment": "Attachment"
+      "attachment": "Attachment",
+      "translate": "Translate conversation",
+      "showOriginals": "Show originals"
     },
     "report": {
       "reasonTooShort": "Describe the reason (at least 5 characters)",
@@ -1244,16 +1248,16 @@
       "how": "How it works"
     },
     "lots": {
-      "indicate": "Enter {{quantity}} {{unit}} of \"{{name}}\"",
+      "indicate": "Enter {{amount}} of \"{{name}}\"",
       "failed": "The lots could not be recorded",
       "saved": "Lots recorded",
       "savedText": "Lot stock has been updated.",
       "title": "Which lot did they come from?",
       "description": "The delivery is already confirmed. Indicate which lot the sold units came from; the suggestion is the lot with the nearest expiry date. You can do this later in Orders.",
       "none": "This order has no units waiting for a lot.",
-      "progress": "{{total}} of {{quantity}} {{unit}}",
+      "progress": "{{total}} of {{amount}}",
       "noLots": "This product has no lots with stock.",
-      "lotLine": "Expiry {{date}} · {{quantity}} {{unit}}",
+      "lotLine": "Expiry {{date}} · {{amount}}",
       "lotAria": "Units from the lot expiring {{date}}",
       "later": "Later",
       "save": "Record lots"
@@ -1475,9 +1479,9 @@
       "endsIn_zero": "ends today",
       "notStarted": "not started yet",
       "stockForSale": "Stock for sale",
-      "stockLine": "{{stock}} {{unit}} · alert at {{threshold}}",
-      "awaitingLot_one": "{{count}} {{unit}} sold awaiting lot assignment (still counts in the lots).",
-      "awaitingLot_other": "{{count}} {{unit}} sold awaiting lot assignment (still count in the lots).",
+      "stockLine": "{{amount}} · alert at {{threshold}}",
+      "awaitingLot_one": "{{amount}} sold awaiting lot assignment (still counts in the lots).",
+      "awaitingLot_other": "{{amount}} sold awaiting lot assignment (still count in the lots).",
       "updateStock": "Update stock",
       "quantity": "Quantity",
       "exact": "Exact number",
@@ -2203,6 +2207,12 @@
           "category": "Necessary / Preferences",
           "purpose": "Last location used to sort by distance (device, district, municipality or point on the map). It is not sent to the platform.",
           "duration": "Session (or persistent, with preferences)"
+        },
+        "translate": {
+          "type": "Local storage",
+          "category": "Necessary",
+          "purpose": "Remembers that you asked to translate texts from farmers and customers.",
+          "duration": "Persistent, until you choose to see the originals or clear the browser"
         }
       },
       "google": "Google processes the data collected by Google Maps according to its <link>privacy policy</link>. You can also delete cookies in your browser settings.",

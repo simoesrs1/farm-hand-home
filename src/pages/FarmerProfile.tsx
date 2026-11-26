@@ -300,7 +300,6 @@ const FarmerProfile = () => {
                 text={display.description || t("farmerPage.noDescription")}
                 as="p"
                 className="text-muted-foreground leading-relaxed"
-                toggle
               />
             </div>
 

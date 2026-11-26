@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { AlertTriangle, Paperclip, Send, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Languages, Paperclip, Send, ShieldAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { formatDateTime } from "@/lib/format";
@@ -61,6 +61,8 @@ const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
   const [file, setFile] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  // Tradução das mensagens da outra parte, só a pedido (também em português).
+  const [translate, setTranslate] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
 
   const closed =
@@ -146,12 +148,26 @@ const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
     <div className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
         <p className="text-sm font-medium text-foreground">{t("chat.title")}</p>
-        <ReportDialog
-          orderId={orderId}
-          reporterRole={viewerRole}
-          open={reportOpen}
-          onOpenChange={setReportOpen}
-        />
+        <div className="flex flex-wrap items-center justify-end gap-1">
+          {messages.some((m) => m.content && m.sender_role !== viewerRole) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5"
+              aria-pressed={translate}
+              onClick={() => setTranslate((v) => !v)}
+            >
+              <Languages className="h-4 w-4" />
+              {translate ? t("chat.showOriginals") : t("chat.translate")}
+            </Button>
+          )}
+          <ReportDialog
+            orderId={orderId}
+            reporterRole={viewerRole}
+            open={reportOpen}
+            onOpenChange={setReportOpen}
+          />
+        </div>
       </div>
 
       <div ref={scroller} className="max-h-80 overflow-y-auto px-4 py-3 space-y-2">
@@ -160,7 +176,7 @@ const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
             {t("chat.empty")}
           </p>
         ) : (
-          messages.map((m) => <Bubble key={m.id} m={m} viewerRole={viewerRole} />)
+          messages.map((m) => <Bubble key={m.id} m={m} viewerRole={viewerRole} translate={translate} />)
         )}
       </div>
 
@@ -197,9 +213,11 @@ const OrderChat = ({ orderId, viewerRole, deliveredAt }: Props) => {
 const Bubble = ({
   m,
   viewerRole,
+  translate,
 }: {
   m: Message;
   viewerRole: "cliente" | "agricultor";
+  translate: boolean;
 }) => {
   if (m.sender_role === "sistema") {
     return (
@@ -207,7 +225,7 @@ const Bubble = ({
         <div className="flex items-start gap-2">
           <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           <div>
-            <TranslatedText type="chat" id={m.id} field="content" text={m.content} as="p" className="whitespace-pre-wrap" toggle />
+            <TranslatedText type="chat" id={m.id} field="content" text={m.content} as="p" className="whitespace-pre-wrap" translate={translate} />
           </div>
         </div>
       </div>
@@ -221,7 +239,7 @@ const Bubble = ({
           mine ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
         }`}
       >
-        {/* As mensagens da outra parte são traduzidas para o idioma de quem lê; as próprias ficam como foram escritas. */}
+        {/* As mensagens da outra parte podem ser traduzidas para o idioma de quem lê; as próprias ficam como foram escritas. */}
         {m.content &&
           (mine ? (
             <p className="whitespace-pre-wrap break-words">{m.content}</p>
@@ -233,7 +251,7 @@ const Bubble = ({
               text={m.content}
               as="p"
               className="whitespace-pre-wrap break-words"
-              toggle
+              translate={translate}
             />
           ))}
         {m.attachment_url && (

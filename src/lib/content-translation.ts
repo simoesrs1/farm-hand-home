@@ -56,10 +56,12 @@ const flush = async () => {
     const list = [...refs.values()];
     for (let start = 0; start < list.length; start += BATCH_SIZE) {
       const chunk = list.slice(start, start + BATCH_SIZE);
-      const { data } = await supabase.functions.invoke<{ translations?: Record<string, string> }>(
+      const { data, error } = await supabase.functions.invoke<{ translations?: Record<string, string> }>(
         "translate-content",
         { body: { lang, items: chunk } },
       );
+      // Pedido falhado: não fica em cache, para se poder tentar outra vez.
+      if (error) continue;
       for (const ref of chunk) cache.set(cacheKey(ref, lang), data?.translations?.[refKey(ref)] ?? null);
       listeners.forEach((l) => l());
     }

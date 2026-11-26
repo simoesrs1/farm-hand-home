@@ -27,7 +27,7 @@ import { canFileDeliveryComplaint, reviewContext } from "@/lib/review-eligibilit
 import { FREE_CANCEL_DAYS, cancellationQuote } from "@/lib/experience-pricing";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import DeliveryTrackingDialog from "@/components/DeliveryTrackingDialog";
-import { formatDate, formatDateTime, formatEuro, unitLabel } from "@/lib/format";
+import { amountLabel, formatDate, formatDateTime, formatEuro } from "@/lib/format";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import TranslatedText from "@/components/TranslatedText";
@@ -437,7 +437,7 @@ const MyOrders = () => {
                     <div className="flex-1">
                       <TranslatedText type="order_item" id={it.id} field="product_name" text={it.product_name} as="p" className="font-medium text-foreground" />
                       <p className="text-xs text-muted-foreground">
-                        {it.quantity} {unitLabel(it.unit, it.quantity)} × {formatEuro(it.unit_price)}
+                        {amountLabel(it.quantity, it.unit)} × {formatEuro(it.unit_price)}
                       </p>
                     </div>
                     <p className="font-medium text-foreground">{formatEuro(it.subtotal)}</p>

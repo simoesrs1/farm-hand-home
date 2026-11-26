@@ -18,7 +18,13 @@ O site está disponível em português, inglês, alemão, espanhol e francês. O
 
 ## 2. Texto escrito por pessoas (tradução automática)
 
-Descrições, títulos, notas, avaliações, notificações, mensagens do chat e nomes nas linhas das encomendas são traduzidos pela IA (Anthropic, modelo `claude-haiku-5-5`) quando alguém os vê noutro idioma.
+Descrições, títulos, notas, avaliações, notificações, mensagens do chat e nomes nas linhas das encomendas são traduzidos pela IA (Anthropic, modelo `claude-haiku-5-5`), em regra só a pedido (ver abaixo).
+
+Quando se traduz:
+
+- **Botão no topo da página** (`ContentTranslationBar`): nos idiomas que não o português, os textos aparecem no original até se carregar em "Traduzir". A escolha mantém-se entre páginas e visitas (`localStorage`, `valorrural_translate_content`, declarada na secção de cookies) até se carregar em "Ver originais". A barra só aparece em páginas com texto traduzível.
+- **Chat:** botão próprio, "Traduzir conversa", em todos os idiomas, incluindo português. Não depende do botão da página nem fica guardado.
+- **Notificações:** automáticas nos idiomas que não o português, porque é o site que as gera.
 
 | Tipo | Tabela | Campos | Quem pode pedir |
 |---|---|---|---|
@@ -33,17 +39,17 @@ Descrições, títulos, notas, avaliações, notificações, mensagens do chat e
 
 Como funciona:
 
-1. O componente `TranslatedText` (com o hook `useTranslatedContent`) mostra logo o original e pede a tradução.
+1. O componente `TranslatedText` (com o hook `useTranslatedContent`) mostra o original e só pede a tradução nas condições acima (`ContentTranslationContext`).
 2. `src/lib/content-translation.ts` junta os pedidos (até 50 por chamada) e chama a Edge Function `translate-content`.
 3. O browser só envia referências (`tipo`, `id`, `campo`). A função lê o texto na base de dados e verifica se quem pede o pode ver.
 4. As traduções ficam em `content_translations`, com o hash do texto original. Se o texto mudar, volta a ser traduzido. Esta tabela só é acessível ao `service_role`.
-5. Textos longos têm o botão "Ver original" / "Ver tradução".
+5. Se o pedido falhar, não fica em cache e volta a ser tentado quando se pedir outra vez.
 
 Notas:
 
 - As notificações são geradas em português: em português não se pede tradução.
-- O resto pode ter sido escrito noutra língua (um agricultor estrangeiro, por exemplo), por isso também se traduz para português. Se o texto já estiver em português, a IA devolve-o igual, fica em cache e não aparece o botão "Ver original".
-- No chat, só as mensagens da outra parte são traduzidas.
+- Em português o site não traduz as páginas: a IA chegou a reescrever texto que já era português. Só o chat o permite, a pedido.
+- No chat, só as mensagens da outra parte (e as do sistema) são traduzidas.
 - Sem `ANTHROPIC_API_KEY` nos segredos do Supabase, a função devolve apenas o que já estiver em cache, e o site mostra os originais.
 
 ## 3. Mensagens de erro do servidor

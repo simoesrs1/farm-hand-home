@@ -230,7 +230,6 @@ const ExperienceDialog = ({ experience, farmName, isOwner, farmId, onOpenChange 
                 text={exp.description}
                 as="p"
                 className="whitespace-pre-line text-sm text-foreground"
-                toggle
               />
             </div>
 

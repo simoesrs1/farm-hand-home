@@ -19,8 +19,10 @@
       "choose": "Choisir la langue"
     },
     "content": {
-      "showOriginal": "Voir l'original",
-      "showTranslation": "Voir la traduction"
+      "original": "Les textes des agriculteurs et des clients sont affichés dans leur version originale.",
+      "translated": "Traduit automatiquement.",
+      "translate": "Traduire",
+      "showOriginals": "Voir les originaux"
     },
     "menu": {
       "button": "Menu",
@@ -542,8 +544,8 @@
       "addedDelivery": "{{amount}} × {{name}} · livraison {{date}} à {{time}}",
       "addedPickup": "{{amount}} × {{name}} · retrait {{date}} à {{time}}",
       "stock": "Stock",
-      "available_one": "{{count}} {{unit}} disponible",
-      "available_other": "{{count}} {{unit}} disponibles",
+      "available_one": "{{amount}} disponible",
+      "available_other": "{{amount}} disponibles",
       "delivery": "Livraison",
       "handDelivery": "L'agriculteur livre en main propre",
       "handDeliveryUpTo": "L'agriculteur livre en main propre jusqu'à {{km}} km",
@@ -901,7 +903,9 @@
       "attach": "Joindre un fichier",
       "toFarmer": "Message pour l'agriculteur...",
       "toClient": "Message pour le client...",
-      "attachment": "Pièce jointe"
+      "attachment": "Pièce jointe",
+      "translate": "Traduire la conversation",
+      "showOriginals": "Voir les originaux"
     },
     "report": {
       "reasonTooShort": "Décris le motif (5 caractères minimum)",
@@ -1244,16 +1248,16 @@
       "how": "Comment ça marche"
     },
     "lots": {
-      "indicate": "Indiquez {{quantity}} {{unit}} de \"{{name}}\"",
+      "indicate": "Indiquez {{amount}} de \"{{name}}\"",
       "failed": "Impossible d'enregistrer les lots",
       "saved": "Lots enregistrés",
       "savedText": "Le stock des lots a été mis à jour.",
       "title": "De quel lot proviennent-ils ?",
       "description": "La livraison est déjà confirmée. Indiquez de quel lot proviennent les unités vendues ; la suggestion est le lot à la date limite la plus proche. Vous pouvez le faire plus tard dans Commandes.",
       "none": "Cette commande n'a pas d'unités en attente de lot.",
-      "progress": "{{total}} sur {{quantity}} {{unit}}",
+      "progress": "{{total}} sur {{amount}}",
       "noLots": "Ce produit n'a pas de lots en stock.",
-      "lotLine": "DLC {{date}} · {{quantity}} {{unit}}",
+      "lotLine": "DLC {{date}} · {{amount}}",
       "lotAria": "Unités du lot avec DLC {{date}}",
       "later": "Plus tard",
       "save": "Enregistrer les lots"
@@ -1475,9 +1479,9 @@
       "endsIn_zero": "se termine aujourd'hui",
       "notStarted": "pas encore commencé",
       "stockForSale": "Stock en vente",
-      "stockLine": "{{stock}} {{unit}} · alerte à {{threshold}}",
-      "awaitingLot_one": "{{count}} {{unit}} vendue en attente d'indication du lot (compte encore dans les lots).",
-      "awaitingLot_other": "{{count}} {{unit}} vendues en attente d'indication du lot (comptent encore dans les lots).",
+      "stockLine": "{{amount}} · alerte à {{threshold}}",
+      "awaitingLot_one": "{{amount}} vendue en attente d'indication du lot (compte encore dans les lots).",
+      "awaitingLot_other": "{{amount}} vendues en attente d'indication du lot (comptent encore dans les lots).",
       "updateStock": "Mettre à jour le stock",
       "quantity": "Quantité",
       "exact": "Nombre exact",
@@ -2203,6 +2207,12 @@
           "category": "Nécessaire / Préférences",
           "purpose": "Dernier lieu utilisé pour trier par distance (appareil, district, commune ou point sur la carte). Il n'est pas envoyé à la plateforme.",
           "duration": "Session (ou persistant, avec préférences)"
+        },
+        "translate": {
+          "type": "Stockage local",
+          "category": "Nécessaire",
+          "purpose": "Mémorise que vous avez demandé la traduction des textes des agriculteurs et des clients.",
+          "duration": "Persistant, jusqu'à ce que vous choisissiez les originaux ou vidiez le navigateur"
         }
       },
       "google": "Google traite les données collectées par Google Maps conformément à sa <link>politique de confidentialité</link>. Vous pouvez aussi supprimer les cookies dans les paramètres de votre navigateur.",

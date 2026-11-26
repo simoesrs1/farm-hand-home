@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import DeliveryRouteMapDialog, { DeliveryRouteControls, RouteDaySummary } from "@/components/DeliveryRouteMapDialog";
 import { useDeliveryRoute, type RouteStop } from "@/hooks/useDeliveryRoute";
-import { formatDate, formatDateTime, formatEuro, formatTime, unitLabel } from "@/lib/format";
+import { amountLabel, formatDate, formatDateTime, formatEuro, formatTime } from "@/lib/format";
 import { scopedStorage, STORAGE_KEYS } from "@/lib/consent";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -396,8 +396,7 @@ const FarmerOrders = () => {
                             <span key={it.id}>
                               {i > 0 && " · "}
                               <TranslatedText type="order_item" id={it.id} field="product_name" text={it.product_name} /> (
-                              {it.quantity}
-                              {it.unit ? ` ${unitLabel(it.unit, it.quantity)}` : ""})
+                              {amountLabel(it.quantity, it.unit)})
                             </span>
                           ))}
                         </p>
@@ -503,7 +502,7 @@ const FarmerOrders = () => {
                               <img src={it.product_image} alt={it.product_name} className="h-6 w-6 rounded object-cover" />
                             )}
                             <TranslatedText type="order_item" id={it.id} field="product_name" text={it.product_name} className="flex-1" />
-                            <span>{it.quantity} {unitLabel(it.unit, it.quantity)}</span>
+                            <span>{amountLabel(it.quantity, it.unit)}</span>
                           </li>
                         ))}
                       </ul>
@@ -667,7 +666,7 @@ const FarmerOrders = () => {
                         <div className="flex-1">
                           <TranslatedText type="order_item" id={it.id} field="product_name" text={it.product_name} as="p" className="font-medium text-foreground" />
                           <p className="text-xs text-muted-foreground">
-                            {it.quantity} {unitLabel(it.unit, it.quantity)} × {formatEuro(it.unit_price)}
+                            {amountLabel(it.quantity, it.unit)} × {formatEuro(it.unit_price)}
                           </p>
                         </div>
                         <p className="font-medium text-foreground">{formatEuro(it.subtotal)}</p>
