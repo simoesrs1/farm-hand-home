@@ -145,6 +145,7 @@ const StripePayoutsCard = ({ userId }: { userId: string }) => {
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
+        
         {active ? (
           <Button variant="outline" onClick={() => openStripe("dashboard")} disabled={busy !== null}>
             {busy === "dashboard" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}

@@ -4,10 +4,11 @@ O site está disponível em português, inglês, alemão, espanhol e francês. O
 
 ## 1. Texto da interface (botões, menus, páginas)
 
-- Biblioteca `react-i18next`; configuração em `src/i18n/` (os ficheiros de `src/locales/*/*.json` carregam-se sozinhos).
-- Áreas (namespaces): `common`, `home`, `catalog`, `cart`, `orders`, `account`, `farmer`, `offerings`, `legal`, `server`.
-- Área nova: criar `src/locales/<idioma>/<área>.json` nos cinco idiomas e acrescentar o import português a `ptResources` em `src/i18n/index.ts` (é daí que vêm os tipos das chaves).
-- O teste `src/test/locales.test.ts` falha se faltar uma chave, se houver um texto vazio ou se as variáveis (`{{nome}}`) forem diferentes entre idiomas.
+- Biblioteca `react-i18next`; configuração em `src/i18n/` (os ficheiros de `src/locales/*.json` carregam-se sozinhos).
+- Um ficheiro por idioma (`pt.json`, `en.json`, `de.json`, `es.json`, `fr.json`), com chaves e valores organizados por secções. No código usa-se `t("chave")`.
+- Secções (namespaces): `common`, `home`, `catalog`, `cart`, `orders`, `account`, `farmer`, `offerings`, `legal`, `server`.
+- Área nova: acrescentar a secção nos cinco ficheiros (os tipos das chaves vêm de `pt.json`).
+- O teste `src/test/locales.test.ts` falha se faltar uma secção ou uma chave, se houver um texto vazio ou se as variáveis (`{{nome}}`) forem diferentes entre idiomas.
 - Plurais: chaves `_one` e `_other` (e `_zero` quando faz sentido), usadas com `t("chave", { count })`.
 - O idioma escolhido fica em `localStorage` (`valorrural_lang`) e, com sessão iniciada, em `profiles.preferred_language`. Na primeira sessão, o idioma em uso é guardado no perfil.
 - Textos que vivem em `src/lib` (dias da semana, categorias, formas de entrega, níveis de atividade, validações) usam `i18n.t`.
@@ -47,9 +48,9 @@ Notas:
 
 ## 3. Mensagens de erro do servidor
 
-As Edge Functions e as funções SQL respondem em português. `src/lib/server-messages.ts` reconhece cada mensagem conhecida (incluindo partes variáveis, como números e nomes) e troca-a pela tradução de `src/locales/<idioma>/server.json`. Está ligado ao `toast` (`src/hooks/use-toast.ts`) e aos avisos do chat, por isso não é preciso chamar nada em cada página. Mensagens desconhecidas aparecem como vieram.
+As Edge Functions e as funções SQL respondem em português. `src/lib/server-messages.ts` reconhece cada mensagem conhecida (incluindo partes variáveis, como números e nomes) e troca-a pela tradução da secção `server` de `src/locales/<idioma>.json`. Está ligado ao `toast` (`src/hooks/use-toast.ts`) e aos avisos do chat, por isso não é preciso chamar nada em cada página. Mensagens desconhecidas aparecem como vieram.
 
-Mensagem nova no servidor: acrescentar a linha em `server-messages.ts` e a tradução nos cinco `server.json`.
+Mensagem nova no servidor: acrescentar a linha em `server-messages.ts` e a tradução na secção `server` dos cinco idiomas.
 
 ## 4. Emails
 
@@ -60,7 +61,7 @@ Mensagem nova no servidor: acrescentar a linha em `server-messages.ts` e a tradu
 
 - Termos (`src/pages/Terms.tsx`) e Política de Privacidade (`src/pages/Privacy.tsx`) têm a versão portuguesa, que prevalece, e traduções de cortesia em `src/pages/legal/*.{en,de,es,fr}.tsx`, com a mesma estrutura e os mesmos `id` das secções (as âncoras, como `/termos#ordenacao`, funcionam em todos os idiomas).
 - Nas traduções aparece o aviso "Tradução de cortesia. Em caso de divergência, prevalece a versão portuguesa." e um botão para ver o original.
-- A secção de cookies (`CookieSection`) e o aviso de cookies (`CookieConsent`) usam os textos de `legal.json`.
+- A secção de cookies (`CookieSection`) e o aviso de cookies (`CookieConsent`) usam os textos da secção `legal`.
 - Ao alterar um texto legal em português, atualizar as quatro traduções. Convém uma revisão jurídica das traduções antes de publicar.
 
 ## Ativar

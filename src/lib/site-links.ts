@@ -3,7 +3,7 @@ import { BedDouble, Info, LayoutGrid, Sprout, Tent, type LucideIcon } from "luci
 /**
  * Páginas gerais: na barra de cima no computador. No menu lateral, as de
  * explorar aparecem sempre e as restantes só no telemóvel.
- * `labelKey`: chave de tradução em src/locales/<idioma>/common.json.
+ * `labelKey`: chave de tradução na secção `common` de src/locales/<idioma>.json.
  */
 export const siteLinks: {
   to: string;

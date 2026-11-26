@@ -46,9 +46,9 @@ Depois de alterar código, corre sempre `tsc` e `eslint` sobre os ficheiros alte
 - Escreve código parecido com o que está à volta: mesma densidade de comentários, nomes e padrões.
 - Comentários em português. Nomes de variáveis, funções e componentes em inglês (`homeDeliveryOrders`, `FarmerOrders`).
 - Todo o texto visível na interface em pt-PT. Mantém a forma de tratamento que a página já usa ("tu" ou "você"), sem misturar as duas na mesma página.
-- O site tem cinco idiomas (PT, EN, DE, ES, FR) com `react-i18next` (`src/i18n/`). Texto novo da interface não se escreve diretamente no JSX: vai para `src/locales/<idioma>/<área>.json` nos cinco idiomas, e usa-se `t("chave")`. O português é a origem; o teste `src/test/locales.test.ts` falha se faltar uma chave ou uma variável num idioma. Datas, horas e preços usam `formatDate`, `formatDateTime`, `formatTime`, `formatEuro` e `formatNumber` de `@/lib/format`, nunca `"pt-PT"` fixo. Ver `docs/traducoes.md`.
+- O site tem cinco idiomas (PT, EN, DE, ES, FR) com `react-i18next` (`src/i18n/`). Texto novo da interface não se escreve diretamente no JSX: vai para a secção da área em `src/locales/<idioma>.json` (um ficheiro por idioma) nos cinco idiomas, e usa-se `t("chave")`. O português é a origem; o teste `src/test/locales.test.ts` falha se faltar uma chave ou uma variável num idioma. Datas, horas e preços usam `formatDate`, `formatDateTime`, `formatTime`, `formatEuro` e `formatNumber` de `@/lib/format`, nunca `"pt-PT"` fixo. Ver `docs/traducoes.md`.
   - Texto escrito por agricultores e clientes (descrições, avaliações, chat, notas) mostra-se com `TranslatedText`, que pede a tradução por IA.
-  - Mensagens de erro novas no servidor (Edge Functions e `RAISE EXCEPTION`) acrescentam-se a `src/lib/server-messages.ts` e a `src/locales/<idioma>/server.json`.
+  - Mensagens de erro novas no servidor (Edge Functions e `RAISE EXCEPTION`) acrescentam-se a `src/lib/server-messages.ts` e à secção `server` de `src/locales/<idioma>.json`.
   - Ao alterar os Termos ou a Política de Privacidade, atualizar também as traduções em `src/pages/legal/`.
 - Reutiliza componentes e utilitários existentes antes de criar novos (ex.: `DeliveryRouteMapDialog`, `ScheduleEditor`, `@/lib/pickup-hours`).
 

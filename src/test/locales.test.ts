@@ -19,6 +19,12 @@ describe("traduções", () => {
     expect(languages).toEqual(["de", "en", "es", "fr", "pt"]);
   });
 
+  it("todos os idiomas têm as mesmas secções", () => {
+    for (const lang of languages) {
+      expect(Object.keys(resources[lang]).sort(), lang).toEqual([...NAMESPACES].sort());
+    }
+  });
+
   for (const ns of NAMESPACES) {
     const tree = (lang: string) => resources[lang]?.[ns] as Tree | undefined;
 

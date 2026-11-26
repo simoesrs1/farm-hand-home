@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { User, Tractor, Loader2, AlertCircle } from "lucide-react";
+import { User, Tractor, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import logoValorRuralFull from "@/assets/logo-valorrural-full.png";
 import GoogleIcon from "@/components/GoogleIcon";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,10 +12,6 @@ import {
   isExistingUserResponse,
   toUserMessage,
 } from "@/lib/auth-errors";
-
-import {Icon} from 'react-icons-kit';
-import {eyeOff} from 'react-icons-kit/feather/eyeOff';
-import {eye} from 'react-icons-kit/feather/eye'
 
 /**
  * O tipo de perfil escolhido no registo não pode viajar no fluxo OAuth (o
@@ -49,8 +45,7 @@ const Auth = () => {
   const safeNext = nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
   const redirectAfterAuth = safeNext ?? "/";
 
-  const [type, setType] = useState('password');
-  const [icon, setIcon] = useState(eyeOff);
+  const [showPassword, setShowPassword] = useState(false);
 
   const userId = user?.id ?? null;
 
@@ -98,16 +93,6 @@ const Auth = () => {
   }, [userId, profileLoaded, navigate, resolvePostLoginRoute]);
 
   if (userId) return null;
-
-  const handlePasswordToggle = () => {
-   if (type==='password'){
-      setIcon(eye);
-      setType('text')
-   } else {
-      setIcon(eyeOff)
-      setType('password')
-   }
-  }
 
   const setIsSignup = (signup: boolean) => {
     if (signup === isSignup) return;
@@ -354,7 +339,7 @@ const Auth = () => {
               <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("auth.password")}</label>
               <div className="relative">
                 <input
-                  type={type}
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="••••••••"
                   value={password}
@@ -366,11 +351,11 @@ const Auth = () => {
                 />
                 <button
                   type="button"
-                  onClick={handlePasswordToggle}
+                  onClick={() => setShowPassword((v) => !v)}
                   className="absolute inset-y-0 right-3 flex items-center justify-center text-muted-foreground hover:text-foreground"
                   aria-label={t("auth.togglePassword")}
                 >
-                  <Icon icon={icon} size={20} />
+                  {showPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                 </button>
               </div>
             </div>

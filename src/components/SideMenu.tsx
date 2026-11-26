@@ -35,7 +35,7 @@ import type { ParseKeys } from "i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 // `requires`: só aparece se o agricultor disponibilizar essa opção.
-// `labelKey`: chave de tradução em src/locales/<idioma>/common.json.
+// `labelKey`: chave de tradução na secção `common` de src/locales/<idioma>.json.
 type MenuLink = { to: string; labelKey: ParseKeys<"common">; Icon: LucideIcon; requires?: Offering; badge?: number };
 
 const farmerLinks: MenuLink[] = [

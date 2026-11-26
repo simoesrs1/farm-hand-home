@@ -358,7 +358,7 @@ const privacyPt: LegalDoc = {
 };
 
 // Ao alterar a política, atualizar também as traduções em src/pages/legal/privacy.*.tsx.
-// A secção de cookies (CookieSection) é a mesma em todos os idiomas, com textos em legal.json.
+// A secção de cookies (CookieSection) é a mesma em todos os idiomas, com textos na secção `legal` das traduções.
 const Privacy = () => (
   <LegalLayout original={privacyPt} translations={{ en: privacyEn, de: privacyDe, es: privacyEs, fr: privacyFr }} />
 );

@@ -3,9 +3,9 @@
  *
  * O servidor responde sempre em português. Aqui, cada mensagem conhecida é
  * reconhecida (com as partes variáveis, como números e nomes) e trocada pela
- * tradução em src/locales/<idioma>/server.json. Mensagens desconhecidas ficam
- * como vieram. Ao acrescentar uma mensagem no servidor, acrescentar a linha aqui
- * e a tradução nos cinco ficheiros server.json.
+ * tradução na secção `server` de src/locales/<idioma>.json. Mensagens
+ * desconhecidas ficam como vieram. Ao acrescentar uma mensagem no servidor,
+ * acrescentar a linha aqui e a tradução nos cinco idiomas.
  */
 import i18n from "@/i18n";
 
